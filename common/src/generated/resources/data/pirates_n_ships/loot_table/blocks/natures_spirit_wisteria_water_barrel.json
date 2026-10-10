@@ -1,0 +1,44 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "natures_spirit"
+    }
+  ],
+  "type": "minecraft:block",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "natures_spirit"
+      ]
+    }
+  ],
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "include": [
+                "pirates_n_ships:water_rations"
+              ],
+              "source": "block_entity"
+            }
+          ],
+          "name": "pirates_n_ships:natures_spirit_wisteria_water_barrel"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "pirates_n_ships:blocks/natures_spirit_wisteria_water_barrel"
+}

@@ -12,6 +12,8 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -107,6 +109,25 @@ public final class WoodFamily<B extends Block> {
         Map<ShipWood, RegistryEntry<Block, B>> entries = new LinkedHashMap<>();
         for (ShipWood wood : ShipWood.shipped()) {
             entries.put(wood, ModRegistry.blockWithItem(memberName(wood, suffix, legacyWood), () -> factory.apply(wood)));
+        }
+        WoodFamily<B> family = new WoodFamily<>(suffix, legacyWood, Collections.unmodifiableMap(entries));
+        ALL.add(family);
+        return family;
+    }
+
+    /**
+     * Like {@link #register(String, ShipWood, Function)}, but each member's item comes from {@code item} (given the
+     * member's block) instead of a plain {@code BlockItem} (WOOD2: the sea chest's wearable {@code SeaChestItem}). The
+     * item is registered under the member's id right after its block, so the creative tab keeps the same order.
+     */
+    public static <B extends Block> WoodFamily<B> register(String suffix, @Nullable ShipWood legacyWood, Function<ShipWood, B> factory,
+                                                           Function<B, ? extends BlockItem> item) {
+        Map<ShipWood, RegistryEntry<Block, B>> entries = new LinkedHashMap<>();
+        for (ShipWood wood : ShipWood.shipped()) {
+            String name = memberName(wood, suffix, legacyWood);
+            RegistryEntry<Block, B> block = ModRegistry.block(name, () -> factory.apply(wood));
+            ModRegistry.item(name, () -> item.apply(block.get()));
+            entries.put(wood, block);
         }
         WoodFamily<B> family = new WoodFamily<>(suffix, legacyWood, Collections.unmodifiableMap(entries));
         ALL.add(family);
@@ -309,6 +330,25 @@ public final class WoodFamily<B extends Block> {
                 else provider.tag(tag).addOptional(e.id());
             });
         }
+    }
+
+    /**
+     * Adds every member's item to each of item {@code tags}; a mod's wood's member as an optional entry
+     * ({@code required: false}) (WOOD2: {@code c:chests}, {@code provisions/water_barrel}).
+     */
+    @SafeVarargs
+    public final void itemTag(ModTagsProvider<Item> provider, TagKey<Item>... tags) {
+        for (TagKey<Item> tag : tags) {
+            entries.forEach((wood, e) -> {
+                if (wood.isVanilla()) provider.tag(tag).add(e.get().asItem());
+                else provider.tag(tag).addOptional(e.id());
+            });
+        }
+    }
+
+    /** Every member's entry, in {@link ShipWood#shipped()} order (for APIs that take block suppliers). */
+    public List<RegistryEntry<Block, B>> entries() {
+        return List.copyOf(entries.values());
     }
 
     /**

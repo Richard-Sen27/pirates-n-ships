@@ -30,6 +30,8 @@ import com.richardsenger.piratesnships.crew.walk.StationFacingGameTests;
 import com.richardsenger.piratesnships.crew.walk.WalkConfig;
 import com.richardsenger.piratesnships.station.StationModule;
 import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
@@ -106,38 +108,43 @@ public final class CrewContentModule implements ModModule {
                 .item(CrewContent.SALTED_FISH, "Salted Fish")
                 .item(CrewContent.SALT_PORK, "Salt Pork")
                 .item(CrewContent.LIME, "Lime")
-                .block(CrewContent.PANTRY, "Pantry")
-                .block(CrewContent.WATER_BARREL, "Water Barrel")
                 .block(CrewContent.HAMMOCK, "Hammock")
                 .add(CrewContent.HAMMOCK_SEAT.get().getDescriptionId(), "Hammock Seat")
                 .add(CrewContent.MEAL_SEAT.get().getDescriptionId(), "Meal Seat")
                 .add("container." + Constants.MOD_ID + ".pantry", "Pantry"));
+        data.lang(lang -> {
+            CrewContent.PANTRIES.lang(lang, "Pantry");
+            CrewContent.WATER_BARRELS.lang(lang, "Water Barrel");
+        });
         data.lang(lang -> GalleyText.LANG.forEach(lang::add));
         data.lang(lang -> CrewInfo.LANG.forEach(lang::add));
         data.models(m -> {
             // The provisions' item models are hand-made (art/models/{hardtack,salted_fish,salt_pork,lime}.bbmodel),
             // so datagen writes none
-            // hand-made Blockbench model (art/models/pantry.bbmodel, design.md §4.8), doors on the north side: only the
-            // block state is generated, rotated so the doors face FACING
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(CrewContent.PANTRY.get(), Variant.variant()
-                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(CrewContent.PANTRY.get())))
+            // hand-made Blockbench model (art/models/pantry.bbmodel, design.md §4.8), doors on the north side, with the
+            // wood family's texture variables (WOOD2: the spruce body is #planks/#log, the dark oak carcass and the oak
+            // panels stay): a child per wood, the block state turns it so the doors face FACING
+            CrewContent.PANTRIES.childModels(m, PANTRY_MODEL);
+            CrewContent.PANTRIES.itemModels(m, PANTRY_MODEL);
+            CrewContent.PANTRIES.forEach((wood, pantry) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(pantry, Variant.variant()
+                    .with(VariantProperties.MODEL, WoodFamily.child(wood, PANTRY_MODEL)))
                     .with(PropertyDispatch.property(PantryBlock.FACING)
                             .select(Direction.NORTH, Variant.variant())
                             .select(Direction.EAST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
-                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
+                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270)))));
             waterBarrelModels(m);
             hammockModels(m);
         });
+        CrewContent.PANTRIES.dropSelf(data);
+        // keeps the rations on the item; the pantry drops its contents itself (onRemove)
+        CrewContent.WATER_BARRELS.loot(data, barrel -> LootTable.lootTable().withPool(LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1))
+                .add(LootItem.lootTableItem(barrel)
+                        .apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
+                                .include(CrewContent.WATER_RATIONS.get())))
+                .when(ExplosionCondition.survivesExplosion())));
         data.blockLoot(loot -> {
-            loot.dropSelf(CrewContent.PANTRY.get());
-            // keeps the rations on the item; the pantry drops its contents itself (onRemove)
-            loot.add(CrewContent.WATER_BARREL.get(), LootTable.lootTable().withPool(LootPool.lootPool()
-                    .setRolls(ConstantValue.exactly(1))
-                    .add(LootItem.lootTableItem(CrewContent.WATER_BARREL.get())
-                            .apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
-                                    .include(CrewContent.WATER_RATIONS.get())))
-                    .when(ExplosionCondition.survivesExplosion())));
             // like a bed: only the foot drops, so breaking either half (or a support) yields one hammock
             HammockBlock hammock = CrewContent.HAMMOCK.get();
             loot.add(hammock, LootTable.lootTable().withPool(LootPool.lootPool()
@@ -156,17 +163,17 @@ public final class CrewContentModule implements ModModule {
             tags.tag(StationModule.SABLE_DESTROY_WITH_SUB_LEVEL).add(CrewContent.MEAL_SEAT.get());
         });
         data.blockTags(tags -> {
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(CrewContent.PANTRY.get(), CrewContent.WATER_BARREL.get());
-            tags.tag(SableWeightTags.LIGHT).add(CrewContent.PANTRY.get(), CrewContent.HAMMOCK.get());
+            CrewContent.PANTRIES.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.LIGHT);
+            CrewContent.WATER_BARRELS.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.HEAVY);
+            tags.tag(SableWeightTags.LIGHT).add(CrewContent.HAMMOCK.get());
             tags.tag(HammockTags.SUPPORTS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS).addTag(BlockTags.LOGS);
-            // Full of water: heavier than a wooden block until containers get load-dependent mass (§4.9)
-            tags.tag(SableWeightTags.HEAVY).add(CrewContent.WATER_BARREL.get());
+            // Full of water: heavier than a wooden block (the water barrels above; CW1's load-dependent mass overrides it)
         });
         data.itemTags(tags -> {
             tags.tag(ProvisionTags.PRESERVED).add(CrewContent.HARDTACK.get(), CrewContent.SALTED_FISH.get(), CrewContent.SALT_PORK.get());
             tags.tag(ProvisionTags.ANTI_SCURVY).add(CrewContent.LIME.get());
             tags.tag(ProvisionTags.RUM).add(TradeContent.RUM.get());
-            tags.tag(ProvisionTags.WATER_BARREL).add(CrewContent.WATER_BARREL.get().asItem());
+            CrewContent.WATER_BARRELS.itemTag(tags, ProvisionTags.WATER_BARREL); // every wood's barrel (WOOD2)
             tags.tag(C_FOODS).add(CrewContent.HARDTACK.get(), CrewContent.SALTED_FISH.get(), CrewContent.SALT_PORK.get(), CrewContent.LIME.get());
             tags.tag(C_FRUITS).add(CrewContent.LIME.get());
             tags.tag(C_BREADS).add(CrewContent.HARDTACK.get());
@@ -185,22 +192,26 @@ public final class CrewContentModule implements ModModule {
                     .requires(Items.PORKCHOP).requires(Items.DRIED_KELP)
                     .unlockedBy("has_dried_kelp", InventoryChangeTrigger.TriggerInstance.hasItems(Items.DRIED_KELP))
                     .save(out, CrewContent.SALT_PORK.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, CrewContent.PANTRY.get())
-                    .pattern("PPP").pattern("PWP").pattern("PPP")
-                    .define('P', ItemTags.PLANKS).define('W', Items.WHEAT)
-                    .unlockedBy("has_wheat", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHEAT))
-                    .save(out, CrewContent.PANTRY.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, CrewContent.WATER_BARREL.get())
-                    .pattern("PIP").pattern("PWP").pattern("PIP")
-                    .define('P', ItemTags.PLANKS).define('I', Items.IRON_NUGGET).define('W', Items.WATER_BUCKET)
-                    .unlockedBy("has_water_bucket", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WATER_BUCKET))
-                    .save(out, CrewContent.WATER_BARREL.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, CrewContent.HAMMOCK_ITEM.get())
                     .pattern("S S").pattern("WWW")
                     .define('S', Items.STRING).define('W', ItemTags.WOOL)
                     .unlockedBy("has_string", InventoryChangeTrigger.TriggerInstance.hasItems(Items.STRING))
                     .save(out, CrewContent.HAMMOCK_ITEM.id());
         });
+        woodRecipes(data);
+    }
+
+    /**
+     * The pantry and the water barrel in every wood from that wood's planks (WOOD2; before: any planks), each family in
+     * its recipe group.
+     */
+    private static void woodRecipes(DataContributions data) {
+        CrewContent.PANTRIES.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 1, "PPP", "PWP", "PPP")
+                .define('P', WoodRecipe.planks()).define('W', WoodRecipe.item(Items.WHEAT))
+                .group(Constants.MOD_ID + ":pantry").unlockedBy("has_wheat", WoodRecipe.item(Items.WHEAT)));
+        CrewContent.WATER_BARRELS.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 1, "PIP", "PWP", "PIP")
+                .define('P', WoodRecipe.planks()).define('I', WoodRecipe.item(Items.IRON_NUGGET)).define('W', WoodRecipe.item(Items.WATER_BUCKET))
+                .group(Constants.MOD_ID + ":water_barrel").unlockedBy("has_water_bucket", WoodRecipe.item(Items.WATER_BUCKET)));
     }
 
     @Override
@@ -215,27 +226,38 @@ public final class CrewContentModule implements ModModule {
 
     /**
      * Hand-made Blockbench models (art/models/water_barrel*.bbmodel, design.md §4.8): fill 0..3 use
-     * {@code water_barrel_fill<n>}, fill 4 (full, also the item model) the plain {@code water_barrel}. Only the block
-     * state is generated.
+     * {@code water_barrel_fill<n>}, fill 4 (full, also the item model) the plain {@code water_barrel}. They use the wood
+     * family's texture variables (WOOD2: the spruce staves are {@code #planks}; the dark oak floor and the oak dipper
+     * stay), so datagen writes a child of each per wood ({@code block/<wood>_water_barrel_fill<n>}), the block states
+     * and the item models.
      */
     private static void waterBarrelModels(ModelContext m) {
-        WaterBarrelBlock barrel = CrewContent.WATER_BARREL.get();
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(barrel).with(PropertyDispatch.property(WaterBarrelBlock.FILL)
-                .generate(fill -> Variant.variant().with(VariantProperties.MODEL, fill == WaterBarrelRules.MAX_FILL
-                        ? ModelLocationUtils.getModelLocation(barrel)
-                        : ModelLocationUtils.getModelLocation(barrel, "_fill" + fill)))));
+        WoodFamily<WaterBarrelBlock> barrels = CrewContent.WATER_BARRELS;
+        for (int fill = 0; fill < WaterBarrelRules.MAX_FILL; fill++) barrels.childModels(m, waterBarrelModel(fill));
+        barrels.childModels(m, WATER_BARREL_MODEL);
+        barrels.forEach((wood, barrel) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(barrel)
+                .with(PropertyDispatch.property(WaterBarrelBlock.FILL)
+                        .generate(fill -> Variant.variant().with(VariantProperties.MODEL, WoodFamily.child(wood, waterBarrelModel(fill)))))));
         // The water surface is greyscale water_still, tinted by the biome on the block and with the default water colour
-        // on the item (both in CrewContentClient, ITC1). The item model names the slot explicitly so it never falls
-        // back to a stand-in texture again.
-        m.models().accept(ModelLocationUtils.getModelLocation(barrel.asItem()), () -> {
-            JsonObject textures = new JsonObject();
-            textures.addProperty(WATER_TEXTURE_SLOT, WATER_TEXTURE);
-            JsonObject model = new JsonObject();
-            model.addProperty("parent", ModelLocationUtils.getModelLocation(barrel).toString());
-            model.add("textures", textures);
+        // on the item (both in CrewContentClient, ITC1, for every wood's barrel). Each wood's item model is a child of
+        // the full barrel with the wood's textures and names the water slot explicitly so it never falls back to a
+        // stand-in texture again.
+        barrels.forEach((wood, barrel) -> m.models().accept(ModelLocationUtils.getModelLocation(barrel.asItem()), () -> {
+            JsonObject model = WoodFamily.childJson(wood, WATER_BARREL_MODEL);
+            model.getAsJsonObject("textures").addProperty(WATER_TEXTURE_SLOT, WATER_TEXTURE);
             return model;
-        });
+        }));
     }
+
+    /** The hand-made parent of fill {@code fill}: {@code water_barrel_fill<n>}, the plain {@code water_barrel} when full. */
+    static ResourceLocation waterBarrelModel(int fill) {
+        return fill == WaterBarrelRules.MAX_FILL ? WATER_BARREL_MODEL : Constants.id("block/water_barrel_fill" + fill);
+    }
+
+    /** The full water barrel's hand-made parent model (also the items' parent). */
+    static final ResourceLocation WATER_BARREL_MODEL = Constants.id("block/water_barrel");
+    /** The pantry's hand-made parent model. */
+    static final ResourceLocation PANTRY_MODEL = Constants.id("block/pantry");
 
     /**
      * The hammock's block state (design.md §4.8, ART1d): the hand-made Blockbench models {@code block/hammock_foot}

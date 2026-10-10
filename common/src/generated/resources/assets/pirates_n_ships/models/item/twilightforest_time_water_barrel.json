@@ -1,0 +1,10 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/water_still",
+    "log": "twilightforest:block/stripped_time_log",
+    "log_top": "twilightforest:block/stripped_time_log_top",
+    "particle": "twilightforest:block/wood/planks_time_0",
+    "planks": "twilightforest:block/wood/planks_time_0"
+  }
+}

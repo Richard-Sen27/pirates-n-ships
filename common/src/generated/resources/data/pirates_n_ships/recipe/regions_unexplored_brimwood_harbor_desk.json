@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "regions_unexplored"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:brimwood_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "regions_unexplored"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "regions_unexplored:brimwood_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:harbor_desk",
+  "key": {
+    "B": {
+      "item": "minecraft:book"
+    },
+    "G": {
+      "item": "minecraft:gold_nugget"
+    },
+    "P": {
+      "item": "regions_unexplored:brimwood_planks"
+    }
+  },
+  "pattern": [
+    "BG ",
+    "PPP",
+    "P P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:regions_unexplored_brimwood_harbor_desk"
+  }
+}

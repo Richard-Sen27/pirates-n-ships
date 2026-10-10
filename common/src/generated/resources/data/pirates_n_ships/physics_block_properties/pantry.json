@@ -17,5 +17,5 @@
   "properties": {
     "sable:mass": 0.5
   },
-  "selector": "pirates_n_ships:pantry"
+  "selector": "#pirates_n_ships:pantries"
 }

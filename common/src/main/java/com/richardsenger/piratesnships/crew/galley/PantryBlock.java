@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.crew.galley;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.crew.content.CrewContent;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionSettings;
@@ -34,13 +36,23 @@ import org.jetbrains.annotations.Nullable;
  * is the side the doors face (towards the player who placed it), the block state rotates the model. It does not occlude
  * its neighbours ({@code noOcclusion} in {@code CrewContent}).
  */
-public class PantryBlock extends BaseEntityBlock {
+public class PantryBlock extends BaseEntityBlock implements WoodBlock {
 
-    public static final MapCodec<PantryBlock> CODEC = simpleCodec(PantryBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<PantryBlock> CODEC = simpleCodec(p -> new PantryBlock(ShipWood.SPRUCE, p));
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    public PantryBlock(Properties properties) {
+    /** The wood of this member (WOOD2). */
+    private final ShipWood wood;
+
+    public PantryBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
                 .setValue(com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD, 0));
     }

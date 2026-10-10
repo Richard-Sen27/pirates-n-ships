@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:cargo_barrel",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "item": "minecraft:birch_planks"
+    }
+  },
+  "pattern": [
+    "PIP",
+    "P P",
+    "PIP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:birch_cargo_barrel"
+  }
+}

@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.trade.cargo;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.richardsenger.piratesnships.trade.plunder.PlunderMark;
@@ -36,17 +38,20 @@ import net.minecraft.world.phys.BlockHitResult;
  * the load; the blocks are registered with {@code noOcclusion} in {@code ShipDecor}. {@link CargoLoad#LOAD} carries the
  * content's weight as Sable mass (CW1, physics only).
  */
-public class CargoContainerBlock extends BaseEntityBlock {
+public class CargoContainerBlock extends BaseEntityBlock implements WoodBlock {
 
     public static final MapCodec<CargoContainerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             CargoContainers.Kind.CODEC.fieldOf("kind").forGetter(CargoContainerBlock::kind),
             propertiesCodec()
-    ).apply(i, (k, p) -> new CargoContainerBlock(p, k)));
+    ).apply(i, (k, p) -> new CargoContainerBlock(k == CargoContainers.Kind.BARREL ? ShipWood.SPRUCE : ShipWood.OAK, p, k)));
 
     private final CargoContainers.Kind kind;
+    /** The wood of this member of the crate or barrel family (WOOD2). */
+    private final ShipWood wood;
 
-    public CargoContainerBlock(Properties properties, CargoContainers.Kind kind) {
+    public CargoContainerBlock(ShipWood wood, Properties properties, CargoContainers.Kind kind) {
         super(properties);
+        this.wood = wood;
         this.kind = kind;
         registerDefaultState(stateDefinition.any().setValue(CargoLoad.LOAD, 0));
     }
@@ -65,6 +70,11 @@ public class CargoContainerBlock extends BaseEntityBlock {
     @Nullable
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide ? null : createTickerHelper(type, CargoContainers.BLOCK_ENTITY.get(), CargoContainerBlockEntity::serverTick);
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     public CargoContainers.Kind kind() {

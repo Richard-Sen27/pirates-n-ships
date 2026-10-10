@@ -17,5 +17,5 @@
   "properties": {
     "sable:mass": 2.0
   },
-  "selector": "pirates_n_ships:water_barrel"
+  "selector": "#pirates_n_ships:water_barrels"
 }

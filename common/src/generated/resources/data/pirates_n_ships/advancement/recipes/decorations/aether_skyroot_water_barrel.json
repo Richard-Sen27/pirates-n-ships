@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "aether"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "aether:skyroot_planks"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:aether_skyroot_water_barrel"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_water_bucket": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:water_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "aether"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "aether:skyroot_planks"
+      ]
+    }
+  ],
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_water_bucket"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "pirates_n_ships:aether_skyroot_water_barrel"
+    ]
+  }
+}

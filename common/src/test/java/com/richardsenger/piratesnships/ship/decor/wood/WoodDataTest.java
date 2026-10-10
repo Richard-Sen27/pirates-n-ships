@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
@@ -30,7 +31,12 @@ class WoodDataTest {
     private static final Path DATA = GENERATED.resolve("data/pirates_n_ships");
     private static final Path ASSETS = GENERATED.resolve("assets/pirates_n_ships");
     /** The families WOOD1 converts; WOOD2-WOOD4 add theirs. */
-    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench");
+    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench",
+            // WOOD2: the storage blocks
+            "cargo_crate", "cargo_barrel", "pantry", "water_barrel", "harbor_desk", "sea_chest");
+    /** The families whose member of one wood keeps its legacy id ({@code <suffix>}). */
+    private static final Map<String, ShipWood> LEGACY = Map.of("cargo_crate", ShipWood.OAK, "cargo_barrel", ShipWood.SPRUCE,
+            "pantry", ShipWood.SPRUCE, "water_barrel", ShipWood.SPRUCE, "harbor_desk", ShipWood.DARK_OAK, "sea_chest", ShipWood.DARK_OAK);
 
     private static JsonObject read(Path p) throws IOException {
         return JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -49,7 +55,7 @@ class WoodDataTest {
         List<String> missing = new ArrayList<>();
         for (String family : FAMILIES) {
             for (ShipWood wood : ShipWood.all()) {
-                String id = WoodFamily.name(wood, family);
+                String id = WoodFamily.memberName(wood, family, LEGACY.get(family));
                 if (!lang.has("block.pirates_n_ships." + id)) missing.add("lang " + id);
                 if (!Files.exists(ASSETS.resolve("blockstates/" + id + ".json"))) missing.add("blockstate " + id);
                 if (!Files.exists(ASSETS.resolve("models/item/" + id + ".json"))) missing.add("item model " + id);
@@ -60,6 +66,11 @@ class WoodDataTest {
         assertTrue(missing.isEmpty(), missing.size() + " missing: " + missing.subList(0, Math.min(20, missing.size())));
         assertEquals("Spruce Railing", lang.get("block.pirates_n_ships.spruce_railing").getAsString());
         assertEquals("Redwood Railing", lang.get("block.pirates_n_ships.biomesoplenty_redwood_railing").getAsString());
+        // a legacy member is named for its wood like the others (WOOD2)
+        assertEquals("Oak Cargo Crate", lang.get("block.pirates_n_ships.cargo_crate").getAsString());
+        assertEquals("Birch Cargo Crate", lang.get("block.pirates_n_ships.birch_cargo_crate").getAsString());
+        assertEquals("Dark Oak Sea Chest", lang.get("block.pirates_n_ships.sea_chest").getAsString());
+        assertEquals("Spruce Water Barrel", lang.get("block.pirates_n_ships.water_barrel").getAsString());
     }
 
     @Test
@@ -128,5 +139,34 @@ class WoodDataTest {
         assertTrue(optional >= WoodCompat.WOODS.size() * FAMILIES.size(), "only " + optional + " optional entries");
         assertTrue(problems.isEmpty(), problems.size() + " problems: " + problems.subList(0, Math.min(20, problems.size())));
         assertTrue(tags.contains("axe.json"), tags.toString());
+    }
+
+    /**
+     * WOOD2: every water barrel's item model names the tinted water slot, and every member of the four container
+     * families is in the family tag Sable's physics file selects (a mod's wood's as an optional entry), so no physics
+     * file names a block id that may not exist.
+     */
+    @Test
+    void storageFamiliesKeepTheWaterSlotAndWeighByTag() throws IOException {
+        List<String> problems = new ArrayList<>();
+        for (ShipWood wood : ShipWood.all()) {
+            String id = WoodFamily.memberName(wood, "water_barrel", ShipWood.SPRUCE);
+            JsonObject item = read(ASSETS.resolve("models/item/" + id + ".json"));
+            if (!"pirates_n_ships:block/water_barrel".equals(item.get("parent").getAsString())) problems.add(id + " parent " + item.get("parent"));
+            if (!"minecraft:block/water_still".equals(item.getAsJsonObject("textures").get("7").getAsString())) problems.add(id + " water slot");
+            for (int fill = 0; fill < 4; fill++) {
+                Path model = ASSETS.resolve("models/block/" + wood.id() + "_water_barrel_fill" + fill + ".json");
+                if (!Files.exists(model)) problems.add(model.toString());
+            }
+        }
+        Map<String, String> tagOf = Map.of("cargo_crate", "cargo_crates", "cargo_barrel", "cargo_barrels", "pantry", "pantries",
+                "water_barrel", "water_barrels");
+        for (Map.Entry<String, String> e : tagOf.entrySet()) {
+            JsonObject physics = read(DATA.resolve("physics_block_properties/" + e.getKey() + ".json"));
+            assertEquals("#pirates_n_ships:" + e.getValue(), physics.get("selector").getAsString(), e.getKey());
+            JsonArray values = read(DATA.resolve("tags/block/" + e.getValue() + ".json")).getAsJsonArray("values");
+            assertEquals(ShipWood.all().size(), values.size(), e.getValue() + " lists every wood's member");
+        }
+        assertTrue(problems.isEmpty(), problems.toString());
     }
 }

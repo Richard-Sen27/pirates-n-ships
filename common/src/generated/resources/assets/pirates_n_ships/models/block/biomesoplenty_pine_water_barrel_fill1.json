@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel_fill1",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_pine_log",
+    "log_top": "biomesoplenty:block/stripped_pine_log_top",
+    "particle": "biomesoplenty:block/pine_planks",
+    "planks": "biomesoplenty:block/pine_planks"
+  }
+}

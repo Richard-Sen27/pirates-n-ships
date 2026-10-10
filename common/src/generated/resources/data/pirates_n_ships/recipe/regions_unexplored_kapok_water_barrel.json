@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "regions_unexplored"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:kapok_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "regions_unexplored"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "regions_unexplored:kapok_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:water_barrel",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "item": "regions_unexplored:kapok_planks"
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "pattern": [
+    "PIP",
+    "PWP",
+    "PIP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:regions_unexplored_kapok_water_barrel"
+  }
+}

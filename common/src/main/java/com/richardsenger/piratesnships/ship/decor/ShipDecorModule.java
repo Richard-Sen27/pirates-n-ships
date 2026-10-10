@@ -91,44 +91,33 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.NAMEPLATE, "Name Board")
                 .add(NameplateText.KEY_WRECK_OF, "Wreck of %s")
                 .block(ShipDecor.FLAGPOLE, "Flagpole")
-                .block(ShipDecor.FLAG_PEDESTAL, "Flag Pedestal")
-                .block(ShipDecor.CARGO_CRATE, "Cargo Crate")
-                .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
+                .block(ShipDecor.FLAG_PEDESTAL, "Flag Pedestal"));
         data.models(m -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
             nameBoard(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             flagPedestal(m, ShipDecor.FLAG_PEDESTAL.get());
-            // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
-            // states are generated; the load does not show (the load property is physics only, CW1: every value uses the model)
-            for (Block cargo : List.of(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get())) {
-                m.blockStates().accept(MultiVariantGenerator.multiVariant(cargo, Variant.variant()
-                        .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(cargo))));
-            }
+            // the cargo crate and barrel families: trade.cargo.CargoContainerData (WOOD2)
         });
         FlagData.gather(data);
         DecorData.gather(data);
         com.richardsenger.piratesnships.ship.decor.railing.RailingData.gather(data); // RAIL1
+        com.richardsenger.piratesnships.trade.cargo.CargoContainerData.gather(data); // WOOD2
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
             loot.dropSelf(ShipDecor.FLAGPOLE.get());
             loot.dropSelf(ShipDecor.FLAG_PEDESTAL.get());
-            loot.add(ShipDecor.CARGO_CRATE.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_CRATE.get()));
-            loot.add(ShipDecor.CARGO_BARREL.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_BARREL.get()));
         });
         data.blockTags(tags -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) {
                 tags.tag(BlockTags.MINEABLE_WITH_AXE).add(f.get());
                 tags.tag(SableWeightTags.LIGHT).add(f.get());
             }
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get(),
-                    ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get());
+            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get());
             // Thin blocks: like ladders and fences in Sable's own tags
             tags.tag(SableWeightTags.SUPER_LIGHT).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get());
             tags.tag(SableWeightTags.QUARTER_VOLUME).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get());
-            // Wooden containers: like vanilla barrels and chests
-            tags.tag(SableWeightTags.LIGHT).add(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get());
         });
         data.recipes(out -> {
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_MERMAID, Items.PRISMARINE_SHARD);
@@ -151,16 +140,6 @@ public final class ShipDecorModule implements ModModule {
                     .define('L', ItemTags.LOGS).define('S', ItemTags.WOODEN_SLABS)
                     .unlockedBy("has_flagpole", InventoryChangeTrigger.TriggerInstance.hasItems(ShipDecor.FLAGPOLE.get()))
                     .save(out, ShipDecor.FLAG_PEDESTAL.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ShipDecor.CARGO_CRATE.get())
-                    .pattern("SPS").pattern("P P").pattern("SPS")
-                    .define('S', Items.STICK).define('P', ItemTags.PLANKS)
-                    .unlockedBy("has_stick", InventoryChangeTrigger.TriggerInstance.hasItems(Items.STICK))
-                    .save(out, ShipDecor.CARGO_CRATE.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ShipDecor.CARGO_BARREL.get())
-                    .pattern("PIP").pattern("P P").pattern("PIP")
-                    .define('P', ItemTags.PLANKS).define('I', Items.IRON_NUGGET)
-                    .unlockedBy("has_iron_nugget", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_NUGGET))
-                    .save(out, ShipDecor.CARGO_BARREL.id());
         });
     }
 

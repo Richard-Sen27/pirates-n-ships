@@ -1,0 +1,10 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/water_still",
+    "log": "aether:block/natural/stripped_skyroot_log",
+    "log_top": "aether:block/natural/stripped_skyroot_log_top",
+    "particle": "aether:block/construction/skyroot_planks",
+    "planks": "aether:block/construction/skyroot_planks"
+  }
+}

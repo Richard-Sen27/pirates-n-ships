@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/helm",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_willow_log",
+    "log_top": "biomesoplenty:block/stripped_willow_log_top",
+    "particle": "biomesoplenty:block/willow_planks",
+    "planks": "biomesoplenty:block/willow_planks"
+  }
+}

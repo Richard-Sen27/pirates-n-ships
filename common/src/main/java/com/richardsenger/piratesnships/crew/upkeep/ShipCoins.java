@@ -1,7 +1,7 @@
 package com.richardsenger.piratesnships.crew.upkeep;
 
 import com.richardsenger.piratesnships.crew.galley.ProvisionContainer;
-import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.trade.cargo.CargoContainerBlockEntity;
 import com.richardsenger.piratesnships.trade.coin.Wallet;
@@ -85,7 +85,7 @@ public final class ShipCoins {
     /** The helm's center (the first helm block in {@code blocks}), or the plot center without a helm. */
     private static Vec3 helm(ServerLevel level, ShipBody ship, List<BlockPos> blocks) {
         for (BlockPos p : blocks) {
-            if (level.getBlockState(p).is(AssemblyContent.HELM.get())) {
+            if (level.getBlockState(p).getBlock() instanceof HelmBlock) {
                 return Vec3.atCenterOf(p);
             }
         }

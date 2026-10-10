@@ -30,14 +30,21 @@ class WoodDataTest {
     private static final Path GENERATED = Path.of("src/generated/resources");
     private static final Path DATA = GENERATED.resolve("data/pirates_n_ships");
     private static final Path ASSETS = GENERATED.resolve("assets/pirates_n_ships");
-    /** The families WOOD1 converts; WOOD2-WOOD4 add theirs (WOOD3: the fittings, each with a legacy id, {@link #LEGACY}). */
+    /** The families WOOD1 converts; WOOD2-WOOD4 add theirs (WOOD3: the fittings, WOOD4: the machines; legacy ids in {@link #LEGACY}). */
     private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench",
-            "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat");
-    /** The wood whose member keeps a family's legacy id (docs/woods.md, "Legacy ids"). */
-    private static final Map<String, ShipWood> LEGACY = Map.of("nameplate", ShipWood.OAK, "chart_table", ShipWood.DARK_OAK,
-            "sea_cot", ShipWood.DARK_OAK, "stern_window", ShipWood.DARK_OAK, "notice_board", ShipWood.DARK_OAK,
-            "flagpole", ShipWood.SPRUCE, "flag_pedestal", ShipWood.SPRUCE, "crows_nest", ShipWood.SPRUCE, "yard", ShipWood.SPRUCE,
-            "cleat", ShipWood.DARK_OAK);
+            "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat",
+            "helm", "capstan", "sail_winch", "bilge_pump", "cannon");
+    /** The families with a legacy member: the wood whose member keeps the id {@code <suffix>} (docs/woods.md "Legacy ids"). */
+    private static final Map<String, ShipWood> LEGACY = Map.ofEntries(Map.entry("nameplate", ShipWood.OAK),
+            Map.entry("chart_table", ShipWood.DARK_OAK), Map.entry("sea_cot", ShipWood.DARK_OAK), Map.entry("stern_window", ShipWood.DARK_OAK),
+            Map.entry("notice_board", ShipWood.DARK_OAK), Map.entry("flagpole", ShipWood.SPRUCE), Map.entry("flag_pedestal", ShipWood.SPRUCE),
+            Map.entry("crows_nest", ShipWood.SPRUCE), Map.entry("yard", ShipWood.SPRUCE), Map.entry("cleat", ShipWood.DARK_OAK),
+            Map.entry("helm", ShipWood.DARK_OAK), Map.entry("capstan", ShipWood.DARK_OAK), Map.entry("sail_winch", ShipWood.SPRUCE),
+            Map.entry("bilge_pump", ShipWood.DARK_OAK), Map.entry("cannon", ShipWood.DARK_OAK));
+    /** WOOD4: the renderer parts with the wood variables, by family: every wood has its child ({@code WoodModels}). */
+    private static final Map<String, List<String>> PARTS = Map.of("helm", List.of("helm", "helm_wheel"),
+            "capstan", List.of("capstan", "capstan_bars"), "sail_winch", List.of("sail_winch"), "bilge_pump", List.of("bilge_pump"),
+            "cannon", List.of("cannon_carriage", "cannon_carriage_rammer", "cannon_quoin"));
 
     private static JsonObject read(Path p) throws IOException {
         return JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -73,6 +80,11 @@ class WoodDataTest {
         assertEquals("Birch Yard", lang.get("block.pirates_n_ships.birch_yard").getAsString());
         assertTrue(!lang.has("block.pirates_n_ships.spruce_yard") && !lang.has("block.pirates_n_ships.oak_nameplate"),
                 "a legacy member is registered twice");
+        // WOOD4: the legacy member is named for its wood like every other
+        assertEquals("Dark Oak Helm", lang.get("block.pirates_n_ships.helm").getAsString());
+        assertEquals("Spruce Sail Winch", lang.get("block.pirates_n_ships.sail_winch").getAsString());
+        assertEquals("Cherry Cannon", lang.get("block.pirates_n_ships.cherry_cannon").getAsString());
+        assertTrue(!lang.has("block.pirates_n_ships.dark_oak_helm"), "the dark oak helm is the legacy helm");
     }
 
     /**
@@ -99,6 +111,68 @@ class WoodDataTest {
                 assertTrue(s.noneMatch(f -> f.getFileName().toString().endsWith("_" + family + ".json")), "a per-member " + family + " file");
             }
         }
+    }
+
+    /**
+     * WOOD4: every wood has the child of every wooden model of the machines (block models and the renderer parts), set to
+     * its planks, stripped log and its end; the legacy member's models are named by wood too ({@code dark_oak_helm_wheel}).
+     */
+    @Test
+    void everyMachinePartHasAChildInEveryWood() throws IOException {
+        List<String> missing = new ArrayList<>();
+        for (Map.Entry<String, List<String>> e : PARTS.entrySet()) {
+            for (String part : e.getValue()) {
+                for (ShipWood wood : ShipWood.all()) {
+                    Path p = ASSETS.resolve("models/block/" + wood.id() + "_" + part + ".json");
+                    if (!Files.exists(p)) {
+                        missing.add(p.getFileName().toString());
+                        continue;
+                    }
+                    JsonObject textures = read(p).getAsJsonObject("textures");
+                    assertEquals(wood.planksTexture().toString(), textures.get(WoodFamily.PLANKS).getAsString(), p.toString());
+                    assertEquals(wood.logTexture().toString(), textures.get(WoodFamily.LOG).getAsString(), p.toString());
+                    assertEquals(wood.logTopTexture().toString(), textures.get(WoodFamily.LOG_TOP).getAsString(), p.toString());
+                }
+            }
+        }
+        assertTrue(missing.isEmpty(), missing.size() + " missing: " + missing.subList(0, Math.min(20, missing.size())));
+        // the rear half of the cannon draws nothing: one shared particle-only model, no child per wood
+        assertTrue(Files.exists(ASSETS.resolve("models/block/cannon_rear.json")));
+        assertTrue(Files.notExists(ASSETS.resolve("models/block/spruce_cannon_rear.json")));
+    }
+
+    /** WOOD4: the capstan's and the cannon's logs are that wood's stripped log (they took any log before). */
+    @Test
+    void capstanAndCannonTakeTheirWoodsStrippedLog() throws IOException {
+        JsonObject capstan = read(DATA.resolve("recipe/spruce_capstan.json")).getAsJsonObject("key");
+        assertEquals("minecraft:stripped_spruce_log", capstan.getAsJsonObject("L").get("item").getAsString());
+        assertEquals("minecraft:spruce_planks", capstan.getAsJsonObject("P").get("item").getAsString());
+        JsonObject cannon = read(DATA.resolve("recipe/cannon.json")).getAsJsonObject("key");
+        assertEquals("minecraft:stripped_dark_oak_log", cannon.getAsJsonObject("L").get("item").getAsString());
+        assertEquals("minecraft:dark_oak_planks", cannon.getAsJsonObject("P").get("item").getAsString());
+    }
+
+    /**
+     * WOOD4: the pump and the cannon keep their Sable weight in every wood: the entry keeps its file (the legacy id) and
+     * selects the family's tag, which lists every member (a mod wood's as an optional entry), because Sable's loader
+     * reads no load conditions and a per-member file of a mod's wood would name an unknown block without the mod.
+     */
+    @Test
+    void everyPumpAndCannonHasItsPhysicsEntry() throws IOException {
+        for (String family : List.of("bilge_pump", "cannon")) {
+            JsonObject json = read(DATA.resolve("physics_block_properties/" + family + ".json"));
+            String tag = family + "s";
+            assertEquals("#pirates_n_ships:" + tag, json.get("selector").getAsString(), family);
+            JsonArray values = read(DATA.resolve("tags/block/" + tag + ".json")).getAsJsonArray("values");
+            Set<String> ids = new TreeSet<>();
+            for (JsonElement v : values) ids.add(v.isJsonObject() ? v.getAsJsonObject().get("id").getAsString() : v.getAsString());
+            for (ShipWood wood : ShipWood.all()) {
+                String id = "pirates_n_ships:" + WoodFamily.memberName(wood, family, LEGACY.get(family));
+                assertTrue(ids.contains(id), tag + " lacks " + id);
+            }
+            assertTrue(Files.notExists(DATA.resolve("physics_block_properties/spruce_" + family + ".json")), "a per-member entry");
+        }
+        assertEquals(2.0, read(DATA.resolve("physics_block_properties/cannon.json")).getAsJsonObject("properties").get("sable:mass").getAsDouble());
     }
 
     @Test

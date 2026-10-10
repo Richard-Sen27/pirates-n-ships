@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.station.capstan;
 
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -16,7 +18,6 @@ import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
 import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
-import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.station.StationCommands;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.StationRef;
@@ -89,18 +90,24 @@ public final class CapstanGameTests {
     }
 
     private static Rig rig(GameTestHelper h) {
-        SailingGameTestsShips.basin(h, true);
-        BlockPos helm = SailingGameTestsShips.squareHull(h, 17, 3, SailTrim.FURLED);
-        h.setBlock(new BlockPos(19, 9, 6), SailingBlocks.CAPSTAN.get());
-        Fixture f = SailingGameTestsShips.assemble(h, helm);
-        return new Rig(f, find(f, SailingBlocks.CAPSTAN.get()), find(f, AssemblyContent.HELM.get()));
+        return rig(h, ShipWood.DARK_OAK);
     }
 
-    private static BlockPos find(Fixture f, Block block) {
+    /** The test hull with a capstan of {@code wood} (WOOD4) amidships, assembled. */
+    private static Rig rig(GameTestHelper h, ShipWood wood) {
+        SailingGameTestsShips.basin(h, true);
+        BlockPos helm = SailingGameTestsShips.squareHull(h, 17, 3, SailTrim.FURLED);
+        h.setBlock(new BlockPos(19, 9, 6), SailingBlocks.CAPSTANS.get(wood));
+        Fixture f = SailingGameTestsShips.assemble(h, helm);
+        BlockPos capstan = find(f, b -> b instanceof CapstanBlock c && c.wood() == wood, wood + " capstan");
+        return new Rig(f, capstan, find(f, b -> b instanceof HelmBlock, "helm"));
+    }
+
+    private static BlockPos find(Fixture f, java.util.function.Predicate<Block> block, String what) {
         for (BlockPos p : f.ship().plotBlocks()) {
-            if (f.ship().level().getBlockState(p).is(block)) return p;
+            if (block.test(f.ship().level().getBlockState(p).getBlock())) return p;
         }
-        throw new AssertionError("no " + block + " on the ship");
+        throw new AssertionError("no " + what + " on the ship");
     }
 
     /** A crew member without AI standing on the deck above the plot cell {@code plot}. */
@@ -157,7 +164,17 @@ public final class CapstanGameTests {
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 500, batch = BATCH + "cycle")
     public static void crewDropsAndRaisesTheAnchor(GameTestHelper h) {
-        Rig r = rig(h);
+        cycle(h, ShipWood.DARK_OAK);
+    }
+
+    /** WOOD4: a capstan of another wood than the legacy dark oak one (birch) drops and weighs the anchor the same. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 500, batch = BATCH + "cycle_birch")
+    public static void birchCapstanDropsAndRaisesTheAnchor(GameTestHelper h) {
+        cycle(h, ShipWood.BIRCH);
+    }
+
+    private static void cycle(GameTestHelper h, ShipWood wood) {
+        Rig r = rig(h, wood);
         ServerLevel level = h.getLevel();
         CrewMember c = manned(h, r);
         StationRef ref = r.ref();

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/helm",
+  "textures": {
+    "log": "minecraft:block/stripped_birch_log",
+    "log_top": "minecraft:block/stripped_birch_log_top",
+    "particle": "minecraft:block/birch_planks",
+    "planks": "minecraft:block/birch_planks"
+  }
+}

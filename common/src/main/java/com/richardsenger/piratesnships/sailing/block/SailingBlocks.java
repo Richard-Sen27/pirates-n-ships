@@ -29,12 +29,16 @@ public final class SailingBlocks {
     public static final RegistryEntry<Block, YardBlock> YARD = YARDS.entry(ShipWood.SPRUCE);
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<YardBlockEntity>> YARD_BLOCK_ENTITY =
             YARDS.blockEntity("yard", YardBlockEntity::new);
-    public static final RegistryEntry<Block, SailWinchBlock> SAIL_WINCH = ModRegistry.blockWithItem("sail_winch",
-            () -> new SailWinchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
-    public static final RegistryEntry<Block, CapstanBlock> CAPSTAN = ModRegistry.blockWithItem("capstan",
-            () -> new CapstanBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    /** WOOD4: the sail winch in every wood; spruce keeps the legacy id {@code sail_winch}. */
+    public static final WoodFamily<SailWinchBlock> SAIL_WINCHES = WoodFamily.register("sail_winch", ShipWood.SPRUCE,
+            wood -> new SailWinchBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The legacy member ({@code sail_winch}, spruce), for placing one; every member is a winch ({@code instanceof}). */
+    public static final RegistryEntry<Block, SailWinchBlock> SAIL_WINCH = SAIL_WINCHES.lead();
+    /** WOOD4: the capstan in every wood; dark oak keeps the legacy id {@code capstan}. Strength as before (2.5). */
+    public static final WoodFamily<CapstanBlock> CAPSTANS = WoodFamily.register("capstan", ShipWood.DARK_OAK,
+            wood -> new CapstanBlock(wood, WoodFamily.properties(wood).strength(2.5f, 3.0f).noOcclusion()));
+    /** The legacy member ({@code capstan}, dark oak), for placing one; every member is a capstan ({@code instanceof}). */
+    public static final RegistryEntry<Block, CapstanBlock> CAPSTAN = CAPSTANS.lead();
 
     private SailingBlocks() {
     }

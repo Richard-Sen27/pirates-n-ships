@@ -1,18 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
+  "group": "pirates_n_ships:cannon",
   "key": {
     "I": {
       "item": "minecraft:iron_block"
     },
     "L": {
-      "tag": "minecraft:logs"
+      "item": "minecraft:stripped_dark_oak_log"
     },
     "N": {
       "item": "minecraft:iron_ingot"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     }
   },
   "pattern": [

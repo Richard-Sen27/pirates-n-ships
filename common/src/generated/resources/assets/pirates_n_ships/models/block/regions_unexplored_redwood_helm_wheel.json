@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/helm_wheel",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_redwood_log",
+    "log_top": "regions_unexplored:block/stripped_redwood_log_top",
+    "particle": "regions_unexplored:block/redwood_planks",
+    "planks": "regions_unexplored:block/redwood_planks"
+  }
+}

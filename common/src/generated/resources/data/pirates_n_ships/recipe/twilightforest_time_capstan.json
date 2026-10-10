@@ -1,0 +1,61 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "twilightforest"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:stripped_time_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:time_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "twilightforest"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "twilightforest:stripped_time_log",
+        "twilightforest:time_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:capstan",
+  "key": {
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "twilightforest:stripped_time_log"
+    },
+    "P": {
+      "item": "twilightforest:time_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "LSL",
+    "CIC",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:twilightforest_time_capstan"
+  }
+}

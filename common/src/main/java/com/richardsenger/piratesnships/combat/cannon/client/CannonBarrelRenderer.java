@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.cannon.client;
 
+import com.richardsenger.piratesnships.ship.decor.wood.client.WoodModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.combat.cannon.CannonBarrelPose;
@@ -42,7 +43,7 @@ public class CannonBarrelRenderer implements BlockEntityRenderer<CannonBlockEnti
     @Override
     public void render(CannonBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         BlockState state = be.getBlockState();
-        if (!(state.getBlock() instanceof CannonBlock) || !state.getValue(CannonBlock.PART).isMaster()) {
+        if (!(state.getBlock() instanceof CannonBlock cannon) || !state.getValue(CannonBlock.PART).isMaster()) {
             return;
         }
         double angle = 0.0;
@@ -66,7 +67,7 @@ public class CannonBarrelRenderer implements BlockEntityRenderer<CannonBlockEnti
         pose.translate(0f, stool, (float) (quoin.slide() / 16.0));
         pose.scale(1f, (float) quoin.scale(), 1f);
         pose.translate(0f, -stool, 0f);
-        draw(models, pose, buffers, CannonClient.QUOIN_MODEL, light, overlay);
+        draw(models, pose, buffers, WoodModels.get(cannon, CannonClient.QUOIN_MODEL), light, overlay); // WOOD4: the carriage's wood
         pose.popPose();
 
         float pivotY = (float) (CannonBarrelPose.PIVOT_Y / 16.0);
@@ -89,7 +90,11 @@ public class CannonBarrelRenderer implements BlockEntityRenderer<CannonBlockEnti
 
     private static void draw(ModelBlockRenderer models, PoseStack pose, MultiBufferSource buffers, ResourceLocation id,
                              int light, int overlay) {
-        BakedModel model = ClientEvents.additionalModel(id);
+        draw(models, pose, buffers, ClientEvents.additionalModel(id), light, overlay);
+    }
+
+    private static void draw(ModelBlockRenderer models, PoseStack pose, MultiBufferSource buffers, BakedModel model,
+                             int light, int overlay) {
         models.renderModel(pose.last(), buffers.getBuffer(Sheets.solidBlockSheet()), null, model, 1f, 1f, 1f, light, overlay);
     }
 

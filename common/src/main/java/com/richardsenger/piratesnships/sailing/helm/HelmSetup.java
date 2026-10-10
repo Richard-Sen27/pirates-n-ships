@@ -6,8 +6,6 @@ import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
-import net.minecraft.data.models.model.DelegatedModel;
-import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -15,6 +13,11 @@ import net.minecraft.resources.ResourceLocation;
  * matching {@code SailingModule} hook.
  */
 public final class HelmSetup {
+
+    /** The wheel's hand-made parent model; every wood's child {@code block/<wood>_helm_wheel} is drawn by the renderer. */
+    public static final ResourceLocation WHEEL_MODEL = Constants.id("block/helm_wheel");
+    /** The whole helm for the items. */
+    static final ResourceLocation ITEM_MODEL = Constants.id("block/helm_item");
 
     private HelmSetup() {
     }
@@ -51,11 +54,12 @@ public final class HelmSetup {
                 .add(HelmService.KEY_RUDDER, "Rudder %s° %s")
                 .add(HelmService.KEY_BUSY, "Someone else is at the wheel"));
         data.models(m -> {
-            // hand-made Blockbench models (art/models/helm.bbmodel, design.md §4.8): block/helm is the pedestal (its
-            // block state comes from ship.assembly), block/helm_wheel the wheel drawn by client/HelmWheelRenderer (a
-            // stand-alone model, no block state), and block/helm_item both together for the item
-            ResourceLocation item = ModelLocationUtils.getModelLocation(AssemblyContent.HELM.get().asItem());
-            m.models().accept(item, new DelegatedModel(Constants.id("block/helm_item")));
+            // hand-made Blockbench models (art/models/helm.bbmodel, design.md §4.8) with the wood variables (WOOD4):
+            // block/helm is the pedestal (its children and block states come from ship.assembly), block/helm_wheel the
+            // wheel drawn by client/HelmWheelRenderer (a stand-alone model, no block state; one child per wood,
+            // block/<wood>_helm_wheel), and block/helm_item both together for every wood's item
+            AssemblyContent.HELMS.childModels(m, WHEEL_MODEL);
+            AssemblyContent.HELMS.itemModels(m, ITEM_MODEL);
         });
     }
 }

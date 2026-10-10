@@ -1,0 +1,49 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "deeperdarker"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "deeperdarker:echo_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "deeperdarker"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "deeperdarker:echo_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:sail_winch",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "deeperdarker:echo_planks"
+    },
+    "T": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "TIT",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:deeperdarker_echo_sail_winch"
+  }
+}

@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import com.google.gson.JsonParser;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,6 +22,11 @@ import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -286,5 +293,104 @@ class SchemToStructureTest {
         assertArrayEquals(Files.readAllBytes(committed), Files.readAllBytes(out.resolve(name + ".nbt")),
                 "rerun python3 tools/schem_to_structure.py and commit the result");
         assertTrue(log.contains("helm at [4, 8, 22]"), log);
+    }
+
+    // ------------------------------------------------------------------ block entity check (FIX3)
+
+    /** Runs a tool script under {@code python3 -I}; returns the exit code, the output in {@code log[0]}. */
+    private static int run(String[] log, String script, String... args) throws Exception {
+        List<String> cmd = new ArrayList<>(List.of("python3", "-I", root.resolve(script).toString()));
+        cmd.addAll(List.of(args));
+        Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+        log[0] = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertTrue(p.waitFor(120, TimeUnit.SECONDS), script + " timed out");
+        return p.exitValue();
+    }
+
+    /**
+     * The tiny v2 schematic with the oak stairs at [2, 0, 1] replaced by {@code state} (when not null) and an extra
+     * block entity {@code id} at {@code pos} (when not null).
+     */
+    private Path v2With(String name, String state, int[] pos, String id) throws IOException {
+        CompoundTag s = read(v2(tmp));
+        if (state != null) {
+            CompoundTag palette = s.getCompound("Palette");
+            palette.remove("minecraft:oak_stairs[half=bottom,facing=east]");
+            palette.putInt(state, OAK);
+        }
+        if (id != null) {
+            CompoundTag be = new CompoundTag();
+            be.put("Pos", new IntArrayTag(pos));
+            be.putString("Id", id);
+            s.getList("BlockEntities", Tag.TAG_COMPOUND).add(be);
+        }
+        Path file = tmp.resolve(name + ".schem");
+        writeSchem(file, s);
+        return file;
+    }
+
+    /** Every committed structure file (world pieces, ship templates, Ponder scenes) passes the block entity check. */
+    @Test
+    void committedStructuresHaveNoBlockEntityProblems() throws Exception {
+        String[] log = new String[1];
+        assertEquals(0, run(log, "tools/check_structures.py"), log[0]);
+        assertTrue(log[0].contains(" 0 with problems"), log[0]);
+    }
+
+    /** Block entity data on a block that has none (the stone at [0, 0, 0]) is refused, and nothing is written. */
+    @Test
+    void strayBlockEntityOnAPlainBlockIsRefused() throws Exception {
+        Path in = v2With("stray", null, new int[] {0, 0, 0}, "minecraft:chest");
+        Path out = tmp.resolve("out");
+        String[] log = new String[1];
+        assertEquals(1, run(log, "tools/schem_to_structure.py", "--out", out.toString(), in.toString()), log[0]);
+        assertTrue(log[0].contains("[0, 0, 0] minecraft:stone: stray block entity data minecraft:chest"), log[0]);
+        assertFalse(Files.exists(out.resolve("stray.nbt")), "a refused template is not written");
+    }
+
+    /** The cannon's own data copied onto its rear half is refused: the rear's block entity is another one. */
+    @Test
+    void cannonDataOnTheRearHalfIsRefused() throws Exception {
+        Path in = v2With("rear", "pirates_n_ships:cannon[facing=north,load=empty,part=rear]", new int[] {2, 0, 1},
+                "pirates_n_ships:cannon");
+        String[] log = new String[1];
+        assertEquals(1, run(log, "tools/schem_to_structure.py", "--out", tmp.resolve("out").toString(), in.toString()), log[0]);
+        assertTrue(log[0].contains("block entity data pirates_n_ships:cannon, but this state's block entity is "
+                + "pirates_n_ships:cannon_rear"), log[0]);
+        // without the copied data the rear half converts (worldgen gives it its own empty block entity)
+        Path clean = v2With("rear_clean", "pirates_n_ships:cannon[facing=north,load=empty,part=rear]", null, null);
+        convert(tmp.resolve("out"), clean);
+    }
+
+    /** An entity block whose state has no block entity (the sea cot) is refused in a generated structure. */
+    @Test
+    void entityBlockWithoutABlockEntityIsRefused() throws Exception {
+        Path in = v2With("cot", "pirates_n_ships:sea_cot[facing=north,occupied=false,part=foot]", null, null);
+        String[] log = new String[1];
+        assertEquals(1, run(log, "tools/schem_to_structure.py", "--out", tmp.resolve("out").toString(), in.toString()), log[0]);
+        assertTrue(log[0].contains("an entity block without a block entity in a generated structure"), log[0]);
+    }
+
+    /** The checker's vanilla table is vanilla's registry: every entity block and the block entity its states create. */
+    @Test
+    void vanillaTableMatchesTheRegistry() throws Exception {
+        String[] log = new String[1];
+        assertEquals(0, run(log, "tools/check_structures.py", "--vanilla-table"), log[0]);
+        Map<String, String> table = new TreeMap<>();
+        // null in the table: an entity block whose newBlockEntity creates none (vanilla's moving piston)
+        JsonParser.parseString(log[0]).getAsJsonObject().entrySet().forEach(e -> table.put(e.getKey(),
+                e.getValue().isJsonNull() ? "none" : e.getValue().getAsString()));
+        Map<String, String> registry = new TreeMap<>();
+        for (Block block : BuiltInRegistries.BLOCK) {
+            if (!(block instanceof EntityBlock entityBlock)) continue;
+            String name = BuiltInRegistries.BLOCK.getKey(block).toString();
+            for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                String type = be == null ? "none" : String.valueOf(BlockEntityType.getKey(be.getType()));
+                String before = registry.put(name, type);
+                assertTrue(before == null || before.equals(type), name + " creates two block entity types");
+            }
+        }
+        assertEquals(registry, table);
     }
 }

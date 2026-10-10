@@ -28,6 +28,9 @@ Rules:
   1.21.1 (3955); a missing one counts as 3955.
 - Output is deterministic: the palette is sorted by block state string, blocks by y, z, x, and the gzip header has no
   timestamp or file name. Re-running on the same input writes the same bytes.
+- Every written template passes ``tools/check_structures.py`` (no block entity data on a state without a block entity
+  or with another block's id, no entity block without a block entity in a generated structure); a schematic that fails
+  is refused and nothing is written (FIX3).
 - Every ``pirates_n_ships:helm`` is reported with its template position: that is where a ship template's ``helm``
   points (the definition finds it by itself when it leaves ``helm`` out).
 - Structure pieces (sources under ``art/schematics/structures/``) report their ``minecraft:jigsaw`` blocks (position,
@@ -348,12 +351,25 @@ def report_jigsaws(schem: dict):
         print(f"  jigsaw at {list(pos)} {props.get('orientation', '?')}: {label} (pool {pool})")
 
 
+def block_entity_problems(root: Tag, worldgen: bool) -> list[str]:
+    """tools/check_structures.py on a converted template: stray or mismatched block entity data, and entity blocks
+    without a block entity where worldgen places them (FIX3)."""
+    sys.dont_write_bytecode = True  # no __pycache__ in tools/
+    sys.path.insert(0, str(Path(__file__).resolve().parent))  # also under python3 -I
+    import check_structures  # noqa: E402  (same folder; imports this module for the NBT reader)
+    return check_structures.check_root(root, worldgen)
+
+
 def convert(source: Path, out_dir: Path | None = None) -> Path:
     piece = structure_group(source) is not None
     if out_dir is None:
         out_dir = default_out(source)
     schem = read_schematic(read_nbt(source.read_bytes()))
     root, helms = to_structure(schem)
+    problems = block_entity_problems(root, structure_group(source) != PONDER_GROUP)
+    if problems:
+        raise ValueError(f"{source}: block entity problems (tools/check_structures.py), nothing written:\n  "
+                         + "\n  ".join(problems))
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / (source.stem + ".nbt")
     target.write_bytes(write_nbt(root))
@@ -387,9 +403,14 @@ def main(argv: list[str]) -> int:
     if not inputs:
         print(f"no schematics in {DEFAULT_IN}", file=sys.stderr)
         return 1
+    failed = 0
     for source in inputs:
-        convert(source, args.out)
-    return 0
+        try:
+            convert(source, args.out)
+        except ValueError as e:
+            print(f"error: {e}", file=sys.stderr)
+            failed += 1
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

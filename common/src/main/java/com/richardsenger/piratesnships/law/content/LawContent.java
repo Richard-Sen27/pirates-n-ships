@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.law.content;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.sounds.SoundEvents;
@@ -55,6 +56,11 @@ public final class LawContent {
     @SuppressWarnings("unchecked")
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<BrigDoorBlockEntity>> BRIG_DOOR_ENTITY =
             ModRegistry.blockEntity("brig_door", BrigDoorBlockEntity::new, BRIG_DOOR);
+
+    /** The upper half's empty block entity (FIX3, {@link PartBlockEntity}: worldgen needs one on every door state). */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PartBlockEntity>> BRIG_DOOR_UPPER_ENTITY =
+            ModRegistry.blockEntity("brig_door_upper",
+                    (pos, state) -> new PartBlockEntity(LawContent.BRIG_DOOR_UPPER_ENTITY.get(), pos, state), BRIG_DOOR);
 
     private LawContent() {
     }

@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.combat.cannon;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.station.StationBlock;
@@ -51,7 +52,8 @@ import java.util.List;
  * and the rear goes towards the placing player; both need room and a block to stand on. Breaking either half removes
  * both, and only the master drops the cannon. {@link #FACING} is the way the muzzle points (the traverse), {@link #LOAD}
  * what is in the barrel (on the master; the rear stays empty); the elevation and the reload cooldown live in the
- * {@link CannonBlockEntity}. The master draws the whole gun across both blocks, the rear draws nothing.
+ * {@link CannonBlockEntity}. The master draws the whole gun across both blocks, the rear draws nothing (its block entity
+ * is an empty {@link PartBlockEntity}).
  *
  * <p>Controls, all on the server through {@link CannonService}:
  * <ul>
@@ -200,10 +202,14 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock, Sim
         return state.getValue(PART).isMaster() ? FRONT_SHAPES[i] : REAR_SHAPES[i];
     }
 
-    /** Only the master has the block entity (elevation, reload). */
+    /**
+     * The master has the cannon's block entity (elevation, reload); the rear an empty {@link PartBlockEntity}, never
+     * null: worldgen asks every state of an entity block for one (FIX3).
+     */
     @Override
-    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(PART).isMaster() ? new CannonBlockEntity(pos, state) : null;
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return state.getValue(PART).isMaster() ? new CannonBlockEntity(pos, state)
+                : new PartBlockEntity(CannonContent.CANNON_REAR_ENTITY.get(), pos, state);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.core.registries.Registries;
@@ -29,6 +30,11 @@ public final class CannonContent {
 
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<CannonBlockEntity>> CANNON_ENTITY =
             ModRegistry.blockEntity("cannon", CannonBlockEntity::new, CANNON);
+
+    /** The rear half's empty block entity (FIX3, {@link PartBlockEntity}: worldgen needs one on every cannon state). */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PartBlockEntity>> CANNON_REAR_ENTITY =
+            ModRegistry.blockEntity("cannon_rear",
+                    (pos, state) -> new PartBlockEntity(CannonContent.CANNON_REAR_ENTITY.get(), pos, state), CANNON);
 
     public static final RegistryEntry<EntityType<?>, EntityType<CannonballEntity>> CANNONBALL = ModRegistry.entity("cannonball",
             () -> EntityType.Builder.<CannonballEntity>of(CannonballEntity::new, MobCategory.MISC)

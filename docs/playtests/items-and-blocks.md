@@ -617,6 +617,60 @@ blocks apart (`/give @s pirates_n_ships:chainplate 4`, `/give @s pirates_n_ships
 - **Config:** `rigging.boarding_nets = false`: the second chainplate answers "Too flat" and nets already strung hold
   nobody; `rigging.boarding_net_hold = 0`: nobody is held; `rigging.boarding_net_cut_hits = 1`: one hit cuts it.
 
+### Railing latches and net sheets (RL5)
+
+Covered by JUnit (`RatlineSheetRulesTest`: the anchors' capacity, the row rule for a rectangle, a trapezoid, RL4's
+triangle, a single strand, strands not in a row, the owner rule under a turn) and 14 GameTests
+(`ship/rigging/RatlineSheetGameTests`: the latch set with its net and gone with it, a second strand on a latch or a
+chainplate refused, gates, ports, unrailed edges and `rigging.railing_latches = false` refused, a latched net climbed
+on land, on a still ship after assembly and on a ship at 4 m/s from the deck and from the net, a rectangle climbed in
+its middle column and off its top edge between two hoops, a broken middle strand re-joining the outer two, a trapezoid
+and a triangle from latches, a boarding net between two latches). What the tests cannot show: how the latch and the
+wider nets look, and how the climb feels.
+
+Setup: a hull with a straight run of oak railings (and a few bulwarks) along one deck edge, a mast or a wall of logs
+four or five blocks inboard, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s pirates_n_ships:ratline_net 8`.
+- **The latch:** put a hoop on the mast's side facing the rail, about five blocks up. Use the net on the top rail of a
+  railing (aim at the rail itself), then on the hoop. Expected: "Net tied: now use the other fitting" after the first
+  click and nothing on the rail yet; after the second, "Net strung through N blocks", and a small iron eye bolt sits on
+  the cap of the rail you clicked, at the middle of that edge, with the net's rope starting from its ring (no
+  chainplate floating above the rail any more). The bolt is iron like the chainplate. Report if the rope starts beside
+  the ring or the bolt clips into the rail; try a corner railing (click each edge) and a bulwark's cap.
+- **Climb from the rail:** stand on the deck in the railing's block, against the rail, and jump while holding forward:
+  you catch the net just over the rail and climb to the hoop. Also from the side of the deck next to the latch.
+- **The latch goes with its net:** break a net cell (aim at the small box in the net): one ratline net drops at the
+  latch and the eye bolt disappears with the net. String it again; break the hoop: the same. String it again; break the
+  railing: the net drops, no bolt is left floating. Also break the bolt itself (aim at the small box round it): the net
+  drops and the bolt is gone.
+- **Refusals (action bar):** a railing gate, a railing port or a bulwark gun port: "No latch on a gate or a port"; the
+  open side of a railing block (an edge without a rail): "No rail on that edge"; a rail with a block on top: "Blocked
+  at x y z"; a latched railing (also its other edges): "That fitting already holds a net" when you try a second net
+  there. A chainplate holding a net refuses a second one the same way.
+- **Rectangle:** three railings in a row with latches two blocks apart, three hoops in a row two blocks apart at one
+  height (on a wall of logs, a wide mast or along a yard), each latch strung to the hoop straight above its row
+  position. Expected: one wide net, drawn as three ropes with rungs running across all of them; you can step into the
+  net anywhere along the rail between the outer latches and climb straight up to the top, and climb on over the top
+  edge (also between two hoops) onto whatever stands there (e.g. the top of the log wall).
+- **Trapezoid:** three latches into two hoops (the first two latches to one hoop, the third to a second hoop two
+  blocks along): one net narrowing to the top; climb it from the middle. Three latches into one hoop is RL4's triangle,
+  now from latches.
+- **Never wider at the top:** you cannot string two nets from one latch or one chainplate, so a top edge always has
+  as many or fewer ends than the bottom. Two hoops at different heights, or latches not in a row (e.g. one on the deck
+  as a chainplate and one on the rail), stay separate nets: "Strung alone: ends not in one row".
+- **Break one strand of a sheet:** break the middle latch's bolt: its net drops, the outer two re-join into one net
+  (if they are at most 6 blocks apart, `rigging.net_max_spread`) and the gap fills.
+- **On a ship:** string a latched net on land, assemble, sail at speed and climb it from the deck; disassemble turned
+  a quarter: the bolt is on the same rail edge and the net still stands.
+- **Boarding nets:** use the net on two railings of one run, on the same (outboard) edge, a few blocks apart: "Boarding
+  net strung along the rail", a bolt on each end, the net hanging along the rail as before. Latches on two different
+  edges: "Boarding nets run along one rail edge" and no bolt stays. Chainplates on railings strung before RL5 keep
+  working.
+- **Config:** `rigging.railing_latches = false`: using the net on a railing says "No latches here: use a chainplate"
+  and sets nothing; chainplates still work. The latch costs nothing beyond the net item (say if it should cost an
+  iron nugget).
+- **Ponder:** the Almanac's "Show me: stringing ratline nets" shows the bolt appearing on the rail when the net is
+  strung, instead of chainplates on the rail.
+
 ## Ship's bell swing (BELL1)
 
 The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step

@@ -6,7 +6,9 @@ import java.util.List;
 /**
  * Pure rules of the ratline nets (RL2, docs/design.md §4.8 "Ratline nets between fittings"): the cells a net strung
  * between two ring points takes (a 3D DDA walk), whether a net may be strung (length and pitch), and the climbing
- * assist's velocity along the net; RL4's fans (several strands sharing a hub, the triangles between them). Coordinates are block coordinates in one frame (the world, or one ship's plot).
+ * assist's velocity along the net; RL4's fans (several strands sharing a hub, the triangles between them); RL5's sheets
+ * (strands in a row joined into a rectangle or a trapezoid, an anchor's capacity). Coordinates are block coordinates in
+ * one frame (the world, or one ship's plot).
  */
 public final class RatlineNetRules {
 
@@ -327,6 +329,178 @@ public final class RatlineNetRules {
             }
         }
         return new ArrayList<>(out.values());
+    }
+
+    // ------------------------------------------------------------------ sheets (RL5)
+
+    /** What holds a strand's end (RL5): a chainplate and a railing latch hold one strand, a mast hoop several. */
+    public enum Anchor { CHAINPLATE, LATCH, HOOP }
+
+    /** How many strands {@code anchor} holds: a hoop {@code maxStrands} ({@code rigging.net_max_strands}), any other one. */
+    public static int capacity(Anchor anchor, int maxStrands) {
+        return anchor == Anchor.HOOP ? Math.max(1, maxStrands) : 1;
+    }
+
+    /** Whether {@code anchor}, holding {@code held} strands, takes another (so a net is never wider at the top). */
+    public static boolean takesAnother(Anchor anchor, int held, int maxStrands) {
+        return held < capacity(anchor, maxStrands);
+    }
+
+    /** Tolerance of "at one height" and "along one axis" for ring points [blocks]. */
+    static final double ROW_EPS = 1.0e-3;
+
+    /**
+     * The horizontal axis along which {@code a} and {@code b} lie in one row at one height: 0 for x, 2 for z; -1 when
+     * they are at different heights, on a diagonal or the same point.
+     */
+    public static int rowAxis(Point a, Point b) {
+        if (Math.abs(a.y - b.y) > ROW_EPS) {
+            return -1;
+        }
+        boolean sameX = Math.abs(a.x - b.x) <= ROW_EPS, sameZ = Math.abs(a.z - b.z) <= ROW_EPS;
+        if (sameX == sameZ) {
+            return -1;
+        }
+        return sameZ ? 0 : 2;
+    }
+
+    private static double along(Point p, int axis) {
+        return axis == 0 ? p.x : p.z;
+    }
+
+    /** Whether two ring points are the same ring. */
+    public static boolean sameRing(Point a, Point b) {
+        return b.minus(a).length() <= ROW_EPS;
+    }
+
+    /**
+     * RL5's join rule: two neighbouring strands (feet {@code footA}, {@code footB}, hubs {@code hubA}, {@code hubB})
+     * form one sheet when their feet lie in a row at one height at most {@code maxSpread} apart, and their hubs are the
+     * same ring or lie in a row at one height at most {@code maxSpread} apart without crossing the feet's order.
+     */
+    public static boolean joins(Point footA, Point hubA, Point footB, Point hubB, double maxSpread) {
+        if (rowAxis(footA, footB) < 0 || spread(footA, footB) > maxSpread + 1.0e-9) {
+            return false;
+        }
+        if (sameRing(hubA, hubB)) {
+            return true;
+        }
+        if (rowAxis(hubA, hubB) < 0 || spread(hubA, hubB) > maxSpread + 1.0e-9) {
+            return false;
+        }
+        Point df = footB.minus(footA), dh = hubB.minus(hubA);
+        return df.x * dh.x + df.z * dh.z >= -1.0e-9;
+    }
+
+    /**
+     * Which of two joined strands owns the cells between them (RL5, the RL4 rule of "the strand on their left by
+     * bearing"): {@code a} when the bearing round the middle of their hubs grows from a's foot to b's, else {@code b}; when
+     * the hubs stand right over the feet's row (no bearing to tell), the one further along the row's axis.
+     */
+    static boolean ownsPair(Point footA, Point hubA, Point footB, Point hubB) {
+        double mx = (hubA.x + hubB.x) / 2, mz = (hubA.z + hubB.z) / 2;
+        double ux = footA.x - mx, uz = footA.z - mz, vx = footB.x - mx, vz = footB.z - mz;
+        double cross = ux * vz - uz * vx;
+        if (Math.abs(cross) > 1.0e-6) {
+            return cross > 0;
+        }
+        int axis = rowAxis(footA, footB);
+        return axis >= 0 && along(footA, axis) > along(footB, axis);
+    }
+
+    /**
+     * RL5: the joins of a group of strands (feet {@code feet}, hubs {@code hubs}, {@code joinable[k]} when strand k may
+     * join at all: its hub is a mast hoop). Each strand's nearest neighbour along a row (x before z on a tie) is its
+     * neighbour; neighbours that {@link #joins join} form a pair, owned by {@link #ownsPair}. Returns for each strand the
+     * index of the strand it owns a pair with, or -1 (a strand owns at most one pair; each strand is in at most two).
+     */
+    public static int[] sheetPartners(List<Point> feet, List<Point> hubs, boolean[] joinable, double maxSpread) {
+        int n = feet.size();
+        int[] out = new int[n];
+        java.util.Arrays.fill(out, -1);
+        for (int k = 0; k < n; k++) {
+            if (!joinable[k]) {
+                continue;
+            }
+            for (int axis : new int[] {0, 2}) {
+                int best = -1;
+                double bestD = Double.POSITIVE_INFINITY;
+                for (int j = 0; j < n; j++) {
+                    if (j == k || !joinable[j] || rowAxis(feet.get(k), feet.get(j)) != axis) {
+                        continue;
+                    }
+                    double d = along(feet.get(j), axis) - along(feet.get(k), axis);
+                    if (d > ROW_EPS && d < bestD - 1.0e-9) {
+                        best = j;
+                        bestD = d;
+                    }
+                }
+                if (best < 0 || !joins(feet.get(k), hubs.get(k), feet.get(best), hubs.get(best), maxSpread)) {
+                    continue;
+                }
+                boolean kOwns = ownsPair(feet.get(k), hubs.get(k), feet.get(best), hubs.get(best));
+                int owner = kOwns ? k : best, other = kOwns ? best : k;
+                if (out[owner] < 0) {
+                    out[owner] = other;
+                }
+            }
+        }
+        return out;
+    }
+
+    /** A cell of a sheet: the strand that owns it, whether it fills a pair, and the pair's other strand when its hub differs (else -1). */
+    public record SheetCell(Cell cell, int owner, boolean fill, int otherHub) {
+    }
+
+    /**
+     * RL5: the cells of a group of strands (feet, hubs, their own cells, {@link #sheetPartners}): first every strand's
+     * own cells (a cell two strands share belongs to the earlier one), then each pair's fill not yet taken, owned by
+     * the pair's owner: the triangle (hub, both feet) when both strands share a hub (RL4's fan), else the quadrilateral
+     * of both feet and both hubs as two triangles (a rectangle or a trapezoid). The fittings' own cells
+     * ({@code fittings}) are never cells of the sheet.
+     */
+    public static List<SheetCell> sheetCells(List<Point> feet, List<Point> hubs, List<List<Cell>> strandCells,
+                                             int[] partner, java.util.Set<Cell> fittings) {
+        java.util.Map<Cell, SheetCell> out = new java.util.LinkedHashMap<>();
+        for (int k = 0; k < strandCells.size(); k++) {
+            for (Cell c : strandCells.get(k)) {
+                if (!fittings.contains(c)) {
+                    out.putIfAbsent(c, new SheetCell(c, k, false, -1));
+                }
+            }
+        }
+        for (int k = 0; k < partner.length; k++) {
+            int p = partner[k];
+            if (p < 0) {
+                continue;
+            }
+            boolean shared = sameRing(hubs.get(k), hubs.get(p));
+            List<Cell> fill = new ArrayList<>();
+            if (shared) {
+                fill.addAll(triangleCells(hubs.get(k), feet.get(k), feet.get(p)));
+            } else {
+                fill.addAll(triangleCells(feet.get(k), feet.get(p), hubs.get(p)));
+                fill.addAll(triangleCells(feet.get(k), hubs.get(p), hubs.get(k)));
+            }
+            for (Cell c : fill) {
+                if (!fittings.contains(c)) {
+                    out.putIfAbsent(c, new SheetCell(c, k, true, shared ? -1 : p));
+                }
+            }
+        }
+        return new ArrayList<>(out.values());
+    }
+
+    /**
+     * Where a fill cell between two hubs climbs to (RL5): the point of the hubs' segment nearest the cell's centre, so a
+     * rectangle climbs straight up its column and a trapezoid towards the nearest point of its top edge.
+     */
+    public static Point topPoint(Cell cell, Point hubA, Point hubB) {
+        Point c = centre(cell);
+        Point d = hubB.minus(hubA);
+        double len2 = d.x * d.x + d.y * d.y + d.z * d.z;
+        double t = len2 < 1.0e-12 ? 0 : Math.max(0, Math.min(1, ((c.x - hubA.x) * d.x + (c.y - hubA.y) * d.y + (c.z - hubA.z) * d.z) / len2));
+        return new Point(hubA.x + d.x * t, hubA.y + d.y * t, hubA.z + d.z * t);
     }
 
     /** The climb direction of a net cell: from its centre towards the hub ring, unit (straight up when it is there). */

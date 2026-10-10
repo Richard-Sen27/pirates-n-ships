@@ -86,11 +86,11 @@ public final class RatlineNetGameTests {
         return RiggingContent.MAST_HOOP.get().defaultBlockState().setValue(MastHoopBlock.FACING, facing);
     }
 
-    private static String key(Component c) {
+    static String key(Component c) {
         return c.getContents() instanceof TranslatableContents t ? t.getKey() : c.getString();
     }
 
-    private static void floor(GameTestHelper h, int size) {
+    static void floor(GameTestHelper h, int size) {
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
                 h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
@@ -98,7 +98,7 @@ public final class RatlineNetGameTests {
         }
     }
 
-    private static int droppedNets(GameTestHelper h) {
+    static int droppedNets(GameTestHelper h) {
         return h.getLevel().getEntitiesOfClass(ItemEntity.class, h.getBounds().inflate(2),
                         e -> e.isAlive() && e.getItem().is(RiggingContent.NET_ITEM.get()))
                 .stream().mapToInt(e -> e.getItem().getCount()).sum();
@@ -118,7 +118,7 @@ public final class RatlineNetGameTests {
     }
 
     /** Strings a net with a fresh stack: first {@code a}, then {@code b} (absolute positions); returns the second answer. */
-    private static String string(ServerLevel level, BlockPos a, BlockPos b, ItemStack stack) {
+    static String string(ServerLevel level, BlockPos a, BlockPos b, ItemStack stack) {
         String first = key(RatlineNetItem.use(level, stack, a, null));
         if (!first.equals(RatlineNetItem.KEY_MARKED)) {
             return first;
@@ -127,7 +127,7 @@ public final class RatlineNetGameTests {
     }
 
     /** A survival mock player in the level at the world position, discarded when the test ends. */
-    private static Player playerInLevel(GameTestHelper h, Vec3 world, float yRot) {
+    static Player playerInLevel(GameTestHelper h, Vec3 world, float yRot) {
         Player player = h.makeMockPlayer(GameType.SURVIVAL);
         player.moveTo(world.x, world.y, world.z, yRot, 0f);
         h.getLevel().addFreshEntity(player);
@@ -161,7 +161,7 @@ public final class RatlineNetGameTests {
      * must be within 1.2 blocks under ring B's height and the feet must have come within 1.5 blocks of ring B across.
      * Everything is scheduled up front (scheduling from a scheduled task changes the task map while it is iterated).
      */
-    private static void climb(GameTestHelper h, int start, Supplier<Player> spawn, Supplier<Net> net,
+    static void climb(GameTestHelper h, int start, Supplier<Player> spawn, Supplier<Net> net,
                               Function<Vec3, Vec3> frame, boolean jump, boolean forward, int forTicks, String what) {
         Player[] player = {null};
         double[] y0 = {0};
@@ -454,7 +454,7 @@ public final class RatlineNetGameTests {
         return null;
     }
 
-    private static int netCount(ServerLevel level, BlockPos fitting) {
+    static int netCount(ServerLevel level, BlockPos fitting) {
         return level.getBlockEntity(fitting) instanceof NetFittingBlockEntity be ? be.netCount() : -1;
     }
 
@@ -728,6 +728,14 @@ public final class RatlineNetGameTests {
 
     /** {@link #shipRig(GameTestHelper, int, int)} in a basin {@code size} blocks long in x (24 wide in z). */
     private static BlockPos shipRig(GameTestHelper h, int plateX, int hoopY, int size) {
+        return shipRig(h, plateX, hoopY, size, false);
+    }
+
+    /**
+     * {@link #shipRig(GameTestHelper, int, int, int)}; with {@code latch} (RL5) an oak railing railed on its west edge
+     * stands at x {@code plateX} instead of the chainplate, for the net item to latch.
+     */
+    static BlockPos shipRig(GameTestHelper h, int plateX, int hoopY, int size, boolean latch) {
         DryHullGameTests.basin(h, 0, size - 1, true);
         SailingGameTestsShips.openSky(h, size);
         BlockPos helm = DryHullGameTests.hull(h, 9, false);
@@ -735,11 +743,12 @@ public final class RatlineNetGameTests {
             h.setBlock(new BlockPos(13, y, 10), Blocks.OAK_LOG);
         }
         h.setBlock(new BlockPos(12, hoopY, 10), hoop(Direction.WEST));
-        h.setBlock(new BlockPos(plateX, 9, 10), chainplate(AttachFace.FLOOR, Direction.EAST));
+        h.setBlock(new BlockPos(plateX, 9, 10), latch ? RatlineSheetGameTests.railing(Direction.WEST)
+                : chainplate(AttachFace.FLOOR, Direction.EAST));
         return helm;
     }
 
-    private static BlockPos plot(Fixture f, BlockPos helmRel, BlockPos rel) {
+    static BlockPos plot(Fixture f, BlockPos helmRel, BlockPos rel) {
         return f.helmPlot().offset(rel.subtract(helmRel));
     }
 
@@ -799,7 +808,7 @@ public final class RatlineNetGameTests {
     }
 
     /** World heading [rad] of the ship's plot +x axis. */
-    private static double heading(ShipBody ship) {
+    static double heading(ShipBody ship) {
         Vec3 x = RatlineNetAssist.rotate(ship.orientation(), new Vec3(1, 0, 0));
         return Math.atan2(x.z, x.x);
     }
@@ -816,20 +825,42 @@ public final class RatlineNetGameTests {
      * must stay within 0.5 blocks of the line.
      */
     private static void underWayClimb(GameTestHelper h, Vec3 linear, double yawRate, boolean fromDeck, String what) {
+        underWayClimb(h, linear, yawRate, fromDeck, false, what);
+    }
+
+    /**
+     * {@link #underWayClimb(GameTestHelper, Vec3, double, boolean, String)}; with {@code latch} (RL5) the net's foot is a
+     * latch on a railing (its net end in the block over the rail) instead of a chainplate on the deck.
+     */
+    static void underWayClimb(GameTestHelper h, Vec3 linear, double yawRate, boolean fromDeck, boolean latch, String what) {
         int plateX = 10, hoopY = 13;
-        BlockPos helmRel = shipRig(h, plateX, hoopY, 40);
+        BlockPos helmRel = shipRig(h, plateX, hoopY, 40, latch);
         Fixture f = DryHullGameTests.assemble(h, helmRel);
         ServerLevel level = h.getLevel();
-        BlockPos plate = plot(f, helmRel, new BlockPos(plateX, 9, 10));
         BlockPos hoopPos = plot(f, helmRel, new BlockPos(12, hoopY, 10));
-        String r = string(level, plate, hoopPos, new ItemStack(RiggingContent.NET_ITEM.get()));
+        BlockPos plate;
+        String r;
+        if (latch) {
+            BlockPos rail = plot(f, helmRel, new BlockPos(plateX, 9, 10));
+            ItemStack stack = new ItemStack(RiggingContent.NET_ITEM.get());
+            String first = key(RatlineNetItem.useOnRailing(level, stack, rail, Direction.WEST, null));
+            r = first.equals(RatlineNetItem.KEY_MARKED) ? key(RatlineNetItem.use(level, stack, hoopPos, null)) : first;
+            plate = rail.above();
+        } else {
+            plate = plot(f, helmRel, new BlockPos(plateX, 9, 10));
+            r = string(level, plate, hoopPos, new ItemStack(RiggingContent.NET_ITEM.get()));
+        }
         h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), what + ": not strung in the plot: " + r);
         ShipBody ship = f.ship();
         Net net = RatlineNets.netOf(level, plate);
         h.assertTrue(net != null, what + ": no net");
         Point a = net.ringA(), b = net.ringB();
         Vec3 ringB = new Vec3(b.x(), b.y(), b.z());
-        Vec3 board = fromDeck ? new Vec3(plate.getX() - 0.5, plate.getY() + 0.02, plate.getZ() + 0.5)
+        // RL5: at a latch the climber stands on the deck in the railing's block, inboard of the rail, and jumps onto the
+        // net (fromDeck), or is put in the net end's cell inboard of the rail, clear of its collision
+        Vec3 board = latch ? (fromDeck ? new Vec3(plate.getX() + 0.6, plate.getY() - 1 + 0.02, plate.getZ() + 0.5)
+                : RatlineSheetGameTests.besideLatch(a))
+                : fromDeck ? new Vec3(plate.getX() - 0.5, plate.getY() + 0.02, plate.getZ() + 0.5)
                 : new Vec3(a.x(), a.y() + 0.1, a.z());
         int forTicks = 90;
         Player[] player = {null};
@@ -863,6 +894,7 @@ public final class RatlineNetGameTests {
                 return;
             }
             p.zza = 1f;
+            p.setJumping(latch && fromDeck);
             Vec3 feet = ship.toPlot(p.position());
             double toB = feet.distanceTo(ringB);
             double line = lineDistance(a, b, feet);

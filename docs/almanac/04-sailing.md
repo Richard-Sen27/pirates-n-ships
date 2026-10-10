@@ -116,16 +116,16 @@ A net needs something to rest on: break one and those hanging from it fall too.
 ## Ratline nets
 show_me: ratline_nets | Show me: stringing ratline nets
 {spotlight:ratline_net}
-A {item:pirates_n_ships:ratline_net}**ratline net** runs from a {item:pirates_n_ships:chainplate}**chainplate** on the rail to a {item:pirates_n_ships:mast_hoop}**mast hoop** up the mast. Use the net on one, then on the other; the line between them must be clear.
+A {item:pirates_n_ships:ratline_net}**ratline net** runs from the rail to a {item:pirates_n_ships:mast_hoop}**mast hoop** up the mast. Use the net on a railing's top rail (or a bulwark's cap), then on the hoop: an iron latch is set on the rail for it, at no cost. Gates and ports take none. On a bare deck use a {item:pirates_n_ships:chainplate}**chainplate**. The line between the ends must be clear.
 {recipe:ratline_net}
 
-Walk into the net and hold forward or jump to climb; sneak to hold on. String several chainplates to one hoop and the space between them is netted too.
+Walk into the net and hold forward or jump to climb; sneak to hold on. A latch or chainplate holds one net, a hoop up to five, so a net is never wider at the top. Nets from a row of latches join into one: into one hoop a triangle, into a row of hoops a rectangle or a narrowing net.
 
 ## Chainplate and hoop
 {recipe:chainplate}
 {recipe:mast_hoop}
 
-Break a net, its chainplate or put a block into it and that net comes down. Break the hoop and they all do.
+Break a net, its latch, chainplate or railing, or put a block into it, and that net comes down; the latch goes with it. Break the hoop and they all do.
 
 ## The ship's bell
 illustration: ships_bell

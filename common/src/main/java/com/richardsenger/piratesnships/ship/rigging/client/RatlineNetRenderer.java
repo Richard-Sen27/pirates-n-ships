@@ -21,17 +21,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Draws the ratline nets of a hub (RL2, RL4) from the hub's block entity (the hoop, which knows all its strands,
- * {@link RatlineNets#hubStrands}). A run of strands that join ({@link NetFittingBlockEntity#joinsNext}) is one fan
- * ({@link RatlineNetGeometry#fan}): every strand's rope from its chainplate to the hoop, the outer ones the sides, and a
- * rung every {@link #RUNG_SPACING} blocks from the first strand to the last through the ones between, narrowing towards
- * the hoop. A lone strand is drawn as RL2 drew it, from its ring A to B as one continuous rope net:
+ * {@link RatlineNets#hubStrands}). Strands in a pair ({@link NetFittingBlockEntity#joinsNext}, {@code joined}) are
+ * one sheet (RL4's fan, RL5's rectangle or trapezoid): every strand's rope from its foot to its hoop, the outer ones the
+ * sides, and from each pair's owner a rung every {@link #RUNG_SPACING} blocks across to its partner
+ * ({@link RatlineNetGeometry#pairRungs}), whose hoop may be another one (RL5), so the rungs run across the whole sheet. A lone strand is drawn as RL2 drew it, from its ring A to B as one continuous rope net:
  * two side ropes that leave A's ring, spread to {@link #HALF_WIDTH} either side of the line and close again at B's ring
  * ({@link RatlineNetGeometry}), and a rung across every {@link #RUNG_SPACING} blocks, all square rope beams with the
  * stay's {@code block/rope} texture tiled along their length (v runs in blocks, so the texture never stretches).
@@ -73,32 +73,31 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
         }
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(StayClothRenderer.ROPE_TEXTURE));
         PoseStack.Pose last = pose.last();
-        // the fan's strands in fan order; each run of strands joined to the next is drawn as one net
-        int i = 0;
-        while (i < strands.size()) {
-            int j = i;
-            while (j + 1 < strands.size() && be.joinsNext(strands.get(j).foot())) {
-                j++;
+        // a strand in no pair keeps RL2's look; a joined one is one rope, and each pair it owns gets the rungs across to
+        // its partner, whose hub may be another hoop of the sheet (RL5)
+        for (Strand s : strands) {
+            boolean owns = be.joinsNext(s.foot());
+            if (!owns && !be.joined(s.foot())) {
+                single(level, s.net(), p, vc, last, light, overlay);
+                continue;
             }
-            if (i == j) {
-                single(level, strands.get(i).net(), p, vc, last, light, overlay);
-            } else {
-                List<Point> feet = new ArrayList<>();
-                for (int k = i; k <= j; k++) {
-                    feet.add(local(strands.get(k).footRing(), p));
-                }
-                RatlineNetGeometry.Fan fan = RatlineNetGeometry.fan(local(strands.get(i).hubRing(), p), feet, RUNG_SPACING);
-                for (Point[] rope : fan.ropes()) {
-                    beam(vc, last, rope[0], rope[1], SIDE_HALF, light, overlay);
-                }
-                for (List<Point> rung : fan.rungs()) {
-                    for (int k = 0; k + 1 < rung.size(); k++) {
-                        beam(vc, last, rung.get(k), rung.get(k + 1), RUNG_HALF, light, overlay);
-                    }
-                }
+            Point foot = local(s.footRing(), p), hub = local(s.hubRing(), p);
+            beam(vc, last, foot, hub, SIDE_HALF, light, overlay);
+            Strand partner = owns ? partner(level, be.partnerOf(s.foot())) : null;
+            if (partner == null) {
+                continue;
             }
-            i = j + 1;
+            for (Point[] rung : RatlineNetGeometry.pairRungs(foot, hub, local(partner.footRing(), p),
+                    local(partner.hubRing(), p), RUNG_SPACING)) {
+                beam(vc, last, rung[0], rung[1], RUNG_HALF, light, overlay);
+            }
         }
+    }
+
+    /** The strand whose foot is {@code foot} (a chainplate or latch holds one), or null. */
+    private static @Nullable Strand partner(Level level, @Nullable BlockPos foot) {
+        Net n = foot == null ? null : RatlineNets.netOf(level, foot);
+        return n == null ? null : RatlineNets.strand(level, n);
     }
 
     /** A lone strand (RL2's look): two side ropes and rungs, the side taken from fitting A's facing for a vertical net. */
@@ -178,6 +177,14 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
         AABB box = new AABB(p);
         for (NetFittingBlockEntity.Link l : be.links()) {
             box = box.minmax(new AABB(l.other()));
+            if (l.partner() != null) {
+                // RL5: the rungs reach to the partner strand, up to its own hub
+                box = box.minmax(new AABB(l.partner()));
+                if (be.getLevel() != null && be.getLevel().getBlockEntity(l.partner()) instanceof NetFittingBlockEntity f
+                        && f.partner() != null) {
+                    box = box.minmax(new AABB(f.partner()));
+                }
+            }
         }
         return box.inflate(HALF_WIDTH + 0.1);
     }

@@ -1083,18 +1083,20 @@ Bulwark (RAIL4), and the gate check:
 
 Railing latch (RL5):
 - **Part list in `tools/gen_railing_models.py`** (the RAIL1 script, extended; written by the script, not yet looked at in
-  Blockbench or rendered). One more group in `models/railing.bbmodel` and parent model `models/block/railing_latch`
-  (6 elements): an iron eye bolt on the cap of the north edge, for the railing and the bulwark alike (both caps are at
-  y 16): a washer x 6.75..9.25, y 16..16.4, z 0.25..2.75, a shank, and a square ring standing across the rail, x
-  7.6..8.4, outer y 16.55..18.95, z 0.3..2.7, 0.6 px bars. The ring's centre (y 17.75, z 1.5) is the net's ring point
-  (`ship/rigging/RailingLatchBlock` `RING_INSET` 1.5 px, `RING_HEIGHT` 1.75 px over the cap).
+  Blockbench or rendered). One more group in `models/railing.bbmodel` and the model `models/block/railing_latch`
+  (6 elements): an iron eye bolt standing on the cap of the north edge, for the railing and the bulwark alike (both
+  caps end at y 16). It is the model of its own block (`ship/rigging/RailingLatchBlock`, id `railing_latch`, no item)
+  in the cell over the rail, so it is made in that block's frame, the cap's top at y 0: a washer x 6.75..9.25,
+  y 0..0.4, z 0.25..2.75, a shank, and a square ring standing across the rail, x 7.6..8.4, outer y 0.55..2.95,
+  z 0.3..2.7, 0.6 px bars. The ring's centre (y 1.75, z 1.5) is the net's ring point (`RailingLatchBlock` `RING_INSET`
+  1.5 px, `RING_HEIGHT` 1.75 px over the cap).
 - **Iron only:** the chainplate's palette (`#metal` = `pirates_n_ships:item/palette_2`, a fourth texture `palette_2`
   with id `metal` in the project, from the mod's textures) with the chainplate's UV patches (plate, bolt, ring), so the
-  model has no `#planks` or `#log` and every wood shares it without a child model. The railing's and the bulwark's
-  multipart state draws it per edge by the block's `latch` property, turned by y rotation without uvlock (fixed palette
-  UVs). Lint clean (no fights).
-- The net's end is not this model: it is the invisible block `railing_latch_end` in the block above the rail (a
-  particle-only model), which holds the net's link, so a railing itself never carries a block entity.
+  model has no `#planks` or `#log` and every wood shares it without a child model. Datagen writes only the latch's
+  block state, turned by its `facing` without uvlock (fixed palette UVs). Lint clean (no fights).
+- **Why its own block** and not a `latch` state of the railing (the RL5 brief): with WOOD1's 108 woods a five-valued
+  property on every railing and bulwark would add about 440,000 block states; the bolt lies entirely in the cell over
+  the cap anyway, and the latch block also holds the net's link, so a railing never carries a block entity.
 
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:

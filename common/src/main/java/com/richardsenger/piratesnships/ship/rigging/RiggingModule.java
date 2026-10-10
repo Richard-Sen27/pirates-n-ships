@@ -97,7 +97,6 @@ public final class RiggingModule implements ModModule {
                 .add(RatlineNetItem.KEY_LATCHES_OFF, "No latches here: use a chainplate")
                 .add(RatlineNetItem.KEY_NO_LATCH, "No latch on a gate or a port")
                 .add(RatlineNetItem.KEY_NO_RAIL, "No rail on that edge")
-                .add(RatlineNetItem.KEY_LATCH_TAKEN, "One latch per railing block")
                 .add(RatlineNetItem.KEY_NOT_IN_ROW, "Strung alone: ends not in one row"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
@@ -134,7 +133,7 @@ public final class RiggingModule implements ModModule {
                     .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get())
                     .add(RiggingContent.NET_CELL.get()).add(RiggingContent.RAILING_LATCH.get());
             // RL2: a net cell weighs nothing (the drawn net is a few ropes across a block of air); RL5: nor does a
-            // latch's net end (the railing carries the eye bolt's weight)
+            // railing latch (a small eye bolt)
             tags.tag(RiggingContent.SABLE_WEIGHTLESS).add(RiggingContent.NET_CELL.get()).add(RiggingContent.RAILING_LATCH.get());
             tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
         });
@@ -203,12 +202,15 @@ public final class RiggingModule implements ModModule {
                 TextureMapping.particle(ResourceLocation.fromNamespaceAndPath(com.richardsenger.piratesnships.Constants.MOD_ID, "block/rope")),
                 m.models());
         m.blockStates().accept(MultiVariantGenerator.multiVariant(cell, Variant.variant().with(VariantProperties.MODEL, cellModel)));
-        // RL5: the latch's net end is invisible too (the railing draws the eye bolt); its particle is the iron's
+        // RL5: the railing latch's hand-made eye bolt (tools/gen_railing_models.py, made on the north edge), turned by
+        // facing; fixed palette UVs, so no uvlock
         Block latch = RiggingContent.RAILING_LATCH.get();
-        ResourceLocation latchModel = ModelTemplates.PARTICLE_ONLY.create(latch,
-                TextureMapping.particle(ResourceLocation.fromNamespaceAndPath(com.richardsenger.piratesnships.Constants.MOD_ID, "item/palette_2")),
-                m.models());
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(latch, Variant.variant().with(VariantProperties.MODEL, latchModel)));
+        ResourceLocation latchModel = ModelLocationUtils.getModelLocation(latch);
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(latch, Variant.variant().with(VariantProperties.MODEL, latchModel))
+                .with(PropertyDispatch.property(BlockStateProperties.HORIZONTAL_FACING).generate(facing -> {
+                    VariantProperties.Rotation y = yRot(facing);
+                    return y == VariantProperties.Rotation.R0 ? Variant.variant() : Variant.variant().with(VariantProperties.Y_ROT, y);
+                })));
     }
 
     @Override

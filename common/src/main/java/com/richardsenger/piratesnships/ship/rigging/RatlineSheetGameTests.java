@@ -7,7 +7,6 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingContent;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingLatch;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
@@ -150,8 +149,10 @@ public final class RatlineSheetGameTests {
         return null;
     }
 
-    private static RailingLatch latchOf(ServerLevel level, BlockPos rail) {
-        return level.getBlockState(rail).getValue(RailingBlock.LATCH);
+    /** The edge of the railing at {@code rail} that carries a latch (the latch block over it), or null. */
+    private static @org.jetbrains.annotations.Nullable Direction latchOf(ServerLevel level, BlockPos rail) {
+        BlockState s = level.getBlockState(rail.above());
+        return s.is(RiggingContent.RAILING_LATCH.get()) ? s.getValue(RailingLatchBlock.FACING) : null;
     }
 
     // ------------------------------------------------------------------ the latch
@@ -169,13 +170,11 @@ public final class RatlineSheetGameTests {
         ItemStack stack = new ItemStack(RiggingContent.NET_ITEM.get(), 4);
         String first = key(RatlineNetItem.useOnRailing(level, stack, rail, Direction.WEST, null));
         h.assertTrue(first.equals(RatlineNetItem.KEY_MARKED), "the railing was not tied: " + first);
-        h.assertTrue(latchOf(level, rail) == RailingLatch.NONE && level.getBlockState(end).isAir(), "a latch was set before the net");
+        h.assertTrue(latchOf(level, rail) == null && level.getBlockState(end).isAir(), "a latch was set before the net");
         String second = key(RatlineNetItem.use(level, stack, hub, null));
         h.assertTrue(second.equals(RatlineNetItem.KEY_STRUNG), "not strung: " + second);
-        h.assertTrue(latchOf(level, rail) == RailingLatch.WEST, "the railing has no latch on its west edge");
-        h.assertTrue(level.getBlockState(end).is(RiggingContent.RAILING_LATCH.get())
-                && level.getBlockState(end).getValue(RailingLatchBlock.FACING) == Direction.WEST, "no net end over the rail");
-        h.assertTrue(level.getBlockState(end).is(BlockTags.CLIMBABLE), "the net end is not climbable");
+        h.assertTrue(latchOf(level, rail) == Direction.WEST, "no latch on the rail's west edge");
+        h.assertTrue(level.getBlockState(end).is(BlockTags.CLIMBABLE), "the latch's block is not climbable");
         Net net = RatlineNets.netOf(level, end);
         h.assertTrue(net != null && net.a().equals(end) && net.b().equals(hub), "the latch does not hold the net: " + net);
         Point ring = net.ringA();
@@ -190,12 +189,12 @@ public final class RatlineSheetGameTests {
         RatlineNetRules.Cell mid = net.cells().get(cells / 2);
         level.destroyBlock(new BlockPos(mid.x(), mid.y(), mid.z()), false);
         h.assertTrue(RatlineNets.standingCells(level, net).isEmpty(), "cells stayed");
-        h.assertTrue(latchOf(level, rail) == RailingLatch.NONE && level.getBlockState(end).isAir(), "the latch stayed after its net broke");
+        h.assertTrue(latchOf(level, rail) == null && level.getBlockState(end).isAir(), "the latch stayed after its net broke");
 
         // the hoop broken
         h.assertTrue(fromRail(level, rail, hub, stack).equals(RatlineNetItem.KEY_STRUNG), "not strung again");
         level.destroyBlock(hub, false);
-        h.assertTrue(latchOf(level, rail) == RailingLatch.NONE && level.getBlockState(end).isAir(), "the latch stayed after the hoop broke");
+        h.assertTrue(latchOf(level, rail) == null && level.getBlockState(end).isAir(), "the latch stayed after the hoop broke");
 
         // the railing broken
         level.setBlockAndUpdate(hub, RatlineNetGameTests.hoop(Direction.WEST));
@@ -290,7 +289,7 @@ public final class RatlineSheetGameTests {
         BlockPos rail = rail(h, 4), hub = hoopAt(h, 4);
         String r = key(RatlineNetItem.useOnRailing(level, new ItemStack(RiggingContent.NET_ITEM.get()), rail, Direction.WEST, null));
         h.assertTrue(r.equals(RatlineNetItem.KEY_LATCHES_OFF), "not refused while latches are off: " + r);
-        h.assertTrue(latchOf(level, rail) == RailingLatch.NONE && level.getBlockState(rail.above()).isAir(), "a latch was set");
+        h.assertTrue(latchOf(level, rail) == null && level.getBlockState(rail.above()).isAir(), "a latch was set");
         String plate = RatlineNetGameTests.string(level, h.absolutePos(new BlockPos(RAIL_X + 1, 1, 4)), hub,
                 new ItemStack(RiggingContent.NET_ITEM.get()));
         h.assertTrue(plate.equals(RatlineNetItem.KEY_STRUNG), "the chainplate's net was not strung: " + plate);
@@ -326,7 +325,7 @@ public final class RatlineSheetGameTests {
         Fixture f = DryHullGameTests.assemble(h, helmRel);
         BlockPos rail = RatlineNetGameTests.plot(f, helmRel, railRel), hoopPos = RatlineNetGameTests.plot(f, helmRel, hoopRel);
         BlockPos end = rail.above();
-        h.assertTrue(latchOf(level, rail) == RailingLatch.WEST, "the railing lost its latch in assembly");
+        h.assertTrue(latchOf(level, rail) == Direction.WEST, "the railing lost its latch in assembly");
         Net net = RatlineNets.netOf(level, end);
         h.assertTrue(net != null && net.b().equals(hoopPos), "the latched net did not survive assembly: " + net);
         h.assertTrue(RatlineNets.standingCells(level, net).size() == cells, "cells were lost in assembly");
@@ -437,7 +436,7 @@ public final class RatlineSheetGameTests {
         stringAll(h, new int[][] {{2, 2}, {4, 4}, {6, 6}});
         ServerLevel level = h.getLevel();
         level.destroyBlock(rail(h, 4).above(), false);
-        h.assertTrue(latchOf(level, rail(h, 4)) == RailingLatch.NONE, "the middle railing kept its latch");
+        h.assertTrue(latchOf(level, rail(h, 4)) == null, "the middle railing kept its latch");
         h.runAfterDelay(3, () -> {
             h.assertTrue(RatlineNetGameTests.droppedNets(h) == 1, "expected one dropped net, found " + RatlineNetGameTests.droppedNets(h));
             RatlineNets.Sheet sheet = RatlineNets.sheetAt(level, hoopAt(h, 2));
@@ -505,7 +504,7 @@ public final class RatlineSheetGameTests {
                 "the first railing was not tied");
         String r = key(RatlineNetItem.useOnRailing(level, stack, rail(h, 6), Direction.WEST, null));
         h.assertTrue(r.equals(RatlineNetItem.KEY_BOARDING_STRUNG), "no boarding net: " + r);
-        h.assertTrue(latchOf(level, rail(h, 2)) == RailingLatch.WEST && latchOf(level, rail(h, 6)) == RailingLatch.WEST, "a latch is missing");
+        h.assertTrue(latchOf(level, rail(h, 2)) == Direction.WEST && latchOf(level, rail(h, 6)) == Direction.WEST, "a latch is missing");
         for (int z = 3; z <= 5; z++) {
             BlockState c = level.getBlockState(rail(h, z).above());
             h.assertTrue(c.is(RiggingContent.NET_CELL.get()) && c.getValue(RatlineNetCellBlock.BOARDING)
@@ -517,8 +516,8 @@ public final class RatlineSheetGameTests {
         RatlineNetItem.useOnRailing(level, second, h.absolutePos(new BlockPos(RAIL_X, 1, 8)), Direction.NORTH, null);
         String along = key(RatlineNetItem.useOnRailing(level, second, rail(h, 7), Direction.WEST, null));
         h.assertTrue(along.equals(RatlineNetItem.KEY_NOT_ALONG), "latches on two edges took a boarding net: " + along);
-        h.assertTrue(latchOf(level, h.absolutePos(new BlockPos(RAIL_X, 1, 8))) == RailingLatch.NONE
-                && latchOf(level, rail(h, 7)) == RailingLatch.NONE, "a refused net left a latch");
+        h.assertTrue(latchOf(level, h.absolutePos(new BlockPos(RAIL_X, 1, 8))) == null
+                && latchOf(level, rail(h, 7)) == null, "a refused net left a latch");
         h.succeed();
     }
 }

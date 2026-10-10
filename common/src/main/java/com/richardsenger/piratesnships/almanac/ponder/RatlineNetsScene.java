@@ -4,8 +4,6 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
 
 import com.richardsenger.piratesnships.almanac.ponder.ShipSceneText.Nets;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingLatch;
 import com.richardsenger.piratesnships.ship.rigging.NetFitting;
 import com.richardsenger.piratesnships.ship.rigging.RailingLatchBlock;
 import com.richardsenger.piratesnships.ship.rigging.NetFittingBlockEntity;
@@ -29,13 +27,13 @@ import net.minecraft.world.phys.Vec3;
 /**
  * "Ratline nets" (PND4, docs/almanac.md "Scenes"; ship/rigging RL2, RL3, RL4 and RL5, design.md §4.8), on the schematic
  * {@code assets/pirates_n_ships/ponder/ratline_nets.nbt} ({@code art/structures/ponder/ratline_nets.py}: a deck, bow
- * north, a railing along the port edge at x 0, y 1, with the invisible net ends of three latches over it at z 2, 4 and
- * 6 ({@code railing_latch_end}, RL5), the mast at x 4, z 4 up to y 6 with a mast hoop on its west face at [3, 6, 4] and the
+ * north, a railing along the port edge at x 0, y 1, with three railing latches (RL5: iron eye bolts on its cap, each its
+ * own block over the rail) at z 2, 4 and 6, the mast at x 4, z 4 up to y 6 with a mast hoop on its west face at [3, 6, 4] and the
  * crow's nest on top at [4, 7, 4]).
  *
- * <p>A net is strung the way {@code RatlineNetItem} strings it: the railing gets its latch (the eye bolt, its
- * {@code latch} state), both fittings' block entities learn the link ({@link NetFittingBlockEntity#setNet}, the latch's
- * net end as end A), and the hoop, the fan's hub, keeps its strands in the
+ * <p>A net is strung the way {@code RatlineNetItem} strings it: the latch appears on the rail (its section is shown when
+ * the net is used), both fittings' block entities learn the link ({@link NetFittingBlockEntity#setNet}, the latch as
+ * end A), and the hoop, the fan's hub, keeps its strands in the
  * bearing order of {@link RatlineNetRules#fanOrder} with RL5's row rule ({@link RatlineNetRules#joins}) between neighbours
  * ({@link NetFittingBlockEntity#setFan}), so the game's {@code RatlineNetRenderer} draws the nets and the fan. The
  * climbable cells are invisible and left out. The climber is a crew member moved along the line (in the game a player
@@ -45,7 +43,7 @@ final class RatlineNetsScene {
 
     static final BlockPos HOOP = new BlockPos(3, 6, 4);
     static final BlockPos NEST = new BlockPos(4, 7, 4);
-    /** The latches' net ends over the rail: the first net's, then the two that fan into the same hoop. */
+    /** The latches over the rail: the first net's, then the two that fan into the same hoop. */
     static final BlockPos PLATE = new BlockPos(0, 2, 4);
     static final List<BlockPos> FAN = List.of(new BlockPos(0, 2, 2), PLATE, new BlockPos(0, 2, 6));
     /** The rail's latched edge (port, west). */
@@ -58,15 +56,9 @@ final class RatlineNetsScene {
     private RatlineNetsScene() {
     }
 
-    /** A latch's ring ({@link RailingLatchBlock#ring}: the eye bolt on the rail's west edge under the net end {@code end}). */
-    static Point plateRing(BlockPos end) {
-        return RailingLatchBlock.ring(end, EDGE);
-    }
-
-    /** The railing under the net end {@code end} gets its latch (the eye bolt appears on its cap). */
-    private static void latch(SceneBuilder scene, BlockPos end) {
-        scene.world().modifyBlock(end.below(), s -> s.hasProperty(RailingBlock.LATCH)
-                ? s.setValue(RailingBlock.LATCH, RailingLatch.of(EDGE)) : s, false);
+    /** A latch's ring ({@link RailingLatchBlock#ring}: the eye bolt on the rail's west edge, the latch at {@code latch}). */
+    static Point plateRing(BlockPos latch) {
+        return RailingLatchBlock.ring(latch, EDGE);
     }
 
     /** The hoop's ring ({@code MastHoopBlock#ring}, facing west: {@link NetFitting#RING_FROM_SUPPORT} off the mast's face). */
@@ -115,7 +107,6 @@ final class RatlineNetsScene {
         // the fittings
         Vec3 a = vec(plateRing(PLATE));
         Vec3 b = vec(hoopRing());
-        scene.world().showSection(util.select().position(PLATE), Direction.DOWN);
         scene.world().showSection(util.select().position(HOOP), Direction.EAST);
         scene.idle(10);
         say(scene.overlay().showText(65), Nets.FITTINGS)
@@ -130,7 +121,7 @@ final class RatlineNetsScene {
         scene.idle(25);
         scene.overlay().showControls(b, Pointing.LEFT, 20).rightClick().withItem(SceneKit.item("ratline_net"));
         scene.idle(15);
-        latch(scene, PLATE);
+        scene.world().showSection(util.select().position(PLATE), Direction.DOWN);
         scene.world().modifyBlockEntity(PLATE, NetFittingBlockEntity.class, be -> be.setNet(HOOP, true));
         scene.world().modifyBlockEntity(HOOP, NetFittingBlockEntity.class, be -> be.setNet(PLATE, false));
         scene.idle(5);
@@ -184,13 +175,10 @@ final class RatlineNetsScene {
 
         // two more chainplates fanning into the same hoop
         for (BlockPos p : List.of(FAN.get(0), FAN.get(2))) {
-            scene.world().showSection(util.select().position(p), Direction.DOWN);
-        }
-        for (BlockPos p : List.of(FAN.get(0), FAN.get(2))) {
             scene.overlay().showControls(vec(plateRing(p)).add(0, 0.2, 0), Pointing.DOWN, 15).rightClick()
                     .withItem(SceneKit.item("ratline_net"));
             scene.idle(18);
-            latch(scene, p);
+            scene.world().showSection(util.select().position(p), Direction.DOWN);
             scene.world().modifyBlockEntity(p, NetFittingBlockEntity.class, be -> be.setNet(HOOP, true));
         }
         string(scene, FAN);
@@ -214,8 +202,6 @@ final class RatlineNetsScene {
         scene.overlay().showControls(last.add(0, 0.2, 0), Pointing.DOWN, 15).leftClick();
         scene.idle(15);
         scene.world().setBlock(gone, Blocks.AIR.defaultBlockState(), true);
-        scene.world().modifyBlock(gone.below(), s -> s.hasProperty(RailingBlock.LATCH)
-                ? s.setValue(RailingBlock.LATCH, RailingLatch.NONE) : s, false);
         scene.world().modifyBlockEntity(HOOP, NetFittingBlockEntity.class, be -> be.clearNet(gone));
         string(scene, List.of(FAN.get(0), FAN.get(1)));
         scene.world().createItemEntity(last.add(0, 0.3, 0), util.vector().of(0, 0.15, 0), SceneKit.item("ratline_net"));

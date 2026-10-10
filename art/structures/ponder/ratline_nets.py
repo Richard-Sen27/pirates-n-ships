@@ -36,7 +36,7 @@ p.fill(0, 0, 0, W - 1, 0, D - 1, "minecraft:spruce_planks")
 for z in range(RAIL_Z[0], RAIL_Z[1] + 1):
     p.put(RAIL_X, 1, z, railing(z))
 for plate in PLATES:
-    p.put(*plate, f"{MOD}:railing_latch_end[facing=west,waterlogged=false]")
+    p.put(*plate, f"{MOD}:railing_latch[facing=west,waterlogged=false]")
 for y in range(1, MAST_TOP + 1):
     p.put(MAST_X, y, MAST_Z, "minecraft:oak_log[axis=y]")
 p.put(*HOOP, f"{MOD}:mast_hoop[facing=west,waterlogged=false]")

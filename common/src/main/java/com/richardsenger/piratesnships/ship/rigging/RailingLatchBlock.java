@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.DecorShapes;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingLatch;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,7 +17,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -32,19 +30,20 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.Map;
 
 /**
- * The net end of a railing latch (RL5, docs/design.md §4.8 "Net sheets and railing latches"): an invisible, climbable
- * fitting in the block over a railing or bulwark whose {@link RailingBlock#LATCH} is set on edge {@link #FACING}. The
- * railing draws the iron eye bolt on its cap ({@code block/railing_latch}); this block holds the net's link
- * ({@link NetFittingBlockEntity}, like a chainplate: one strand) and its ring is the eye bolt's: the edge's centre,
- * {@link #RING_INSET} in from the block's outer face, {@link #RING_HEIGHT} over the cap. A railing therefore never
- * carries a block entity of its own (worldgen structures with railings stay plain), and the cell a climber reaches from
- * the rail is part of the net.
+ * The railing latch (RL5, docs/design.md §4.8 "Net sheets and railing latches"): an iron eye bolt standing on the cap of
+ * a railing's or bulwark's edge {@link #FACING}, the bottom end of a ratline net. It is its own block in the cell over
+ * the rail (the bolt sits on top of the cap, y 16 of the railing, so all of it lies in that cell): hand-made model
+ * {@code block/railing_latch} from the railing part list ({@code tools/gen_railing_models.py}, iron only, so one model
+ * for every wood), turned by {@link #FACING}. It holds the net's link ({@link NetFittingBlockEntity}, like a chainplate:
+ * one strand) and its ring is the bolt's: the edge's centre, {@link #RING_INSET} in from the block's outer face,
+ * {@link #RING_HEIGHT} over the cap. The railings themselves stay unchanged (no block state, no block entity: a hundred
+ * woods of railings and bulwarks would otherwise multiply their states by five), and the cell a climber reaches from
+ * the rail is the net's own (climbable).
  *
- * <p>Set by the net item ({@link RailingLatches#place}); it lasts only with its railing (it drops to nothing when the
- * railing below goes or loses that edge) and only with its strand ({@link RatlineNets#removeStrands} takes it away when
- * its net goes); breaking it breaks the net like breaking a chainplate, and drops nothing itself: the latch costs
- * nothing beyond the net item. Removing it clears the railing's latch ({@link #onRemove}, and the railing's own shape
- * update). Waterloggable, no item, no collision, a small outline round the eye bolt.
+ * <p>Set by the net item ({@link RailingLatches#place}) when the net is strung; it lasts only with its railing (it drops
+ * to nothing when the railing below goes) and only with its strand ({@link RatlineNets#removeStrands} takes it away when
+ * its net goes): no orphan latches. Breaking it breaks the net like breaking a chainplate, and drops nothing itself: the
+ * latch costs nothing beyond the net item. Waterloggable, no item, no collision, a small outline round the bolt.
  */
 public class RailingLatchBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, EntityBlock, NetFitting {
 
@@ -57,7 +56,7 @@ public class RailingLatchBlock extends HorizontalDirectionalBlock implements Sim
     public static final double RING_HEIGHT = 1.75 / 16.0;
 
     /** Facing north (the latch on the railing's north edge), px: round the eye bolt standing on the cap. */
-    private static final Map<Direction, VoxelShape> SHAPES = DecorShapes.horizontal(new double[] {6, 0, 0, 10, 4, 4});
+    private static final Map<Direction, VoxelShape> SHAPES = DecorShapes.horizontal(new double[] {6, 0, 0, 10, 3.5, 3.5});
 
     public RailingLatchBlock(Properties properties) {
         super(properties);
@@ -103,11 +102,6 @@ public class RailingLatchBlock extends HorizontalDirectionalBlock implements Sim
     }
 
     @Override
-    protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
-    }
-
-    @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPES.get(state.getValue(FACING));
     }
@@ -133,18 +127,11 @@ public class RailingLatchBlock extends HorizontalDirectionalBlock implements Sim
         RatlineNets.resync(level, pos);
     }
 
-    /** Its net breaks (as a chainplate's), and the railing below loses the latch (not when Sable moves the blocks). */
+    /** Its net breaks, as a chainplate's does. */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         RatlineNets.onFittingRemoved(level, pos, state, movedByPiston, newState);
         super.onRemove(state, level, pos, newState, movedByPiston);
-        if (!movedByPiston && !newState.is(this) && !level.isClientSide) {
-            BlockPos below = pos.below();
-            BlockState rail = level.getBlockState(below);
-            if (RailingBlock.latch(rail) == state.getValue(FACING)) {
-                level.setBlock(below, rail.setValue(RailingBlock.LATCH, RailingLatch.NONE), Block.UPDATE_ALL);
-            }
-        }
     }
 
     @Override

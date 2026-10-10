@@ -4,7 +4,6 @@ import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.railing.BulwarkPortBlock;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingGateBlock;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingLatch;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingPortBlock;
 import com.richardsenger.piratesnships.ship.decor.railing.RailingRules;
 import net.minecraft.core.BlockPos;
@@ -18,9 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Railing latches (RL5, docs/design.md §4.8 "Net sheets and railing latches"): the ratline net item used on a railing's
- * or bulwark's top rail ties the net to an iron latch set on that edge ({@link RailingBlock#LATCH}, drawn on the cap)
- * whose net end is a {@link RailingLatchBlock} in the block above. Here: which railing-family blocks take one
- * ({@link #refusal}), which edge a click means ({@link #edgeAt}), and setting and taking away a latch.
+ * or bulwark's top rail ties the net to an iron latch set on that edge's cap, a {@link RailingLatchBlock} in the block
+ * above the rail. Here: which railing-family blocks take one ({@link #refusal}), which edge a click means
+ * ({@link #edgeAt}), and setting and taking away a latch.
  */
 public final class RailingLatches {
 
@@ -71,7 +70,7 @@ public final class RailingLatches {
         if (!(s.getBlock() instanceof RailingBlock)) {
             return Refusal.GATE_OR_PORT;
         }
-        if (RailingBlock.latch(s) != null) {
+        if (level.getBlockState(pos.above()).getBlock() instanceof RailingLatchBlock) {
             return Refusal.TAKEN;
         }
         if (edge == null || !edge.getAxis().isHorizontal() || !s.getValue(RailingBlock.edge(edge))) {
@@ -81,22 +80,18 @@ public final class RailingLatches {
     }
 
     /**
-     * Server: sets the latch on {@code edge} of the railing at {@code rail} (checked by {@link #refusal}): the net end
-     * above it, then the railing's eye bolt. Returns the net end's position (the fitting).
+     * Server: sets the latch on {@code edge} of the railing at {@code rail} (checked by {@link #refusal}) in the block
+     * above it. Returns the latch's position (the fitting).
      */
     public static BlockPos place(ServerLevel level, BlockPos rail, Direction edge) {
         BlockPos at = rail.above().immutable();
         BlockState end = Waterlogging.at(RiggingContent.RAILING_LATCH.get().defaultBlockState()
                 .setValue(RailingLatchBlock.FACING, edge), level, at);
         level.setBlock(at, end, Block.UPDATE_ALL);
-        BlockState r = level.getBlockState(rail);
-        if (r.getBlock() instanceof RailingBlock) {
-            level.setBlock(rail, r.setValue(RailingBlock.LATCH, RailingLatch.of(edge)), Block.UPDATE_ALL);
-        }
         return at;
     }
 
-    /** Server: takes the latch whose net end is at {@code end} away again (a refused net); the railing loses its eye bolt. */
+    /** Server: takes the latch at {@code end} away again (a refused net). */
     public static void remove(ServerLevel level, BlockPos end) {
         BlockState s = level.getBlockState(end);
         if (s.getBlock() instanceof RailingLatchBlock) {

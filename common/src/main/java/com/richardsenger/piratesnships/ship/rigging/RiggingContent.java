@@ -21,7 +21,7 @@ import net.minecraft.world.level.material.PushReaction;
  * Registry entries of the {@code ship.rigging} module: RL1's ratlines block and item and their anchor tag; RL2's
  * ratline nets (the chainplate and the mast hoop with their block entity, the invisible net cell with its block entity,
  * the net item and the component that remembers its first end); RL5's railing latch (the invisible net end over a latched
- * railing).
+ * railing's cap).
  */
 public final class RiggingContent {
 
@@ -61,8 +61,8 @@ public final class RiggingContent {
                     .isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
     public static final RegistryEntry<Item, RatlineNetItem> NET_ITEM = ModRegistry.item("ratline_net",
             () -> new RatlineNetItem(new Item.Properties().stacksTo(16)));
-    /** RL5: the net end of a railing latch, invisible in the block over the railing (no item, no loot). */
-    public static final RegistryEntry<Block, RailingLatchBlock> RAILING_LATCH = ModRegistry.block("railing_latch_end",
+    /** RL5: the railing latch, an eye bolt on a railing's cap in the block over it (no item, no loot). */
+    public static final RegistryEntry<Block, RailingLatchBlock> RAILING_LATCH = ModRegistry.block("railing_latch",
             () -> new RailingLatchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(0.5f)
                     .sound(SoundType.CHAIN).noCollission().noOcclusion().noLootTable().pushReaction(PushReaction.DESTROY)
                     .isValidSpawn((state, level, pos, type) -> false).isRedstoneConductor((s, l, p) -> false)

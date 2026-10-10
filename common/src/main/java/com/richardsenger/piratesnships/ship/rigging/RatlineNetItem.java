@@ -3,7 +3,6 @@ package com.richardsenger.piratesnships.ship.rigging;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.core.text.Num;
-import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Check;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -59,7 +58,6 @@ public class RatlineNetItem extends Item {
     public static final String KEY_LATCHES_OFF = P + "latches_off";
     public static final String KEY_NO_LATCH = P + "no_latch";
     public static final String KEY_NO_RAIL = P + "no_rail";
-    public static final String KEY_LATCH_TAKEN = P + "latch_taken";
     public static final String KEY_NOT_IN_ROW = P + "not_in_row";
     public static final String KEY_TOOLTIP = "item." + Constants.MOD_ID + ".ratline_net.tooltip";
 
@@ -124,7 +122,8 @@ public class RatlineNetItem extends Item {
         if (!RiggingConfig.NETS_ENABLED.get()) {
             return Component.translatable(KEY_DISABLED);
         }
-        if (RailingBlock.latch(level.getBlockState(rail)) != null && isFitting(level, rail.above())) {
+        if (level.getBlockState(rail.above()).getBlock() instanceof RailingLatchBlock) {
+            // the railing has its latch already (one per block): it is that latch's net end
             return use(level, stack, rail.above(), player);
         }
         switch (RailingLatches.refusal(level, rail, edge)) {
@@ -138,7 +137,7 @@ public class RatlineNetItem extends Item {
                 return Component.translatable(KEY_NO_RAIL);
             }
             case TAKEN -> {
-                return Component.translatable(KEY_LATCH_TAKEN);
+                return Component.translatable(KEY_BUSY);
             }
             case BLOCKED -> {
                 BlockPos at = RatlineNets.worldPos(level, rail.above());

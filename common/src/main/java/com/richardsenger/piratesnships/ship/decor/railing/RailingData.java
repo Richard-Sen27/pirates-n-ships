@@ -55,9 +55,6 @@ import java.util.List;
  * {@code _lid_open} by {@code open}); the bulwark in the railing's tags and {@code barrel_blocking}, the gun port in the
  * port's. Recipes: bulwark {@code SPS / PPP} gives 4 (vanilla's trapdoor is {@code PPP / PPP}); gun port, a bulwark and an
  * iron nugget, shapeless.
- *
- * <p>RL5: the railing's and the bulwark's multipart also draw {@code block/railing_latch} (an iron eye bolt on the cap,
- * from the part list) turned to the edge named by {@link RailingBlock#LATCH}.
  */
 public final class RailingData {
 
@@ -80,8 +77,6 @@ public final class RailingData {
     static final ResourceLocation BULWARK_PORT_LID = Constants.id("block/bulwark_port_lid");
     static final ResourceLocation BULWARK_PORT_LID_OPEN = Constants.id("block/bulwark_port_lid_open");
     static final ResourceLocation BULWARK_PORT_ITEM = Constants.id("block/bulwark_port_item");
-    /** RL5: the iron eye bolt of a net's latch on the cap of the north edge (iron only, so one model for every wood). */
-    static final ResourceLocation LATCH = Constants.id("block/railing_latch");
 
     private RailingData() {
     }
@@ -218,23 +213,7 @@ public final class RailingData {
         for (Direction corner : Direction.Plane.HORIZONTAL) {
             gen.with(Condition.condition().term(RailingBlock.post(corner), true), turned(post, corner));
         }
-        // RL5: a net's latch on one edge's cap; iron with fixed palette UVs, so turned without uvlock
-        for (Direction d : Direction.Plane.HORIZONTAL) {
-            Variant v = Variant.variant().with(VariantProperties.MODEL, LATCH);
-            VariantProperties.Rotation r = yRot(d);
-            gen.with(Condition.condition().term(RailingBlock.LATCH, RailingLatch.of(d)),
-                    r == VariantProperties.Rotation.R0 ? v : v.with(VariantProperties.Y_ROT, r));
-        }
         return gen;
-    }
-
-    private static VariantProperties.Rotation yRot(Direction d) {
-        return switch (d) {
-            case EAST -> VariantProperties.Rotation.R90;
-            case SOUTH -> VariantProperties.Rotation.R180;
-            case WEST -> VariantProperties.Rotation.R270;
-            default -> VariantProperties.Rotation.R0;
-        };
     }
 
     /** {@code model} (north frame) turned to {@code d} by the block state, textures kept on the world grid. */

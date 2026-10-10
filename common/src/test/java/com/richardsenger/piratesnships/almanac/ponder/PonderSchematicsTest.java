@@ -274,7 +274,7 @@ class PonderSchematicsTest {
         CompoundTag nets = schematic(ShipSceneText.RATLINE_NETS);
         for (BlockPos plate : RatlineNetsScene.FAN) {
             // RL5: the latch's net end over the rail (the scene sets the railing's latch when it strings the net)
-            assertEquals(MOD + ":railing_latch_end[facing=west,waterlogged=false]", stateAt(nets, plate));
+            assertEquals(MOD + ":railing_latch[facing=west,waterlogged=false]", stateAt(nets, plate));
             assertTrue(stateAt(nets, plate.below()).startsWith(MOD + ":oak_railing["), "the rail under " + plate);
             assertTrue(stateAt(nets, plate.below()).contains("west=true"), "the rail under " + plate + " is railed on the latch's edge");
         }

@@ -160,7 +160,6 @@ message.pirates_n_ships.ratline_net.boarding_strung
 message.pirates_n_ships.ratline_net.busy
 message.pirates_n_ships.ratline_net.disabled
 message.pirates_n_ships.ratline_net.full
-message.pirates_n_ships.ratline_net.latch_taken
 message.pirates_n_ships.ratline_net.latches_off
 message.pirates_n_ships.ratline_net.marked
 message.pirates_n_ships.ratline_net.no_latch

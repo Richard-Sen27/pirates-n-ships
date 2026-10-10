@@ -3887,7 +3887,7 @@
   "pirates_n_ships.almanac.welcome.p2.list1_3": "{#2e6a24}Green ink{/} is a tip, {#9a1c14}red ink{/} a warning, {#2a4580}blue ink{/} a link to another chapter.",
   "pirates_n_ships.almanac.welcome.p3.heading": "Show me",
   "pirates_n_ships.almanac.welcome.p3.text1": "Some pages carry a **Show me** button: the Almanac acts the thing out on a little model ship.",
-  "pirates_n_ships.almanac.welcome.p3.text2": "Or hover an item, such as the cannon, and hold the Ponder key.",
+  "pirates_n_ships.almanac.welcome.p3.text2": "Or hover any block or item a scene shows, such as the cannon or a railing of any wood, and hold the Ponder key.",
   "pirates_n_ships.almanac.welcome.p4.heading": "Where to start",
   "pirates_n_ships.almanac.welcome.p4.text1": "Start with [[pirates_n_ships:first_ship|Your first ship]]: from planks to sail in a few pages.",
   "pirates_n_ships.almanac.welcome.p4.text2": "At the back, [[pirates_n_ships:inventory|The ship's inventory]] lists every block and item, [[pirates_n_ships:ledger|The Quartermaster's ledger]] serves a server's keeper, and [[pirates_n_ships:not_yet|Not yet charted]] owns up to what is still missing.",

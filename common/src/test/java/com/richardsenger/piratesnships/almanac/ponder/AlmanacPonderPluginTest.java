@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,21 +33,27 @@ class AlmanacPonderPluginTest {
 
     private static final String MOD = "pirates_n_ships";
 
-    @Test
-    void registersEveryScenesStoryboardForItsItem() {
-        PonderLocalization localization = new PonderLocalization();
-        PonderSceneRegistry registry = new PonderSceneRegistry(localization);
+    /** Registers like the client, with every subject an item and no wood families (no mod registry in JUnit). */
+    private static PonderSceneRegistry register(Function<ResourceLocation, List<ResourceLocation>> subjects) {
+        PonderSceneRegistry registry = new PonderSceneRegistry(new PonderLocalization());
         AlmanacPonderPlugin plugin = new AlmanacPonderPlugin();
         assertEquals(MOD, plugin.getModId());
-        plugin.registerScenes(new DefaultPonderSceneRegistrationHelper(plugin.getModId(), registry));
+        plugin.registerScenes(new DefaultPonderSceneRegistrationHelper(plugin.getModId(), registry), subjects);
+        return registry;
+    }
+
+    @Test
+    void registersEveryScenesStoryboardForItsItem() {
+        PonderSceneRegistry registry = register(List::of);
 
         List<StoryBoardEntry> entries = registry.getRegisteredEntries().stream().map(Map.Entry::getValue).toList();
-        assertEquals(AlmanacScenes.ALL.size(), entries.size());
+        assertEquals(AlmanacScenes.ALL.stream().mapToInt(s -> s.subjects().size()).sum(), entries.size(),
+                "one entry per scene and subject");
         for (AlmanacScenes.Scene scene : AlmanacScenes.ALL) {
             assertTrue(registry.doScenesExistForId(scene.component()), "no scenes for " + scene.component());
             StoryBoardEntry entry = entries.stream().filter(e -> e.getSchematicLocation().equals(scene.schematic()))
                     .findFirst().orElseThrow(() -> new AssertionError("no storyboard with schematic " + scene.schematic()));
-            assertEquals(scene.component(), entry.getComponent());
+            assertEquals(scene.component(), entry.getComponent(), "the component's entry comes first");
             assertEquals(MOD, entry.getNamespace());
             assertNotNull(AlmanacPonderPlugin.STORYBOARDS.get(scene.id()));
         }
@@ -58,8 +65,54 @@ class AlmanacPonderPluginTest {
             assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:" + item)),
                     "the Ponder key of " + item + " plays its scene");
         }
-        assertEquals(2, registry.getRegisteredEntries().stream()
-                .filter(e -> e.getKey().equals(AlmanacScenes.HELM_ITEM)).count(), "the helm has assembly and steering");
+        // PND5: the helm's own scenes first, then the ones that show it
+        assertEquals(List.of(AlmanacScenes.SHIP_ASSEMBLY, AlmanacScenes.STEERING, AlmanacScenes.CREW_ORDERS,
+                        AlmanacScenes.OARS, AlmanacScenes.SHIP_IDENTITY),
+                schematicsOf(registry, AlmanacScenes.HELM_ITEM), "the helm's scenes in order");
+    }
+
+    /** PND5: every item a scene shows gets the scene (the inventory hint), each item's own scenes first. */
+    @Test
+    void everySubjectGetsTheScene() {
+        PonderSceneRegistry registry = register(List::of);
+        for (AlmanacScenes.Scene scene : AlmanacScenes.ALL) {
+            for (ResourceLocation subject : scene.subjects()) {
+                assertTrue(schematicsOf(registry, subject).contains(scene.schematic()), subject + " plays " + scene.id());
+            }
+        }
+        for (String item : List.of("cargo_barrel", "cannonball", "water_barrel", "oak_railing_port", "oak_bulwark",
+                "oak_rope_railing", "flag_pedestal", "navy_flag", "chainplate", "mast_hoop", "harbor_desk", "sea_cot")) {
+            assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:" + item)), item + " has a scene");
+        }
+        assertEquals(List.of(AlmanacScenes.CREW_ORDERS), schematicsOf(registry, AlmanacScenes.CAPTAINS_WHISTLE_ITEM)
+                .subList(0, 1), "the whistle's own scene first");
+        assertEquals(List.of(AlmanacScenes.RAILINGS, AlmanacScenes.ON_DECK, AlmanacScenes.OARS,
+                AlmanacScenes.RATLINE_NETS), schematicsOf(registry, AlmanacScenes.OAK_RAILING_ITEM));
+    }
+
+    /** PND5: a subject stands for its whole wood family; an id the resolver drops (no item) gets no entry. */
+    @Test
+    void woodFamiliesExpandAndItemlessSubjectsAreDropped() {
+        ResourceLocation spruceRailing = ResourceLocation.parse("pirates_n_ships:spruce_railing");
+        ResourceLocation spruceHelm = ResourceLocation.parse("pirates_n_ships:spruce_helm");
+        ResourceLocation latch = ResourceLocation.parse("pirates_n_ships:railing_latch");
+        PonderSceneRegistry registry = register(id -> {
+            if (id.equals(AlmanacScenes.OAK_RAILING_ITEM)) return List.of(id, spruceRailing);
+            if (id.equals(AlmanacScenes.HELM_ITEM)) return List.of(id, spruceHelm);
+            if (id.equals(latch)) return List.of();
+            return List.of(id);
+        });
+        assertEquals(schematicsOf(registry, AlmanacScenes.OAK_RAILING_ITEM), schematicsOf(registry, spruceRailing));
+        assertEquals(schematicsOf(registry, AlmanacScenes.HELM_ITEM), schematicsOf(registry, spruceHelm));
+        assertTrue(!registry.doScenesExistForId(latch), "a block without an item gets no entry");
+        long distinct = registry.getRegisteredEntries().stream()
+                .map(e -> e.getKey() + " " + e.getValue().getSchematicLocation()).distinct().count();
+        assertEquals(registry.getRegisteredEntries().size(), distinct, "no item has a scene twice");
+    }
+
+    private static List<ResourceLocation> schematicsOf(PonderSceneRegistry registry, ResourceLocation item) {
+        return registry.getRegisteredEntries().stream().filter(e -> e.getKey().equals(item))
+                .map(e -> e.getValue().getSchematicLocation()).toList();
     }
 
     @Test

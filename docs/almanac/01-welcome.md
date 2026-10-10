@@ -23,7 +23,7 @@ Lost yours? Bind a new {item:pirates_n_ships:captains_almanac}**Captain's Almana
 ## Show me
 Some pages carry a **Show me** button: the Almanac acts the thing out on a little model ship.
 
-> Or hover an item, such as the cannon, and hold the Ponder key.
+> Or hover any block or item a scene shows, such as the cannon or a railing of any wood, and hold the Ponder key.
 
 ## Where to start
 Start with [[pirates_n_ships:first_ship|Your first ship]]: from planks to sail in a few pages.

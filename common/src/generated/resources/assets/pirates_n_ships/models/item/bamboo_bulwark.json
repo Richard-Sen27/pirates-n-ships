@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bulwark_item",
+  "textures": {
+    "log": "minecraft:block/stripped_bamboo_block",
+    "log_top": "minecraft:block/stripped_bamboo_block_top",
+    "particle": "minecraft:block/bamboo_planks",
+    "planks": "minecraft:block/bamboo_planks"
+  }
+}

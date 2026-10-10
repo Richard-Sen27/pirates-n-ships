@@ -1,0 +1,46 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "undergarden"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "undergarden:wigglewood_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "undergarden"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "undergarden:wigglewood_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:railing",
+  "key": {
+    "P": {
+      "item": "undergarden:wigglewood_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "SSS",
+    "PPP"
+  ],
+  "result": {
+    "count": 4,
+    "id": "pirates_n_ships:undergarden_wigglewood_railing"
+  }
+}

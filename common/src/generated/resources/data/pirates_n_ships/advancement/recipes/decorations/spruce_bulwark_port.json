@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bulwark": {
+      "conditions": {
+        "items": [
+          {
+            "items": "pirates_n_ships:spruce_bulwark"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:spruce_bulwark_port"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bulwark"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "pirates_n_ships:spruce_bulwark_port"
+    ]
+  }
+}

@@ -94,6 +94,15 @@ public final class RecipeGrid {
         return index;
     }
 
+    /** WOOD1: ticks one wood of a wood family's recipe panel shows before the next. */
+    public static final int FAMILY_CYCLE_TICKS = 40;
+
+    /** WOOD1: which of {@code members} recipes of a wood family's panel shows at {@code gameTime} (ticks). */
+    public static int familyCycle(int members, long gameTime) {
+        if (members <= 1) return 0;
+        return (int) Math.floorMod(gameTime / FAMILY_CYCLE_TICKS, (long) members);
+    }
+
     /** Which of {@code options} alternatives of an ingredient shows at {@code gameTime} (ticks). */
     public static int cycle(int options, long gameTime) {
         if (options <= 1) return 0;

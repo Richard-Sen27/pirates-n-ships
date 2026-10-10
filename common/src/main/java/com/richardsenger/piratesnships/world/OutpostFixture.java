@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
@@ -44,16 +45,58 @@ public final class OutpostFixture {
         openSky(helper);
         ServerLevel level = helper.getLevel();
         BlockPos site = WorldGameTests.site(helper, sea);
-        Structure s = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(OutpostKeys.NAVY_OUTPOST);
-        if (!(s instanceof PortStructure structure)) throw new IllegalStateException("navy_outpost is not loaded: " + s);
-        Structure.GenerationContext context = WorldGameTests.context(level, site);
-        Structure.GenerationStub stub = structure.plan(context, site, WorldGameTests.seaSurface(helper), WorldGameTests.terrain(helper), 1)
-                .orElseThrow(() -> new IllegalStateException("the shore gives no generation point"));
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
-                new PiecesContainer(withoutTheCourt(stub.getPiecesBuilder().build().pieces())));
+        PortStructure structure = structure(level);
+        List<StructurePiece> planned = plan(helper, sea, 1);
+        if (planned.isEmpty()) throw new IllegalStateException("the shore gives no generation point");
+        StructureStart start = new StructureStart(structure, new ChunkPos(site), 0, new PiecesContainer(withoutTheCourt(planned)));
         WorldGameTests.place(level, start);
         PiecesContainer pieces = new PiecesContainer(start.getPieces());
         return new Placed(start, pieces, pieces.calculateBoundingBox());
+    }
+
+    /** The level seed every fixture outpost is planned with (STR4: the layout must not depend on the test run). */
+    public static final long FIXTURE_SEED = 20_261_010L;
+    /** Where the fixture arena's north-west corner is planned: a fixed chunk-aligned site far from any test. */
+    static final int PLAN_X = 8192;
+    static final int PLAN_Z = 8192;
+
+    /**
+     * The outpost on the hand-built shore with the sea to {@code sea}, planned at {@code depth} deterministically
+     * (STR4): planned with {@link #FIXTURE_SEED} as if the arena lay at ({@value #PLAN_X}, {@value #PLAN_Z}), the
+     * terrain read from the real arena, then moved onto it. {@link PortStructure#plan} draws its jigsaw random from
+     * the seed and the site's chunk, so planning at the real site gave each run its own wall pieces, wherever the
+     * framework put the arena. Empty when the shore gives no generation point.
+     */
+    public static List<StructurePiece> plan(GameTestHelper helper, Direction sea, int depth) {
+        ServerLevel level = helper.getLevel();
+        BlockPos a = helper.absolutePos(BlockPos.ZERO);
+        BlockPos b = helper.absolutePos(new BlockPos(WorldGameTests.SIZE - 1, 0, WorldGameTests.SIZE - 1));
+        int dx = Math.min(a.getX(), b.getX()) - PLAN_X;
+        int dz = Math.min(a.getZ(), b.getZ()) - PLAN_Z;
+        BlockPos site = WorldGameTests.site(helper, sea).offset(-dx, 0, -dz);
+        PortStructure.Terrain arena = WorldGameTests.terrain(helper);
+        PortStructure.Terrain terrain = (x, z) -> arena.firstFree(x + dx, z + dz);
+        var generator = level.getChunkSource().getGenerator();
+        Structure.GenerationContext context = new Structure.GenerationContext(level.registryAccess(), generator,
+                generator.getBiomeSource(), level.getChunkSource().randomState(), level.getStructureManager(), FIXTURE_SEED,
+                new ChunkPos(site), level, biome -> true);
+        var stub = structure(level).plan(context, site, WorldGameTests.seaSurface(helper), terrain, depth);
+        if (stub.isEmpty()) return List.of();
+        List<StructurePiece> pieces = new java.util.ArrayList<>(stub.get().getPiecesBuilder().build().pieces());
+        pieces.forEach(p -> p.move(dx, 0, dz));
+        return pieces;
+    }
+
+    static PortStructure structure(ServerLevel level) {
+        Structure s = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(OutpostKeys.NAVY_OUTPOST);
+        if (!(s instanceof PortStructure structure)) throw new IllegalStateException("navy_outpost is not loaded: " + s);
+        return structure;
+    }
+
+    /** The piece names of a planned outpost, in the jigsaw's order. */
+    public static List<String> names(List<StructurePiece> pieces) {
+        return pieces.stream().map(p -> p instanceof PoolElementStructurePiece e ? GarrisonPosts.pieceName(e.getElement().toString()) : "")
+                .toList();
     }
 
     /** The fort gate, the quay and the wall trace with its towers: the planned pieces without the court (STR4). */

@@ -100,12 +100,10 @@ public final class NavyOutpostGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos site = WorldGameTests.site(helper, Direction.NORTH);
         PortStructure structure = structure(level);
-        Structure.GenerationContext context = WorldGameTests.context(level, site);
-        Optional<Structure.GenerationStub> stub = structure.plan(context, site, WorldGameTests.seaSurface(helper),
-                WorldGameTests.terrain(helper), 1);
-        helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
-                new PiecesContainer(OutpostFixture.withoutTheCourt(stub.get().getPiecesBuilder().build().pieces())));
+        List<StructurePiece> planned = OutpostFixture.plan(helper, Direction.NORTH, 1);
+        helper.assertTrue(!planned.isEmpty(), "the shore gives a generation point");
+        StructureStart start = new StructureStart(structure, new net.minecraft.world.level.ChunkPos(site), 0,
+                new PiecesContainer(OutpostFixture.withoutTheCourt(planned)));
         BoundingBox box = new PiecesContainer(start.getPieces()).calculateBoundingBox();
         WorldGameTests.place(level, start);
 
@@ -198,11 +196,14 @@ public final class NavyOutpostGameTests {
         helper.assertValueEqual(structure.shoreAnchor(), OutpostData.FORT_GATE, "shore anchor");
         helper.assertValueEqual(structure.maxDepth(), OutpostData.SIZE, "size");
 
-        Structure.GenerationContext context = WorldGameTests.context(level, site);
-        Optional<Structure.GenerationStub> stub = structure.plan(context, site, seaY, WorldGameTests.terrain(helper), 1);
-        helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
-                new PiecesContainer(OutpostFixture.withoutTheCourt(stub.get().getPiecesBuilder().build().pieces())));
+        List<StructurePiece> planned = OutpostFixture.plan(helper, sea, 1);
+        helper.assertTrue(!planned.isEmpty(), "the shore gives a generation point");
+        // STR4: the fixture's layout is fixed (OutpostFixture.FIXTURE_SEED), wherever the framework puts the arena
+        helper.assertValueEqual(OutpostFixture.names(OutpostFixture.withoutTheCourt(planned)), sea == Direction.NORTH
+                ? List.of("fort_gate", "wall_bastion", "wall_stair", "quay", "battery", "battery")
+                : List.of("fort_gate", "quay", "wall", "wall_sally_port", "round_tower", "round_tower"), "the fixture's pieces");
+        StructureStart start = new StructureStart(structure, new net.minecraft.world.level.ChunkPos(site), 0,
+                new PiecesContainer(OutpostFixture.withoutTheCourt(planned)));
         List<StructurePiece> pieces = start.getPieces();
         PiecesContainer container = new PiecesContainer(pieces);
         BoundingBox box = container.calculateBoundingBox();

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_left_meet_open",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_magic_log",
+    "log_top": "biomesoplenty:block/stripped_magic_log_top",
+    "particle": "biomesoplenty:block/magic_planks",
+    "planks": "biomesoplenty:block/magic_planks"
+  }
+}

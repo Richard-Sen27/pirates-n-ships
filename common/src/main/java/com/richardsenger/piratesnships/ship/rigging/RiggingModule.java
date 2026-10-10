@@ -217,6 +217,7 @@ public final class RiggingModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class, BoardingNetGameTests.class, RatlineSheetGameTests.class);
+        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class, BoardingNetGameTests.class, RatlineSheetGameTests.class,
+                RatlineFootGameTests.class);
     }
 }

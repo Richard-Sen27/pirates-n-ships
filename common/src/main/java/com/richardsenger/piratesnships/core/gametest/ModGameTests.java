@@ -1,7 +1,10 @@
 package com.richardsenger.piratesnships.core.gametest;
 
 import com.richardsenger.piratesnships.Constants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.level.block.Rotation;
 
@@ -73,6 +76,7 @@ public final class ModGameTests {
     }
 
     private static void invoke(Method m, GameTestHelper helper) {
+        checkPlacement(helper);
         try {
             m.invoke(null, helper);
         } catch (InvocationTargetException e) {
@@ -82,6 +86,21 @@ public final class ModGameTests {
             throw new RuntimeException(e.getCause());
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * On the GameTest server every test must lie within {@link GameTestGrid#SAFE_RANGE} of the origin, where Sable's
+     * 32-bit physics has the precision the tests were calibrated at (TST1). {@code MixinGameTestServer} keeps the
+     * grid there; this fails the test loudly if the grid ever grows past it, instead of letting a physics test
+     * measure different numbers. Tests started by hand in a game ({@code /test}) are not checked.
+     */
+    static void checkPlacement(GameTestHelper helper) {
+        if (!(helper.getLevel().getServer() instanceof GameTestServer)) return;
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        if (!GameTestGrid.inSafeRange(origin.getX(), origin.getZ())) {
+            throw new GameTestAssertException("test placed at " + origin.toShortString() + ", beyond ±" + GameTestGrid.SAFE_RANGE
+                    + " blocks of the origin where ship physics loses precision (see GameTestGrid)");
         }
     }
 }

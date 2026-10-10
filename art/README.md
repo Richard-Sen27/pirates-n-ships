@@ -1254,6 +1254,33 @@ Railing rework (RAIL6):
   a lone block, a corner, the item; spruce and dark oak runs at deck distance; close-ups of the lines and the latch), and RL5's `renders/railing_latch.png`, `railing_latch_bulwark.png` redrawn on the new
   cap (the washer stands on the cap's band without clipping or floating; the ring and the strand unchanged).
 
+Wide ports and double gates (RAIL7):
+- **Why:** the human (2026-10-10): two ports side by side should lose the posts where they touch, "to have a larger
+  port", and the gate should "support a double block door". Part list `tools/gen_railing_models.py` extended;
+  `railing.bbmodel` now holds 25 groups. Lint clean on the five new models.
+- **Port as parts** (RAIL6's baluster pattern): the block state no longer draws `railing_port` (kept as the port's
+  item) but `railing_port_sill` (1 element: planks x 0..16, y 0..4, z 0..2, the ends hidden inside the posts where they
+  stand) and the railing's `railing_post` turned to each end's corner while `post_left`/`post_right` are true (looking
+  outboard; the left end is the corner keyed by the facing, the right the one keyed clockwise of it). A post is left
+  out where the next block along the edge is a port of the same facing, so a row of ports reads as one opening on one
+  sill. The port's posts were already the railing post's geometry, so a lone port looks exactly as before.
+- **Gate as parts:** the same sill, the post the leaf hangs on (always), the latch post (only unpaired), the RAIL6 leaf
+  unchanged, and for one leaf of a double gate (`paired`) its run on to the middle: `railing_gate_left_meet` and
+  `_right_meet` (4 elements: the cap body and band and the bottom rail from u 11 to 13.5, i.e. x 13.5..16 for a left
+  leaf, and a plain 2 px log meeting stile at x 14..16 from the bottom rail to the cap), with `_open` variants turned
+  with the leaf (the same transform about the hinge corner). The two stiles meet at the block boundary as a 4 px pair.
+- **Bulwark gun port: unchanged.** Its frame has no stanchions but wall jambs (x 0..3 and 13..16, wall and cap ends)
+  either side of the notch; two gun ports side by side keep 6 px of wall between their notches. Leaving the jambs out
+  would leave each 10 px lid a 3 px gap at either side when shut (the lid and its hinge are sized for one barrel), and a
+  bulwark keeps its planking between gun ports; a wide opening in a bulwark is a railing port's job.
+- **Renders** (a scratch three.js scene in Blockbench's `risky_eval`, no project opened, the part JSON drawn face by face
+  with vanilla's face shading; the block states emulated: railing posts by `RailingRules.posts`, port posts by the
+  neighbour rule, gate parts by `paired`; `art/vanilla` textures from `tools/extract_vanilla_textures.py`):
+  `renders/railing_wide_port.png` (two ports, three ports and a lone port between railings, from inboard and
+  outboard, a close-up of two ports) and `renders/railing_gate.png` (redrawn: a double gate shut, a double gate open
+  and a single gate between railings, from inboard and outboard, close-ups of the shut pair inboard and the open pair
+  outboard).
+
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
   `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),

@@ -1,0 +1,259 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "cap_meet",
+			"from": [
+				0,
+				14,
+				-1
+			],
+			"to": [
+				2.5,
+				15.5,
+				3
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						4,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						4,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						0,
+						0.5,
+						4,
+						2
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0.5,
+						4,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "cap_band_meet",
+			"from": [
+				0,
+				15.5,
+				-0.45
+			],
+			"to": [
+				2.5,
+				16,
+				2.45
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						2.5
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						0.5
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						0.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "bottom_rail_meet",
+			"from": [
+				0,
+				4,
+				0
+			],
+			"to": [
+				2.5,
+				6,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						10,
+						2.5,
+						12
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						0,
+						10,
+						2.5,
+						12
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						2.5,
+						2
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						0,
+						10,
+						2,
+						12
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						0,
+						10,
+						2,
+						12
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "meet_stile",
+			"from": [
+				0,
+				6,
+				0
+			],
+			"to": [
+				2,
+				14,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						2,
+						2,
+						10
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						2,
+						2,
+						10
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						2,
+						2,
+						10
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						2,
+						2,
+						10
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	]
+}

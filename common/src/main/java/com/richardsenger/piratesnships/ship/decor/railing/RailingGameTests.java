@@ -64,7 +64,9 @@ import java.util.Set;
  * The railing family (RAIL1, docs/design.md §4.8 "Railings (RAIL1/RAIL2)") in a real server: placing at the edge, the
  * posts and corners as a run grows, adding an edge, waterlogging, the drops, the toggle and the collision height; a
  * carriage cannon firing through a port and into a plain railing; a gangway laid from a port to a pier and walked; the
- * swivel gun on a railing; ratlines on a railing; and a railing assembled into a ship.
+ * swivel gun on a railing; ratlines on a railing; and a railing assembled into a ship. RAIL7: ports in a row are one
+ * opening (posts only at its outer ends, a cannon fires through any cell, a plank starts from any cell), a port keeps
+ * its posts beside anything else.
  */
 public final class RailingGameTests {
 
@@ -457,6 +459,157 @@ public final class RailingGameTests {
         h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "refused: " + laid.outcome());
         h.assertTrue(laid.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 4))), "the run starts at " + laid.cells().get(0));
         h.assertTrue(laid.landing() == PlankRun.Landing.LEVEL, "landing " + laid.landing());
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------ wide ports (RAIL7)
+
+    /** A port facing {@code facing} at relative {@code rel}, its posts worked out from its neighbours. */
+    private static BlockPos setPort(GameTestHelper h, BlockPos rel, Direction facing) {
+        BlockPos abs = h.absolutePos(rel);
+        h.getLevel().setBlock(abs, RailingPortBlock.withPosts(port().defaultBlockState().setValue(RailingPortBlock.FACING, facing),
+                h.getLevel(), abs), 3);
+        return abs;
+    }
+
+    /** The posts of the port at {@code rel} as "LR", "L-", "-R" or "--" (left and right looking outboard). */
+    private static String portPosts(GameTestHelper h, BlockPos rel) {
+        BlockState s = h.getBlockState(rel);
+        return (s.getValue(RailingPortBlock.POST_LEFT) ? "L" : "-") + (s.getValue(RailingPortBlock.POST_RIGHT) ? "R" : "-");
+    }
+
+    /** Whether the box {@code local} (block coordinates, 0..1 inside {@code rel}) hits the block's collision. */
+    private static boolean collides(GameTestHelper h, BlockPos rel, AABB local) {
+        BlockPos abs = h.absolutePos(rel);
+        return h.getLevel().getBlockState(abs).getCollisionShape(h.getLevel(), abs, CollisionContext.empty()).toAabbs().stream()
+                .anyMatch(b -> b.intersects(local));
+    }
+
+    /** Whether the outline of the block at {@code rel} reaches above the cap (only a post does) inside {@code local}. */
+    private static boolean outlineIn(GameTestHelper h, BlockPos rel, AABB local) {
+        BlockPos abs = h.absolutePos(rel);
+        return h.getLevel().getBlockState(abs).getShape(h.getLevel(), abs, CollisionContext.empty()).toAabbs().stream()
+                .anyMatch(b -> b.intersects(local));
+    }
+
+    /**
+     * RAIL7: two ports placed side by side with the item on the east edge (looking out east, left is north): the first
+     * keeps both posts until the second comes, then each drops the post toward the other, so the outline has no post
+     * in the middle and the collision there is only the sill; a carriage cannon behind the second cell fires through
+     * the wide opening. Breaking the second gives the first its post back.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 40)
+    public static void twoPortsInARowAreOneOpeningACannonFiresThroughTheSecond(GameTestHelper h) {
+        floor(h, 0, 8);
+        Player p = holder(h, port().asItem(), 2, Direction.EAST);
+        BlockPos first = new BlockPos(4, 1, 3);
+        BlockPos second = new BlockPos(4, 1, 4);
+        h.assertTrue(clickFloor(h, p, first, 0.9, 0.5).consumesAction(), "the first port was not placed");
+        h.assertTrue(portPosts(h, first).equals("LR"), "a lone port has both posts: " + portPosts(h, first));
+        h.assertTrue(clickFloor(h, p, second, 0.9, 0.5).consumesAction(), "the second port was not placed");
+        h.assertTrue(h.getBlockState(second).getValue(RailingPortBlock.FACING) == Direction.EAST, "the second port faces "
+                + h.getBlockState(second).getValue(RailingPortBlock.FACING));
+        h.assertTrue(portPosts(h, first).equals("L-"), "the first port keeps a post toward the second: " + portPosts(h, first));
+        h.assertTrue(portPosts(h, second).equals("-R"), "the second port keeps a post toward the first: " + portPosts(h, second));
+        // no post where they meet (the east edge's south end of the first, north end of the second), above the sill
+        AABB southEnd = new AABB(13 / 16.0, 0.5, 14 / 16.0, 1.0, 1.0, 1.0);
+        AABB northEnd = new AABB(13 / 16.0, 0.5, 0.0, 1.0, 1.0, 2 / 16.0);
+        h.assertFalse(outlineIn(h, first, southEnd), "a post stands at the first port's middle end");
+        h.assertFalse(outlineIn(h, second, northEnd), "a post stands at the second port's middle end");
+        h.assertFalse(collides(h, first, southEnd) || collides(h, second, northEnd), "something collides where the posts were");
+        h.assertTrue(outlineIn(h, first, northEnd) && outlineIn(h, second, southEnd), "the outer posts are gone");
+        // the sill runs through the middle
+        h.assertTrue(collides(h, first, new AABB(14.5 / 16.0, 0.0, 15.5 / 16.0, 15.5 / 16.0, 0.2, 1.0)), "no sill at the middle");
+        BlockPos master = cannon(h, new BlockPos(3, 1, 4), Direction.EAST);
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        creative.getAbilities().instabuild = true;
+        ServerLevel level = h.getLevel();
+        CannonService.load(level, master, creative, new ItemStack(Items.GUNPOWDER));
+        CannonService.load(level, master, creative, new ItemStack(CombatContent.CANNONBALL.get()));
+        CannonService.Use use = CannonService.fire(level, master, null);
+        h.assertTrue(use.outcome() == CannonService.Outcome.FIRED && use.ball() != null, "the cannon did not fire: " + use.outcome());
+        CannonballEntity ball = use.ball();
+        int portX = h.absolutePos(second).getX();
+        h.succeedWhen(() -> {
+            h.assertTrue(ball.getX() > portX + 2.5 && !(ball.isRemoved() && ball.tickCount <= 1),
+                    "the ball stopped at x " + ball.getX() + " (port at " + portX + ", ticks " + ball.tickCount + ")");
+            h.assertTrue(h.getBlockState(second).getBlock() instanceof RailingPortBlock, "the second port is gone");
+            h.destroyBlock(second);
+            h.assertTrue(portPosts(h, first).equals("LR"), "the first port did not get its post back: " + portPosts(h, first));
+        });
+    }
+
+    /**
+     * RAIL7: three ports in a row on the north edge (left is west): posts only at the outer ends, the middle one only a
+     * sill; a cannon behind each cell fires through.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 40)
+    public static void threePortsInARowHavePostsOnlyAtTheOuterEnds(GameTestHelper h) {
+        floor(h, 0, 8);
+        for (int x = 2; x <= 4; x++) setPort(h, new BlockPos(x, 1, 5), Direction.NORTH);
+        h.assertTrue(portPosts(h, new BlockPos(2, 1, 5)).equals("L-"), "west port " + portPosts(h, new BlockPos(2, 1, 5)));
+        h.assertTrue(portPosts(h, new BlockPos(3, 1, 5)).equals("--"), "middle port " + portPosts(h, new BlockPos(3, 1, 5)));
+        h.assertTrue(portPosts(h, new BlockPos(4, 1, 5)).equals("-R"), "east port " + portPosts(h, new BlockPos(4, 1, 5)));
+        h.assertFalse(h.getBlockState(new BlockPos(3, 1, 5)).isFaceSturdy(h.getLevel(), h.absolutePos(new BlockPos(3, 1, 5)),
+                Direction.DOWN, net.minecraft.world.level.block.SupportType.CENTER), "a port without posts carries a lantern");
+        ServerLevel level = h.getLevel();
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        creative.getAbilities().instabuild = true;
+        List<CannonballEntity> balls = new ArrayList<>();
+        for (int x = 2; x <= 4; x++) {
+            BlockPos master = cannon(h, new BlockPos(x, 1, 6), Direction.NORTH);
+            CannonService.load(level, master, creative, new ItemStack(Items.GUNPOWDER));
+            CannonService.load(level, master, creative, new ItemStack(CombatContent.CANNONBALL.get()));
+            CannonService.Use use = CannonService.fire(level, master, null);
+            h.assertTrue(use.outcome() == CannonService.Outcome.FIRED && use.ball() != null, "cannon " + x + " did not fire: " + use.outcome());
+            balls.add(use.ball());
+        }
+        int portZ = h.absolutePos(new BlockPos(3, 1, 5)).getZ();
+        h.succeedWhen(() -> {
+            for (int i = 0; i < balls.size(); i++) {
+                CannonballEntity b = balls.get(i);
+                h.assertTrue(b.getZ() < portZ - 1.5 && !(b.isRemoved() && b.tickCount <= 1),
+                        "cell " + i + ": the ball stopped at z " + b.getZ() + " (ports at " + portZ + ")");
+                h.assertTrue(h.getBlockState(new BlockPos(2 + i, 1, 5)).getBlock() instanceof RailingPortBlock, "port " + i + " is gone");
+            }
+        });
+    }
+
+    /**
+     * RAIL7: a port keeps its post beside a plain railing on the same edge (the railing ends against it), beside a port
+     * facing another way, and beside a gate.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aPortKeepsItsPostBesideARailingAnotherPortOrAGate(GameTestHelper h) {
+        floor(h, 0, 8);
+        setRailing(h, new BlockPos(3, 1, 4), Direction.NORTH);
+        setPort(h, new BlockPos(4, 1, 4), Direction.NORTH);
+        h.assertTrue(portPosts(h, new BlockPos(4, 1, 4)).equals("LR"), "beside a railing: " + portPosts(h, new BlockPos(4, 1, 4)));
+        h.assertTrue(postsAt(h, new BlockPos(3, 1, 4)).equals(set(Direction.NORTH)), "the railing ends against the port: "
+                + postsAt(h, new BlockPos(3, 1, 4)));
+        setPort(h, new BlockPos(5, 1, 4), Direction.SOUTH);
+        h.assertTrue(portPosts(h, new BlockPos(4, 1, 4)).equals("LR"), "beside a south port: " + portPosts(h, new BlockPos(4, 1, 4)));
+        h.setBlock(new BlockPos(4, 1, 6), RailingContent.GATES.get(ShipWood.OAK).defaultBlockState().setValue(RailingGateBlock.FACING, Direction.NORTH));
+        setPort(h, new BlockPos(5, 1, 6), Direction.NORTH);
+        h.assertTrue(portPosts(h, new BlockPos(5, 1, 6)).equals("LR"), "beside a gate: " + portPosts(h, new BlockPos(5, 1, 6)));
+        h.succeed();
+    }
+
+    /** RAIL7: a plank used on the sill of either cell of a wide port lays its gangway from beyond that cell. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aPlankStartsFromEitherCellOfAWidePort(GameTestHelper h) {
+        for (int x = 0; x <= 3; x++) for (int z = 2; z <= 6; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        for (int x = 6; x <= 8; x++) for (int z = 2; z <= 6; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        setPort(h, new BlockPos(3, 2, 3), Direction.EAST);
+        setPort(h, new BlockPos(3, 2, 5), Direction.EAST);
+        setPort(h, new BlockPos(3, 2, 4), Direction.EAST);
+        h.assertTrue(portPosts(h, new BlockPos(3, 2, 4)).equals("--"), "the middle port " + portPosts(h, new BlockPos(3, 2, 4)));
+        for (int z : new int[]{3, 5}) {
+            BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(new BlockPos(3, 2, z)), Direction.UP, Direction.EAST);
+            h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "refused from cell z " + z + ": " + laid.outcome());
+            h.assertTrue(laid.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, z))), "the run from z " + z + " starts at " + laid.cells().get(0));
+            h.assertTrue(laid.landing() == PlankRun.Landing.LEVEL, "landing " + laid.landing());
+        }
         h.succeed();
     }
 

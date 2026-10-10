@@ -122,11 +122,11 @@ Railings, ports, gates, bulwarks and rope railings come in every wood, a wood mo
 
 {recipe:oak_railing}
 
-A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.
+A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there. Ports side by side make one wide opening.
 
 {recipe:oak_railing_port}
 
-A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate, and a lantern hangs from any railing post.
+A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate; two side by side are a double gate that opens as one. A lantern hangs from any railing post.
 
 {spotlight3d:block:oak_railing_gate|The railing gate, shut}
 

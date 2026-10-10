@@ -15,8 +15,6 @@ import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.core.Direction;
 import net.minecraft.data.models.blockstates.Condition;
 import net.minecraft.data.models.blockstates.MultiPartGenerator;
-import net.minecraft.data.models.blockstates.MultiVariantGenerator;
-import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -61,6 +59,12 @@ import java.util.List;
  * ({@code block/rope_railing_edge} per edge, the railing's post per post, its item {@code block/rope_railing_item}) in
  * the railing's weight tags and {@code grapple_latches}, recipe {@code TTT / P P} (string, that wood's planks) gives 4.
  * No model is turned with uvlock any more, so the cap rail's grain follows each edge.
+ *
+ * <p>RAIL7: the port's state is a multipart of its sill ({@code block/railing_port_sill}, the block's full width, so a
+ * row of ports shares one sill) and the railing's post at each end where {@code post_left}/{@code post_right} stand; the
+ * gate's of the same sill, the post it hangs on, the latch post unless {@code paired}, the leaf, and for a paired leaf
+ * its run on to the middle ({@code block/railing_gate_left_meet}, {@code _right_meet} and their {@code _open}). The
+ * port's own model {@code block/railing_port} stays as its item.
  */
 public final class RailingData {
 
@@ -73,6 +77,13 @@ public final class RailingData {
     static final ResourceLocation ROPE_EDGE = Constants.id("block/rope_railing_edge");
     static final ResourceLocation ROPE_ITEM = Constants.id("block/rope_railing_item");
     static final ResourceLocation PORT = Constants.id("block/railing_port");
+    /** RAIL7: the port's and the gate's sill across the whole block; their posts are the railing's post. */
+    static final ResourceLocation PORT_SILL = Constants.id("block/railing_port_sill");
+    /** RAIL7: a double gate's leaf from where the latch post would stand to the middle, closed and open. */
+    static final ResourceLocation GATE_LEFT_MEET = Constants.id("block/railing_gate_left_meet");
+    static final ResourceLocation GATE_RIGHT_MEET = Constants.id("block/railing_gate_right_meet");
+    static final ResourceLocation GATE_LEFT_MEET_OPEN = Constants.id("block/railing_gate_left_meet_open");
+    static final ResourceLocation GATE_RIGHT_MEET_OPEN = Constants.id("block/railing_gate_right_meet_open");
     static final ResourceLocation ITEM = Constants.id("block/railing_item");
     /** RAIL3: the gate's leaf, closed and open, hinged left or right (the posts and sill are the port's model). */
     static final ResourceLocation GATE_LEFT = Constants.id("block/railing_gate_left");
@@ -179,19 +190,35 @@ public final class RailingData {
         railings.childModels(m, BALUSTER_WEST);
         railings.childModels(m, BALUSTER_EAST);
         railings.itemModels(m, ITEM);
-        ports.childModels(m, PORT); // block/<wood>_railing_port: the port's own model, which its item uses too
+        ports.childModels(m, PORT); // block/<wood>_railing_port: the port's own model, which its item uses
+        ports.childModels(m, PORT_SILL);
         WoodFamily<RailingGateBlock> gates = RailingContent.GATES;
-        for (ResourceLocation leaf : List.of(GATE_LEFT, GATE_RIGHT, GATE_LEFT_OPEN, GATE_RIGHT_OPEN)) gates.childModels(m, leaf);
+        for (ResourceLocation leaf : List.of(GATE_LEFT, GATE_RIGHT, GATE_LEFT_OPEN, GATE_RIGHT_OPEN,
+                GATE_LEFT_MEET, GATE_RIGHT_MEET, GATE_LEFT_MEET_OPEN, GATE_RIGHT_MEET_OPEN)) gates.childModels(m, leaf);
         gates.itemModels(m, GATE_ITEM);
         gates.forEach((wood, block) -> {
             MultiPartGenerator gen = MultiPartGenerator.multiPart(block);
+            ResourceLocation post = WoodFamily.child(wood, POST);
             for (Direction d : Direction.Plane.HORIZONTAL) {
-                gen.with(Condition.condition().term(RailingGateBlock.FACING, d), turned(WoodFamily.child(wood, PORT), d));
-                for (boolean open : new boolean[]{false, true}) {
-                    for (DoorHingeSide hinge : DoorHingeSide.values()) {
-                        ResourceLocation leaf = hinge == DoorHingeSide.LEFT ? (open ? GATE_LEFT_OPEN : GATE_LEFT) : (open ? GATE_RIGHT_OPEN : GATE_RIGHT);
+                gen.with(Condition.condition().term(RailingGateBlock.FACING, d), turned(WoodFamily.child(wood, PORT_SILL), d));
+                for (DoorHingeSide hinge : DoorHingeSide.values()) {
+                    // RAIL7: the post the leaf hangs on always, the latch post only on a single gate (the railing's
+                    // post turned to that corner: the edge's left end is the corner keyed by the edge, its right end
+                    // the one keyed clockwise of it)
+                    Direction hingeCorner = hinge == DoorHingeSide.LEFT ? d : d.getClockWise();
+                    Direction latchCorner = hinge == DoorHingeSide.LEFT ? d.getClockWise() : d;
+                    gen.with(Condition.condition().term(RailingGateBlock.FACING, d).term(RailingGateBlock.HINGE, hinge),
+                            turned(post, hingeCorner));
+                    gen.with(Condition.condition().term(RailingGateBlock.FACING, d).term(RailingGateBlock.HINGE, hinge)
+                            .term(RailingGateBlock.PAIRED, false), turned(post, latchCorner));
+                    for (boolean open : new boolean[]{false, true}) {
+                        boolean left = hinge == DoorHingeSide.LEFT;
+                        ResourceLocation leaf = left ? (open ? GATE_LEFT_OPEN : GATE_LEFT) : (open ? GATE_RIGHT_OPEN : GATE_RIGHT);
                         gen.with(Condition.condition().term(RailingGateBlock.FACING, d).term(RailingGateBlock.OPEN, open)
                                 .term(RailingGateBlock.HINGE, hinge), turned(WoodFamily.child(wood, leaf), d));
+                        ResourceLocation meet = left ? (open ? GATE_LEFT_MEET_OPEN : GATE_LEFT_MEET) : (open ? GATE_RIGHT_MEET_OPEN : GATE_RIGHT_MEET);
+                        gen.with(Condition.condition().term(RailingGateBlock.FACING, d).term(RailingGateBlock.OPEN, open)
+                                .term(RailingGateBlock.HINGE, hinge).term(RailingGateBlock.PAIRED, true), turned(WoodFamily.child(wood, meet), d));
                     }
                 }
             }
@@ -236,10 +263,18 @@ public final class RailingData {
             }
             m.blockStates().accept(gen);
         });
+        // RAIL7: the sill always, each post while it stands (the left end of the edge is the corner keyed by the
+        // facing, the right end the one keyed clockwise of it)
         ports.forEach((wood, block) -> {
-            ResourceLocation model = WoodFamily.child(wood, PORT);
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(RailingPortBlock.FACING)
-                    .generate(facing -> turned(model, facing))));
+            MultiPartGenerator gen = MultiPartGenerator.multiPart(block);
+            ResourceLocation post = WoodFamily.child(wood, POST);
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                gen.with(Condition.condition().term(RailingPortBlock.FACING, d), turned(WoodFamily.child(wood, PORT_SILL), d));
+                gen.with(Condition.condition().term(RailingPortBlock.FACING, d).term(RailingPortBlock.POST_LEFT, true), turned(post, d));
+                gen.with(Condition.condition().term(RailingPortBlock.FACING, d).term(RailingPortBlock.POST_RIGHT, true),
+                        turned(post, d.getClockWise()));
+            }
+            m.blockStates().accept(gen);
         });
     }
 

@@ -119,7 +119,7 @@ show_me: ratline_nets | Show me: stringing ratline nets
 A {item:pirates_n_ships:ratline_net}**ratline net** runs from the rail to a {item:pirates_n_ships:mast_hoop}**mast hoop** up the mast. Use the net on a railing's top rail (or a bulwark's cap), then on the hoop: an iron latch is set on the rail for it, at no cost. Gates and ports take none. On a bare deck use a {item:pirates_n_ships:chainplate}**chainplate**. The line between the ends must be clear.
 {recipe:ratline_net}
 
-Walk into the net and hold forward or jump to climb; sneak to hold on. A latch or chainplate holds one net, a hoop up to five, so a net is never wider at the top. Nets from a row of latches join into one: into one hoop a triangle, into a row of hoops a rectangle or a narrowing net.
+Walk into the net and hold forward or jump to climb; sneak to hold on. At its foot, walk along the rail, or look down at the deck and walk, to step off. A latch or chainplate holds one net, a hoop up to five, so a net is never wider at the top. Nets from a row of latches join into one: into one hoop a triangle, into a row of hoops a rectangle or a narrowing net.
 
 ## Chainplate and hoop
 {recipe:chainplate}

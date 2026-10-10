@@ -13,9 +13,9 @@ import java.util.Set;
  * stand. Pure tables in the pieces' local coordinates (y 0 the foundation row, the outside to the north), shared by
  * {@link GarrisonPosts} and {@code mob/squad/SquadRoutes}.
  *
- * <p><b>Walls.</b> A run grows from the fort gate in three states (shore, flank, back), each a pool of the same kinds of
- * piece; the kinds share their geometry, so a {@link Wall} entry holds for every state of its kind. Symmetric pieces
- * serve both runs; the angles and steps belong to one run (a jigsaw never mirrors).
+ * <p><b>Walls.</b> A run grows from the fort gate in two states (along the shore, down the flank), each a pool of the
+ * same kinds of piece; the kinds share their geometry, so a {@link Wall} entry holds for both states of its kind.
+ * Symmetric pieces serve both runs; the angles and steps belong to one run (a jigsaw never mirrors).
  */
 public final class OutpostPieces {
 
@@ -43,12 +43,12 @@ public final class OutpostPieces {
         Wall nine = new Wall(new BlockPos(1, 5, 2), new BlockPos(7, 5, 3), new BlockPos(1, 5, 3));
         // the bastion stands on three rows of footings and its line runs behind the projection (z 5..9)
         Wall bastion = new Wall(new BlockPos(5, 8, 2), new BlockPos(9, 8, 8), new BlockPos(1, 8, 8));
-        for (String state : List.of("wall", "flank", "back")) {
+        for (String state : List.of("wall", "flank")) {
             walls.put(state.equals("wall") ? "wall" : state + "_wall", straight);
             walls.put(state + "_long", longWall);
             walls.put(state + "_sally_port", nine);
             walls.put(state + "_stair", nine);
-            if (!state.equals("back")) walls.put(state + "_bastion", bastion);
+            walls.put(state + "_bastion", bastion);
         }
         for (String state : List.of("wall", "flank")) {
             Wall east = new Wall(new BlockPos(5, 5, 1), new BlockPos(4, 5, 5), new BlockPos(4, 5, 5));

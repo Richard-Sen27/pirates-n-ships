@@ -107,7 +107,7 @@ class StructurePiecesTest {
      * own jigsaw pair, each state of the trace its own out connectors (art/README.md).
      */
     private static final Group NAVY = new Group("navy_outpost",
-            List.of("armoury", "back_long", "back_sally_port", "back_stair", "back_wall", "barracks", "barracks_long",
+            List.of("armoury", "barracks", "barracks_long",
                     "barracks_mess", "battery", "brig", "brig_large", "chapel",
                     "deco_bell_post", "deco_benches", "deco_cannon_balls", "deco_cart", "deco_crates", "deco_drill_target",
                     "deco_lantern_post", "deco_notice_board", "deco_tree", "deco_water_trough",
@@ -123,10 +123,14 @@ class StructurePiecesTest {
                     Map.entry(MOD + ":wall_east_in", List.of(MOD + ":wall_east_out", EMPTY, "aligned")),
                     Map.entry(MOD + ":wall_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls", "aligned")),
                     Map.entry(MOD + ":wall_west_in", List.of(MOD + ":wall_west_out", EMPTY, "aligned")),
+                    Map.entry(MOD + ":gate_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls_gate", "aligned")),
+                    Map.entry(MOD + ":gate_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls_gate", "aligned")),
                     Map.entry(MOD + ":flank_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls_flank", "aligned")),
                     Map.entry(MOD + ":flank_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls_flank", "aligned")),
-                    Map.entry(MOD + ":back_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls_back", "aligned")),
-                    Map.entry(MOD + ":back_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls_back", "aligned")),
+                    Map.entry(MOD + ":flankhead_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls_flank_head", "aligned")),
+                    Map.entry(MOD + ":flankhead_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls_flank_head", "aligned")),
+                    Map.entry(MOD + ":end_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/terminators", "aligned")),
+                    Map.entry(MOD + ":end_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/terminators", "aligned")),
                     Map.entry(MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":navy_outpost/buildings", "rollable")),
                     Map.entry(MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable")),
                     Map.entry(MOD + ":quay_out", List.of(MOD + ":quay_in", MOD + ":navy_outpost/quay", "aligned")),
@@ -141,8 +145,7 @@ class StructurePiecesTest {
             "brig_large", "signal_tower", "officers_quarters", "powder_magazine", "armoury", "gun_battery", "store_house", "chapel");
     /** The symmetric wall pieces of every state (both runs' pairs) and the run-ending towers. */
     private static final List<String> NAVY_STRAIGHTS = List.of("wall", "wall_long", "wall_bastion", "wall_sally_port", "wall_stair",
-            "flank_wall", "flank_long", "flank_bastion", "flank_sally_port", "flank_stair",
-            "back_wall", "back_long", "back_sally_port", "back_stair");
+            "flank_wall", "flank_long", "flank_bastion", "flank_sally_port", "flank_stair");
     private static final List<String> NAVY_TOWERS = List.of("wall_tower", "round_tower", "battery");
 
     private static final List<Group> GROUPS = List.of(VILLAGE, ISLAND, NAVY);
@@ -563,11 +566,11 @@ class StructurePiecesTest {
 
     @Test
     void navyConnectorsPerPiece() throws IOException {
-        assertEquals(Map.of("lanehead_out", 1, "quay_out", 1, "wall_east_out", 1, "wall_west_out", 1),
+        assertEquals(Map.of("lanehead_out", 1, "quay_out", 1, "gate_east_out", 1, "gate_west_out", 1),
                 countNames(jigsaws(piece(NAVY, "fort_gate"))));
         assertEquals(Map.of("berth", 2, "quay_in", 1), countNames(jigsaws(piece(NAVY, "quay"))));
         for (String name : NAVY_STRAIGHTS) {
-            String state = name.startsWith("flank") ? "flank" : name.startsWith("back") ? "back" : "wall";
+            String state = name.startsWith("flank") ? "flank" : "wall";
             assertEquals(Map.of("wall_east_in", 1, state + "_east_out", 1, "wall_west_in", 1, state + "_west_out", 1),
                     countNames(jigsaws(piece(NAVY, name))), name);
         }
@@ -575,10 +578,10 @@ class StructurePiecesTest {
             assertEquals(Map.of("wall_east_in", 1, "wall_west_in", 1), countNames(jigsaws(piece(NAVY, tower))), tower);
         }
         // the angles turn one run inland into the next state, the flank's steps back out into the shore state
-        assertEquals(Map.of("wall_east_in", 1, "flank_east_out", 1), countNames(jigsaws(piece(NAVY, "wall_angle_east"))));
-        assertEquals(Map.of("wall_west_in", 1, "flank_west_out", 1), countNames(jigsaws(piece(NAVY, "wall_angle_west"))));
-        assertEquals(Map.of("wall_east_in", 1, "back_east_out", 1), countNames(jigsaws(piece(NAVY, "flank_angle_east"))));
-        assertEquals(Map.of("wall_west_in", 1, "back_west_out", 1), countNames(jigsaws(piece(NAVY, "flank_angle_west"))));
+        assertEquals(Map.of("wall_east_in", 1, "flankhead_east_out", 1), countNames(jigsaws(piece(NAVY, "wall_angle_east"))));
+        assertEquals(Map.of("wall_west_in", 1, "flankhead_west_out", 1), countNames(jigsaws(piece(NAVY, "wall_angle_west"))));
+        assertEquals(Map.of("wall_east_in", 1, "end_east_out", 1), countNames(jigsaws(piece(NAVY, "flank_angle_east"))));
+        assertEquals(Map.of("wall_west_in", 1, "end_west_out", 1), countNames(jigsaws(piece(NAVY, "flank_angle_west"))));
         assertEquals(Map.of("wall_east_in", 1, "wall_east_out", 1), countNames(jigsaws(piece(NAVY, "flank_step_east"))));
         assertEquals(Map.of("wall_west_in", 1, "wall_west_out", 1), countNames(jigsaws(piece(NAVY, "flank_step_west"))));
         for (String building : NAVY_BUILDINGS) {
@@ -588,7 +591,7 @@ class StructurePiecesTest {
             assertEquals(0, jigsaws.get(0).pos().getY(), building + ": the connector is on the foundation row");
         }
         // the gate: quay seaward (north), the wall runs east and west, the court's lanes landward (south); all on y 0
-        Map<String, String> fronts = Map.of("quay_out", "north", "wall_east_out", "east", "wall_west_out", "west",
+        Map<String, String> fronts = Map.of("quay_out", "north", "gate_east_out", "east", "gate_west_out", "west",
                 "lanehead_out", "south");
         for (Jigsaw j : jigsaws(piece(NAVY, "fort_gate"))) {
             String name = j.name().substring(MOD.length() + 1);
@@ -623,7 +626,7 @@ class StructurePiecesTest {
             Map<String, BlockPos> wall = byName(jigsaws(piece(NAVY, name)));
             BlockPos offset = name.endsWith("bastion") ? new BlockPos(0, 3, 5) : BlockPos.ZERO;
             for (String run : List.of("east", "west")) {
-                BlockPos out = gate.get("wall_" + run + "_out");
+                BlockPos out = gate.get("gate_" + run + "_out");
                 BlockPos in = wall.get("wall_" + run + "_in");
                 assertEquals(out.getY() + offset.getY(), in.getY(), name + " " + run + " run: row");
                 assertEquals(out.getZ() + offset.getZ(), in.getZ(), name + " " + run + " run: z");
@@ -648,10 +651,10 @@ class StructurePiecesTest {
     @Test
     void anglesHandTheirSectionOn() throws IOException {
         Map<String, List<Object>> expected = Map.of(
-                "wall_angle_east", List.of("flank_east_out", new BlockPos(4, 0, 6), "south"),
-                "wall_angle_west", List.of("flank_west_out", new BlockPos(3, 0, 6), "south"),
-                "flank_angle_east", List.of("back_east_out", new BlockPos(4, 0, 6), "south"),
-                "flank_angle_west", List.of("back_west_out", new BlockPos(3, 0, 6), "south"),
+                "wall_angle_east", List.of("flankhead_east_out", new BlockPos(4, 0, 6), "south"),
+                "wall_angle_west", List.of("flankhead_west_out", new BlockPos(3, 0, 6), "south"),
+                "flank_angle_east", List.of("end_east_out", new BlockPos(4, 0, 6), "south"),
+                "flank_angle_west", List.of("end_west_out", new BlockPos(3, 0, 6), "south"),
                 "flank_step_east", List.of("wall_east_out", new BlockPos(4, 0, 0), "north"),
                 "flank_step_west", List.of("wall_west_out", new BlockPos(3, 0, 0), "north"));
         for (Map.Entry<String, List<Object>> e : expected.entrySet()) {

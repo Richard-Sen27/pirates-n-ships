@@ -21,9 +21,12 @@ public final class OutpostKeys {
     public static final ResourceKey<StructureTemplatePool> BUILDINGS = pool("buildings");
     public static final ResourceKey<StructureTemplatePool> QUAY = pool("quay");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
-    /** STR4: the wall trace's flank (after a salient angle) and back (after a second one) states. */
+    /** STR4: the wall trace's flank (after a salient angle). */
     public static final ResourceKey<StructureTemplatePool> WALLS_FLANK = pool("walls_flank");
-    public static final ResourceKey<StructureTemplatePool> WALLS_BACK = pool("walls_back");
+    /** STR4: the flank's first piece (straights only), after the shore's angle. */
+    public static final ResourceKey<StructureTemplatePool> WALLS_FLANK_HEAD = pool("walls_flank_head");
+    /** STR4: what the gate's own wall connectors draw (the shore state without the angles). */
+    public static final ResourceKey<StructureTemplatePool> WALLS_GATE = pool("walls_gate");
     /** STR4: the court's lanes: what the land gate draws, the lanes, their dead ends; the decorations. */
     public static final ResourceKey<StructureTemplatePool> LANEHEADS = pool("laneheads");
     public static final ResourceKey<StructureTemplatePool> LANES = pool("lanes");

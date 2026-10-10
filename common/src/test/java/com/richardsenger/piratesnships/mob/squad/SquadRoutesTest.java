@@ -160,7 +160,7 @@ class SquadRoutesTest {
         assertLane("wall", 7, List.of(3, 4), List.of(0, 6));
         assertLane(GarrisonPosts.FORT_GATE, 15, List.of(2, 3), List.of(0, 14));
         // STR4: every straight piece of the trace in every state, and the bastion's line behind its projection
-        for (String state : List.of("wall", "flank", "back")) {
+        for (String state : List.of("wall", "flank")) {
             assertLane(state.equals("wall") ? "wall" : state + "_wall", 7, List.of(3, 4), List.of(0, 6));
             assertLane(state + "_long", 11, List.of(3, 4), List.of(0, 10));
             assertLane(state + "_sally_port", 9, List.of(3, 4), List.of(0, 8));

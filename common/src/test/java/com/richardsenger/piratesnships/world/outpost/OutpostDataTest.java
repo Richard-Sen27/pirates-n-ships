@@ -63,7 +63,7 @@ class OutpostDataTest {
         assertEquals(TerrainAdjustment.BEARD_THIN, s.terrainAdaptation(), "STR4: the court sits on the slope");
         assertTrue(s.landPiecesOnLand(), "STR4: lanes over open water are dropped");
         assertEquals(OutpostData.SIZE, s.maxDepth());
-        assertEquals(6, s.maxDepth());
+        assertEquals(7, s.maxDepth());
         assertEquals(1, s.startHeight());
         assertEquals(new ShoreAnchor(7, 0), s.shoreAnchor());
         assertEquals(OutpostData.FORT_GATE, s.shoreAnchor());
@@ -93,8 +93,9 @@ class OutpostDataTest {
         Map<String, Integer> weights = new TreeMap<>();
         Map<ResourceKey<StructureTemplatePool>, Map<String, Integer>> expected = Map.ofEntries(
                 Map.entry(OutpostKeys.START, Map.of("fort_gate", 1)), Map.entry(OutpostKeys.QUAY, Map.of("quay", 1)),
+                Map.entry(OutpostKeys.WALLS_GATE, OutpostData.WALLS_GATE), Map.entry(OutpostKeys.WALLS_FLANK_HEAD, OutpostData.WALLS_FLANK_HEAD),
                 Map.entry(OutpostKeys.WALLS, OutpostData.WALLS), Map.entry(OutpostKeys.WALLS_FLANK, OutpostData.WALLS_FLANK),
-                Map.entry(OutpostKeys.WALLS_BACK, OutpostData.WALLS_BACK), Map.entry(OutpostKeys.TERMINATORS, OutpostData.TERMINATORS),
+Map.entry(OutpostKeys.TERMINATORS, OutpostData.TERMINATORS),
                 Map.entry(OutpostKeys.BUILDINGS, OutpostData.BUILDINGS), Map.entry(OutpostKeys.LANEHEADS, OutpostData.LANEHEADS),
                 Map.entry(OutpostKeys.LANES, OutpostData.LANES), Map.entry(OutpostKeys.LANE_ENDS, OutpostData.LANE_ENDS),
                 Map.entry(OutpostKeys.DECORATIONS, OutpostData.DECORATIONS));
@@ -122,20 +123,26 @@ class OutpostDataTest {
             assertEquals(new TreeMap<>(expected.get(key)), poolWeights, key.location().toString());
         }
         // every committed piece is in a pool, the WG3 weights of the ST3 buildings stand
-        assertEquals(59, weights.size(), "pieces in the pools");
+        assertEquals(55, weights.size(), "pieces in the pools");
         assertEquals(2, weights.get("pirates_n_ships:navy_outpost/barracks"));
         assertEquals(1, weights.get("pirates_n_ships:navy_outpost/brig"));
         assertEquals(1, weights.get("pirates_n_ships:navy_outpost/watchtower"));
-        for (String walls : List.of("walls", "walls_flank", "walls_back")) {
+        for (String walls : List.of("walls_gate", "walls", "walls_flank_head", "walls_flank")) {
             assertEquals(OutpostKeys.TERMINATORS.location().toString(),
                     StandAloneOps.generated("worldgen/template_pool/navy_outpost/" + walls).getAsJsonObject().get("fallback").getAsString(), walls);
         }
+        // the towers fall back to themselves: at the depth limit the flank's angle (whose outs draw the towers) still gets one
+        assertEquals(OutpostKeys.TERMINATORS.location().toString(),
+                StandAloneOps.generated("worldgen/template_pool/navy_outpost/terminators").getAsJsonObject().get("fallback").getAsString());
         for (String lane : List.of("laneheads", "lanes")) {
             assertEquals(OutpostKeys.LANE_ENDS.location().toString(),
                     StandAloneOps.generated("worldgen/template_pool/navy_outpost/" + lane).getAsJsonObject().get("fallback").getAsString(), lane);
         }
         // each run's state can turn inland only by an angle of its own run, and the shore state is more likely to turn
         // or bastion than to run on straight
+        assertTrue(OutpostData.WALLS_GATE.keySet().stream().noneMatch(n -> n.contains("angle")), "the gate's walls never turn");
+        assertTrue(OutpostData.WALLS_FLANK_HEAD.keySet().stream().noneMatch(n -> n.contains("angle") || n.contains("step")),
+                "the flank's first piece runs on inland");
         int shoreTurns = OutpostData.WALLS.get("wall_angle_east") + OutpostData.WALLS.get("wall_bastion");
         int shoreEast = OutpostData.WALLS.values().stream().mapToInt(Integer::intValue).sum() - OutpostData.WALLS.get("wall_angle_west");
         assertTrue(2 * shoreTurns >= shoreEast, "an angle or a bastion is at least half the east run's draws");

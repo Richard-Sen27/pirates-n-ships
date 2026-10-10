@@ -7,7 +7,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 3
+      "weight": 4
     },
     {
       "element": {
@@ -16,7 +16,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 3
     },
     {
       "element": {
@@ -43,7 +43,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 1
     },
     {
       "element": {
@@ -52,7 +52,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 1
     },
     {
       "element": {

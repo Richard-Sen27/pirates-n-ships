@@ -3,7 +3,7 @@
     {
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "pirates_n_ships:navy_outpost/back_wall",
+        "location": "pirates_n_ships:navy_outpost/flank_wall",
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
@@ -12,16 +12,16 @@
     {
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "pirates_n_ships:navy_outpost/back_long",
+        "location": "pirates_n_ships:navy_outpost/flank_long",
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
-      "weight": 2
+      "weight": 3
     },
     {
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "pirates_n_ships:navy_outpost/back_stair",
+        "location": "pirates_n_ships:navy_outpost/flank_bastion",
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
@@ -30,7 +30,16 @@
     {
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "pirates_n_ships:navy_outpost/back_sally_port",
+        "location": "pirates_n_ships:navy_outpost/flank_sally_port",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:navy_outpost/flank_stair",
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },

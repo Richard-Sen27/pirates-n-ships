@@ -34,7 +34,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 1
     },
     {
       "element": {
@@ -43,7 +43,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 1
     }
   ],
   "fallback": "pirates_n_ships:navy_outpost/lane_ends"

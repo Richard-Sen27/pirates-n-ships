@@ -2,11 +2,13 @@
 wall pieces in their three states, the angles and the run-ending towers. The piece files (``wall_long.py``,
 ``flank_angle_east.py``, ...) call these with their state and kind.
 
-**States.** A run grows from the fort gate along the shore (state ``wall``: pool ``navy_outpost/walls``), turns inland
-at a salient angle (``flank``: pool ``walls_flank``) and may turn once more toward the other run (``back``: pool
-``walls_back``). A piece's out connectors name the pool of its state (``wall_*_out``, ``flank_*_out``,
-``back_*_out``), the salient angle the next state's, the flank's re-entrant step the shore state's again: a run turns
-inland at most twice and never toward the sea. Every piece attaches by ``wall_east_in`` / ``wall_west_in``.
+**States.** A run grows from the fort gate along the shore (state ``wall``: pool ``navy_outpost/walls``; the gate's own
+pair draws ``walls_gate``, the same without the angles), turns inland at a salient angle (``flank``: the first piece
+from ``walls_flank_head``, straights only, then ``walls_flank``) and may turn once more toward the other run, where a
+corner tower closes it (the flank's angle draws the towers). A piece's out connectors name the pool of its state
+(``wall_*_out``, ``flank_*_out``), an angle the next one (``flankhead_*_out``, ``end_*_out``), the flank's re-entrant
+step the shore state's again: a run turns inland at most twice and never toward the sea. Every piece attaches by
+``wall_east_in`` / ``wall_west_in``.
 
 **Section** (shared with the gate, ``_style.curtain``): the seaward (outer) skin on z 0, the body on z 1..4 to the
 walkway (y 4, people stand on y 5), parapet and merlons on z 0; landward the hoarding, the ladder and a gravel path
@@ -19,9 +21,10 @@ from buildspec import Piece
 H = 8                 # rows 0..7: walkway top y 4, parapet y 5, merlons y 6, caps y 7
 HOARD_Z = 5
 
-OUTS = {"wall": ("wall_east_out", "wall_west_out"), "flank": ("flank_east_out", "flank_west_out"),
-        "back": ("back_east_out", "back_west_out")}
-TITLES = {"wall": "Shore", "flank": "Flank", "back": "Back"}
+OUTS = {"wall": ("wall_east_out", "wall_west_out"), "flank": ("flank_east_out", "flank_west_out")}
+# what an angle in a state hands the run to: the flank's head (straights only), the towers
+ANGLE_OUTS = {"wall": ("flankhead_east_out", "flankhead_west_out"), "flank": ("end_east_out", "end_west_out")}
+TITLES = {"wall": "Shore", "flank": "Flank"}
 
 
 class At:
@@ -261,7 +264,7 @@ def angle(run, state):
     skin turns round the north-east corner and the run leaves through the south face at x 4 (its outer skin on x 6);
     the west run mirrors it. A gun over the outer face, a lantern on the corner merlon, the ladder in the inner corner."""
     east = run == "east"
-    out_name = OUTS[{"wall": "flank", "flank": "back"}[state]][0 if east else 1]
+    out_name = ANGLE_OUTS[state][0 if east else 1]
     p = _piece(state, f"angle_{run}", (7, H, 7), f"Angle ({run})")
 
     def X(x):                 # the east piece's x, mirrored for the west one

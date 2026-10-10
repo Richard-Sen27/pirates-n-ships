@@ -156,8 +156,8 @@ public final class NavyOutpostGameTests {
         ServerLevel level = helper.getLevel();
         var pools = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
         int elements = 0;
-        for (ResourceKey<StructureTemplatePool> key : List.of(OutpostKeys.START, OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK,
-                OutpostKeys.WALLS_BACK, OutpostKeys.BUILDINGS, OutpostKeys.QUAY, OutpostKeys.TERMINATORS, OutpostKeys.LANEHEADS,
+        for (ResourceKey<StructureTemplatePool> key : List.of(OutpostKeys.START, OutpostKeys.WALLS_GATE, OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK_HEAD,
+                OutpostKeys.WALLS_FLANK, OutpostKeys.BUILDINGS, OutpostKeys.QUAY, OutpostKeys.TERMINATORS, OutpostKeys.LANEHEADS,
                 OutpostKeys.LANES, OutpostKeys.LANE_ENDS, OutpostKeys.DECORATIONS)) {
             StructureTemplatePool pool = pools.get(key);
             helper.assertTrue(pool != null, "pool " + key.location() + " is loaded");
@@ -169,12 +169,13 @@ public final class NavyOutpostGameTests {
         }
         // weights expand in the pools: fort gate and quay one each, the rest as OutpostData weighs them
         int weights = 2;
-        for (var pool : List.of(OutpostData.WALLS, OutpostData.WALLS_FLANK, OutpostData.WALLS_BACK, OutpostData.BUILDINGS,
+        for (var pool : List.of(OutpostData.WALLS_GATE, OutpostData.WALLS, OutpostData.WALLS_FLANK_HEAD, OutpostData.WALLS_FLANK, OutpostData.BUILDINGS,
                 OutpostData.TERMINATORS, OutpostData.LANEHEADS, OutpostData.LANES, OutpostData.LANE_ENDS, OutpostData.DECORATIONS)) {
             weights += pool.values().stream().mapToInt(Integer::intValue).sum();
         }
         helper.assertValueEqual(elements, weights, "pool elements");
-        for (ResourceKey<StructureTemplatePool> walls : List.of(OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK, OutpostKeys.WALLS_BACK)) {
+        for (ResourceKey<StructureTemplatePool> walls : List.of(OutpostKeys.WALLS_GATE, OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK_HEAD,
+                OutpostKeys.WALLS_FLANK)) {
             helper.assertValueEqual(pools.get(walls).getFallback().unwrapKey(), Optional.of(OutpostKeys.TERMINATORS),
                     walls.location() + " falls back to the towers");
         }

@@ -26,14 +26,23 @@ CONNECTORS = {
     "building_in": ("building_out", EMPTY_POOL, "rollable"),
     "quay_out": ("quay_in", f"{MOD}:{GROUP}/quay", "aligned"),
     "quay_in": ("quay_out", EMPTY_POOL, "aligned"),
-    # STR4 (natural layout): the wall trace has three states, each with its own pool, so a run turns inland at most
-    # twice and never back toward the sea: along the shore (wall_*_out -> walls), down the flank after a salient
-    # angle (flank_*_out -> walls_flank), back toward the other run after a second one (back_*_out -> walls_back).
+    # STR4 (natural layout): the wall trace has states, each with its own pool, so a run turns inland at most twice
+    # and never back toward the sea: along the shore (wall_*_out -> walls), down the flank after a salient angle
+    # (flank_*_out -> walls_flank), and after a second angle the corner tower that closes it (end_*_out -> terminators).
     # Every wall piece attaches by wall_east_in / wall_west_in whatever its state.
+    # the gate's own pair draws from walls_gate (the shore state without the angles), so every run stands at least
+    # one piece along the shore before it may turn inland and the court has room between the flanks
+    "gate_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_gate", "aligned"),
+    "gate_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_gate", "aligned"),
+    # the shore's angle hands the run to walls_flank_head (the flank's straights only), so a run goes at least one
+    # piece inland before it may turn again; the flank's angle turns the run back toward the other run and hands it
+    # straight to the towers (end_*_out), so a run that closes the trace never runs into the court or the other run
+    "flankhead_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_flank_head", "aligned"),
+    "flankhead_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_flank_head", "aligned"),
+    "end_east_out": ("wall_east_in", f"{MOD}:{GROUP}/terminators", "aligned"),
+    "end_west_out": ("wall_west_in", f"{MOD}:{GROUP}/terminators", "aligned"),
     "flank_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_flank", "aligned"),
     "flank_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_flank", "aligned"),
-    "back_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_back", "aligned"),
-    "back_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_back", "aligned"),
     # STR4: the court's lanes (terrain matching) from the land gate, the buildings and decorations on their sides
     "lanehead_out": ("lane_in", f"{MOD}:{GROUP}/laneheads", "aligned"),
     "lane_out": ("lane_in", f"{MOD}:{GROUP}/lanes", "aligned"),

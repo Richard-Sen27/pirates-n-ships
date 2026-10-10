@@ -52,7 +52,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
-      "weight": 2
+      "weight": 1
     },
     {
       "element": {
@@ -61,7 +61,7 @@
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
-      "weight": 2
+      "weight": 1
     },
     {
       "element": {

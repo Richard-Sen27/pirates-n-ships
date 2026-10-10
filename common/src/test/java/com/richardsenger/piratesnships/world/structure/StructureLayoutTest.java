@@ -154,7 +154,7 @@ class StructureLayoutTest {
                 return -64;
             }
         };
-        CompoundTag tag = RegionSchematic.of(flat, new BoundingBox(0, 0, 0, 2, 1, 3));
+        CompoundTag tag = RegionSchematic.of(flat, new BoundingBox(0, 0, 0, 2, 1, 3), net.minecraft.core.BlockPos.ZERO);
         assertEquals(2, tag.getInt("Version"));
         assertEquals(3, tag.getShort("Width"));
         assertEquals(2, tag.getShort("Height"));

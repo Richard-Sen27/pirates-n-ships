@@ -282,7 +282,7 @@ public final class VillageLayoutGameTests {
         BoundingBox region = new BoundingBox(b.minX() - MARGIN, Math.max(level.getMinBuildHeight(), b.minY() - MARGIN),
                 b.minZ() - MARGIN, b.maxX() + MARGIN, Math.min(level.getMaxBuildHeight() - 1, b.maxY() + MARGIN), b.maxZ() + MARGIN);
         try {
-            RegionSchematic.write(level, region, dir().resolve("seafarer_village_" + seed + ".schem"));
+            RegionSchematic.write(level, region, helper.absolutePos(BlockPos.ZERO), dir().resolve("seafarer_village_" + seed + ".schem"));
         } catch (IOException e) {
             throw new IllegalStateException("could not write the region of seed " + seed, e);
         }

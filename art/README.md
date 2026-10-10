@@ -2846,7 +2846,12 @@ The files go to the folder in the system property `pirates_n_ships.layout.dir`, 
 GameTest run directory (`neoforge/build/gametest/structure-layouts`, `fabric/build/gametest/structure-layouts`); both
 GameTest runs forward the Gradle property `-Ppirates_n_ships.layout.dir=<dir>` to it (a relative path is taken from
 the run directory, so give an absolute one, e.g. a scratch folder outside the repository). Both
-loaders give byte-identical layout files. A seed's layout depends on the site's chunk as well, so the seeds are planned
+loaders give byte-identical dumps, the layout files and the region schematics alike (`cmp` on all eighteen files of
+the island's and the village's tests, STR5). The schematics once differed: `RegionSchematic` wrote the region's
+absolute world corner as the Sponge `Offset`, and the GameTest framework lays the arenas out at different world
+positions on NeoForge and Fabric (and in scoped and full runs); palette, block data and every block were already equal.
+`Offset` is now the corner relative to the test's origin (`helper.absolutePos(BlockPos.ZERO)`), so a dump depends on
+the placed blocks alone (`RegionSchematicTest`). A seed's layout depends on the site's chunk as well, so the seeds are planned
 at a fixed site and moved into the arena; neighbouring seeds can share a layout (`PortStructure.plan` takes the first
 of `seed`, `seed + 1`, ... that gives the shore's rotation), so the seeds lie far apart.
 

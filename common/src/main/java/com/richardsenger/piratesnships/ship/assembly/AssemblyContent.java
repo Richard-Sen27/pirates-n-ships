@@ -2,18 +2,26 @@ package com.richardsenger.piratesnships.ship.assembly;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
 
 /** Registry content of the {@code ship.assembly} module. */
 public final class AssemblyContent {
 
-    public static final RegistryEntry<Block, HelmBlock> HELM = ModRegistry.blockWithItem("helm",
-            () -> new HelmBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f).sound(SoundType.WOOD).noOcclusion()));
+    /**
+     * WOOD4: the helm in every wood ({@code <wood>_helm}); dark oak keeps the legacy id {@code helm} (kept ids,
+     * structures, ship templates and Ponder schematics name it). Strength as before WOOD4 (2.0).
+     */
+    public static final WoodFamily<HelmBlock> HELMS = WoodFamily.register("helm", ShipWood.DARK_OAK,
+            wood -> new HelmBlock(wood, WoodFamily.properties(wood).strength(2.0f).noOcclusion()));
+    /**
+     * The legacy member ({@code helm}, dark oak), for placing a helm; never compare a block against it: every member is
+     * a helm ({@code instanceof HelmBlock}).
+     */
+    public static final RegistryEntry<Block, HelmBlock> HELM = HELMS.lead();
 
     // ---------------------------------------------------------------- the Shipwright's Toolkit (RS2)
 

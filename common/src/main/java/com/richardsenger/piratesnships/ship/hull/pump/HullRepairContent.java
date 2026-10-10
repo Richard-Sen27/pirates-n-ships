@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.world.item.Item;
@@ -16,13 +18,15 @@ import net.minecraft.world.level.material.MapColor;
  */
 public final class HullRepairContent {
 
-    public static final RegistryEntry<Block, BilgePumpBlock> BILGE_PUMP = ModRegistry.blockWithItem("bilge_pump",
-            () -> new BilgePumpBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    /** WOOD4: the bilge pump in every wood; dark oak keeps the legacy id {@code bilge_pump}. */
+    public static final WoodFamily<BilgePumpBlock> BILGE_PUMPS = WoodFamily.register("bilge_pump", ShipWood.DARK_OAK,
+            wood -> new BilgePumpBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The legacy member ({@code bilge_pump}, dark oak), for placing one; every member is a pump ({@code instanceof}). */
+    public static final RegistryEntry<Block, BilgePumpBlock> BILGE_PUMP = BILGE_PUMPS.lead();
 
-    /** PMP1: carries the synced pumping flag the handle renderer reads. */
+    /** PMP1: carries the synced pumping flag the handle renderer reads (every member's, WOOD4). */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<BilgePumpBlockEntity>> BILGE_PUMP_ENTITY =
-            ModRegistry.blockEntity("bilge_pump", BilgePumpBlockEntity::new, BILGE_PUMP);
+            BILGE_PUMPS.blockEntity("bilge_pump", BilgePumpBlockEntity::new);
 
     /** A plank-like, watertight hull block; as strong as planks. */
     public static final RegistryEntry<Block, Block> HULL_PATCH_BLOCK = ModRegistry.block("hull_patch",

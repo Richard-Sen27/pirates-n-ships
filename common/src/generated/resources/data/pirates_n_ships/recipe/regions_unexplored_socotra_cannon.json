@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "regions_unexplored"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:stripped_socotra_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:socotra_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "regions_unexplored"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "regions_unexplored:stripped_socotra_log",
+        "regions_unexplored:socotra_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:cannon",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "regions_unexplored:stripped_socotra_log"
+    },
+    "N": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "regions_unexplored:socotra_planks"
+    }
+  },
+  "pattern": [
+    "NIN",
+    "LPL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:regions_unexplored_socotra_cannon"
+  }
+}

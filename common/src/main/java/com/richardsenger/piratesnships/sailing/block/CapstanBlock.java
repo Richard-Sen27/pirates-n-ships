@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
@@ -49,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
  * ({@link CapstanBlockEntity}), turning while a crew member works the capstan; the item shows both
  * ({@code block/capstan_item}).
  */
-public class CapstanBlock extends Block implements StationBlock, EntityBlock {
+public class CapstanBlock extends Block implements StationBlock, EntityBlock, WoodBlock {
 
     /** Block-state mirror of {@link AnchorState.Phase}. */
     public enum Phase implements StringRepresentable {
@@ -67,9 +69,18 @@ public class CapstanBlock extends Block implements StationBlock, EntityBlock {
 
     public static final EnumProperty<Phase> ANCHOR = EnumProperty.create("anchor", Phase.class);
 
-    public CapstanBlock(Properties properties) {
+    private final ShipWood wood;
+
+    /** WOOD4: one capstan per wood ({@code SailingBlocks.CAPSTANS}); every member behaves the same. */
+    public CapstanBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(ANCHOR, Phase.RAISED));
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     @Override

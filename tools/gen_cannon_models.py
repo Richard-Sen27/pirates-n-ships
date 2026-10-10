@@ -22,6 +22,10 @@ T = math.tan(math.radians(22.5))
 OUT = Path(sys.argv[-1])
 
 # texture variables (key -> vanilla id), the same set as the one-block cannon of F7f
+# WOOD4: the main wood (the dark oak cheeks, axletrees and their ends) is written as the wood family's variables
+# #planks, #log and #log_top (docs/woods.md, art/README.md "Wood families"); every other key is numbered by its place
+# among the keys a model uses, as before. The spruce bed, trucks and rammer stay accents.
+WOOD_VARS = {"cheek": "planks", "axle": "log", "axle_end": "log_top"}
 TEX = {
     "iron": "minecraft:block/anvil",
     "black": "minecraft:block/black_concrete",
@@ -143,7 +147,7 @@ class Model:
                 if k not in used:
                     used.append(k)
         order = [k for k in TEX if k in used]
-        index = {k: str(i) for i, k in enumerate(order)}
+        index = {k: WOOD_VARS.get(k, str(i)) for i, k in enumerate(order)}
         elements = []
         for e in self.elements:
             e = json.loads(json.dumps(e))

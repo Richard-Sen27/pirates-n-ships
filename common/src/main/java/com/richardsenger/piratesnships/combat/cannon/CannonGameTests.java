@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.combat.CombatConfig;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.block.PartBlockEntity;
@@ -334,6 +335,41 @@ public final class CannonGameTests {
                     "the cannon did not take powder after the reload time");
             h.succeed();
         });
+    }
+
+    /**
+     * WOOD4: a cannon of another wood than the legacy dark oak one (cherry, {@code cherry_cannon}) is placed from its
+     * item as both halves of that wood, loads, fires one ball from the muzzle, and breaking it drops one cherry cannon.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60)
+    public static void cherryCannonLoadsFiresAndDropsItself(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CannonBlock cherry = CannonContent.CANNONS.get(ShipWood.CHERRY);
+        h.setBlock(new BlockPos(4, 0, 4), Blocks.STONE);
+        h.setBlock(new BlockPos(3, 0, 4), Blocks.STONE);
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.setYRot(-90); // looking east
+        h.assertTrue(place(h, player, new ItemStack(cherry), new BlockPos(4, 1, 4)), "placing the cherry cannon was refused");
+        BlockPos pos = h.absolutePos(new BlockPos(4, 1, 4));
+        BlockPos rear = h.absolutePos(new BlockPos(3, 1, 4));
+        h.assertTrue(CannonBlock.isMaster(level.getBlockState(pos)) && level.getBlockState(pos).is(cherry)
+                && level.getBlockState(rear).is(cherry), "the halves are no cherry cannon: " + level.getBlockState(pos) + ", " + level.getBlockState(rear));
+        h.assertTrue(level.getBlockEntity(pos) instanceof CannonBlockEntity, "the cherry master has no block entity");
+        h.assertTrue(level.getBlockEntity(rear) instanceof PartBlockEntity, "the cherry rear has no part block entity");
+        loadFully(h, pos);
+        h.assertTrue(load(level, pos) == CannonLoad.LOADED, "the cherry cannon is not loaded");
+        CannonService.Use use = CannonService.fire(level, pos, player);
+        h.assertTrue(use.outcome() == CannonService.Outcome.FIRED && use.ball() != null, "no shot from the cherry cannon: " + use.outcome());
+        assertNear(h, use.ball().position(), Vec3.atBottomCenterOf(pos).add(CannonRules.MUZZLE_LENGTH, CannonRules.PIVOT_HEIGHT, 0),
+                1e-6, "muzzle of the cherry cannon");
+        use.ball().discard();
+        level.destroyBlock(rear, true);
+        h.assertTrue(level.getBlockState(pos).isAir(), "the cherry master stayed after its rear was broken");
+        int dropped = h.getEntities(EntityType.ITEM).stream().map(ItemEntity::getItem)
+                .filter(st -> st.is(cherry.asItem())).mapToInt(ItemStack::getCount).sum();
+        h.assertTrue(dropped == 1, "expected one cherry cannon item, got " + dropped);
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.succeed();
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60)

@@ -2,16 +2,16 @@
 	"credit": "Made with Blockbench, source art/models/bilge_pump.bbmodel",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"0": "minecraft:block/dark_oak_planks",
+		"planks": "minecraft:block/dark_oak_planks",
 		"1": "minecraft:block/anvil",
-		"2": "minecraft:block/stripped_spruce_log",
-		"3": "minecraft:block/stripped_spruce_log_top",
+		"log": "minecraft:block/stripped_spruce_log",
+		"log_top": "minecraft:block/stripped_spruce_log_top",
 		"4": "minecraft:block/iron_block",
 		"5": "minecraft:block/stripped_oak_log_top",
 		"6": "minecraft:block/stripped_oak_log",
 		"7": "minecraft:block/black_wool",
 		"8": "minecraft:block/blue_ice",
-		"particle": "minecraft:block/stripped_spruce_log"
+		"particle": "#log"
 	},
 	"elements": [
 		{
@@ -43,7 +43,7 @@
 						13,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"east": {
 					"uv": [
@@ -52,7 +52,7 @@
 						13,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"south": {
 					"uv": [
@@ -61,7 +61,7 @@
 						13,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"west": {
 					"uv": [
@@ -70,7 +70,7 @@
 						13,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -79,7 +79,7 @@
 						13,
 						13
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"down": {
 					"uv": [
@@ -88,7 +88,7 @@
 						13,
 						13
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				}
 			}
 		},
@@ -121,7 +121,7 @@
 						12,
 						14.5
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"east": {
 					"uv": [
@@ -130,7 +130,7 @@
 						12,
 						14.5
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"south": {
 					"uv": [
@@ -139,7 +139,7 @@
 						12,
 						14.5
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"west": {
 					"uv": [
@@ -148,7 +148,7 @@
 						12,
 						14.5
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -157,7 +157,7 @@
 						12,
 						12
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				}
 			}
 		},
@@ -466,7 +466,7 @@
 						11,
 						14
 					],
-					"texture": "#2"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -475,7 +475,7 @@
 						11,
 						14
 					],
-					"texture": "#2"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -484,7 +484,7 @@
 						11,
 						14
 					],
-					"texture": "#2"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -493,7 +493,7 @@
 						11,
 						14
 					],
-					"texture": "#2"
+					"texture": "#log"
 				},
 				"up": {
 					"uv": [
@@ -502,7 +502,7 @@
 						11,
 						11
 					],
-					"texture": "#3"
+					"texture": "#log_top"
 				}
 			}
 		},

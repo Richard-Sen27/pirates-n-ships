@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/capstan",
+  "textures": {
+    "log": "biomeswevegone:block/rainbow_eucalyptus/stripped_log",
+    "log_top": "biomeswevegone:block/rainbow_eucalyptus/stripped_log_top",
+    "particle": "biomeswevegone:block/rainbow_eucalyptus/planks",
+    "planks": "biomeswevegone:block/rainbow_eucalyptus/planks"
+  }
+}

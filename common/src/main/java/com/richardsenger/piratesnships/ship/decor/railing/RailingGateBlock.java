@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -64,6 +65,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * outboard lays the gangway from the block beyond it (the gate is in {@code #pirates_n_ships:gangway_openings}, which
  * the plank reads for open gates only, {@code PlankRun#opening}). Its posts carry a lantern or a chain like a railing
  * post's ({@link RailingRules#supportBoxes}).
+ *
+ * <p><b>Double gates</b> (RAIL7, docs/design.md "Wide ports, double gates and the net's foot (RAIL7, RL6)"): two gates
+ * side by side on one edge, facing the same way with mirrored hinges, are one double gate ({@link #PAIRED}, worked out
+ * on placement and on every neighbour update, {@link RailingRules#pairs}): the leaves hang on the outer posts, the
+ * post where they meet is left out and each leaf runs on to the middle (the {@code _meet} part), the sill runs through.
+ * A gate placed beside a free gate (one not yet in a pair) takes the hinge away from it, turning that gate's hinge
+ * round if it hung on the new gate's side ({@link RailingRules#placedHingeLeft}, {@link #setPlacedBy}); a gate already
+ * in a pair is never taken, so a row placed one by one pairs as first and second, third and fourth. Using either leaf
+ * opens or closes both ({@link #partner}); redstone moves each leaf by its own signal, like vanilla's doors. Open, both
+ * cells are gangway openings and crew path through either.
  */
 public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, WoodBlock {
     /** The wood of this member (WOOD1). */
@@ -79,6 +90,8 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
     public static final EnumProperty<DoorHingeSide> HINGE = BlockStateProperties.DOOR_HINGE;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    /** RAIL7: one leaf of a double gate (its latch-side neighbour is its mirrored partner); the latch post is left out. */
+    public static final BooleanProperty PAIRED = BooleanProperty.create("paired");
 
     private final SoundEvent openSound;
     private final SoundEvent closeSound;
@@ -93,12 +106,13 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
         this.openSound = wood.woodType().fenceGateOpen();
         this.closeSound = wood.woodType().fenceGateClose();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, false)
-                .setValue(HINGE, DoorHingeSide.LEFT).setValue(POWERED, false).setValue(Waterlogging.WATERLOGGED, false));
+                .setValue(HINGE, DoorHingeSide.LEFT).setValue(POWERED, false).setValue(PAIRED, false)
+                .setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, OPEN, HINGE, POWERED, Waterlogging.WATERLOGGED);
+        builder.add(FACING, OPEN, HINGE, POWERED, PAIRED, Waterlogging.WATERLOGGED);
     }
 
     // ------------------------------------------------------------------ placement
@@ -118,17 +132,93 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
         double fz = Math.max(0, Math.min(1, hit.z - pos.getZ()));
         Direction edge = RailingRules.edgeForClick(fx, fz, context.getClickedFace().getAxis() == Direction.Axis.Y,
                 context.getHorizontalDirection());
-        boolean powered = context.getLevel().hasNeighborSignal(pos);
+        Level level = context.getLevel();
+        boolean powered = level.hasNeighborSignal(pos);
+        // RAIL7: beside a free gate on the same edge, take the hinge away from it so the two make a double gate
+        boolean hingeLeft = RailingRules.placedHingeLeft(RailingRules.gateHingeLeft(fx, fz, edge),
+                neighbour(level, pos, edge, true), neighbour(level, pos, edge, false));
         BlockState state = defaultBlockState().setValue(FACING, edge)
-                .setValue(HINGE, RailingRules.gateHingeLeft(fx, fz, edge) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)
+                .setValue(HINGE, hingeLeft ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)
                 .setValue(POWERED, powered).setValue(OPEN, powered);
-        return Waterlogging.placed(state, context);
+        BlockState mate = level.getBlockState(pos.relative(RailingRules.latchSide(edge, hingeLeft)));
+        if (!powered && isGateFacing(mate, edge) && !isPaired(level, pos.relative(RailingRules.latchSide(edge, hingeLeft)), mate, pos)) {
+            state = state.setValue(OPEN, mate.getValue(OPEN)); // join the leaf as it stands
+        }
+        return Waterlogging.placed(withPaired(state, level, pos), context);
+    }
+
+    /**
+     * RAIL7: the gate placed by a player pairs with the free gate on its latch side; if that one hung on this side it
+     * turns its hinge round (and opens or shuts like this one), so the two leaves hang on the outer posts.
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (level.isClientSide) return;
+        Direction facing = state.getValue(FACING);
+        boolean hingeLeft = state.getValue(HINGE) == DoorHingeSide.LEFT;
+        BlockPos matePos = pos.relative(RailingRules.latchSide(facing, hingeLeft));
+        BlockState mate = level.getBlockState(matePos);
+        if (!(mate.getBlock() instanceof RailingGateBlock)) return;
+        if (!RailingRules.flipsNeighbour(neighbourInfo(level, matePos, mate, pos, facing))) return;
+        BlockState turned = mate.setValue(HINGE, hingeLeft ? DoorHingeSide.RIGHT : DoorHingeSide.LEFT);
+        if (!mate.getValue(POWERED)) turned = turned.setValue(OPEN, state.getValue(OPEN));
+        level.setBlock(matePos, withPaired(turned, level, matePos), Block.UPDATE_ALL);
+        BlockState self = level.getBlockState(pos);
+        if (self.is(this)) level.setBlock(pos, withPaired(self, level, pos), Block.UPDATE_CLIENTS);
+    }
+
+    /** What a gate placed at {@code pos} facing {@code facing} sees of the block on its left ({@code left}) or right. */
+    private static RailingRules.GateNeighbour neighbour(Level level, BlockPos pos, Direction facing, boolean left) {
+        BlockPos at = pos.relative(left ? RailingRules.leftOf(facing) : RailingRules.rightOf(facing));
+        return neighbourInfo(level, at, level.getBlockState(at), pos, facing);
+    }
+
+    /** {@link RailingRules.GateNeighbour} of the block {@code s} at {@code at}, beside a new gate at {@code newPos}. */
+    private static RailingRules.GateNeighbour neighbourInfo(BlockGetter level, BlockPos at, BlockState s, BlockPos newPos, Direction facing) {
+        if (!isGateFacing(s, facing)) return RailingRules.GateNeighbour.NONE;
+        // its hinge is toward the new gate when its latch side points away from it
+        boolean hingeToward = !at.relative(RailingRules.latchSide(facing, s.getValue(HINGE) == DoorHingeSide.LEFT)).equals(newPos);
+        return new RailingRules.GateNeighbour(true, hingeToward, isPaired(level, at, s, newPos));
+    }
+
+    /** Whether the gate {@code s} at {@code at} pairs with a gate other than the one at {@code exclude}. */
+    private static boolean isPaired(BlockGetter level, BlockPos at, BlockState s, BlockPos exclude) {
+        BlockPos latch = at.relative(RailingRules.latchSide(s.getValue(FACING), s.getValue(HINGE) == DoorHingeSide.LEFT));
+        return !latch.equals(exclude) && partner(level, at, s) != null;
+    }
+
+    private static boolean isGateFacing(BlockState s, Direction facing) {
+        return s.getBlock() instanceof RailingGateBlock && s.getValue(FACING) == facing;
+    }
+
+    /**
+     * RAIL7: the position of the other leaf of the double gate {@code state} at {@code pos} belongs to, or null for a
+     * single gate: the gate on its latch side, facing the same way with the mirrored hinge ({@link RailingRules#pairs}).
+     */
+    public static @Nullable BlockPos partner(BlockGetter level, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof RailingGateBlock)) return null;
+        Direction facing = state.getValue(FACING);
+        boolean hingeLeft = state.getValue(HINGE) == DoorHingeSide.LEFT;
+        BlockPos at = pos.relative(RailingRules.latchSide(facing, hingeLeft));
+        BlockState n = level.getBlockState(at);
+        boolean gate = n.getBlock() instanceof RailingGateBlock;
+        return RailingRules.pairs(facing, hingeLeft, gate, gate ? n.getValue(FACING) : null,
+                gate && n.getValue(HINGE) == DoorHingeSide.LEFT) ? at : null;
+    }
+
+    /** RAIL7: {@code state} with {@link #PAIRED} worked out from its latch-side neighbour. */
+    public static BlockState withPaired(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.setValue(PAIRED, partner(level, pos, state) != null);
     }
 
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
                                      BlockPos pos, BlockPos neighborPos) {
         Waterlogging.tickFluid(state, level, pos);
+        if (direction.getAxis().isHorizontal()) {
+            return withPaired(state, level, pos);
+        }
         return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
     }
 
@@ -151,6 +241,14 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         boolean open = !state.getValue(OPEN);
         level.setBlock(pos, state.setValue(OPEN, open), Block.UPDATE_CLIENTS | Block.UPDATE_IMMEDIATE);
+        // RAIL7: the other leaf of a double gate swings with it
+        BlockPos other = partner(level, pos, state);
+        if (other != null) {
+            BlockState o = level.getBlockState(other);
+            if (o.getValue(OPEN) != open) {
+                level.setBlock(other, o.setValue(OPEN, open), Block.UPDATE_CLIENTS | Block.UPDATE_IMMEDIATE);
+            }
+        }
         swingSound(level, player, pos, open);
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -183,7 +281,7 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return outlines.computeIfAbsent(state, s -> RailingBlock.shape(RailingRules.gateBoxes(s.getValue(FACING), s.getValue(OPEN),
-                RailingRules.POST_TOP, RailingRules.RAIL_TOP, RailingRules.POST)));
+                RailingRules.POST_TOP, RailingRules.RAIL_TOP, RailingRules.POST, hingeLeft(s), s.getValue(PAIRED))));
     }
 
     /** Closed: the posts and the leaf at the railing's collision height; open: the port's collision. */
@@ -195,15 +293,21 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, W
             collisionHeight = height;
         }
         return collisions.computeIfAbsent(state, s -> RailingBlock.shape(s.getValue(OPEN)
-                ? RailingRules.gateBoxes(s.getValue(FACING), true, RailingRules.POST_TOP, 0, RailingRules.PORT_COLLISION_POST)
-                : RailingRules.gateBoxes(s.getValue(FACING), false, height, height, RailingRules.POST)));
+                ? RailingRules.gateBoxes(s.getValue(FACING), true, RailingRules.POST_TOP, 0, RailingRules.PORT_COLLISION_POST,
+                        hingeLeft(s), s.getValue(PAIRED))
+                : RailingRules.gateBoxes(s.getValue(FACING), false, height, height, RailingRules.POST, hingeLeft(s), s.getValue(PAIRED))));
     }
 
     /** Its posts carry a lantern or a chain like a railing post ({@link RailingRules#supportBoxes}). */
     @Override
     protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
         return supports.computeIfAbsent(state, s -> RailingBlock.shape(RailingRules.supportBoxes(
-                RailingRules.portBoxes(s.getValue(FACING), RailingRules.RAIL_TOP), true)));
+                RailingRules.gateBoxes(s.getValue(FACING), true, RailingRules.RAIL_TOP, 0, RailingRules.POST, hingeLeft(s),
+                        s.getValue(PAIRED)), true)));
+    }
+
+    private static boolean hingeLeft(BlockState s) {
+        return s.getValue(HINGE) == DoorHingeSide.LEFT;
     }
 
     /** Crew and mobs walk through an open gate, not a closed one (like a fence gate). */

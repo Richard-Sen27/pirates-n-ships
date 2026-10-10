@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.ship.decor.DecorConfig;
 import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import net.minecraft.core.BlockPos;
@@ -49,7 +51,10 @@ import java.util.Set;
  * sounds, its collision and pathing follow; a villager paths through the open gate and not the closed one; a plank laid
  * from the open gate's sill starts beyond the gate, from a closed gate it does not, and a plank in hand never swings
  * the gate; a lantern hangs below and stands on a railing post (and a gate's), a chain runs on from a post, and neither
- * is carried by a plain rail. The grappling hook on a railing is in {@code RailingGrappleGameTests}.
+ * is carried by a plain rail. The grappling hook on a railing is in {@code RailingGrappleGameTests}. RAIL7: two gates
+ * side by side pair as a double gate (mirrored hinges, no post where they meet, one use swings both), a row pairs in
+ * twos, only mirrored gates on one edge pair, and an open double gate takes a plank from either sill and lets crew
+ * through onto it.
  */
 public final class RailingGateGameTests {
 
@@ -298,6 +303,193 @@ public final class RailingGateGameTests {
         h.assertTrue(r == ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION, "the gate takes the plank's click: " + r);
         h.assertTrue(open(h, at), "the gate swung");
         h.succeed();
+    }
+
+    // ------------------------------------------------------------------ double gates (RAIL7)
+
+    private static String hinge(GameTestHelper h, BlockPos rel) {
+        return h.getBlockState(rel).getValue(RailingGateBlock.HINGE) == DoorHingeSide.LEFT ? "L" : "R";
+    }
+
+    private static boolean paired(GameTestHelper h, BlockPos rel) {
+        return h.getBlockState(rel).getValue(RailingGateBlock.PAIRED);
+    }
+
+    /** Whether the outline of the block at {@code rel} hits {@code local} (block coordinates, 0..1 inside it). */
+    private static boolean outlineIn(GameTestHelper h, BlockPos rel, AABB local) {
+        BlockPos abs = h.absolutePos(rel);
+        return h.getLevel().getBlockState(abs).getShape(h.getLevel(), abs, CollisionContext.empty()).toAabbs().stream()
+                .anyMatch(b -> b.intersects(local));
+    }
+
+    /** Places a gate with the item on the north edge of {@code cell}, clicking the floor's top at {@code fx} (z 0.1). */
+    private static void placeGate(GameTestHelper h, Player p, BlockPos cell, double fx) {
+        h.assertTrue(use(h, p, cell.below(), Direction.UP, fx, 1.0, 0.1).consumesAction(), "the gate at " + cell + " was not placed");
+    }
+
+    /** Above the sill and the cap, where only a post reaches (y 16.2..16.8 px), at the edge's west or east end. */
+    private static AABB postTop(boolean west) {
+        return west ? new AABB(0.0, 16.2 / 16, 0.0, 2 / 16.0, 16.8 / 16, 2 / 16.0)
+                : new AABB(14 / 16.0, 16.2 / 16, 0.0, 1.0, 16.8 / 16, 2 / 16.0);
+    }
+
+    /**
+     * RAIL7: a gate placed with the item beside a gate on the same edge takes the mirrored hinge (the first clicked in
+     * its west half hangs on its west post; the second, clicked in its west half too, hangs on its east post), the two
+     * pair, the posts where they meet are gone and each closed leaf reaches the middle; using either leaf opens both and
+     * using either again shuts both.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void twoGatesSideBySideAreADoubleGate(GameTestHelper h) {
+        floor(h);
+        Player p = holder(h, gate().asItem(), 2, Direction.NORTH);
+        BlockPos west = new BlockPos(3, 1, 4);
+        BlockPos east = new BlockPos(4, 1, 4);
+        placeGate(h, p, west, 0.2);
+        h.assertTrue(hinge(h, west).equals("L") && !paired(h, west), "a lone gate: hinge " + hinge(h, west) + ", paired " + paired(h, west));
+        h.assertTrue(outlineIn(h, west, postTop(true)) && outlineIn(h, west, postTop(false)), "a lone gate lacks a post");
+        placeGate(h, p, east, 0.2);
+        h.assertTrue(hinge(h, east).equals("R"), "the second gate did not take the mirrored hinge: " + hinge(h, east));
+        h.assertTrue(paired(h, west) && paired(h, east), "not paired: " + paired(h, west) + ", " + paired(h, east));
+        h.assertTrue(RailingGateBlock.partner(h.getLevel(), h.absolutePos(west), h.getBlockState(west)).equals(h.absolutePos(east)),
+                "the west leaf's partner is not the east one");
+        h.assertTrue(outlineIn(h, west, postTop(true)) && outlineIn(h, east, postTop(false)), "an outer post is missing");
+        h.assertFalse(outlineIn(h, west, postTop(false)) || outlineIn(h, east, postTop(true)), "a post stands where the leaves meet");
+        // closed, the leaves close the middle
+        AABB westMiddle = new AABB(14.5 / 16.0, 0.5, 0.0, 1.0, 1.4, 0.1);
+        AABB eastMiddle = new AABB(0.0, 0.5, 0.0, 1.5 / 16.0, 1.4, 0.1);
+        h.assertTrue(collides(h, west, westMiddle) && collides(h, east, eastMiddle), "the closed leaves leave a gap in the middle");
+        Player user = h.makeMockPlayer(GameType.SURVIVAL);
+        h.useBlock(west, user);
+        h.assertTrue(open(h, west) && open(h, east), "using the west leaf did not open both");
+        h.assertFalse(collides(h, west, westMiddle) || collides(h, east, eastMiddle), "the open double gate still blocks the middle");
+        h.assertTrue(h.getBlockState(east).isPathfindable(PathComputationType.LAND), "crew cannot path through the east leaf");
+        h.useBlock(east, user);
+        h.assertFalse(open(h, west) || open(h, east), "using the east leaf did not shut both");
+        h.useBlock(east, user);
+        h.assertTrue(open(h, west) && open(h, east), "using the east leaf did not open both");
+        h.succeed();
+    }
+
+    /**
+     * RAIL7: the second gate placed on the hinge side of a lone gate turns that gate's hinge round, so the two still
+     * hang on their outer posts: the first clicked in its east half (hinged east), the second east of it.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aLoneGateTurnsItsHingeRoundForItsNewPartner(GameTestHelper h) {
+        floor(h);
+        Player p = holder(h, gate().asItem(), 2, Direction.NORTH);
+        BlockPos west = new BlockPos(3, 1, 4);
+        BlockPos east = new BlockPos(4, 1, 4);
+        placeGate(h, p, west, 0.8);
+        h.assertTrue(hinge(h, west).equals("R"), "the first gate hangs " + hinge(h, west));
+        placeGate(h, p, east, 0.8);
+        h.assertTrue(hinge(h, west).equals("L") && hinge(h, east).equals("R"), "hinges " + hinge(h, west) + hinge(h, east));
+        h.assertTrue(paired(h, west) && paired(h, east), "not paired");
+        h.succeed();
+    }
+
+    /**
+     * RAIL7: three gates placed west to east: the first two pair, the third (beside a gate already paired) stays single
+     * with the hinge its click gives and opens alone; a fourth east of it pairs with the third.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aRowOfGatesPairsInTwos(GameTestHelper h) {
+        floor(h);
+        Player p = holder(h, gate().asItem(), 4, Direction.NORTH);
+        BlockPos[] g = {new BlockPos(2, 1, 4), new BlockPos(3, 1, 4), new BlockPos(4, 1, 4), new BlockPos(5, 1, 4)};
+        placeGate(h, p, g[0], 0.2);
+        placeGate(h, p, g[1], 0.2);
+        placeGate(h, p, g[2], 0.2);
+        h.assertTrue(paired(h, g[0]) && paired(h, g[1]), "the first two do not pair");
+        h.assertFalse(paired(h, g[2]), "the third took a gate already paired");
+        h.assertTrue(hinge(h, g[2]).equals("L"), "the third does not hang as clicked: " + hinge(h, g[2]));
+        h.assertTrue(outlineIn(h, g[2], postTop(true)) && outlineIn(h, g[2], postTop(false)), "the single third gate lacks a post");
+        Player user = h.makeMockPlayer(GameType.SURVIVAL);
+        h.useBlock(g[2], user);
+        h.assertTrue(open(h, g[2]) && !open(h, g[1]) && !open(h, g[0]), "the single third gate swung the pair");
+        h.useBlock(g[2], user);
+        h.useBlock(g[0], user);
+        h.assertTrue(open(h, g[0]) && open(h, g[1]) && !open(h, g[2]), "the pair swung the third gate");
+        h.useBlock(g[0], user);
+        placeGate(h, p, g[3], 0.2);
+        h.assertTrue(paired(h, g[2]) && paired(h, g[3]), "the fourth does not pair with the third");
+        h.assertTrue(hinge(h, g[2]).equals("L") && hinge(h, g[3]).equals("R"), "hinges " + hinge(h, g[2]) + hinge(h, g[3]));
+        h.assertTrue(paired(h, g[0]) && paired(h, g[1]), "the first pair came apart");
+        h.succeed();
+    }
+
+    /**
+     * RAIL7: a gate beside a gate of another facing, or with the same hinge set without placement (a hinge post between
+     * them), stays single; breaking one leaf of a pair gives the other its latch post back.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void onlyMirroredGatesOnOneEdgePair(GameTestHelper h) {
+        floor(h);
+        BlockPos a = new BlockPos(3, 1, 4);
+        BlockPos b = new BlockPos(4, 1, 4);
+        h.setBlock(a, gateState(Direction.NORTH, false).setValue(RailingGateBlock.HINGE, DoorHingeSide.LEFT));
+        h.setBlock(b, gateState(Direction.NORTH, false).setValue(RailingGateBlock.HINGE, DoorHingeSide.LEFT));
+        h.assertFalse(paired(h, a) || RailingGateBlock.partner(h.getLevel(), h.absolutePos(a), h.getBlockState(a)) != null,
+                "two gates with the same hinge paired");
+        h.setBlock(b, gateState(Direction.SOUTH, false).setValue(RailingGateBlock.HINGE, DoorHingeSide.RIGHT));
+        h.assertFalse(paired(h, a), "a gate paired with one facing the other way");
+        h.setBlock(b, gateState(Direction.NORTH, false).setValue(RailingGateBlock.HINGE, DoorHingeSide.RIGHT));
+        h.assertTrue(paired(h, a), "the mirrored gate did not pair");
+        h.destroyBlock(b);
+        h.assertFalse(paired(h, a), "the leaf left alone is still paired");
+        h.assertTrue(outlineIn(h, a, postTop(false)), "the leaf left alone did not get its latch post back");
+        h.succeed();
+    }
+
+    /**
+     * RAIL7: an open double gate on a stone edge facing east, a stone landing two blocks of air beyond it: a plank used
+     * on either cell's sill starts beyond that cell at the gate's height and lands level, and a crew member walks from
+     * the deck through the open double gate and along the plank onto the landing.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 400)
+    public static void aPlankFromEitherSillOfAnOpenDoubleGateAndCrewCross(GameTestHelper h) {
+        for (int x = 0; x <= 3; x++) for (int z = 1; z <= 7; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        for (int x = 6; x <= 8; x++) for (int z = 1; z <= 7; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        // the rest of the edge railed, so the only way off the deck is the gate
+        for (int z = 1; z <= 7; z++) {
+            if (z != 3 && z != 4) setRailing(h, new BlockPos(3, 2, z), Direction.EAST);
+        }
+        // facing east the left end is north: the north leaf hangs left, the south one right
+        BlockPos north = new BlockPos(3, 2, 3);
+        BlockPos south = new BlockPos(3, 2, 4);
+        h.setBlock(north, gateState(Direction.EAST, true).setValue(RailingGateBlock.HINGE, DoorHingeSide.LEFT));
+        BlockPos southAbs = h.absolutePos(south);
+        h.getLevel().setBlock(southAbs, RailingGateBlock.withPaired(gateState(Direction.EAST, true)
+                .setValue(RailingGateBlock.HINGE, DoorHingeSide.RIGHT), h.getLevel(), southAbs), 3);
+        h.assertTrue(paired(h, north) && paired(h, south), "the double gate is not paired");
+        for (BlockPos cell : new BlockPos[]{north, south}) {
+            BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(cell), Direction.UP, Direction.EAST);
+            h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "refused from " + cell + ": " + laid.outcome());
+            h.assertTrue(laid.cells().get(0).equals(h.absolutePos(cell.east())), "the run from " + cell + " starts at " + laid.cells().get(0));
+            h.assertTrue(startFloor(laid) == h.absolutePos(cell).getY(), "the board from " + cell + " starts at y " + startFloor(laid));
+            h.assertTrue(laid.landing() == PlankRun.Landing.LEVEL, "landing " + laid.landing());
+        }
+        net.minecraft.server.level.ServerLevel level = h.getLevel();
+        CrewMember c = StationContent.CREW_MEMBER.get().create(level);
+        if (c == null) throw new AssertionError("no crew member");
+        Vec3 from = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1, 2, 4)));
+        Vec3 to = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(7, 2, 4)));
+        c.moveTo(from.x, from.y, from.z, -90.0f, 0.0f);
+        c.setStationary(true);
+        level.addFreshEntity(c);
+        h.onEachTick(() -> {
+            if (c.getNavigation().isDone()) {
+                c.getNavigation().moveTo(to.x, to.y, to.z, 1.0);
+            }
+        });
+        h.succeedWhen(() -> {
+            double landing = h.absolutePos(new BlockPos(6, 2, 4)).getX();
+            h.assertTrue(c.position().distanceTo(to) < 1.6 && c.getX() > landing + 0.3,
+                    "the crew member is at " + c.position() + ", not on the landing near " + to);
+            h.assertTrue(Math.abs(c.getY() - to.y) < 0.2, "the crew member is not on the landing");
+            c.discard();
+        });
     }
 
     // ------------------------------------------------------------------ hanging from a post

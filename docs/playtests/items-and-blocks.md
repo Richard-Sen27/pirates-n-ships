@@ -707,6 +707,37 @@ railing: three string over two planks with a gap between them, gives 4).
 - **Other woods:** a spruce rope railing and a dark oak railing show their wood's log and planks; the rope keeps its colour. Say whether the lines read as twisted rope at a few
   blocks' distance (the texture is `block/rope_line`, drawn for the 1.5 px lines).
 
+### Wide ports and double gates (RAIL7)
+
+Renders: `art/renders/railing_wide_port.png` (two and three ports in a row against a lone port), `railing_gate.png`
+(a double gate shut and open, from inboard and outboard). `/give @s pirates_n_ships:oak_railing 16`,
+`oak_railing_port 4`, `oak_railing_gate 4`, `boarding_plank 2`, `cannon`, `cannonball 4`, `gunpowder 4`.
+- **Wide port:** on a deck edge lay a railing, then two ports side by side, then a railing. Expected: posts only at the
+  two outer ends of the opening (where the railings end against them), no post in the middle, the sill runs through
+  without a seam you notice. Add a third port: still posts only at the outer ends. Break the middle port: each
+  remaining port gets its post back on that side.
+- **Walk through:** walk along the opening through both blocks and in and out of each: nothing catches you between the
+  two blocks.
+- **Cannon:** place a cannon right behind the second (or third) port block and fire: the ball flies out through the
+  opening, no port breaks.
+- **Port beside other things:** a port next to a plain railing, next to a gate and next to a port on another edge keeps
+  its post on that side.
+- **Double gate:** place a gate, then a second one right beside it on the same edge (click anywhere on the second
+  block's edge). Expected: the two leaves hang on the outer posts and meet in the middle, each with a plain upright at
+  its meeting end, no post between them; the cap rail runs across without a gap. Do it again with the first gate placed
+  by clicking its other half (hinged toward where the second goes): the first gate turns its hinge round when the
+  second is placed.
+- **Open and shut:** use either leaf: both swing open together (one fence-gate sound), outboard, each about its outer
+  post; use either again: both shut. Watch both from outboard: the open leaves stand clear of each other.
+- **Three gates:** place a third gate beside the pair: it stays a single gate (both its posts), opens alone, and the
+  pair still opens together; a fourth beside the third pairs with it.
+- **Gangway:** open a double gate on a ship's side and use a boarding plank on each sill while facing out: a plank goes
+  out from each of the two blocks. Order the crew to board (or walk one across): they pass through the open double gate.
+- **Redstone:** a lever beside one leaf opens only that leaf (like vanilla doors); say whether you want the signal to
+  move both.
+- **Saved worlds:** ports and gates placed before RAIL7 look as before (a lone port keeps both posts); two older ports
+  side by side lose their middle posts as soon as a block next to them changes (or when re-placed).
+
 ## Ship's bell swing (BELL1)
 
 The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step

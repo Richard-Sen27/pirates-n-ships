@@ -580,7 +580,9 @@ vault it) and crew do not walk through it.
 A **Railing Port** (two sticks over three planks, gives 2) is the opening in a railing: its two posts and a low sill,
 no rails. A railing beside it ends against its post. A cannon placed right behind it fires through it at every
 elevation; use a boarding plank on the sill while facing out and the gangway starts in the block beyond the port at
-deck height, so the port is also where boarders go across. A **swivel gun** placed on a railing sits on the rail
+deck height, so the port is also where boarders go across. **Ports side by side** on the same edge make one wide
+opening: the posts between them go, only the outer ends keep theirs, and the sill runs through, so a cannon behind any
+of its blocks fires through and a plank starts from any of its blocks. A **swivel gun** placed on a railing sits on the rail
 itself, at the edge (with a corner railing, on the edge nearest your click), and its crew stands on the deck inside;
 **ratlines** stand on a railing's top or hang on its side. Railings weigh like fences on a ship and hold water. Server
 config `ship_decor.railings_enabled` (off: railings, ports and gates cannot be placed; placed ones stay).
@@ -590,7 +592,11 @@ a railing section with two iron hinge straps on one post and a latch on the othe
 hinge), open it swings outboard like a fence gate. Use it, or give it a redstone signal, to open and close it. A run of
 railing continues into it without a second post. Closed it blocks like a railing and crew go around it; open, crew walk
 through, and a boarding plank used on its sill while facing out lays the gangway from beyond it, as from a port (a
-plank in hand does not swing the gate). **Railing posts carry things:** wherever a railing (or a port's or gate's) post
+plank in hand does not swing the gate). **Double gate:** place a second gate right beside a gate on the same edge and it
+hangs on the other side (the first turns its hinge round if it has to), so the two leaves hang on the outer posts and
+meet in the middle with no post between them; using either leaf opens or shuts both (a redstone signal still moves
+each leaf by itself, like doors). A gate already in a pair is never taken by a third, so a row of gates pairs as first
+and second, third and fourth. An open double gate is two blocks wide: a plank goes out from either sill. **Railing posts carry things:** wherever a railing (or a port's or gate's) post
 stands, a lantern or soul lantern hangs below the block or stands on it, and a chain runs on from it; a plain stretch
 of rail carries nothing. The **grappling hook** holds on a railing or gate like on a cleat (twice the rope's length),
 but a hard haul tears the railing out and the rope lets go (`grapple.railing_break_force`).

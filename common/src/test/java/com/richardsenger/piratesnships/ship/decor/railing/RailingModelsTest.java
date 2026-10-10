@@ -99,10 +99,55 @@ class RailingModelsTest {
         for (String block : List.of("oak_bulwark", "oak_rope_railing")) {
             assertTrue(parts(block).stream().anyMatch(p -> model(p).equals("pirates_n_ships:block/oak_railing_post")), block);
         }
-        for (String block : List.of("oak_railing", "oak_bulwark", "oak_rope_railing", "oak_railing_gate", "oak_bulwark_port")) {
+        for (String block : List.of("oak_railing", "oak_bulwark", "oak_rope_railing", "oak_railing_gate", "oak_bulwark_port", "oak_railing_port")) {
             for (JsonObject p : parts(block)) {
                 assertFalse(p.getAsJsonObject("apply").has("uvlock"), block + ": uvlock on " + model(p));
             }
         }
+    }
+
+    /**
+     * RAIL7: the port draws its sill always and each post only while it stands ({@code post_left}/{@code post_right});
+     * the gate its sill, the post it hangs on, the latch post only unpaired and the leaf's run to the middle only paired.
+     */
+    @Test
+    void wideOpeningsLeaveTheMiddlePostsOut() throws IOException {
+        int sills = 0, posts = 0;
+        for (JsonObject part : parts("oak_railing_port")) {
+            JsonObject when = part.getAsJsonObject("when");
+            String m = model(part);
+            if (m.equals("pirates_n_ships:block/oak_railing_port_sill")) {
+                assertEquals(1, when.size(), "the sill hangs on the facing only: " + when);
+                sills++;
+            } else {
+                assertEquals("pirates_n_ships:block/oak_railing_post", m);
+                assertTrue(when.has("post_left") ^ when.has("post_right"), "a post on one end: " + when);
+                posts++;
+            }
+        }
+        assertEquals(4, sills);
+        assertEquals(8, posts);
+        int latchPosts = 0, meets = 0;
+        for (JsonObject part : parts("oak_railing_gate")) {
+            JsonObject when = part.getAsJsonObject("when");
+            String m = model(part);
+            if (m.endsWith("_meet") || m.endsWith("_meet_open")) {
+                assertEquals("true", when.get("paired").getAsString(), m + ": " + when);
+                meets++;
+            } else if (when.has("paired")) {
+                assertEquals("false", when.get("paired").getAsString(), m + ": " + when);
+                assertEquals("pirates_n_ships:block/oak_railing_post", m);
+                latchPosts++;
+            }
+        }
+        assertEquals(8, latchPosts, "a latch post per facing and hinge");
+        assertEquals(16, meets, "a meeting piece per facing, hinge and open");
+        Path sill = MODELS.resolve("railing_port_sill.json");
+        JsonArray els = json(sill).getAsJsonArray("elements");
+        assertEquals(1, els.size());
+        JsonObject el = els.get(0).getAsJsonObject();
+        assertEquals(0.0, el.getAsJsonArray("from").get(0).getAsDouble());
+        assertEquals(16.0, el.getAsJsonArray("to").get(0).getAsDouble());
+        assertEquals(RailingRules.SILL_TOP, el.getAsJsonArray("to").get(1).getAsDouble());
     }
 }

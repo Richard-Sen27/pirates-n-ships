@@ -18,13 +18,13 @@ import java.util.regex.Pattern;
  *
  * <p><b>Posts.</b> Each post is the block a mob stands in (air, with a walkable block below and air above) and the
  * direction it faces, both turned with its piece. Officers: the fort gate's court beside the harbor master's office
- * door, then behind the desk, then across the path. Soldiers by tier:
+ * door, then behind the desk, then across the path, then the officers' quarters (STR4). Soldiers by tier:
  * <ol>
  *     <li>the two guards inside the land gate (facing landward);</li>
- *     <li>one post on every wall segment's walkway (beside the gun) and every wall tower's roof, facing the sea,
- *     nearest to the gate first (the two runs alternate);</li>
- *     <li>the building on the apron: inside the barracks, in the brig's guard room facing the cells, or on the
- *     watchtower's lookout;</li>
+ *     <li>one post on every wall piece's walkway (beside the gun) and every tower's roof or platform, facing
+ *     outward (the sea along the shore, the land on the flanks), nearest to the gate first (the two runs alternate);</li>
+ *     <li>the buildings of the court (STR4; before it the one building on the apron): inside the barracks, in the
+ *     brig's guard room facing the cells, on the watchtower's lookout and so on;</li>
  *     <li>the gate's own walkway over the sea gate, then its landward wall.</li>
  * </ol>
  * Within a tier posts nearer the gate's centre come first, ties in the jigsaw's piece order. A plan takes the first
@@ -56,23 +56,44 @@ public final class GarrisonPosts {
     static final int TIER_BUILDING = 2;
     static final int TIER_GATE_WALKS = 3;
 
-    /** The posts of each ST3 piece; the quay has none. */
-    public static final Map<String, List<Post>> POSTS = Map.of(
-            FORT_GATE, List.of(
-                    officer(6, 1, 7, Direction.EAST),
-                    officer(2, 1, 7, Direction.EAST),
-                    officer(8, 1, 7, Direction.WEST),
-                    soldier(6, 1, 10, Direction.SOUTH, TIER_GATE),
-                    soldier(8, 1, 10, Direction.SOUTH, TIER_GATE),
-                    soldier(3, 5, 2, Direction.NORTH, TIER_GATE_WALKS),
-                    soldier(11, 5, 2, Direction.NORTH, TIER_GATE_WALKS),
-                    soldier(3, 5, 13, Direction.SOUTH, TIER_GATE_WALKS),
-                    soldier(11, 5, 13, Direction.SOUTH, TIER_GATE_WALKS)),
-            "wall", List.of(soldier(1, 5, 2, Direction.NORTH, TIER_WALLS)),
-            "wall_tower", List.of(soldier(5, 10, 1, Direction.NORTH, TIER_WALLS)),
-            "barracks", List.of(soldier(7, 1, 3, Direction.NORTH, TIER_BUILDING)),
-            "brig", List.of(soldier(5, 1, 2, Direction.SOUTH, TIER_BUILDING)),
-            "watchtower", List.of(soldier(1, 11, 1, Direction.NORTH, TIER_BUILDING)));
+    /**
+     * The posts of each piece; the quay, the lanes and the decorations have none. STR4: every wall piece of the trace
+     * has its guard ({@link OutpostPieces#WALLS}, tier walls, facing outward), every tower its roof guard, every building
+     * its guard (the officers' quarters an officer as well).
+     */
+    public static final Map<String, List<Post>> POSTS = posts();
+
+    private static Map<String, List<Post>> posts() {
+        Map<String, List<Post>> out = new java.util.LinkedHashMap<>();
+        out.put(FORT_GATE, List.of(
+                officer(6, 1, 7, Direction.EAST),
+                officer(2, 1, 7, Direction.EAST),
+                officer(8, 1, 7, Direction.WEST),
+                soldier(6, 1, 10, Direction.SOUTH, TIER_GATE),
+                soldier(8, 1, 10, Direction.SOUTH, TIER_GATE),
+                soldier(3, 5, 2, Direction.NORTH, TIER_GATE_WALKS),
+                soldier(11, 5, 2, Direction.NORTH, TIER_GATE_WALKS),
+                soldier(3, 5, 13, Direction.SOUTH, TIER_GATE_WALKS),
+                soldier(11, 5, 13, Direction.SOUTH, TIER_GATE_WALKS)));
+        OutpostPieces.WALLS.forEach((name, wall) -> out.put(name, List.of(new Post(Role.SOLDIER, wall.post(), Direction.NORTH, TIER_WALLS))));
+        out.put("wall_tower", List.of(soldier(5, 10, 1, Direction.NORTH, TIER_WALLS)));
+        out.put("round_tower", List.of(soldier(3, 10, 1, Direction.NORTH, TIER_WALLS)));
+        out.put("battery", List.of(soldier(1, 5, 3, Direction.NORTH, TIER_WALLS)));
+        out.put("barracks", List.of(soldier(7, 1, 3, Direction.NORTH, TIER_BUILDING)));
+        out.put("brig", List.of(soldier(5, 1, 2, Direction.SOUTH, TIER_BUILDING)));
+        out.put("watchtower", List.of(soldier(1, 11, 1, Direction.NORTH, TIER_BUILDING)));
+        out.put("barracks_long", List.of(soldier(10, 1, 3, Direction.NORTH, TIER_BUILDING)));
+        out.put("barracks_mess", List.of(soldier(3, 1, 4, Direction.NORTH, TIER_BUILDING)));
+        out.put("brig_large", List.of(soldier(6, 1, 3, Direction.SOUTH, TIER_BUILDING)));
+        out.put("signal_tower", List.of(soldier(1, 11, 1, Direction.NORTH, TIER_BUILDING)));
+        out.put("officers_quarters", List.of(officer(3, 1, 4, Direction.NORTH), soldier(8, 1, 3, Direction.NORTH, TIER_BUILDING)));
+        out.put("powder_magazine", List.of(soldier(2, 1, 5, Direction.NORTH, TIER_BUILDING)));
+        out.put("armoury", List.of(soldier(6, 1, 3, Direction.NORTH, TIER_BUILDING)));
+        out.put("gun_battery", List.of(soldier(5, 3, 4, Direction.SOUTH, TIER_BUILDING)));
+        out.put("store_house", List.of(soldier(2, 1, 3, Direction.NORTH, TIER_BUILDING)));
+        out.put("chapel", List.of(soldier(2, 1, 2, Direction.NORTH, TIER_BUILDING)));
+        return java.util.Collections.unmodifiableMap(out);
+    }
 
     private static final Pattern PIECE_NAME = Pattern.compile("navy_outpost/([a-z0-9_]+)");
 
@@ -112,13 +133,16 @@ public final class GarrisonPosts {
                 BlockPos pos = toWorld(piece, post.local());
                 long dx = pos.getX() - centre.getX();
                 long dz = pos.getZ() - centre.getZ();
+                // officers: the gate's posts before any other piece's (STR4: the officers' quarters in the court)
+                int tier = post.role() == Role.OFFICER ? (piece == gate ? 0 : 1) : post.tier();
                 Candidate c = new Candidate(new Assignment(post.role(), pos, piece.rotation().rotate(post.facing())),
-                        post.tier(), dx * dx + dz * dz, order++);
+                        tier, dx * dx + dz * dz, order++);
                 (post.role() == Role.OFFICER ? officerPosts : soldierPosts).add(c);
             }
         }
         soldierPosts.sort(Comparator.comparingInt(Candidate::tier).thenComparingLong(Candidate::distance)
                 .thenComparingInt(Candidate::order));
+        officerPosts.sort(Comparator.comparingInt(Candidate::tier).thenComparingInt(Candidate::order));
 
         List<Assignment> out = new ArrayList<>();
         officerPosts.stream().limit(Math.max(0, officers)).forEach(c -> out.add(c.assignment()));

@@ -318,14 +318,16 @@ public final class SquadGameTests {
         BlockPos anchor = squad.outpost();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE_TICKS, () -> {
-                    // with the sea to the north the gate is not turned: the west run lies at smaller x, its walkway at y + 5
+                    // with the sea to the north the gate is not turned: the west run lies at smaller x, its walkway at y + 5;
+                    // STR4: the west run's tower may be the squat battery, whose guard stands at walkway height as well,
+                    // so the wall's guard is the one nearest the gate (the entity list's order is no order)
                     NavySoldier westGuard = OutpostFixture.navy(level, outpost.box()).stream()
                             .filter(m -> m instanceof NavySoldier).map(m -> (NavySoldier) m)
                             .filter(m -> {
                                 GarrisonPost post = SquadService.post(m);
                                 return post != null && post.pos().getY() == anchor.getY() + 5 && post.pos().getX() < anchor.getX() - 7;
                             })
-                            .findFirst().orElse(null);
+                            .max(java.util.Comparator.comparingInt(m -> SquadService.post(m).pos().getX())).orElse(null);
                     helper.assertTrue(westGuard != null, "the west wall has its guard");
                     helper.assertTrue(squad.startPatrol(true), "the patrol starts");
                     helper.assertValueEqual(squad.members().size(), 4, "four soldiers follow the officer: " + squad);

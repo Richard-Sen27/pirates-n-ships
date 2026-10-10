@@ -12,6 +12,8 @@ to Markdown first). Written to survive CurseForge's renderer, which differs from
   span against the mod's item, block and mob names; use bold for emphasis.
 - Every feature line was checked against `docs/progress.md` on 2026-10-10. Run
   `python3 tools/check_release_texts.py` after any edit.
+- The status paragraph names the version: 0.1.0 is the first public release (the human, 2026-10-10), released
+  before the playtest rounds; 1.0.0 follows them and the wood variants. Update it with each release.
 
 PASTE FROM HERE
 
@@ -112,6 +114,14 @@ you get the *Captain's Almanac*.
 
 Every gameplay feature has a server config switch, and every strength and rate is a config value.
 
+## Status
+
+**Version 0.1.0 is the first public release.** It ships before its in-game playtest rounds, so expect rough edges
+and please report what you find on the
+[issue tracker](https://github.com/Richard-Sen27/pirates-n-ships/issues). Wood variants of every wooden block (all
+vanilla woods and those of known wood mods) are in progress for the next release; 1.0.0 follows once the playtest
+rounds are done.
+
 ## Requirements
 
 - Minecraft 1.21.1, Java 21.
@@ -144,7 +154,7 @@ Every gameplay feature has a server config switch, and every strength and rate i
 - Feints are for the NPC duelists only; players cannot feint, and there is no directional attack and parry mode.
 - Triangular sails are not torn by chain shot (only their rope is cut), and the *Swivel Gun* fires neither chain shot
   nor grapeshot.
-- Railings, bulwarks and oar benches come in oak only.
+- Railings, bulwarks and oar benches come in oak only for now (more woods are in progress).
 - Not built yet: a ship's logbook, hull paint, a wanted poster of your own.
 - On Fabric the config screen needs Mod Menu (otherwise edit the config files).
 - JEI is held at 19.39.0.372 until the mod moves to a newer NeoForge.

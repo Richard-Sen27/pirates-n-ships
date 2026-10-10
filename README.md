@@ -13,6 +13,10 @@ The full feature list, as players see it on Modrinth and CurseForge, is in
 [`docs/release/store-page.md`](docs/release/store-page.md). What exists, what is open and what is being tuned is
 tracked in [`docs/progress.md`](docs/progress.md).
 
+**Status:** the first public release is **0.1.0**. It ships before the in-game playtest rounds, so reports on the
+[issue tracker](https://github.com/Richard-Sen27/pirates-n-ships/issues) are welcome. Wood variants of every wooden
+block (all vanilla woods and known wood mods) are in progress for the next release; 1.0.0 follows the playtest rounds.
+
 ## Screenshots
 
 To be taken in game (the human) for the README, the Modrinth and CurseForge galleries and the release post. Save
@@ -81,7 +85,8 @@ Java 21, Mojang mappings with Parchment, Gradle 9.5 on a Java 21 toolchain.
 ./gradlew :neoforge:runClient                     # dev client (Fabric: ./gradlew :fabric:runClient)
 ```
 
-Local builds are `<mod_version>-dev`; releases are built from a pushed tag (see "Releasing" below).
+Local builds are `<mod_version>-dev`; releases are built from a pushed tag `vX.Y.Z` (0.x releases are beta, the
+first is `v0.1.0`; see [`docs/releasing.md`](docs/releasing.md)).
 
 ## Documentation
 

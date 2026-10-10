@@ -4,7 +4,7 @@ How versions are numbered, how a release is cut, and what the release workflow (
 
 ## Version scheme
 
-- **Semantic versions** `MAJOR.MINOR.PATCH`, starting at `0.1.0`. Before `1.0.0` the mod is in beta by definition.
+- **Semantic versions** `MAJOR.MINOR.PATCH`, starting at `0.1.0`, the first public release (the human, 2026-10-10: "i will not release right now 1.0.0, but 0.1.0. as i cannot test it out right now"). Before `1.0.0` the mod is in beta by definition; `1.0.0` follows the in-game playtest rounds and the wood variants of every wooden block (WOOD1 and its follow-ups).
 - **Pre-releases** add `-alpha.N` or `-beta.N`: `0.3.0-alpha.1`, `0.3.0-beta.2`. Nothing else (no `-rc.N`, no build metadata); the build and the workflow reject other forms.
 - **Git tags** are the version with a `v`: `v0.1.0`, `v0.3.0-beta.1`.
 - **Mod version and jars** carry the version without the `v`. The mod list shows it (`neoforge.mods.toml` has `version = "0.3.0-beta.1"`, `fabric.mod.json` has `"version": "0.3.0-beta.1"`), and the jars are `pirates_n_ships-neoforge-1.21.1-<version>.jar` and `pirates_n_ships-fabric-1.21.1-<version>.jar` (`<mod_id>-<loader>-<minecraft version>-<version>`, set in `buildSrc/src/main/groovy/multiloader-common.gradle`).
@@ -31,7 +31,7 @@ Both Modrinth and CurseForge get the same channel:
 | `v0.Y.Z` (any 0.x version without suffix) | `beta` |
 | `vX.Y.Z` with X ≥ 1 | `release` |
 
-The GitHub release is marked as a pre-release for every channel except `release`.
+The GitHub release is marked as a pre-release for every channel except `release`. So `v0.1.0` publishes on the `beta` channel and as a GitHub pre-release.
 
 ### Names on the platforms
 
@@ -150,10 +150,10 @@ So write commit subjects for players: the subject of every `feat` and `fix` ends
 Hand-written texts for the platforms and the release, in `docs/release/` (REL4), checked by a script:
 
 - [`release/store-page.md`](release/store-page.md): the Modrinth and CurseForge description (one text for both, with what CurseForge's renderer does not take).
-- [`release/1.0.0-notes.md`](release/1.0.0-notes.md): the 1.0.0 release notes (hand-written, since there is no earlier tag to generate from) and the `release.yml` change that publishes them.
-- [`release/save-compatibility.md`](release/save-compatibility.md): what a pre-release world keeps and loses under 1.0.0 (SAV1); the notes link to it.
+- [`release/0.1.0-notes.md`](release/0.1.0-notes.md): the 0.1.0 release notes (hand-written, since there is no earlier tag to generate from). The workflow publishes `docs/release/<version>-notes.md` for the tag's version (`v0.1.0` → `0.1.0-notes.md`) when it exists.
+- [`release/save-compatibility.md`](release/save-compatibility.md): what a pre-release world keeps and loses under 0.1.0 (SAV1), and the ids kept from 0.1.0 on; the notes link to it.
 - [`../README.md`](../README.md): the repository's front page, with the screenshot list for the galleries.
-- `tools/check_release_texts.py`: fails when the store page, the notes or the README name an item, block, mob or config key that the generated lang does not have, or a dependency version that differs from `gradle.properties` (`--self-test` checks its rules).
+- `tools/check_release_texts.py`: fails when the store page, the README or the notes of the version being released (`docs/release/<version>-notes.md`, the version from the workflow's `VERSION` or else `mod_version`; skipped with a message when there is none) name an item, block, mob or config key that the generated lang does not have, or a dependency version that differs from `gradle.properties` (`--self-test` checks its rules).
 
 ## Cutting a release
 
@@ -172,8 +172,8 @@ Before tagging, check:
 Then tag and push:
 
 ```sh
-git tag -a v0.1.0-beta.1 -m "Pirates 'n' Ships 0.1.0-beta.1"
-git push origin v0.1.0-beta.1
+git tag -a v0.1.0 -m "Pirates 'n' Ships 0.1.0"
+git push origin v0.1.0
 ```
 
 The tag push starts the workflow. After a final (non-pre-release) version, bump `mod_version` in `gradle.properties` to the next planned version.

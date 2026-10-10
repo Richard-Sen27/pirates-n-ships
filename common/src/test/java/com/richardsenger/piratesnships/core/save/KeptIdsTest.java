@@ -78,7 +78,7 @@ class KeptIdsTest {
         Map<String, List<String>> ids = keptIds(Files.readAllLines(NOTE, StandardCharsets.UTF_8));
         JsonObject lang = JsonParser.parseString(Files.readString(LANG, StandardCharsets.UTF_8)).getAsJsonObject();
         int count = ids.values().stream().mapToInt(List::size).sum();
-        // the 1.0.0 table lists 47 blocks, 57 items and 22 entities; a parse that finds far fewer is a broken table
+        // the 0.1.0 table lists 47 blocks, 57 items and 22 entities; a parse that finds far fewer is a broken table
         assertTrue(count >= 120, "only " + count + " kept ids found in " + NOTE + " (markers or table format broken?)");
         List<String> missing = new ArrayList<>();
         for (Map.Entry<String, List<String>> e : ids.entrySet()) {

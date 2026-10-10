@@ -45,6 +45,37 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
   mangrove is "Twilight Mangrove" so it does not read like vanilla's.
 - **Recipes:** each member from that wood's planks (and sticks, nuggets as before), in the family's recipe group.
 
+## The families
+
+| Family (suffix) | Legacy id (wood) | Variables | Registered in | Datagen |
+|---|---|---|---|---|
+| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak leads) | `#planks`, `#log` | `ship/decor/railing/RailingContent` | `RailingData` |
+| `oar_bench` | none | `#planks`, `#log` | `sailing/oars/OarsContent` | `OarsData` |
+| `nameplate` (the name board) | `nameplate` (oak) | `#planks`, `#log` | `ShipDecor.NAMEPLATES` | `ShipDecorModule` |
+| `flagpole` | `flagpole` (spruce) | `#log` | `ShipDecor.FLAGPOLES` | `flag/FlagData` |
+| `flag_pedestal` | `flag_pedestal` (spruce) | `#log`, `#log_top` | `ShipDecor.FLAG_PEDESTALS` | `ShipDecorModule` |
+| `stern_window`, `chart_table`, `sea_cot` | dark oak | `#planks`, `#log` | `ShipDecor.STERN_WINDOWS`, `CHART_TABLES`, `SEA_COTS` | `DecorData` |
+| `notice_board` | `notice_board` (dark oak) | `#planks`, `#log`, `#log_top` | `law/content/LawContent.NOTICE_BOARDS` | `NoticeBoardData` |
+| `crows_nest` | `crows_nest` (spruce) | `#planks`, `#log` | `station/lookout/LookoutContent.CROWS_NESTS` | `LookoutModule` |
+| `yard` | `yard` (spruce) | `#log`, `#log_top` | `sailing/block/SailingBlocks.YARDS` | `sailing/block/YardData` |
+| `cleat` | `cleat` (dark oak) | `#log`, `#log_top` | `sailing/sail/TriangularSailContent.CLEATS` | `TriangularSailData` |
+
+WOOD3 (the fittings): each content class keeps its old constant as the legacy member (`ShipDecor.YARD` is
+`YARDS.entry(SPRUCE)`), so tests, schematics and templates that name it still work; everything that asks "is this a
+yard" asks `instanceof YardBlock` (or the family's tag) instead, never `is(YARD)`. The family block entities
+(`nameplate`, `flagpole`, `yard`, `cleat`) are one type valid for every member (`WoodFamily.blockEntity`). Codecs:
+`WoodBlock.codec(factory)` for a block class whose vanilla parent demands one. Recipes per wood: name board two planks
+and a gold nugget (3); flagpole the stripped log over two sticks (2); flag pedestal the stripped log over a plank (2);
+stern window from the wood's planks (2, dark oak's before); chart table, sea cot (any wool, `WoodRecipe.tag`), notice
+board, crow's nest and cleat from the wood's planks; yard three stripped logs (3, any log before). Tags: the yards and
+crow's nests of every wood are `ratlines_anchors`; `pirates_n_ships:yards` and `:cleats` hold every member.
+
+**Sable physics of a family:** the yard and the cleat had a per-id `physics_block_properties` file. A selector naming a
+block that is not registered (a mod's wood without its mod) logs "Unknown block" on every level load
+(`refs/sable/common/.../PhysicsBlockPropertiesDefinitionLoader#applyToBlocks`), and Sable's own loader applies no load
+conditions, so a family's file keeps the legacy path and selects the family's tag (`"selector": "#pirates_n_ships:yards"`),
+whose compat entries are optional. WOOD2 and WOOD4 (cargo, pantry, water barrel, bilge pump, cannon) should do the same.
+
 ## Datagen and the compat files
 
 Datagen writes every wood, vanilla and compat alike (models, block states, item models, lang, loot, recipes,

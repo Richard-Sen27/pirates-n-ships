@@ -277,6 +277,48 @@ public final class DecorGameTests {
         helper.succeed();
     }
 
+    /**
+     * ART20: cots placed side by side with the same facing join into one berth, a row of three too, whatever their
+     * woods: the outer cots join on their inner side, the middle one on both, each on both halves; a cot beside a
+     * crosswise cot does not join; breaking the middle cot un-joins both neighbours. A joined side's outline runs to the
+     * block's side.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void seaCotsSideBySideJoinIntoOneBerth(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (int x = 1; x <= 5; x++) helper.setBlock(new BlockPos(x, 1, 5), Blocks.STONE);
+        player.setYRot(Direction.NORTH.toYRot());
+        Block[] row = {ShipDecor.SEA_COT.get(), ShipDecor.SEA_COTS.get(ShipWood.SPRUCE), ShipDecor.SEA_COT.get()};
+        for (int i = 0; i < row.length; i++) place(helper, player, row[i], new BlockPos(1 + i, 1, 5), Direction.UP);
+        // a crosswise cot right of the row's east end: foot (4, 2, 5), head (5, 2, 5)
+        player.setYRot(Direction.EAST.toYRot());
+        place(helper, player, ShipDecor.SEA_COT.get(), new BlockPos(4, 1, 5), Direction.UP);
+        helper.assertBlockProperty(new BlockPos(4, 2, 5), SeaCotBlock.FACING, Direction.EAST);
+        assertJoined(helper, 1, false, true);
+        assertJoined(helper, 2, true, true);
+        assertJoined(helper, 3, true, false);
+        helper.assertBlockProperty(new BlockPos(4, 2, 5), SeaCotBlock.LEFT, false);
+        helper.assertBlockProperty(new BlockPos(4, 2, 5), SeaCotBlock.RIGHT, false);
+        var shape = helper.getBlockState(new BlockPos(1, 2, 5)).getShape(helper.getLevel(), helper.absolutePos(new BlockPos(1, 2, 5))).bounds();
+        helper.assertTrue(shape.maxX == 1.0 && shape.minX == 0.5 / 16 && shape.maxY == 11.75 / 16,
+                "a cot joined on its right should reach the east side only: " + shape);
+        // breaking the middle cot (its foot) takes its head along and leaves both neighbours unjoined
+        helper.destroyBlock(new BlockPos(2, 2, 5));
+        helper.assertBlockNotPresent(ShipDecor.SEA_COTS.get(ShipWood.SPRUCE), new BlockPos(2, 2, 4));
+        assertJoined(helper, 1, false, false);
+        assertJoined(helper, 3, false, false);
+        helper.succeed();
+    }
+
+    /** Both halves of the north-facing cot whose foot is at (x, 2, 5) have {@code left} and {@code right} as given. */
+    private static void assertJoined(GameTestHelper helper, int x, boolean left, boolean right) {
+        for (BlockPos p : List.of(new BlockPos(x, 2, 5), new BlockPos(x, 2, 4))) {
+            BlockState s = helper.getBlockState(p);
+            helper.assertTrue(s.getBlock() instanceof SeaCotBlock && s.getValue(SeaCotBlock.LEFT) == left && s.getValue(SeaCotBlock.RIGHT) == right,
+                    "cot at " + p + ": expected left=" + left + " right=" + right + ", got " + s);
+        }
+    }
+
     // ------------------------------------------------------------------ on a ship
 
     private static final BlockPos HELM = new BlockPos(4, 3, 4);

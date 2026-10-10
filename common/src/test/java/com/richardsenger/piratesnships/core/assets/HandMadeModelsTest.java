@@ -63,7 +63,9 @@ class HandMadeModelsTest {
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mast_hoop", "mooring_ring",
             "name_board", "name_board_cap_left", "name_board_cap_right", "name_board_item", "notice_board", "oar_bench", "pantry", "railing_baluster_east", "railing_baluster_west", "railing_edge", "railing_gate_item", "railing_gate_left", "railing_gate_left_open", "railing_gate_right",
             "railing_gate_right_open", "railing_item", "railing_latch", "railing_port", "railing_post", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
-            "rope_railing_edge", "rope_railing_item", "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
+            "rope_railing_edge", "rope_railing_item", "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_foot_left", "sea_cot_foot_left_joined", "sea_cot_foot_right",
+            "sea_cot_foot_right_joined", "sea_cot_head", "sea_cot_head_left", "sea_cot_head_left_joined", "sea_cot_head_right",
+            "sea_cot_head_right_joined", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall", "stern_window",
             "stern_window_shutters", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
@@ -402,6 +404,10 @@ class HandMadeModelsTest {
         for (String n : List.of("name_board_cap_left", "name_board_cap_right")) keys.put(n, List.of("log"));
         for (String n : List.of("stern_window", "stern_window_shutters", "sea_cot_head", "sea_cot_foot", "sea_cot_item", "chart_table")) {
             keys.put(n, List.of("planks", "log"));
+        }
+        // ART20: the cot's halves are a core plus, per side, the edge or the joined fill; every part names both
+        for (String half : List.of("sea_cot_head", "sea_cot_foot")) {
+            for (String side : List.of("_left", "_right", "_left_joined", "_right_joined")) keys.put(half + side, List.of("planks", "log"));
         }
         keys.put("notice_board", List.of("planks", "log", "log_top"));
         for (String n : List.of("flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top")) keys.put(n, List.of("log"));

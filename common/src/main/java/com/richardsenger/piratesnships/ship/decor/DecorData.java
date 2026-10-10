@@ -4,11 +4,14 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.core.Direction;
+import net.minecraft.data.models.blockstates.Condition;
+import net.minecraft.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
@@ -157,6 +160,8 @@ final class DecorData {
     static final ResourceLocation SEA_COT_HEAD = Constants.id("block/sea_cot_head");
     static final ResourceLocation SEA_COT_FOOT = Constants.id("block/sea_cot_foot");
     static final ResourceLocation SEA_COT_ITEM = Constants.id("block/sea_cot_item");
+    /** ART20: per half, the core and per side the edge ({@code _left}, {@code _right}) or the fill ({@code _left_joined}, ...). */
+    static final List<String> SEA_COT_SIDES = List.of("", "_left", "_right", "_left_joined", "_right_joined");
 
     /**
      * WOOD3: the stern window, chart table and sea cot per wood: children of the hand-made parents
@@ -182,13 +187,36 @@ final class DecorData {
                         .with(VariantProperties.Y_ROT, yRot(facing))))));
 
         WoodFamily<SeaCotBlock> cots = ShipDecor.SEA_COTS;
-        for (ResourceLocation parent : List.of(SEA_COT_HEAD, SEA_COT_FOOT)) cots.childModels(m, parent);
+        for (ResourceLocation half : List.of(SEA_COT_HEAD, SEA_COT_FOOT)) {
+            for (String side : SEA_COT_SIDES) cots.childModels(m, half.withSuffix(side));
+        }
         // the item is the whole cot (both halves, display scaled to the slot)
         cots.itemModels(m, SEA_COT_ITEM);
-        cots.forEach((wood, cot) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(cot).with(PropertyDispatch
-                .properties(SeaCotBlock.FACING, SeaCotBlock.PART).generate((facing, part) -> Variant.variant()
-                        .with(VariantProperties.MODEL, WoodFamily.child(wood, part == BedPart.HEAD ? SEA_COT_HEAD : SEA_COT_FOOT))
-                        .with(VariantProperties.Y_ROT, yRot(facing))))));
+        // ART20: a multipart per wood: the half's core, and per side its edge or, joined to a neighbour, its fill
+        cots.forEach((wood, cot) -> {
+            MultiPartGenerator gen = MultiPartGenerator.multiPart(cot);
+            for (Direction facing : Direction.Plane.HORIZONTAL) {
+                for (BedPart part : BedPart.values()) {
+                    ResourceLocation half = part == BedPart.HEAD ? SEA_COT_HEAD : SEA_COT_FOOT;
+                    Condition.TerminalCondition at = Condition.condition().term(SeaCotBlock.FACING, facing).term(SeaCotBlock.PART, part);
+                    gen.with(at, cotPart(wood, half, "", facing));
+                    for (boolean joined : List.of(false, true)) {
+                        String suffix = joined ? "_joined" : "";
+                        gen.with(Condition.condition().term(SeaCotBlock.FACING, facing).term(SeaCotBlock.PART, part)
+                                .term(SeaCotBlock.LEFT, joined), cotPart(wood, half, "_left" + suffix, facing));
+                        gen.with(Condition.condition().term(SeaCotBlock.FACING, facing).term(SeaCotBlock.PART, part)
+                                .term(SeaCotBlock.RIGHT, joined), cotPart(wood, half, "_right" + suffix, facing));
+                    }
+                }
+            }
+            m.blockStates().accept(gen);
+        });
+    }
+
+    private static Variant cotPart(ShipWood wood, ResourceLocation half,
+                                   String side, Direction facing) {
+        return Variant.variant().with(VariantProperties.MODEL, WoodFamily.child(wood, half.withSuffix(side)))
+                .with(VariantProperties.Y_ROT, yRot(facing));
     }
 
     private static ResourceLocation model(Block block, String suffix) {

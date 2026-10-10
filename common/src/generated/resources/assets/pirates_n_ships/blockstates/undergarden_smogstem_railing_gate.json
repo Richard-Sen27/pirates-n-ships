@@ -2,10 +2,30 @@
   "multipart": [
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port"
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port_sill"
       },
       "when": {
         "facing": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "left",
+        "paired": "false"
       }
     },
     {
@@ -20,12 +40,13 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right"
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet"
       },
       "when": {
         "facing": "north",
-        "hinge": "right",
-        "open": "false"
+        "hinge": "left",
+        "open": "false",
+        "paired": "true"
       }
     },
     {
@@ -40,6 +61,58 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet_open"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "left",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "right",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "right",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "right",
+        "open": "false",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_open"
       },
       "when": {
@@ -50,7 +123,18 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet_open"
+      },
+      "when": {
+        "facing": "north",
+        "hinge": "right",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port_sill",
         "y": 90
       },
       "when": {
@@ -59,6 +143,27 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "left",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left",
         "y": 90
       },
@@ -70,13 +175,14 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet",
         "y": 90
       },
       "when": {
         "facing": "east",
-        "hinge": "right",
-        "open": "false"
+        "hinge": "left",
+        "open": "false",
+        "paired": "true"
       }
     },
     {
@@ -92,6 +198,62 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet_open",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "left",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "right",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "right",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "right",
+        "open": "false",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_open",
         "y": 90
       },
@@ -103,7 +265,19 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet_open",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "hinge": "right",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port_sill",
         "y": 180
       },
       "when": {
@@ -112,6 +286,27 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "left",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left",
         "y": 180
       },
@@ -123,13 +318,14 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet",
         "y": 180
       },
       "when": {
         "facing": "south",
-        "hinge": "right",
-        "open": "false"
+        "hinge": "left",
+        "open": "false",
+        "paired": "true"
       }
     },
     {
@@ -145,6 +341,62 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet_open",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "left",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "right",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "right",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "right",
+        "open": "false",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_open",
         "y": 180
       },
@@ -156,7 +408,19 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet_open",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "hinge": "right",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_port_sill",
         "y": 270
       },
       "when": {
@@ -165,6 +429,26 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post"
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "left",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left",
         "y": 270
       },
@@ -176,13 +460,14 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet",
         "y": 270
       },
       "when": {
         "facing": "west",
-        "hinge": "right",
-        "open": "false"
+        "hinge": "left",
+        "open": "false",
+        "paired": "true"
       }
     },
     {
@@ -198,6 +483,61 @@
     },
     {
       "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_left_meet_open",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "left",
+        "open": "true",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post"
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "right",
+        "paired": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "right",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "right",
+        "open": "false",
+        "paired": "true"
+      }
+    },
+    {
+      "apply": {
         "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_open",
         "y": 270
       },
@@ -205,6 +545,18 @@
         "facing": "west",
         "hinge": "right",
         "open": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/undergarden_smogstem_railing_gate_right_meet_open",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "hinge": "right",
+        "open": "true",
+        "paired": "true"
       }
     }
   ]

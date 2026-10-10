@@ -35,10 +35,10 @@ Every block and item a hand may need, a line on each, and the chapter that tells
 - {item:pirates_n_ships:sea_cot}**Sea cot:** the captain's bed at sea.
 - {item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]
 - {item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.
-- {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port.
+- {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port; ports side by side make one wide opening.
 - {item:pirates_n_ships:oak_bulwark}{item:pirates_n_ships:oak_bulwark_port}**Bulwark, bulwark gun port:** a solid plank wall along a block's edge, placed like a railing. A cannon behind it fires into it; through the gun port it fires at every elevation, and the port's lid opens for the gun or by hand.
 - {item:pirates_n_ships:oak_rope_railing}**Rope railing:** a stanchion per block with two rope lines along a block's edge, placed like a railing; a run ends in a post against any other railing.
-- {item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.
+- {item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone; two side by side are a double gate that opens together), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.
 
 ## Stores and cargo
 - {item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]

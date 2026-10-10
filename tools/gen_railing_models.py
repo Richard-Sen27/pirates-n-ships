@@ -26,7 +26,9 @@ uvlock, so the cap's grain follows the rail on every edge):
   square centred on the corner of the two rail lines (x and z -0.5..2.5), from the deck to y 16.5 (half a pixel over
   the cap, so the cap rails' tops never fight it), a 2 px finial y 16.5..18.5 and a 1 px tip to y 19.5. The bulwark
   and the rope railing use it too.
-- block/railing_port: the port's two posts and a 4 px plank sill between them (x 2.5..13.5, y 0..4, z 0..2).
+- block/railing_port: the port's two posts and a 4 px plank sill between them (x 2.5..13.5, y 0..4, z 0..2); since
+  RAIL7 only its item, the block state draws block/railing_port_sill (the sill across the whole block, x 0..16, its
+  ends inside the posts) and block/railing_post at each end where a post stands, so a row of ports is one opening.
 - block/railing_item: posts at both ends, the cap, the toe rail and one baluster in the middle, centred (z 6..10).
 - RAIL3 gate leaf, block/railing_gate_left and _right (between the port's posts, u 0..11 from the hinge post's inner
   face at x 2.5): the cap rail, a plank bottom rail on the sill (y 4..6, z 0..2), one turned baluster in the middle
@@ -34,7 +36,9 @@ uvlock, so the cap's grain follows the rail on every edge):
   a latch bar on the cap's inboard face at the other end, its tongue in the latch post, with a grip. left = hinged on
   the west post looking outboard (north), right mirrored. _open: the same leaf turned 90 degrees outboard about the
   hinge corner of the cap (x 2.5 or 13.5, z -1). block/railing_gate_item: posts, sill and the closed left leaf,
-  centred.
+  centred. RAIL7 double gate: block/railing_gate_left_meet and _right_meet (and _open, turned with the leaf) carry a
+  paired leaf on from the latch post's place to the block's side (u 11..13.5): the cap, the bottom rail and a plain
+  2 px meeting stile at u 11.5..13.5 (x 14..16), so the two leaves meet in the middle on a 4 px pair of stiles.
 - RAIL4 bulwark: block/bulwark_edge, a plank wall (x 0..16, y 0..14, z 0.05..2) under the same cap rail; its posts are
   block/railing_post. block/bulwark_port: the jambs x 0..3 and 13..16 (wall and cap ends) and the sill x 3..13; the
   notch is open from the sill up through the cap. block/bulwark_port_lid (x 3..13, y 4..16, z 0.05..1.05, two iron
@@ -212,6 +216,11 @@ def post():
     return post_parts((LINE, LINE))
 
 
+def port_sill():
+    """RAIL7: the sill across the whole block (its ends lie inside the posts where they stand)."""
+    return [cube("sill", (0, 0, 0), (16, SILL_TOP, RAIL_DEPTH), {f: "planks" for f in ("north", "south", "up")})]
+
+
 def port(dz=0.0):
     out = post_parts((LINE, LINE + dz), "post_west") + post_parts((16 - LINE, LINE + dz), "post_east")
     out.append(cube("sill", (SILL[0], 0, dz), (SILL[1], SILL_TOP, dz + RAIL_DEPTH),
@@ -272,15 +281,35 @@ def leaf_parts():
     return out
 
 
-def leaf(hinge_left, open_, dz=0.0):
+MEET = LEAF + HINGE_X  # RAIL7: a paired leaf runs on to the block's side (u 13.5, x 16 or 0)
+STILE_U = (MEET - 2 * BALUSTER_HALF, MEET)  # the meeting stile, 2 px, against the block's side
+
+
+def meet_parts():
+    """RAIL7: a double gate's leaf from the latch post's place (u LEAF) to the block's side, in the leaf's frame."""
+    long_ = "log@90"
+    cap_ends = {"east": "log_top", "west": "log_top"}
+    rail = {"north": "planks", "south": "planks", "up": "planks", "down": "planks", "east": "planks", "west": "planks"}
+    return [
+        ("cap_meet", (LEAF, MEET), (CAP[0], CAP_STEP), (LINE - CAP_HALF, LINE + CAP_HALF),
+         {"north": long_, "south": long_, "up": long_, "down": long_, **cap_ends}),
+        ("cap_band_meet", (LEAF, MEET), (CAP_STEP, CAP[1]), (LINE - BAND_HALF, LINE + BAND_HALF),
+         {"north": long_, "south": long_, "up": long_, **cap_ends}),
+        ("bottom_rail_meet", (LEAF, MEET), LEAF_RAIL, (0, RAIL_DEPTH), rail),
+        ("meet_stile", STILE_U, (LEAF_RAIL[1], CAP[0]), (LINE - BALUSTER_HALF, LINE + BALUSTER_HALF), {s: "log" for s in SIDES}),
+    ]
+
+
+def leaf(hinge_left, open_, dz=0.0, parts=None):
     """The leaf in the block's north frame: closed between the posts, or open, turned 90 degrees outboard (to -z)
-    about the cap's outer corner at the hinge post (x 2.5 or 13.5, z -1), every face drawn."""
+    about the cap's outer corner at the hinge post (x 2.5 or 13.5, z -1), every face drawn. parts: the leaf's parts in
+    its own frame (leaf_parts, or RAIL7's meet_parts)."""
     out = []
-    for name, (u0, u1), (y0, y1), (w0, w1), faces in leaf_parts():
+    for name, (u0, u1), (y0, y1), (w0, w1), faces in (leaf_parts() if parts is None else parts):
         if not open_:
             x = (HINGE_X + u0, HINGE_X + u1) if hinge_left else (16 - HINGE_X - u1, 16 - HINGE_X - u0)
             z = (w0 + dz, w1 + dz)
-            if name == "bottom_rail":
+            if name.startswith("bottom_rail"):
                 faces = {f: t for f, t in faces.items() if f != "down"}  # on the sill
         else:
             a, b = w0 - HINGE_PIVOT_W, w1 - HINGE_PIVOT_W
@@ -557,9 +586,13 @@ def write(path, model):
 
 def main():
     models = [("railing_edge", edge()), ("railing_baluster_west", baluster(True)), ("railing_baluster_east", baluster(False)),
-              ("railing_post", post()), ("railing_port", port()), ("railing_item", item()),
+              ("railing_post", post()), ("railing_port", port()), ("railing_port_sill", port_sill()), ("railing_item", item()),
               ("railing_gate_left", leaf(True, False)), ("railing_gate_right", leaf(False, False)),
               ("railing_gate_left_open", leaf(True, True)), ("railing_gate_right_open", leaf(False, True)),
+              ("railing_gate_left_meet", leaf(True, False, parts=meet_parts())),
+              ("railing_gate_right_meet", leaf(False, False, parts=meet_parts())),
+              ("railing_gate_left_meet_open", leaf(True, True, parts=meet_parts())),
+              ("railing_gate_right_meet_open", leaf(False, True, parts=meet_parts())),
               ("railing_gate_item", gate_item()),
               ("bulwark_edge", bulwark_edge()), ("bulwark_port", bulwark_port()),
               ("bulwark_port_lid", lid(False)), ("bulwark_port_lid_open", lid(True)), ("bulwark_item", bulwark_item()),

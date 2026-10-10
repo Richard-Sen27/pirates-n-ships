@@ -168,11 +168,99 @@ public final class RailingRules {
      * {@code SubLevelEntityCollision#tryStepUp}).
      */
     public static List<double[]> portBoxes(Direction facing, double postTop, double post) {
+        return portBoxes(facing, postTop, post, true, true);
+    }
+
+    /**
+     * RAIL7: {@link #portBoxes(Direction, double, double)} with only the posts that stand: {@code left} the post at the
+     * edge's left end looking outboard (x 0 in the north frame), {@code right} the one at its right end. Where a post is
+     * left out (the next block along the edge is a port of the same facing, {@link #portPosts}) the sill runs on to the
+     * block's side, so a row of ports is one opening on one sill.
+     */
+    public static List<double[]> portBoxes(Direction facing, double postTop, double post, boolean left, boolean right) {
         List<double[]> out = new ArrayList<>();
-        out.add(rotate(new double[]{0, 0, 0, post, postTop, post}, facing));
-        out.add(rotate(new double[]{16 - post, 0, 0, 16, postTop, post}, facing));
-        out.add(rotate(new double[]{POST, 0, 0, 16 - POST, SILL_TOP, RAIL_DEPTH}, facing));
+        if (left) out.add(rotate(new double[]{0, 0, 0, post, postTop, post}, facing));
+        if (right) out.add(rotate(new double[]{16 - post, 0, 0, 16, postTop, post}, facing));
+        out.add(rotate(new double[]{left ? POST : 0, 0, 0, right ? 16 - POST : 16, SILL_TOP, RAIL_DEPTH}, facing));
         return out;
+    }
+
+    // ------------------------------------------------------------------ wide ports and double gates (RAIL7)
+
+    /** RAIL7: the direction of the block at the left end of an edge facing {@code facing}, looking outboard. */
+    public static Direction leftOf(Direction facing) {
+        return facing.getCounterClockWise();
+    }
+
+    /** RAIL7: the direction of the block at the right end of an edge facing {@code facing}, looking outboard. */
+    public static Direction rightOf(Direction facing) {
+        return facing.getClockWise();
+    }
+
+    /**
+     * RAIL7: the posts of a railing port, {left, right} (looking outboard): a post stands at an end of the port's edge
+     * unless the block beyond that end is another railing port facing the same way ({@code portLeft},
+     * {@code portRight}), so two or more ports in a row make one opening with posts only at its outer ends.
+     */
+    public static boolean[] portPosts(boolean portLeft, boolean portRight) {
+        return new boolean[]{!portLeft, !portRight};
+    }
+
+    /**
+     * RAIL7: the side of a gate its latch is on, as the direction of the block there: a gate hinged on its left post
+     * ({@code hingeLeft}) latches on the right, and the other way round.
+     */
+    public static Direction latchSide(Direction facing, boolean hingeLeft) {
+        return hingeLeft ? rightOf(facing) : leftOf(facing);
+    }
+
+    /**
+     * RAIL7: whether a gate (facing {@code facing}, hinged left {@code hingeLeft}) and the block on its latch side make a
+     * double gate: that block is a railing gate ({@code gate}) facing the same way ({@code neighbourFacing}) and hinged
+     * on the other side ({@code neighbourHingeLeft != hingeLeft}), so its latch side is this gate. The relation is
+     * mutual, so each gate has at most one partner, and in a run of gates each pairs only with its mirrored neighbour.
+     */
+    public static boolean pairs(Direction facing, boolean hingeLeft, boolean gate, @Nullable Direction neighbourFacing,
+                                boolean neighbourHingeLeft) {
+        return gate && neighbourFacing == facing && neighbourHingeLeft != hingeLeft;
+    }
+
+    /**
+     * RAIL7: what a placement sees of a gate beside the new one on the same edge: {@code gate} it is a railing gate
+     * facing the same way; {@code hingeTowardNew} its hinge post is on the new gate's side; {@code paired} it already
+     * makes a double gate with its other neighbour.
+     */
+    public record GateNeighbour(boolean gate, boolean hingeTowardNew, boolean paired) {
+        public static final GateNeighbour NONE = new GateNeighbour(false, false, false);
+
+        /** 0: nothing to pair with; 1: a free gate hung on the new gate's side (it is turned round); 2: a free gate latching toward it. */
+        int score() {
+            if (!gate || paired) return 0;
+            return hingeTowardNew ? 1 : 2;
+        }
+    }
+
+    /**
+     * RAIL7: the hinge of a gate placed beside other gates, true for the left post. The new gate pairs with a free gate
+     * beside it (one not already in a double gate) by taking the hinge away from it, so the two leaves hang on the outer
+     * posts and meet in the middle: a free neighbour whose latch already faces the new gate is preferred, else one hung
+     * on the new gate's side (the caller turns that one's hinge round, {@link #flipsNeighbour}); with a free gate on
+     * either side equally good, or none, the clicked half decides ({@code clickLeft}, {@link #gateHingeLeft}) as for a
+     * single gate.
+     */
+    public static boolean placedHingeLeft(boolean clickLeft, GateNeighbour left, GateNeighbour right) {
+        int l = left.score(), r = right.score();
+        if (l == r) return clickLeft;
+        // pairing with the right-hand gate means latching right, so hanging on the left post
+        return r > l;
+    }
+
+    /**
+     * RAIL7: whether the gate on the new gate's latch side has to turn its hinge round to pair with it: it is a free
+     * gate hung on the new gate's side ({@link #placedHingeLeft} chose it).
+     */
+    public static boolean flipsNeighbour(GateNeighbour latchSide) {
+        return latchSide.score() == 1;
     }
 
     // ------------------------------------------------------------------ the gate (RAIL3)
@@ -199,9 +287,21 @@ public final class RailingRules {
      * an open gate's collision so a player steps through as through a port).
      */
     public static List<double[]> gateBoxes(Direction facing, boolean open, double postTop, double leafTop, double post) {
-        List<double[]> out = portBoxes(facing, postTop, post);
+        return gateBoxes(facing, open, postTop, leafTop, post, true, false);
+    }
+
+    /**
+     * RAIL7: {@link #gateBoxes(Direction, boolean, double, double, double)} of a gate hinged left ({@code hingeLeft}) or
+     * right, one leaf of a double gate when {@code paired}: then the post on its latch side is left out, the sill runs on
+     * to that side of the block and the closed leaf reaches it, where it meets its partner's.
+     */
+    public static List<double[]> gateBoxes(Direction facing, boolean open, double postTop, double leafTop, double post,
+                                           boolean hingeLeft, boolean paired) {
+        boolean left = !paired || hingeLeft;
+        boolean right = !paired || !hingeLeft;
+        List<double[]> out = portBoxes(facing, postTop, post, left, right);
         if (!open) {
-            out.add(rotate(new double[]{POST, 0, 0, 16 - POST, leafTop, RAIL_DEPTH}, facing));
+            out.add(rotate(new double[]{left ? POST : 0, 0, 0, right ? 16 - POST : 16, leafTop, RAIL_DEPTH}, facing));
         }
         return out;
     }

@@ -1,19 +1,117 @@
 {
-  "variants": {
-    "facing=east": {
-      "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port",
-      "y": 90
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port_sill"
+      },
+      "when": {
+        "facing": "north"
+      }
     },
-    "facing=north": {
-      "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port"
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post"
+      },
+      "when": {
+        "facing": "north",
+        "post_left": "true"
+      }
     },
-    "facing=south": {
-      "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port",
-      "y": 180
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "north",
+        "post_right": "true"
+      }
     },
-    "facing=west": {
-      "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port",
-      "y": 270
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port_sill",
+        "y": 90
+      },
+      "when": {
+        "facing": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "post_left": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "east",
+        "post_right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port_sill",
+        "y": 180
+      },
+      "when": {
+        "facing": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "post_left": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "south",
+        "post_right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_port_sill",
+        "y": 270
+      },
+      "when": {
+        "facing": "west"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "post_left": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_skyris_railing_post"
+      },
+      "when": {
+        "facing": "west",
+        "post_right": "true"
+      }
     }
-  }
+  ]
 }

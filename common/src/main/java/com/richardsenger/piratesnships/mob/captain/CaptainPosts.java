@@ -16,16 +16,25 @@ import java.util.regex.Pattern;
  *
  * <ul>
  *   <li><b>Captain's hut</b> ({@code captains_hut.py}): the middle of the room, (4, 3, 5) on the floor boards (y 2),
- *       between the rug and the stool, one block in from the door (4, 3, 3), facing it (north).</li>
+ *       between the rug and the stool, one block in from the door (4, 3, 3), facing it (north). The STR2 variants
+ *       {@code captains_lookout} (the same hut with a lookout beside it) and {@code captains_cabin} (the beached
+ *       stern) keep the room, the floor and the door there, so all three use this post.</li>
  *   <li><b>No hut:</b> the huts pool draws the captain's hut one time in six, so an island without one puts its captain
  *       in the camp ({@code camp_start.py}): on the inland trail (6, 1, 10) south of the east-west trail, facing the
  *       campfire (north).</li>
  * </ul>
- * The island's first captain's hut in the jigsaw's piece order wins, so the same post comes out in every chunk.
+ * The island's first captain's hut (of any of the three) in the jigsaw's piece order wins, so the same post comes
+ * out in every chunk.
  */
 public final class CaptainPosts {
 
     public static final String CAPTAINS_HUT = "captains_hut";
+    /** STR2: the captain's hut with a lookout platform beside it ({@code captains_lookout.py}). */
+    public static final String CAPTAINS_LOOKOUT = "captains_lookout";
+    /** STR2: the captain's cabin in a beached stern ({@code captains_cabin.py}). */
+    public static final String CAPTAINS_CABIN = "captains_cabin";
+    /** Every captain's hut; each puts the captain at {@link #HUT_POST}. */
+    public static final List<String> CAPTAINS_HUTS = List.of(CAPTAINS_HUT, CAPTAINS_LOOKOUT, CAPTAINS_CABIN);
     public static final String CAMP_START = "camp_start";
 
     /** A post: the block the captain stands in and the way he faces, both local to the piece. */
@@ -52,15 +61,16 @@ public final class CaptainPosts {
 
     /** The captain's post of an island made of {@code pieces} (jigsaw order), or empty without a hut or a camp. */
     public static Optional<Placement> post(List<PlacedPiece> pieces) {
-        for (String name : List.of(CAPTAINS_HUT, CAMP_START)) {
-            Post post = CAPTAINS_HUT.equals(name) ? HUT_POST : CAMP_POST;
-            for (PlacedPiece piece : pieces) {
-                if (name.equals(piece.name())) {
-                    return Optional.of(new Placement(GarrisonPosts.toWorld(piece, post.local()),
-                            piece.rotation().rotate(post.facing()), name));
-                }
-            }
+        for (PlacedPiece piece : pieces) {
+            if (CAPTAINS_HUTS.contains(piece.name())) return Optional.of(placement(piece, HUT_POST));
+        }
+        for (PlacedPiece piece : pieces) {
+            if (CAMP_START.equals(piece.name())) return Optional.of(placement(piece, CAMP_POST));
         }
         return Optional.empty();
+    }
+
+    private static Placement placement(PlacedPiece piece, Post post) {
+        return new Placement(GarrisonPosts.toWorld(piece, post.local()), piece.rotation().rotate(post.facing()), piece.name());
     }
 }

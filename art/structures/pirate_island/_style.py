@@ -9,7 +9,7 @@ fittings at the end of this file (``awning``, ``palisade_post``, ``shutter_windo
 ``campfire_ring``, ``sand_skirt``, ``weatherboard``, ``chimney``, ``lantern_post``) give every piece of the set the
 same ramshackle, salvaged look.
 
-The group's connectors (art/README.md, "Pirate island (ST2)") are added to ``buildspec.CONNECTORS`` here, so
+The group's connectors (art/README.md, "Pirate island (ST2)", "Natural layout (STR2)") are added to ``buildspec.CONNECTORS`` here, so
 ``Piece.connector`` knows them; ``treasure`` adds the buried treasure marker."""
 import sys
 from pathlib import Path
@@ -24,11 +24,20 @@ POOL = f"{MOD}:pirate_island"
 buildspec.CONNECTORS.update({
     "path_out": ("path_in", f"{POOL}/paths", "aligned"),
     "path_in": ("path_out", buildspec.EMPTY_POOL, "aligned"),
+    # STR2: the camp's inland trailhead draws from a pool without ends, bends and junctions, so every camp grows a
+    # trail inland
+    "trailhead_out": ("path_in", f"{POOL}/trailheads", "aligned"),
     "hut_out": ("hut_in", f"{POOL}/huts", "rollable"),
     "hut_in": ("hut_out", buildspec.EMPTY_POOL, "rollable"),
     "jetty_out": ("jetty_in", f"{POOL}/jetty", "aligned"),
     "jetty_in": ("jetty_out", buildspec.EMPTY_POOL, "aligned"),
+    # STR2: small decoration pieces (campfires, crates, palms, racks...) hung on the sides of trails and clearings
+    "deco_out": ("deco_in", f"{POOL}/decorations", "rollable"),
+    "deco_in": ("deco_out", buildspec.EMPTY_POOL, "rollable"),
 })
+# STR2: a trail piece tries its buildings first, then its decorations, then the next trail piece
+# (the camp's inland trailhead before everything, so the huts beside it cannot block the camp's way inland)
+buildspec.SELECTION_PRIORITY.update({"trailhead_out": 3, "hut_out": 2, "deco_out": 1})
 
 PALETTE = {
     # ground

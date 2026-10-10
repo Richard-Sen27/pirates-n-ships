@@ -1,6 +1,7 @@
 {
   "type": "pirates_n_ships:port_village",
   "biomes": "#pirates_n_ships:has_structure/pirate_island",
+  "land_pieces_on_land": true,
   "max_distance_from_center": 64,
   "port_kind": "pirate_island",
   "shore_anchor": {
@@ -24,5 +25,5 @@
   "start_height": 1,
   "start_pool": "pirates_n_ships:pirate_island/start",
   "step": "surface_structures",
-  "terrain_adaptation": "none"
+  "terrain_adaptation": "beard_thin"
 }

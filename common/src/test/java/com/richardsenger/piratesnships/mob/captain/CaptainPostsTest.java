@@ -101,6 +101,34 @@ class CaptainPostsTest {
     }
 
     @Test
+    void theVariantsKeepTheHutPost() throws IOException {
+        for (String variant : List.of(CaptainPosts.CAPTAINS_LOOKOUT, CaptainPosts.CAPTAINS_CABIN)) {
+            assertStandable(variant, CaptainPosts.HUT_POST, true);
+            Template hut = template(variant);
+            BlockPos door = new BlockPos(4, 3, 3);
+            assertTrue(hut.names().getOrDefault(door, "").contains("door"), variant + ": the door is in front of him: " + hut.names().get(door));
+        }
+        assertEquals(List.of(CaptainPosts.CAPTAINS_HUT, CaptainPosts.CAPTAINS_LOOKOUT, CaptainPosts.CAPTAINS_CABIN),
+                CaptainPosts.CAPTAINS_HUTS);
+    }
+
+    @Test
+    void aVariantHutHoldsTheCaptainBeforeTheCamp() {
+        PlacedPiece camp = new PlacedPiece(CaptainPosts.CAMP_START, new BlockPos(100, 64, 200), Rotation.NONE);
+        for (String variant : List.of(CaptainPosts.CAPTAINS_LOOKOUT, CaptainPosts.CAPTAINS_CABIN)) {
+            PlacedPiece hut = new PlacedPiece(variant, new BlockPos(120, 63, 230), Rotation.NONE);
+            CaptainPosts.Placement p = CaptainPosts.post(List.of(camp, hut)).orElseThrow();
+            assertEquals(new BlockPos(124, 66, 235), p.pos(), variant + ": the hut's room");
+            assertEquals(Direction.NORTH, p.facing(), variant);
+            assertEquals(variant, p.piece());
+        }
+        // the first captain's hut of any kind wins
+        PlacedPiece cabin = new PlacedPiece(CaptainPosts.CAPTAINS_CABIN, new BlockPos(60, 63, 230), Rotation.NONE);
+        PlacedPiece classic = new PlacedPiece(CaptainPosts.CAPTAINS_HUT, new BlockPos(120, 63, 230), Rotation.NONE);
+        assertEquals(CaptainPosts.CAPTAINS_CABIN, CaptainPosts.post(List.of(camp, cabin, classic)).orElseThrow().piece());
+    }
+
+    @Test
     void theCampPostIsOnTheInlandTrail() throws IOException {
         assertStandable(CaptainPosts.CAMP_START, CaptainPosts.CAMP_POST, false);
     }

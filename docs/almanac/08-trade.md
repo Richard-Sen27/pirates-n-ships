@@ -64,7 +64,7 @@ Every port has a harbour master's desk.
 
 - **Seafarer villages:** quay, pier, cottages and a tavern on a beach.
 - **Navy outposts:** rarer stone forts with cannon and a garrison.
-- **Pirate islands:** rarer still, camps under the Jolly Roger. Strangers are not welcome.
+- **Pirate islands:** rarer still, camps under the Jolly Roger: a rough jetty, then tents, huts and a tavern along winding trails up from the beach. Strangers are not welcome.
 
 ## The harbour master
 illustration: harbor_desk

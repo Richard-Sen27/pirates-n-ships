@@ -4,7 +4,25 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/path_end",
-        "processors": "pirates_n_ships:connections",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_end_rocks",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_end_palm",
+        "processors": "pirates_n_ships:pirate_island_trail",
         "projection": "terrain_matching"
       },
       "weight": 1

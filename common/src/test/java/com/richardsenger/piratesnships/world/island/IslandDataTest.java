@@ -64,7 +64,8 @@ class IslandDataTest {
         withoutOverrides.add("spawn_overrides", new JsonObject());
         PortStructure s = PortStructure.CODEC.codec().parse(ops, withoutOverrides).getOrThrow();
         assertEquals(GenerationStep.Decoration.SURFACE_STRUCTURES, s.step());
-        assertEquals(TerrainAdjustment.NONE, s.terrainAdaptation());
+        assertEquals(TerrainAdjustment.BEARD_THIN, s.terrainAdaptation(), "STR2: the huts sit on the slope");
+        assertTrue(s.landPiecesOnLand(), "STR2: no trails out over the sea");
         assertEquals(IslandData.SIZE, s.maxDepth());
         assertEquals(1, s.startHeight());
         assertEquals(ShoreAnchor.PIRATE_CAMP, s.shoreAnchor());
@@ -110,8 +111,9 @@ class IslandDataTest {
     void poolsParseAndNameCommittedPieces() throws IOException {
         Map<String, Integer> weights = new TreeMap<>();
         Map<String, String> projections = new HashMap<>();
+        Map<String, String> processors = new HashMap<>();
         for (ResourceKey<StructureTemplatePool> key : List.of(IslandKeys.START, IslandKeys.PATHS, IslandKeys.HUTS,
-                IslandKeys.JETTY, IslandKeys.TERMINATORS)) {
+                IslandKeys.JETTY, IslandKeys.TERMINATORS, IslandKeys.DECORATIONS, IslandKeys.TRAILHEADS)) {
             JsonObject json = StandAloneOps.generated("worldgen/template_pool/" + key.location().getPath()).getAsJsonObject();
             StructureTemplatePool pool = StructureTemplatePool.DIRECT_CODEC.parse(ops, json).getOrThrow();
             int total = 0;
@@ -121,6 +123,7 @@ class IslandDataTest {
                 String location = element.get("location").getAsString();
                 weights.put(location, entry.get("weight").getAsInt());
                 projections.put(location, element.get("projection").getAsString());
+                processors.put(location, element.get("processors").getAsString());
                 total += entry.get("weight").getAsInt();
                 ResourceLocation id = ResourceLocation.parse(location);
                 Path nbt = root.resolve("common/src/main/resources/data/" + id.getNamespace() + "/structure/" + id.getPath() + ".nbt");
@@ -129,16 +132,60 @@ class IslandDataTest {
             assertTrue(total > 0, key.location() + " has pieces (vanilla skips connectors with an empty fallback)");
             assertEquals(total, pool.getShuffledTemplates(RandomSource.create(0L)).size(), key.location().toString());
         }
-        assertEquals(Map.of("pirates_n_ships:pirate_island/camp_start", 1, "pirates_n_ships:pirate_island/path", 1,
-                "pirates_n_ships:pirate_island/tent", 3, "pirates_n_ships:pirate_island/tavern_hut", 1,
-                "pirates_n_ships:pirate_island/captains_hut", 1, "pirates_n_ships:pirate_island/treasure_spot", 1,
-                "pirates_n_ships:pirate_island/jetty", 1, "pirates_n_ships:pirate_island/path_end", 1), weights);
-        assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/path"));
-        assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/path_end"));
+        Map<String, Integer> expected = new TreeMap<>();
+        expected.put("pirates_n_ships:pirate_island/camp_start", 1);
+        expected.put("pirates_n_ships:pirate_island/jetty", 1);
+        for (Map<String, Integer> pool : List.of(IslandData.PATHS, IslandData.HUTS, IslandData.TERMINATORS, IslandData.DECORATIONS,
+                IslandData.TRAILHEADS)) {
+            pool.forEach((piece, weight) -> expected.put("pirates_n_ships:pirate_island/" + piece, weight));
+        }
+        assertEquals(expected, weights);
+        // STR2: a path network (straights, bends, forks, a junction, a clearing), several looks of every building
+        assertTrue(IslandData.PATHS.size() >= 8, "path pieces " + IslandData.PATHS.keySet());
+        int straights = IslandData.PATHS.get("path") + IslandData.PATHS.get("path_long");
+        int total = IslandData.PATHS.values().stream().mapToInt(Integer::intValue).sum();
+        assertTrue(straights * 2 < total, "straights are the minority of the trail draws: " + straights + " of " + total);
+        for (String kind : List.of("tent", "hut_", "tavern_", "captains_", "treasure_")) {
+            long looks = IslandData.HUTS.keySet().stream().filter(k -> k.startsWith(kind)).count();
+            assertTrue(looks >= 3, kind + " has " + looks + " looks");
+        }
+        assertTrue(IslandData.DECORATIONS.size() >= 8, "decorations " + IslandData.DECORATIONS.keySet());
+        // the trailheads lead on: every one is a trail piece with the paths pool's weight, none ends the trail
+        IslandData.TRAILHEADS.forEach((piece, weight) -> {
+            assertEquals(IslandData.PATHS.get(piece), weight, piece);
+            assertTrue(!piece.contains("end") && !piece.contains("clearing") && !piece.contains("bend")
+                    && !piece.contains("junction"), piece + " ends or turns the inland trailhead");
+        });
+        for (String piece : IslandData.PATHS.keySet()) {
+            assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/" + piece), piece);
+            assertEquals(IslandKeys.TRAIL_PROCESSORS.location().toString(), processors.get("pirates_n_ships:pirate_island/" + piece), piece);
+        }
+        for (String piece : IslandData.TERMINATORS.keySet()) {
+            assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/" + piece), piece);
+        }
+        for (Map<String, Integer> pool : List.of(IslandData.HUTS, IslandData.DECORATIONS)) {
+            for (String piece : pool.keySet()) {
+                assertEquals("rigid", projections.get("pirates_n_ships:pirate_island/" + piece), piece);
+            }
+        }
         assertEquals("rigid", projections.get("pirates_n_ships:pirate_island/jetty"));
-        assertEquals("rigid", projections.get("pirates_n_ships:pirate_island/treasure_spot"));
+        // every committed island piece is drawn by some pool
+        try (var files = Files.list(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/pirate_island"))) {
+            files.forEach(f -> {
+                String name = "pirates_n_ships:pirate_island/" + f.getFileName().toString().replace(".nbt", "");
+                assertTrue(weights.containsKey(name), name + " is in no pool");
+            });
+        }
         assertEquals(IslandKeys.TERMINATORS.location().toString(),
                 StandAloneOps.generated("worldgen/template_pool/pirate_island/paths").getAsJsonObject().get("fallback").getAsString());
+    }
+
+    @Test
+    void trailProcessorsConnectAndLayBoardwalks() throws IOException {
+        JsonObject json = StandAloneOps.generated("worldgen/processor_list/pirate_island_trail").getAsJsonObject();
+        List<String> types = new java.util.ArrayList<>();
+        for (JsonElement e : json.getAsJsonArray("processors")) types.add(e.getAsJsonObject().get("processor_type").getAsString());
+        assertEquals(List.of("pirates_n_ships:connections", "pirates_n_ships:boardwalk"), types);
     }
 
     @Test

@@ -145,6 +145,11 @@ loom {
             if (perfDir) {
                 vmArg("-Dpirates_n_ships.perf.dir=${perfDir}")
             }
+            // STR2: -Ppirates_n_ships.layout.dir=<dir> chooses where StructureLayoutGameTests writes its layout dumps
+            def layoutDir = providers.gradleProperty('pirates_n_ships.layout.dir').getOrNull()
+            if (layoutDir) {
+                vmArg("-Dpirates_n_ships.layout.dir=${layoutDir}")
+            }
             runDir('build/gametest')
         }
     }

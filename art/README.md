@@ -2660,10 +2660,10 @@ treasure marker, the flagpole).
 |---|---|---|---|---|
 | `pirates_n_ships:jetty_out` | `pirates_n_ships:jetty_in` | `pirates_n_ships:pirate_island/jetty` | aligned | camp (north edge) |
 | `pirates_n_ships:jetty_in` | `pirates_n_ships:jetty_out` | `minecraft:empty` | aligned | jetty (south end, deck row) |
-| `pirates_n_ships:path_out` | `pirates_n_ships:path_in` | `pirates_n_ships:pirate_island/paths` | aligned | camp (east and west edges), path (south end) |
-| `pirates_n_ships:path_in` | `pirates_n_ships:path_out` | `minecraft:empty` | aligned | path, path_end (north end) |
-| `pirates_n_ships:hut_out` | `pirates_n_ships:hut_in` | `pirates_n_ships:pirate_island/huts` | rollable | camp (south edge), path (both sides) |
-| `pirates_n_ships:hut_in` | `pirates_n_ships:hut_out` | `minecraft:empty` | rollable | tent, tavern hut, captain's hut (north side, y 0), treasure spot (north side, y 2) |
+| `pirates_n_ships:path_out` | `pirates_n_ships:path_in` | `pirates_n_ships:pirate_island/paths` | aligned | camp (east and west edges), every trail piece that leads on (STR2) |
+| `pirates_n_ships:path_in` | `pirates_n_ships:path_out` | `minecraft:empty` | aligned | every trail piece and trail end (north end) |
+| `pirates_n_ships:hut_out` | `pirates_n_ships:hut_in` | `pirates_n_ships:pirate_island/huts` | rollable | the trail pieces' sides (STR2; the camp's south edge before STR2) |
+| `pirates_n_ships:hut_in` | `pirates_n_ships:hut_out` | `minecraft:empty` | rollable | every building (north side, y 0), the treasure looks (north side, y 2) |
 | `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | jetty (berth markers, as the village pier) |
 | `pirates_n_ships:treasure` | `minecraft:empty` | `minecraft:empty` | aligned | treasure spot (the buried treasure marker) |
 
@@ -2672,7 +2672,8 @@ treasure marker, the flagpole).
 berths, sand for the treasure. Pools: `pirates_n_ships:pirate_island/start` (the camp), `pirate_island/paths`
 (`path`), `pirate_island/huts` (`tent`, `tavern_hut`, `captains_hut`, `treasure_spot`), `pirate_island/jetty`
 (`jetty`) and `pirate_island/terminators` (`path_end`, the fallback for `path_out` once the depth runs out). The world
-module (WG2) defines them.
+module (WG2) defines them. STR2 adds the pools `trailheads` and `decorations`, many pieces and the connectors
+`trailhead_out`, `deco_out` and `deco_in`: "Natural layout (STR2)" below.
 
 **Sea level:** as in the village. The camp's sand (its y 0) sits one block above sea level; the jetty's deck is its
 row y 5 (level with the sand), the sea surface its row y 4, its posts stand on footings on its row y 0. The berths are
@@ -2693,9 +2694,9 @@ left alone, the jigsaw just becomes sand.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `camp_start` (start) | 13×8×13 | 399 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with driftwood log seats and a roasting spit, a keg, the Jolly Roger, a loot heap (barrels, crates, a chest) under a striped sailcloth lean-to, the fence's lean-to shack (desk as the counter, stock, cobwebs; vertical dark and spruce boards with salvaged patches, palm front posts, sill beam, rafter ends, barred and shuttered windows) with the notice board on its south side under a striped awning, a crude palisade of uneven stakes on the inland sides with taller gate posts (a skull and a torch on the south gate), lantern posts, gravel and mossy skirts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
+| `camp_start` (start) | 13×8×13 | 399 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with driftwood log seats and a roasting spit, a keg, the Jolly Roger, a loot heap (barrels, crates, a chest) under a striped sailcloth lean-to, the fence's lean-to shack (desk as the counter, stock, cobwebs; vertical dark and spruce boards with salvaged patches, palm front posts, sill beam, rafter ends, barred and shuttered windows) with the notice board on its south side under a striped awning, a crude palisade of uneven stakes on the inland sides with taller gate posts (a skull and a torch on the south gate), lantern posts, gravel and mossy skirts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `trailhead_out` [6, 0, 12] (a `hut_out` before STR2) | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
 | `jetty` | 5×9×16 | 117 | 3 wide patched plank deck (dark oak, a salvaged jungle board, sagging slabs) on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, palm bollards and a rope rail at the seaward end, a lantern post and a rail with a net, a ladder down, a crude crane (palm mast, fence jib on a stair brace, chain hook with a crate) and a rope rail at the landward end, barrels and a lantern post; columns x 0 and x 4 stay clear; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
-| `path` | 7×4×7 | 73 | gravel and dirt trail on sand between uneven palisade stakes (palm, stripped spruce, dark oak, fence tips), one propped on a stair, a lantern and a torch, a barrel and dead bushes, gravel at the stakes' feet; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
+| `path` | 7×4×7 | 36 | rebuilt in STR2 (see below): the 3 wide trail bed between driftwood edges, no sand rectangle; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
 | `path_end` | 7×4×3 | 42 | the trail ends at a row of uneven stakes with a palm warning post carrying a skull, a lantern, a crate and a dead bush; `path_in` [3, 0, 0] | `cargo_crate` |
 | `tent` | 7×6×7 | 125 | A-frame of stepped wool (vanilla has no wool stairs or slabs) in patched sailcloth (white, grey and brown patches, a red patch, brown hem) over a stripped log ridge that runs on over a fly on two poles, a hanging lantern at the front, a red pennant at the back, a guy stake and a crate, a bed roll, a chest, a barrel, lanterns, a rug; `hut_in` [3, 0, 0] | `cargo_crate` |
 | `tavern_hut` | 9×8×9 | 309 | open-sided hut (board course of alternating dark and spruce boards, fence rail, palm corner posts, stripped door posts) on a cobblestone plinth going mossy, under a patched dark oak thatch roof with rafter ends; gables on a tie beam with vertical boards, king post and vents; a shuttered back window and a fieldstone chimney with a smoking top; a bar of barrels and a plank counter with a skull, kegs and rum behind it, two tables with stools, lanterns (one over the doorway), cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
@@ -2723,6 +2724,175 @@ containing "water" as water. Every piece was reviewed from all four corners with
 `SCHEMATIC_LAB_PORT` environment variable, else 8766. Agents building pieces in parallel each use their own port
 (ST2 was built on 8767: `SCHEMATIC_LAB_PORT=8767 python3 tools/build_structures.py pirate_island/tent`), so they never
 post to each other's lab session.
+
+### Natural layout (STR2)
+The human, 2026-10-10: "the pirate island I found was just one long straight row with tents, one port and one
+headmaster building … They should look natural in their generation." Cause: the paths pool held one straight piece,
+the huts pool four buildings, and the structure had no terrain adaptation (design.md §10.1, "Natural layouts").
+STR2 gives the island a branching trail network, twenty buildings, a decoration pool, the beard and a check that
+proves it headless; STR3 (village) and STR4 (outpost) reuse the check and the render tooling.
+
+**Sources.** The new pieces are BuildSpec generators like every other piece, built by `tools/build_structures.py`.
+Shared helpers: `_camp.py` (trails drawn along a centre line: `line`, `arc`, `band`; `trail` for the 3 wide bed of
+gravel, trodden dirt, coarse dirt and sand; `edging` for the driftwood edges, flush stripped jungle logs with gaps and
+the odd stake; `patch` for trodden ground that fades into the terrain; `rocks`, `palm`, `crate_stack`, `rope_coil`,
+`skull_post`, `hanging_sign`), `_trails.py` (the mirrored bend and fork pairs: jigsaw never mirrors), `_huts.py` (the
+7 wide hut with options stilts, porch depth and ridge direction), `_captains.py` (the captain's hut, moved out of
+`captains_hut.py` byte-identically, with an `extras` hook for its variants) and `_decos.py` (the ten decorations).
+New pieces leave every cell they do not need empty, so the terrain shows through: no sand rectangle under a trail or
+a hut. A hanging sign's block entity goes out through `piece.jigsaws` like the flagpole's, with `Id`
+`minecraft:hanging_sign` overriding the lab's default (the block's name), so `tools/check_structures.py` passes.
+
+**Connectors** (added to the ST2 vocabulary in `_style.py`):
+
+| name | target | pool | joint | selection priority | used by |
+|---|---|---|---|---|---|
+| `pirates_n_ships:trailhead_out` | `pirates_n_ships:path_in` | `pirates_n_ships:pirate_island/trailheads` | aligned | 3 | camp (south edge, the inland trail) |
+| `pirates_n_ships:deco_out` | `pirates_n_ships:deco_in` | `pirates_n_ships:pirate_island/decorations` | rollable | 1 | long trail, forks, clearing |
+| `pirates_n_ships:deco_in` | `pirates_n_ships:deco_out` | `minecraft:empty` | rollable | 0 | every decoration (north edge, y 0) |
+| `pirates_n_ships:hut_out` | (as ST2) | | | 2 | every trail piece but the ends |
+
+`buildspec.SELECTION_PRIORITY` holds the priorities: vanilla's jigsaw tries a piece's connectors in descending
+selection priority, so a trail piece places its buildings, then its decorations, then the next trail piece, and the
+camp its inland trail before anything else. The camp's `hut_out` became the `trailhead_out` (its side connectors stay
+`path_out`).
+
+**Pools and weights** (`world/island/IslandData`; weights expand in the pool):
+
+| pool | projection | pieces (weight) |
+|---|---|---|
+| `start` | rigid | `camp_start` |
+| `jetty` | rigid | `jetty` |
+| `trailheads` (fallback `terminators`) | terrain matching | `path` 3, `path_long` 2, `path_fork_left` 2, `path_fork_right` 2 |
+| `paths` (fallback `terminators`) | terrain matching | `path` 3, `path_long` 2, `path_bend_left` 2, `path_bend_right` 2, `path_fork_left` 2, `path_fork_right` 2, `path_junction` 1, `path_clearing` 2 |
+| `terminators` | terrain matching | `path_end` 1, `path_end_rocks` 1, `path_end_palm` 1 |
+| `huts` | rigid | `tent` 3, `tent_small` 2, `tent_large` 2, `tent_lean` 2, `hut_stilts` 2, `hut_porch` 2, `hut_thatch` 2, `tavern_hut` 1, `tavern_long` 1, `tavern_deck` 1, `captains_hut` 1, `captains_lookout` 1, `captains_cabin` 1, `lookout_tower` 1, `smokehouse` 2, `powder_store` 1, `longboat` 1, `treasure_spot` 1, `treasure_cairn` 1, `treasure_wreck` 1 |
+| `decorations` | rigid | `deco_campfire` 2, `deco_crates` 3, `deco_hammock` 2, `deco_rocks` 3, `deco_fish_rack` 2, `deco_washing_line` 2, `deco_rum_cask` 2, `deco_skull_post` 1, `deco_jolly_roger` 1, `deco_palm` 3 |
+
+Why these numbers: a trail piece of the paths pool leads on to 1.2 trail pieces on average (forks and the junction
+two, bends and straights one, the clearing none), so the network keeps growing until the depth (6) or the space
+runs out, and straights are 5 of 16 draws. With the ends drawn in the paths pool as well, one camp in ten died out
+after two or three pieces; with only the fallback ends, 60 of 60 scanned seeds passed the check (16 to 81 pieces,
+median 41; aspect 0.52 to 0.99; 4 to 15 distinct buildings). The inland trailhead never draws an end, a bend or the
+junction, so every camp has a trunk that climbs inland; the two side trails along the beach draw from the paths pool.
+
+**Processors.** The trails (`paths`, `trailheads`, `terminators`) run the processor list
+`pirates_n_ships:pirate_island_trail`: the connections (WG4) and `pirates_n_ships:boardwalk`
+(`world/structure/BoardwalkProcessor`), which lays a trail's bed (sand, gravel, coarse dirt, dirt path, the edging
+logs) as spruce planks where its final position is water (it works after vanilla's gravity processor, in
+`finalizeProcessing`; a `minecraft:rule` processor sees the block before that move). Everything else runs
+`pirates_n_ships:connections` as before.
+
+**Terrain and shore.** The structure has `terrain_adaptation: beard_thin`, so the rigid huts and decorations (sunk
+one block onto the surface row, as before) get their ground levelled and the slope round them eased. The camp stays
+the beach landing: the shore anchor (WG2) puts the camp's north edge on the last land column and its sand one above
+the sea surface, the jetty runs out into the water. There is no `project_start_to_heightmap`: the port structure type
+sets the start's height from the sea surface (a heightmap projection would lift the camp and the jetty off the water on
+a beach that rises inland). New, `land_pieces_on_land: true` (`world/structure/LandFilter`, run by
+`PortStructure.plan`): after the jigsaw, a land piece (a trail, or a building or decoration hanging from one) with at
+least three of five footprint samples (centre and corners) over open water is dropped, with everything hanging from
+it; the start and the jetty stay. Without it, side trails bent out to sea and carried boardwalks and huts over the
+open water. The beard works round the rigid jetty too (it lowers the shore beside it to the jetty's foot and raises a
+deep seabed toward it, about three blocks of water at the berths), which is accepted; the village and the outpost
+keep `none`.
+
+| piece | size (x×y×z) | blocks | contents and connectors |
+|---|---|---|---|
+| `path` | 7×4×7 | 36 | short straight: the bed between driftwood edges, a barrel, a lantern stake, spurs to the sides; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] |
+| `path_long` | 7×4×11 | 55 | long straight wandering half a block east and back, a rope coil, a crate, a lantern stake; `path_in` [3, 0, 0], `path_out` [3, 0, 10], `hut_out` [0, 0, 3] and [6, 0, 8], `deco_out` [6, 0, 3] and [0, 0, 8] |
+| `path_bend_left` / `path_bend_right` | 9×4×9 | 64 / 60 | a quarter bend on a radius of 6 to the east / west, a leaning palm and rocks in the inside corner, a lantern stake; `path_in` [2, 0, 0] / [6, 0, 0], `path_out` [8, 0, 6] east / [0, 0, 6] west, `hut_out` on the outside [0, 0, 4] and [3, 0, 8] / [8, 0, 4] and [5, 0, 8] |
+| `path_fork_left` / `path_fork_right` | 9×4×11 | 72 / 70 | the trail runs on south and a branch sweeps off east / west on a radius of 5, crates and a lantern in the crotch; `path_in` [3, 0, 0] / [5, 0, 0], `path_out` south and east / west, `hut_out` and `deco_out` on the other side |
+| `path_junction` | 11×5×7 | 74 | a T with rounded corners, a skull signpost and a barrel at its head; `path_in` [5, 0, 0], `path_out` [0, 0, 4] and [10, 0, 4], `hut_out` [5, 0, 6] |
+| `path_clearing` | 11×5×11 | 113 | a dead end opening into a ragged round clearing with a cold fire pit, a spit, log seats, rocks and a rum keg; `path_in` [5, 0, 0], `hut_out` [0, 0, 6] and [10, 0, 6], `deco_out` [5, 0, 10] |
+| `path_end_rocks` | 7×3×4 | 26 | the trail petering out among rocks behind a fallen driftwood log; `path_in` [3, 0, 0] |
+| `path_end_palm` | 7×8×5 | 43 | the trail ending under a leaning palm with rocks, a rope coil, a crate and a lantern stake; `path_in` [3, 0, 0] |
+| `tent_small` | 5×5×6 | 60 | a closed two-course pup tent of grey and brown canvas, a bed roll, a sea bag, a lantern; `hut_in` [2, 0, 0] |
+| `tent_large` | 9×7×9 | 188 | an open-fronted mess tent of red and white striped sailcloth with a fly on poles, two bed rolls, a table, a chest, a pennant; `hut_in` [4, 0, 0] |
+| `tent_lean` | 7×5×6 | 82 | a sail lean-to against a driftwood log wall, a bed roll, a crate, a cold fire and a stool; `hut_in` [2, 0, 0] |
+| `hut_stilts` | 7×10×8 | 223 | a one-room hut on palm stilts, steps up to a roped porch, salvage under it, gables on the sides; `hut_in` [3, 0, 0] |
+| `hut_porch` | 7×8×8 | 200 | a ground hut with a two-deep roped porch under a lower thatch course, a stool and a barrel, a fieldstone chimney; `hut_in` [3, 0, 0] |
+| `hut_thatch` | 7×8×6 | 157 | a ground hut under a steep front-to-back thatch with boarded gables and a king post, a chimney, crates by the side; `hut_in` [3, 0, 0] |
+| `tavern_long` | 13×10×10 | 430 | a long drinking hall with an open bar front, a long bar, three tables, kegs, a hanging sign "The Rusty Cutlass" on a palm post and fence arm, barrels outside, a chimney; `hut_in` [6, 0, 0] |
+| `tavern_deck` | 11×11×12 | 470 | a grog shack behind a slab terrace with barrel tables and a rum cask, a serving hatch under a striped awning, a hanging sign "The Drunken Kraken", barrels against the side; `hut_in` [5, 0, 0] |
+| `captains_lookout` | 13×15×9 | 456 | the captain's hut with a lookout platform on palm legs beside it (ladder, rail, lantern, the black banner on the mast); `hut_in` [4, 0, 0] |
+| `captains_cabin` | 9×9×11 | 353 | the captain's cabin in a beached ship's stern on log cradles: curved dark oak hull, stern windows, a quarterdeck with a rail and the banner, the map table with a map tile, the sea chest; `hut_in` [4, 0, 0] |
+| `lookout_tower` | 5×15×6 | 148 | a crow's nest platform on four tapering palm legs with braces, a ladder to a trapdoor, a ship's bell, a sunshade; `hut_in` [2, 0, 0] |
+| `smokehouse` | 9×8×7 | 164 | a fieldstone and board smokehouse with a smoking flue and a smoker, two drying racks of fish (open trapdoors) and kelp; `hut_in` [2, 0, 0] |
+| `powder_store` | 5×5×7 | 128 | a squat mossy cobblestone magazine with an iron door, powder kegs, a moss roof, a warning skull, a cauldron of sand; `hut_in` [2, 0, 0] |
+| `longboat` | 8×5×12 | 123 | a beached longboat (keel and bottom sunk in the sand, thwarts, oars), nets drying on driftwood poles, rope, a fish basket; `hut_in` [3, 0, 0] |
+| `treasure_cairn` | 5×7×5 | 89 | buried treasure under a ring of stones beside a tall cairn with a skull and a broken shovel; surface row y 2, the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] |
+| `treasure_wreck` | 7×6×7 | 169 | buried treasure among the bleached ribs of an old boat, a skeleton, a skull, a broken barrel; surface row y 2, the treasure marker [3, 0, 3]; `hut_in` [3, 2, 0] |
+| `deco_*` | 3×4×3 to 7×9×5 | 9 to 43 | `campfire` (a lit fire ring with seats), `crates`, `hammock` (a hammock between two leaning palms), `rocks`, `fish_rack`, `washing_line`, `rum_cask`, `skull_post`, `jolly_roger` (a flagpole), `palm`; `deco_in` in the middle of the north edge, y 0 |
+
+The captain's post (`CaptainPosts.HUT_POST`, (4, 3, 5) on the floor at y 2, the door at (4, 3, 3)) is the same in the
+two new captain's huts, and `CaptainPosts.CAPTAINS_HUTS` lists all three: the island's first captain's hut of any kind
+holds the captain; only a camp without one puts him at the camp's post.
+
+**The layout check.** `world/structure/StructureLayoutGameTests` (STR3 and STR4 add their structures there):
+
+- `pirateIslandLayoutsAreNatural` plans the island through the real jigsaw assembler (`PortStructure.plan`) for six
+  seeds (11, 2024, 4242, 31337, 65536, 99991) at a fixed site on a straight shore (sea to the north), with the trails'
+  height from a flat generator at the sand's surface (the jigsaw's collision test is three-dimensional; trails at the
+  superflat height would pass under the camp). Per instance: at least 10 pieces, a footprint aspect (shorter side of
+  the bounding box over the longer) of at least 0.5, at least 4 distinct buildings of the huts pool, the jetty's far
+  end over the water; no two instances with the same piece sequence. Each instance goes to `layout-<seed>.txt`
+  (`world/structure/StructureLayout`: the header, then one line per piece with its box).
+- `pirateIslandPlaced1..3` place the seeds 11, 2024 and 4242 for real on a 160 by 160 beach (the barrier ceiling
+  taken away, or vanilla's gravity processor would lay the trails on it): the trails lie on the sand, the jetty's far
+  end stands in water, the port registers with its two berths, and the region (the structure's box and 8 blocks
+  round it) is written as a Sponge schematic `pirate_island_<seed>.schem` (`world/structure/RegionSchematic`).
+
+The files go to the folder in the system property `pirates_n_ships.layout.dir`, default `structure-layouts` in the
+GameTest run directory (`neoforge/build/gametest/structure-layouts`, `fabric/build/gametest/structure-layouts`); both
+GameTest runs forward the Gradle property `-Ppirates_n_ships.layout.dir=<dir>` to it (a relative path is taken from
+the run directory, so give an absolute one, e.g. a scratch folder outside the repository). Both
+loaders give byte-identical layout files. A seed's layout depends on the site's chunk as well, so the seeds are planned
+at a fixed site and moved into the arena; neighbouring seeds can share a layout (`PortStructure.plan` takes the first
+of `seed`, `seed + 1`, ... that gives the shore's rotation), so the seeds lie far apart.
+
+`tools/structure_check.py [DIR | layout-*.txt] [--map]` reads the dumps, prints one row per instance (pieces, size,
+aspect, buildings, the trail pieces) and, with `--map`, a top-down sketch of the piece boxes, and fails on the same
+thresholds (`--min-pieces`, `--min-aspect`, `--min-variants`).
+
+**Renders for the human.** `art/renders/structures/pirate_island_<seed>_top.png` and `_iso.png` for the seeds 11, 2024
+and 4242: the placed instances of the GameTest on its flat beach (no real terrain, no beard; the playtest covers
+those). To regenerate them:
+
+```sh
+./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=StructureLayoutGameTests \
+    -Ppirates_n_ships.layout.dir=/tmp/layouts
+python3 tools/structure_check.py /tmp/layouts --map
+python3 tools/render_generated_structure.py /tmp/layouts/pirate_island_{11,2024,4242}.schem --out art/renders/structures
+```
+
+Without `-Ppirates_n_ships.layout.dir` the files stay in `neoforge/build/gametest/structure-layouts`, the folder
+`tools/structure_check.py` reads by default.
+
+**A real world.** `art/renders/structures/pirate_island_smoke_top.png` and `_iso.png` show the island the NeoForge
+dedicated-server smoke test generates (seed 2718281828, port `pirate_island_-3012_4328`: a narrow sandy spit with the
+jetty running west into the sea, real terrain, the beard and the land filter at work). To regenerate:
+
+```sh
+tools/server_smoke.sh neoforge
+python3 tools/world_region.py neoforge/build/server-smoke/world -3088 4256 -2960 4384 --y0 45 --y1 95 \
+    --out /tmp/pirate_island_smoke.schem
+python3 tools/render_generated_structure.py /tmp/pirate_island_smoke.schem --out art/renders/structures
+```
+
+`tools/world_region.py` cuts a box out of a saved world's Anvil region files as a Sponge schematic (standard library;
+chunks not generated up to features come out as air). The first smoke render showed the beard raising a sand bar the
+length of the jetty: vanilla's jigsaw gives a rigid child of a rigid parent its parent's ground level (the jetty's
+came out one above the sea), so `PortStructure.plan` now copies every rigid piece hanging rigidly from the start
+(jetty, pier, quay) with its ground level a thousand blocks down, out of the beard's reach
+(`PortStructure.unbearded`; `StructureLayoutGameTests.pirateIslandBeardSparesTheJetty` feeds the island's pieces to
+vanilla's beardifier and fails without it). The camp's own beard still widens the beach a few blocks in front of the
+landing.
+
+`tools/render_generated_structure.py` draws `_top` (every column's top block from above, lit from the north-west,
+water darkened with depth, 8 px per block) and `_iso` (the south-east isometric view with `tools/iso_render.render`,
+shapes and rough Minecraft colours, only exposed blocks). `--iso lab --port N` posts the region to the
+minecraft-schematic-lab as a build and saves its preview instead; the lab draws whole cubes in its own colour table,
+which paints most of a camp's stairs, slabs and wool blue, so it is only a cross-check.
 
 ### Navy outpost (ST3)
 The navy fort (design.md §10.1) as a third piece set, group `navy_outpost`, built with the same pipeline and

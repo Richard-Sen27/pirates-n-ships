@@ -49,7 +49,7 @@ Pirate fences sell blank {item:pirates_n_ships:treasure_map}**treasure maps**, a
 
 Hold it to see the red X and the way there. At the X, dig into the sand for the chest.
 
-> Every pirate island has a chest buried beneath two crossed logs.
+> Pirate islands hide their chests under the sand: beneath two crossed logs, by a cairn, or among the ribs of an old boat.
 
 ## Wrecks
 The ocean floor is strewn with wrecks, each with a chest of ship's stores: doubloons, rum, supplies, now and then a treasure map. Tall wrecks lie in deep water. Bring something to breathe and see down there.

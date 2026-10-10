@@ -67,7 +67,7 @@ class BulwarkRulesTest {
         assertEquals(3, outline.size(), "wall, cap rail, stanchion");
         assertEquals(18.0, top(outline));
         double[] cap = outline.get(1);
-        assertEquals(4.0, cap[5] - cap[2], "the cap rail is 4 px deep, 2 px proud of the 2 px wall");
+        assertEquals(3.0, cap[5] - cap[2], "the cap rail's outline is 3 px deep, 1 px proud of the 2 px wall (RAIL6)");
         assertEquals(14.0, cap[1]);
         List<double[]> collision = BulwarkRules.boxes(set(EAST, SOUTH), set(SOUTH), 24, 24, false);
         assertEquals(3, collision.size(), "two walls and a stanchion, no cap");

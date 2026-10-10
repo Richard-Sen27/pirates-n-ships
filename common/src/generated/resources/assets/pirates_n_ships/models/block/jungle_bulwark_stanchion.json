@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "minecraft:block/stripped_jungle_log",
-    "log_top": "minecraft:block/stripped_jungle_log_top",
-    "particle": "minecraft:block/jungle_planks",
-    "planks": "minecraft:block/jungle_planks"
-  }
-}

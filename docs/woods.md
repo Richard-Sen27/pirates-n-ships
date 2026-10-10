@@ -3,7 +3,7 @@
 The human, 2026-10-10: "i want you to add the multi wood support (including woods from other mods)"; earlier "the thing
 with the wood counts for all various wood based things in this mod". WOOD1 builds the core and ships the two families
 that existed (the railing family of RAIL1, RAIL3 and RAIL4, and the oar bench of OAR1) in every wood; WOOD2 to WOOD4
-convert the other wooden blocks.
+convert the other wooden blocks. RAIL6 adds the rope railing (`<wood>_rope_railing`) as a seventh family.
 
 ## The pieces (`ship/decor/wood`)
 
@@ -38,7 +38,8 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 - **Registration:** every vanilla wood always; a mod's wood only when its mod is loaded. WOOD1's 6 families x 11
   woods = 66 blocks with items (it had the 6 oak members); WOOD4's 5 machine families add 5 x 11 = 55 (they had the 5
   legacy members: 50 new blocks); WOOD2's 6 storage families add 6 x 11 = 66 (they had the 6 legacy members: 60 new
-  blocks); each loaded wood mod adds one member per family and wood.
+  blocks); each loaded wood mod adds one member per family and wood. RAIL6's rope railing adds
+  a family of its own (11 blocks, one more per loaded compat wood).
 - **Creative tab:** registration order, so family-major: oak railing, spruce railing, ... warped railing, the loaded
   mods' railings, then the ports, and so on (like vanilla's fences).
 - **Names:** "Spruce Railing", "Redwood Railing". No mod name in the name or a tooltip: two mods with the same wood
@@ -51,7 +52,8 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 
 | Family (suffix) | Legacy id (wood) | Variables | Registered in | Datagen |
 |---|---|---|---|---|
-| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak leads) | `#planks`, `#log` | `ship/decor/railing/RailingContent` | `RailingData` |
+| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak leads) | `#planks`, `#log`, `#log_top` (RAIL6) | `ship/decor/railing/RailingContent` | `RailingData` |
+| `rope_railing` (RAIL6) | none (oak leads) | `#planks` (particle), `#log`, `#log_top`; rope `block/rope_line` fixed | `RailingContent.ROPE_RAILINGS` | `RailingData` |
 | `oar_bench` | none | `#planks`, `#log` | `sailing/oars/OarsContent` | `OarsData` |
 | `cargo_crate` | `cargo_crate` (oak) | `#planks`, `#log`, `#log_top` | `ShipDecor.CARGO_CRATES` | `trade/cargo/CargoContainerData` |
 | `cargo_barrel` | `cargo_barrel` (spruce) | `#planks` | `ShipDecor.CARGO_BARRELS` | `trade/cargo/CargoContainerData` |

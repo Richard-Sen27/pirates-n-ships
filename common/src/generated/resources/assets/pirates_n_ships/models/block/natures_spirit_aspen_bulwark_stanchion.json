@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "natures_spirit:block/stripped_aspen_log",
-    "log_top": "natures_spirit:block/stripped_aspen_log_top",
-    "particle": "natures_spirit:block/aspen_planks",
-    "planks": "natures_spirit:block/aspen_planks"
-  }
-}

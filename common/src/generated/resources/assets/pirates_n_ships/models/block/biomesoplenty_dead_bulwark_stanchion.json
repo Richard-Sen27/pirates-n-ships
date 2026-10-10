@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "biomesoplenty:block/stripped_dead_log",
-    "log_top": "biomesoplenty:block/stripped_dead_log_top",
-    "particle": "biomesoplenty:block/dead_planks",
-    "planks": "biomesoplenty:block/dead_planks"
-  }
-}

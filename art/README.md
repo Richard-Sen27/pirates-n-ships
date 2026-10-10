@@ -1076,7 +1076,7 @@ datagen's children per wood set the variables (`block/<wood>_<part>`, the legacy
   Particle: the log (was the anvil).
 - `HandMadeModelsTest.woodFamilyParentsUseTheWoodVariables` checks every parent's keys.
 
-Railings (RAIL1):
+Railings (RAIL1; the look superseded by "Railing rework (RAIL6)" below):
 - **Part list in `tools/gen_railing_models.py`** (committed). It writes the four parent models of the wood family to
   `models/block/` and their project `models/railing.bbmodel` itself (groups `railing_edge` 6 elements, `railing_post`
   2, `railing_port` 5, `railing_item` 10; all at the same place, the first visible; textures `oak_planks` with id
@@ -1196,6 +1196,62 @@ Railing latch (RL5):
 - **Why its own block** and not a `latch` state of the railing (the RL5 brief): with WOOD1's 108 woods a five-valued
   property on every railing and bulwark would add about 440,000 block states; the bolt lies entirely in the cell over
   the cap anyway, and the latch block also holds the net's link, so a railing never carries a block entity.
+
+Railing rework (RAIL6):
+- **Why:** the human (2026-10-10): the railing "obviously just looks like a fence ... very bulky ... the few openings
+  also seem to me so small". Target: an open, slender ship's rail. The part list `tools/gen_railing_models.py` was
+  rewritten (the RAIL1, RAIL3, RAIL4 geometry above is superseded where it says otherwise; RL5's latch is unchanged);
+  `railing.bbmodel` now holds 20 groups. Lint clean (no fights; two harmless back-to-back pairs in the gate item).
+- **Cap rail** (railing, gate leaf, bulwark, the same part): stripped log, y 14..16 on the balusters' line z 1: a body
+  y 14..15.5, z -1..3 (4 px, overhanging the balusters 1 px each side and the block's outer face by 1 px) and a band
+  y 15.5..16, z -0.45..2.45 on it (the step that makes it read rounded; 2.9 px so its faces lie inside a post's 3 px
+  and never fight them). Long faces `#log` turned 90 degrees (`"rotation": 90`, the UV rectangle transposed), so the
+  grain runs along the rail; end faces `#log_top`, drawn (the overhang past a post shows them, back-to-back ends of
+  neighbours are culled). Top stays y 16: RL5's latch washer (z 0.3..2) stands on the band, RAIL5's leaners rest on it.
+- **Toe rail:** planks y 0..2, z 0..2, full width; no middle rail.
+- **Balusters** (`railing_baluster_west` x 4, `railing_baluster_east` x 12; 8 px apart across blocks, 6 px openings):
+  a 2 px log shaft y 2..14, z 0..2 and a turned bulge y 6..9 (a 3 px belly y 6.5..8.5 between 2.5 px collars). The
+  block state draws each only while no post stands at its end of the edge (`when: {<edge>: true, <post>: false}`: the
+  west one with the corner keyed by the edge, the east one with the corner keyed clockwise of it), so a post never
+  presses against a baluster (an end opening is 8.5 px).
+- **Post** (`railing_post`, also the bulwark's and the rope railing's; `bulwark_stanchion` is gone): 3 px log square
+  centred on the corner of the two rail lines (x and z -0.5..2.5, so it stands half a pixel past the block's faces), y
+  0..16.5 (half a pixel over the cap), a 2 px finial y 16.5..18.5 and a 1 px tip to 19.5; tops `#log_top`. The outline
+  keeps its 3 x 3 px box to y 17 and the collision its height: only the look changed.
+- **Port:** the two posts and a plank sill x 2.5..13.5, y 0..4, z 0..2. **Gate leaf** (u 0..11 from the hinge post's
+  inner face at x 2.5): the cap rail, a plank bottom rail y 4..6 on the sill, one turned baluster at x 8, iron hinge
+  bands 1 px tall round the cap's body (y 14.25..15.25) and the bottom rail (y 4.5..5.5), reaching 1 px onto the post, a
+  latch bar on the cap's inboard face (y 14.5..15.5) with a grip, its tongue in the latch post. Open: turned 90 degrees
+  outboard about the cap's outer corner at the hinge post (x 2.5 or 13.5, z -1), every face drawn.
+- **Bulwark:** the plank wall x 0..16, y 0..14, z 0.05..2 under the cap rail; the gun port's jambs carry cap ends; the
+  lid is unchanged. The outline's cap is 3 px deep now (`BulwarkRules.CAP_DEPTH`), the overhang is drawn only.
+- **Rope railing** (`rope_railing_edge`, `rope_railing_item`; block `<wood>_rope_railing`): a 2 px log stanchion at the
+  edge's x-0 end (x 0..2, z 0..2, y 0..16.25: inside the post where a run ends there, so no condition is needed) and two
+  rope lines on the line z 0.25..1.75, the top y 14.5..16 (its top where the cap's is, so RL5's latch stands on it) and
+  the middle y 7..8.5. Rope texture: `#rope` = `pirates_n_ships:block/rope_line`, made for these lines by
+  `tools/gen_rope_line_texture.py` (committed with the PNG): every row the same 6-texel strand (flank, crown, flank,
+  shade, groove, shade in the rigging rope's hues) shifted two texels per row, so the 1.5-texel strip a face samples (16
+  along the line, 1.5 across; the top and bottom faces the same, the ends hidden in posts and neighbours) shows rounded
+  strands laid at a slant. Tried first and dropped, by renders in spruce and dark oak: the rigging's
+  `block/rope` (blotchy at 1.5 px), stripped birch turned along the line (reads as a pale wooden rail), a 4-texel ramp,
+  a 4-texel rounded strand, the 6-texel strand with a one-texel slant (the twist barely shows). Posts: `railing_post`.
+- **Not done:** the belaying-pin rail on the bulwark (three pins per block inboard of the cap). Left out: it would
+  stand where RAIL5's leaners put their arms and RL5's nets leave the latch, and a pin rail on every bulwark block reads
+  busy; it fits better as its own block (a pin rail placed on a bulwark) if wanted.
+- **uvlock off:** the railing family's block states no longer turn with uvlock (with it a top face keeps the world's
+  grain, across the cap on the east and west edges); `RailingModelsTest` checks it.
+- **Renders** (a scratch three.js scene in Blockbench's `risky_eval`, no project opened: each model JSON built as one
+  quad per face with vanilla's face shading, element rotations and face UV rotations, `FrontSide` like the game's
+  culling; vanilla textures from the 1.21.1 client jar; the block states emulated in the scene, posts by the
+  `RailingRules.posts` rule and the balusters by the multipart conditions above; composed with a canvas and written
+  with `fs`): `renders/railing.png` (a run of three with the swivel gun shifted 6 px onto the cap, a one-block gap, a
+  block running into the port with the cannon model behind it, a corner; from the deck, from outboard, close up),
+  `renders/railing_before_after.png` (the same scene with the pre-RAIL6 model JSON from git and with the new, one
+  camera), `renders/railing_item.png`, `renders/railing_gate.png` (each hinge closed and open between two railings,
+  from inboard and outboard, and the item), `renders/bulwark.png` (a run, a shut and an open gun port with a cannon, a
+  corner, a railing beside it, the items), `renders/rope_railing.png` (oak: a run of three with a latch and a net strand,
+  a lone block, a corner, the item; spruce and dark oak runs at deck distance; close-ups of the lines and the latch), and RL5's `renders/railing_latch.png`, `railing_latch_bulwark.png` redrawn on the new
+  cap (the washer stands on the cap's band without clipping or floating; the ring and the strand unchanged).
 
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:

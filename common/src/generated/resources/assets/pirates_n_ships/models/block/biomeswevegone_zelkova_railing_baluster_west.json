@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_baluster_west",
+  "textures": {
+    "log": "biomeswevegone:block/zelkova/stripped_log",
+    "log_top": "biomeswevegone:block/zelkova/stripped_log_top",
+    "particle": "biomeswevegone:block/zelkova/planks",
+    "planks": "biomeswevegone:block/zelkova/planks"
+  }
+}

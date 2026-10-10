@@ -405,6 +405,14 @@
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:oak_bulwark_port"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p16.text6"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_rope_railing"
         }
       ]
     },

@@ -57,13 +57,13 @@ class HandMadeModelsTest {
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "bulwark_edge", "bulwark_item", "bulwark_port", "bulwark_port_item",
-            "bulwark_port_lid", "bulwark_port_lid_open", "bulwark_stanchion", "cannon",
+            "bulwark_port_lid", "bulwark_port_lid_open", "cannon",
             "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
             "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chainplate", "chart_table", "cleat", "crows_nest", "crows_nest_pole", "figurehead_eagle",
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mast_hoop", "mooring_ring",
-            "name_board", "name_board_cap_left", "name_board_cap_right", "name_board_item", "notice_board", "oar_bench", "pantry", "railing_edge", "railing_gate_item", "railing_gate_left", "railing_gate_left_open", "railing_gate_right",
+            "name_board", "name_board_cap_left", "name_board_cap_right", "name_board_item", "notice_board", "oar_bench", "pantry", "railing_baluster_east", "railing_baluster_west", "railing_edge", "railing_gate_item", "railing_gate_left", "railing_gate_left_open", "railing_gate_right",
             "railing_gate_right_open", "railing_item", "railing_latch", "railing_port", "railing_post", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
-            "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
+            "rope_railing_edge", "rope_railing_item", "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall", "stern_window",
             "stern_window_shutters", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
@@ -407,6 +407,13 @@ class HandMadeModelsTest {
         for (String n : List.of("flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top")) keys.put(n, List.of("log"));
         for (String n : List.of("flag_pedestal", "flag_pedestal_pole", "yard", "cleat")) keys.put(n, List.of("log", "log_top"));
         for (String n : List.of("crows_nest", "crows_nest_pole")) keys.put(n, List.of("planks", "log"));
+        // RAIL6: the railing family's parents (tools/gen_railing_models.py)
+        for (String n : List.of("railing_edge", "bulwark_edge", "railing_item", "railing_gate_left", "railing_gate_item")) {
+            keys.put(n, List.of("planks", "log", "log_top"));
+        }
+        for (String n : List.of("railing_baluster_west", "railing_baluster_east", "railing_post", "rope_railing_edge")) {
+            keys.put(n, List.of("log", "log_top"));
+        }
         for (Map.Entry<String, List<String>> e : keys.entrySet()) {
             JsonObject textures = blockModel(e.getKey()).getAsJsonObject("textures");
             for (String key : e.getValue()) assertTrue(textures.has(key), e.getKey() + ": no #" + key + " in " + textures);

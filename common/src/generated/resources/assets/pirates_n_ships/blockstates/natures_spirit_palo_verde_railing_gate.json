@@ -51,7 +51,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_port",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -61,7 +60,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -73,7 +71,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -85,7 +82,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left_open",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -97,7 +93,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right_open",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -109,7 +104,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_port",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -119,7 +113,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -131,7 +124,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -143,7 +135,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left_open",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -155,7 +146,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right_open",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -167,7 +157,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_port",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -177,7 +166,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -189,7 +177,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -201,7 +188,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_left_open",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -213,7 +199,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/natures_spirit_palo_verde_railing_gate_right_open",
-        "uvlock": true,
         "y": 270
       },
       "when": {

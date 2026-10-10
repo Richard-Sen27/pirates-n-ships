@@ -11,7 +11,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_edge",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -21,7 +20,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_edge",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -31,7 +29,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_edge",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -40,7 +37,7 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_stanchion"
+        "model": "pirates_n_ships:block/twilightforest_mangrove_railing_post"
       },
       "when": {
         "post_nw": "true"
@@ -48,8 +45,7 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_stanchion",
-        "uvlock": true,
+        "model": "pirates_n_ships:block/twilightforest_mangrove_railing_post",
         "y": 90
       },
       "when": {
@@ -58,8 +54,7 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_stanchion",
-        "uvlock": true,
+        "model": "pirates_n_ships:block/twilightforest_mangrove_railing_post",
         "y": 180
       },
       "when": {
@@ -68,8 +63,7 @@
     },
     {
       "apply": {
-        "model": "pirates_n_ships:block/twilightforest_mangrove_bulwark_stanchion",
-        "uvlock": true,
+        "model": "pirates_n_ships:block/twilightforest_mangrove_railing_post",
         "y": 270
       },
       "when": {

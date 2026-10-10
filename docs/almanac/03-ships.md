@@ -118,7 +118,7 @@ The {item:pirates_n_ships:figurehead_eagle}**eagle** and the {item:pirates_n_shi
 show_me: railings | Show me: railings and bulwarks
 An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.
 
-Railings, ports, gates and bulwarks come in every wood, a wood mod's too: each is made from that wood's planks, and the panels below show each wood in turn.
+Railings, ports, gates, bulwarks and rope railings come in every wood, a wood mod's too: each is made from that wood's planks, and the panels below show each wood in turn.
 
 {recipe:oak_railing}
 
@@ -137,6 +137,10 @@ A {item:pirates_n_ships:oak_bulwark}**bulwark** is a solid wall instead: a gun b
 {recipe:oak_bulwark}
 
 {recipe:oak_bulwark_port}
+
+A {item:pirates_n_ships:oak_rope_railing}**rope railing** is the light one for working decks: a stanchion per block and two rope lines. It is placed like a railing, holds a grappling hook and takes a net's latch on its top line.
+
+{recipe:oak_rope_railing}
 
 ## On deck
 The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.

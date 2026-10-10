@@ -4,6 +4,7 @@
 	"textures": {
 		"planks": "minecraft:block/oak_planks",
 		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
 		"particle": "#planks"
 	},
 	"elements": [
@@ -59,71 +60,138 @@
 			}
 		},
 		{
-			"name": "west_cap_rail",
+			"name": "west_cap",
 			"from": [
 				0,
 				14,
-				0.05
+				-1
+			],
+			"to": [
+				3,
+				15.5,
+				3
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						3
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						3
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						4,
+						3
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						4,
+						3
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						0,
+						0.5,
+						4,
+						2
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0.5,
+						4,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "west_cap_band",
+			"from": [
+				0,
+				15.5,
+				-0.45
 			],
 			"to": [
 				3,
 				16,
-				3.95
+				2.45
 			],
 			"faces": {
 				"north": {
 					"uv": [
 						0,
 						0,
-						3,
-						2
+						0.5,
+						3
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"south": {
 					"uv": [
 						0,
 						0,
-						3,
-						2
+						0.5,
+						3
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"up": {
 					"uv": [
 						0,
-						0.05,
-						3,
-						3.95
-					],
-					"texture": "#log"
-				},
-				"down": {
-					"uv": [
 						0,
-						0.05,
-						3,
-						3.95
+						2.9,
+						3
 					],
-					"texture": "#log"
-				},
-				"west": {
-					"uv": [
-						0.05,
-						0,
-						3.95,
-						2
-					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"east": {
 					"uv": [
-						0.05,
 						0,
-						3.95,
-						2
+						0,
+						2.9,
+						0.5
 					],
-					"texture": "#log"
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						0.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
@@ -179,71 +247,138 @@
 			}
 		},
 		{
-			"name": "east_cap_rail",
+			"name": "east_cap",
 			"from": [
 				13,
 				14,
-				0.05
+				-1
 			],
 			"to": [
 				16,
-				16,
-				3.95
+				15.5,
+				3
 			],
 			"faces": {
 				"north": {
 					"uv": [
+						0.5,
 						13,
-						0,
-						16,
-						2
+						2,
+						16
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"south": {
 					"uv": [
+						0.5,
 						13,
-						0,
-						16,
-						2
+						2,
+						16
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"up": {
 					"uv": [
+						0,
 						13,
-						0.05,
-						16,
-						3.95
+						4,
+						16
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"down": {
 					"uv": [
-						13,
-						0.05,
-						16,
-						3.95
-					],
-					"texture": "#log"
-				},
-				"west": {
-					"uv": [
-						0.05,
 						0,
-						3.95,
-						2
+						13,
+						4,
+						16
 					],
-					"texture": "#log"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"east": {
 					"uv": [
-						0.05,
 						0,
-						3.95,
+						0.5,
+						4,
 						2
 					],
-					"texture": "#log"
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0.5,
+						4,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "east_cap_band",
+			"from": [
+				13,
+				15.5,
+				-0.45
+			],
+			"to": [
+				16,
+				16,
+				2.45
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						13,
+						0.5,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0,
+						13,
+						0.5,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0,
+						13,
+						2.9,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						0.5
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2.9,
+						0.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},

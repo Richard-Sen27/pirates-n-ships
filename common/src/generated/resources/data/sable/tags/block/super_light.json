@@ -2397,6 +2397,405 @@
       "id": "pirates_n_ships:undergarden_wigglewood_bulwark_port",
       "required": false
     },
+    "pirates_n_ships:oak_rope_railing",
+    "pirates_n_ships:spruce_rope_railing",
+    "pirates_n_ships:birch_rope_railing",
+    "pirates_n_ships:jungle_rope_railing",
+    "pirates_n_ships:acacia_rope_railing",
+    "pirates_n_ships:dark_oak_rope_railing",
+    "pirates_n_ships:mangrove_rope_railing",
+    "pirates_n_ships:cherry_rope_railing",
+    "pirates_n_ships:bamboo_rope_railing",
+    "pirates_n_ships:crimson_rope_railing",
+    "pirates_n_ships:warped_rope_railing",
+    {
+      "id": "pirates_n_ships:aether_skyroot_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ars_nouveau_archwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_dead_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_empyreal_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_fir_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_hellbark_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_jacaranda_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_magic_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_mahogany_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_maple_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_palm_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_pine_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_redwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_umbran_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_willow_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_aspen_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_baobab_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_blue_enchanted_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cika_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cypress_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ebony_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_fir_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_florus_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_green_enchanted_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_holly_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ironwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_jacaranda_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_mahogany_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_maple_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_palm_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_pine_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_rainbow_eucalyptus_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_redwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_sakura_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_skyris_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_spirit_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_white_mangrove_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_willow_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_witch_hazel_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_zelkova_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:deeperdarker_echo_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_azalea_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_coconut_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_walnut_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_aspen_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cedar_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_coconut_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cypress_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_fir_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_ghaf_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_joshua_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_larch_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_mahogany_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_maple_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_olive_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_palo_verde_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_redwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_saxaul_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_sugi_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_willow_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_wisteria_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_ancient_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_azalea_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_blossom_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_baobab_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blackwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blue_bioshroom_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_brimwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cobalt_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cypress_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_dead_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_eucalyptus_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_green_bioshroom_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_joshua_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_kapok_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_larch_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_magnolia_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_maple_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_palm_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pine_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pink_bioshroom_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_redwood_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_socotra_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_willow_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_wisteria_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_yellow_bioshroom_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_canopy_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_dark_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mangrove_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mining_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_sorting_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_time_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_transformation_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_twilight_oak_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_grongle_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_smogstem_rope_railing",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_wigglewood_rope_railing",
+      "required": false
+    },
     "pirates_n_ships:nameplate",
     "pirates_n_ships:spruce_nameplate",
     "pirates_n_ships:birch_nameplate",

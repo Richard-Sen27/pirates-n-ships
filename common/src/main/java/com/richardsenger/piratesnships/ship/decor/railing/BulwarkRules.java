@@ -13,7 +13,8 @@ import java.util.Set;
  * edges are solid plank walls and whose posts are stanchions.
  *
  * <p><b>Bulwark.</b> Per railed edge a plank wall {@link #WALL_DEPTH} deep from the deck to {@link #CAP_BOTTOM} and a cap
- * rail on top of it from there to {@link #WALL_TOP}, {@link #CAP_DEPTH} deep (2 px proud of the wall's inboard face).
+ * rail on top of it from there to {@link #WALL_TOP}, {@link #CAP_DEPTH} deep in the outline (RAIL6: the railing's cap
+ * rail, drawn 4 px wide over the wall's line).
  * Per post (the {@link RailingRules#posts} rule) a {@link #STANCHION} px square stanchion up to {@link #STANCHION_TOP}.
  * A run continues only into another bulwark or a bulwark port on the same edge ({@link #continues}); against a railing,
  * a railing port or a gate it ends in a stanchion, and a railing ends in a post against it.
@@ -32,8 +33,11 @@ public final class BulwarkRules {
     public static final double CAP_BOTTOM = 14.0;
     /** Top of the wall with its cap rail, in pixels. */
     public static final double WALL_TOP = 16.0;
-    /** Depth of the cap rail, 2 px proud of the wall's inboard face, in pixels. */
-    public static final double CAP_DEPTH = 4.0;
+    /**
+     * Depth of the cap rail in the outline, in pixels: RAIL6's cap (z -1..3, the railing's) is 1 px proud of the wall's
+     * inboard face; its outboard overhang past the block's face is drawn only.
+     */
+    public static final double CAP_DEPTH = 3.0;
     /** Side of a stanchion, in pixels. */
     public static final double STANCHION = 4.0;
     /** Top of a stanchion (its head stands 2 px above the cap rail), in pixels. */
@@ -60,14 +64,16 @@ public final class BulwarkRules {
         RAILING,
         /** A bulwark or a bulwark gun port. */
         BULWARK,
+        /** RAIL6: a rope railing (no ports or gates of its own). */
+        ROPE,
         /** Anything else. */
         NONE
     }
 
     /**
      * Whether a run of {@code self}'s kind continues into a neighbour of kind {@code neighbour} that carries the edge:
-     * railings into railings (ports, gates), bulwarks into bulwarks (gun ports). Two kinds that meet end in a post or a
-     * stanchion each, since a rail cannot run on into a wall.
+     * railings into railings (ports, gates), bulwarks into bulwarks (gun ports), rope railings into rope railings. Two
+     * kinds that meet end in a post each, since a rail cannot run on into a wall or a rope line into a cap rail.
      */
     public static boolean continues(Kind self, Kind neighbour, boolean carriesEdge) {
         return carriesEdge && self != Kind.NONE && self == neighbour;

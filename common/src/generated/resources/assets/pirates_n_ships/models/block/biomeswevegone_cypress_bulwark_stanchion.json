@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "biomeswevegone:block/cypress/stripped_log",
-    "log_top": "biomeswevegone:block/cypress/stripped_log_top",
-    "particle": "biomeswevegone:block/cypress/planks",
-    "planks": "biomeswevegone:block/cypress/planks"
-  }
-}

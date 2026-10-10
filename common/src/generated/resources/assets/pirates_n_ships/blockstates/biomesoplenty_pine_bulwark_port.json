@@ -29,7 +29,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -39,7 +38,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -50,7 +48,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid_open",
-        "uvlock": true,
         "y": 90
       },
       "when": {
@@ -61,7 +58,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -71,7 +67,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -82,7 +77,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid_open",
-        "uvlock": true,
         "y": 180
       },
       "when": {
@@ -93,7 +87,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -103,7 +96,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid",
-        "uvlock": true,
         "y": 270
       },
       "when": {
@@ -114,7 +106,6 @@
     {
       "apply": {
         "model": "pirates_n_ships:block/biomesoplenty_pine_bulwark_port_lid_open",
-        "uvlock": true,
         "y": 270
       },
       "when": {

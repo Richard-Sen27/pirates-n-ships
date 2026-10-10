@@ -40,6 +40,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * ended run and (with a gap of one block) the posts on both sides of the gap; a second placement in the same block
  * adds an edge (corners, hatch surrounds). Registered per wood through {@code ship.decor.wood.WoodFamily}.
  *
+ * <p><b>Look</b> (RAIL6, docs/design.md "Railing rework (RAIL6)", {@code tools/gen_railing_models.py}): an open ship's
+ * rail, a log cap rail on two turned balusters per block and a plank toe rail, a turned post with a finial only where a
+ * run ends or turns; the block state leaves out the baluster next to a post. The shapes below are unchanged by it.
+ *
  * <p><b>State.</b> {@link #NORTH}..{@link #WEST}: the railed edges. {@link #POST_NW}, {@link #POST_NE},
  * {@link #POST_SE}, {@link #POST_SW}: the posts, derived from the edges and the neighbours in
  * {@link #getStateForPlacement} and {@link #updateShape} by {@link RailingRules#posts} (the block state's multipart
@@ -161,10 +165,14 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock, WoodB
         return s.getBlock() instanceof RailingPortBlock && s.getValue(RailingPortBlock.FACING) == edge;
     }
 
-    /** RAIL4: whether {@code s} belongs to the railings (railing, port, gate), the bulwarks (bulwark, gun port) or neither. */
+    /**
+     * RAIL4: whether {@code s} belongs to the railings (railing, port, gate), the bulwarks (bulwark, gun port), RAIL6's
+     * rope railings or none of them.
+     */
     public static BulwarkRules.Kind kindOf(BlockState s) {
         Block b = s.getBlock();
         if (b instanceof BulwarkBlock || b instanceof BulwarkPortBlock) return BulwarkRules.Kind.BULWARK;
+        if (b instanceof RopeRailingBlock) return BulwarkRules.Kind.ROPE;
         if (b instanceof RailingBlock || b instanceof RailingPortBlock || b instanceof RailingGateBlock) return BulwarkRules.Kind.RAILING;
         return BulwarkRules.Kind.NONE;
     }

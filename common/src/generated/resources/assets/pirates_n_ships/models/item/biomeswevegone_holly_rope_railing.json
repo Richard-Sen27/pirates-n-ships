@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/rope_railing_item",
+  "textures": {
+    "log": "biomeswevegone:block/holly/stripped_log",
+    "log_top": "biomeswevegone:block/holly/stripped_log_top",
+    "particle": "biomeswevegone:block/holly/planks",
+    "planks": "biomeswevegone:block/holly/planks"
+  }
+}

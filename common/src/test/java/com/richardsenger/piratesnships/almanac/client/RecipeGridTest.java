@@ -67,4 +67,14 @@ class RecipeGridTest {
         assertTrue(AlmanacPanels.tileU(AlmanacPanels.TILE_MAX) + AlmanacPanels.TILE_MAX <= AlmanacPanels.TEX_W, "every tile in the atlas");
         assertEquals(AlmanacPanels.TILE_U + 10, AlmanacPanels.tileU(11));
     }
+
+    /** WOOD1: a wood family's panel shows each member for {@link RecipeGrid#FAMILY_CYCLE_TICKS} in turn. */
+    @Test
+    void familyPanelsCycleThroughTheWoods() {
+        assertEquals(0, RecipeGrid.familyCycle(1, 12345));
+        assertEquals(0, RecipeGrid.familyCycle(11, 0));
+        assertEquals(1, RecipeGrid.familyCycle(11, RecipeGrid.FAMILY_CYCLE_TICKS));
+        assertEquals(0, RecipeGrid.familyCycle(11, 11L * RecipeGrid.FAMILY_CYCLE_TICKS));
+        assertEquals(10, RecipeGrid.familyCycle(11, 11L * RecipeGrid.FAMILY_CYCLE_TICKS - 1));
+    }
 }

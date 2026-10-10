@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/oar_bench",
+  "textures": {
+    "log": "biomeswevegone:block/ebony/stripped_log",
+    "log_top": "biomeswevegone:block/ebony/stripped_log_top",
+    "particle": "biomeswevegone:block/ebony/planks",
+    "planks": "biomeswevegone:block/ebony/planks"
+  }
+}

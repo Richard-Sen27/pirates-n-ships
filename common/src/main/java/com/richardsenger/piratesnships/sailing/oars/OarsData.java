@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import com.richardsenger.piratesnships.station.StationModule;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
@@ -54,19 +55,16 @@ public final class OarsData {
                     .add(WhistleOrder.ROW.toggledDescriptionKey(), "The rowers ship their oars and go back to their places");
         });
         data.models(OarsData::models);
-        data.blockLoot(loot -> benches.forEach((wood, block) -> loot.dropSelf(block)));
+        benches.dropSelf(data);
         data.blockTags(tags -> benches.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT));
         data.entityTypeTags(tags -> {
             tags.tag(StationModule.SABLE_RETAIN).add(OarsContent.OAR_SEAT.get());
             tags.tag(StationModule.SABLE_DESTROY_WITH_SUB_LEVEL).add(OarsContent.OAR_SEAT.get());
         });
+        benches.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 1, "PPP", "S S")
+                .define('P', WoodRecipe.planks()).define('S', WoodRecipe.item(Items.STICK))
+                .group(Constants.MOD_ID + ":oar_bench").unlockedBy("has_planks", WoodRecipe.planks()));
         data.recipes(out -> {
-            benches.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block)
-                    .pattern("PPP").pattern("S S")
-                    .define('P', wood.planks()).define('S', Items.STICK)
-                    .group(Constants.MOD_ID + ":oar_bench")
-                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
-                    .save(out, benches.entry(wood).id()));
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, OarsContent.OAR.get())
                     .pattern("  P").pattern(" S ").pattern("S  ")
                     .define('P', ItemTags.PLANKS).define('S', Items.STICK)

@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.DecorConfig;
@@ -39,9 +41,17 @@ import java.util.Map;
  * over the sill, also aboard (Sable's step-up test widens the player). Waterloggable (WLOG1), refused
  * while {@code ship_decor.railings_enabled} is off.
  */
-public class RailingPortBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class RailingPortBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
 
-    public static final MapCodec<RailingPortBlock> CODEC = simpleCodec(RailingPortBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<RailingPortBlock> CODEC = simpleCodec(p -> new RailingPortBlock(ShipWood.OAK, p));
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
@@ -56,8 +66,9 @@ public class RailingPortBlock extends HorizontalDirectionalBlock implements Simp
         }
     }
 
-    public RailingPortBlock(Properties properties) {
+    public RailingPortBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_right",
+  "textures": {
+    "log": "undergarden:block/stripped_grongle_log_side",
+    "log_top": "undergarden:block/stripped_grongle_log_end",
+    "particle": "undergarden:block/grongle_planks",
+    "planks": "undergarden:block/grongle_planks"
+  }
+}

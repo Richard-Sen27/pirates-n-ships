@@ -1,0 +1,46 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "natures_spirit"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bulwark": {
+      "conditions": {
+        "items": [
+          {
+            "items": "pirates_n_ships:natures_spirit_maple_bulwark"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:natures_spirit_maple_bulwark_port"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "natures_spirit"
+      ]
+    }
+  ],
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bulwark"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "pirates_n_ships:natures_spirit_maple_bulwark_port"
+    ]
+  }
+}

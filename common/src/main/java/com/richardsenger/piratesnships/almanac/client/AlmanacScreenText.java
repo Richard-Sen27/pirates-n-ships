@@ -20,6 +20,8 @@ public final class AlmanacScreenText {
     public static final String SHAPELESS = GUI + "shapeless";
     public static final String RECIPE_MISSING = GUI + "recipe_missing";
     public static final String RECIPE_UNKNOWN = GUI + "recipe_unknown";
+    /** WOOD1: the hover of a wood family's panel, which shows each wood's recipe in turn. */
+    public static final String EVERY_WOOD = GUI + "every_wood";
 
     private AlmanacScreenText() {
     }
@@ -37,5 +39,6 @@ public final class AlmanacScreenText {
         lang.add(SHAPELESS, "Shapeless: the ingredients go anywhere in the grid");
         lang.add(RECIPE_MISSING, "This recipe is not in the world");
         lang.add(RECIPE_UNKNOWN, "Made another way");
+        lang.add(EVERY_WOOD, "Made in every wood: the panel shows each wood's recipe in turn");
     }
 }

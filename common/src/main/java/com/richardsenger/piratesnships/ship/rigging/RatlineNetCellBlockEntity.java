@@ -29,6 +29,9 @@ import java.util.Objects;
  * <p>For the climbing assist a cell answers its {@link #climbDirection()} (unit, towards the hub's ring, in the frame
  * of the cell's level: the ship's plot on a ship) and whether it {@link #isTop()} (the next cell along that direction
  * is the hub's block). Both are derived from the stored fittings, so they turn with the ship.
+ *
+ * <p>RL5: a fill cell between two strands with different hubs (a rectangle or a trapezoid) also names the other hub
+ * ({@link #hub2()}); it climbs towards the nearest point between the two hubs' rings ({@link RatlineNetRules#topPoint}).
  */
 public class RatlineNetCellBlockEntity extends BlockEntity {
 
@@ -36,10 +39,12 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
     private static final String B = "net_b";
     private static final String HUB = "net_hub";
     private static final String FILL = "net_fill";
+    private static final String HUB2 = "net_hub2";
 
     private @Nullable Vec3i aLocal;
     private @Nullable Vec3i bLocal;
     private @Nullable Vec3i hubLocal;
+    private @Nullable Vec3i hub2Local;
     private boolean fill;
 
     public RatlineNetCellBlockEntity(BlockPos pos, BlockState state) {
@@ -82,6 +87,11 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
         return world(hubLocal);
     }
 
+    /** RL5: the other hub of the pair a fill cell lies between, when it is not the owner's hub; else null. */
+    public @Nullable BlockPos hub2() {
+        return world(hub2Local);
+    }
+
     /** Whether this cell fills the triangle between two strands (RL4) rather than lying on its strand's line. */
     public boolean isFill() {
         return fill;
@@ -95,13 +105,20 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
 
     /** Server: the cell belongs to the strand from {@code a} to {@code b} of the fan at {@code hub}; {@code fill} for a triangle cell. */
     public void setOwner(BlockPos a, BlockPos b, BlockPos hub, boolean fill) {
-        Vec3i na = local(a), nb = local(b), nh = local(hub);
-        if (Objects.equals(na, aLocal) && Objects.equals(nb, bLocal) && Objects.equals(nh, hubLocal) && fill == this.fill) {
+        setOwner(a, b, hub, fill, null);
+    }
+
+    /** Server (RL5): as {@link #setOwner(BlockPos, BlockPos, BlockPos, boolean)}, a fill cell also naming the pair's other hub. */
+    public void setOwner(BlockPos a, BlockPos b, BlockPos hub, boolean fill, @Nullable BlockPos hub2) {
+        Vec3i na = local(a), nb = local(b), nh = local(hub), n2 = local(hub2);
+        if (Objects.equals(na, aLocal) && Objects.equals(nb, bLocal) && Objects.equals(nh, hubLocal)
+                && Objects.equals(n2, hub2Local) && fill == this.fill) {
             return;
         }
         aLocal = na;
         bLocal = nb;
         hubLocal = nh;
+        hub2Local = n2;
         this.fill = fill;
         changed();
     }
@@ -134,12 +151,18 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
         return new Cell(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ());
     }
 
+    /** Where this cell climbs to: its hub's ring, or (RL5) the nearest point between its two hubs' rings. */
     private @Nullable Point hubRing() {
         if (level == null) {
             return null;
         }
         Strand s = RatlineNets.ownerStrand(level, worldPosition);
-        return s == null ? null : s.hubRing();
+        if (s == null) {
+            return null;
+        }
+        BlockPos h2 = hub2();
+        Point r2 = fill && h2 != null ? RatlineNets.ring(level, h2) : null;
+        return r2 == null ? s.hubRing() : RatlineNetRules.topPoint(cell(), s.hubRing(), r2);
     }
 
     private void changed() {
@@ -165,6 +188,7 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
         put(tag, A, aLocal);
         put(tag, B, bLocal);
         put(tag, HUB, hubLocal);
+        put(tag, HUB2, hub2Local);
         tag.putBoolean(FILL, fill);
     }
 
@@ -185,6 +209,7 @@ public class RatlineNetCellBlockEntity extends BlockEntity {
         aLocal = get(tag, A);
         bLocal = get(tag, B);
         hubLocal = get(tag, HUB);
+        hub2Local = get(tag, HUB2);
         fill = tag.getBoolean(FILL);
     }
 }

@@ -37,6 +37,14 @@ common/src/main/resources/assets/pirates_n_ships/models/block/ and their Blockbe
   block/bulwark_port_item: a wall with a stanchion at either end, and the gun port with its shut lid, centred like the
   railing's item.
 
+- RL5, the railing latch: block/railing_latch: an iron eye bolt on the cap of the north edge, for the railing and the
+  bulwark alike (the multipart state draws it per edge by the block's latch property, turned without uvlock): a
+  washer on the cap (x 6.75..9.25, y 16..16.4, z 0.25..2.75), a short shank and a square ring standing across the rail
+  (x 7.6..8.4, outer y 16.55..18.95, z 0.3..2.7, 0.6 px bars), its centre (y 17.75, z 1.5) the net's ring point
+  (ship/rigging/RailingLatchBlock RING_INSET, RING_HEIGHT). Iron only: the chainplate's palette (#metal,
+  pirates_n_ships:item/palette_2) with the chainplate's UV patches, so it has no #planks or #log and every wood shares
+  it without a child model.
+
 Every model uses two texture variables, #planks and #log (vanilla oak planks and stripped oak log here); the wood
 family's datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. The block state turns the
 north-frame parts by y rotation (multipart): an edge model per railed edge, a post model per post corner.
@@ -57,6 +65,7 @@ ART = ROOT / "art/models"
 PLANKS = "minecraft:block/oak_planks"
 LOG = "minecraft:block/stripped_oak_log"
 IRON = "minecraft:block/anvil"
+METAL = "pirates_n_ships:item/palette_2"  # RL5: the chainplate's iron
 
 INSET = 0.05  # the rails' and the sill's outer face stand this far in from the block's edge
 RAIL_DEPTH = 2
@@ -298,6 +307,48 @@ def bulwark_port_item():
     return bulwark_port(dz) + lid(False, dz)
 
 
+# ---------------------------------------------------------------------- the railing latch (RL5)
+
+LATCH_CENTRE_Z = 1.5  # RailingLatchBlock.RING_INSET (px)
+LATCH_RING_Y = (16.55, 18.95)  # outer; the centre 17.75 = 16 + RailingLatchBlock.RING_HEIGHT (px)
+LATCH_RING_X = (7.6, 8.4)
+LATCH_BAR = 0.6
+LATCH_RING_HALF = 1.2
+# the chainplate's palette patches: plate sides, plate top, bolt sides, ring sides, ring top, ring bottom
+UV_PLATE = [0.5, 12.5, 3.5, 15.5]
+UV_PLATE_UP = [12.5, 8.5, 15.5, 11.5]
+UV_BOLT = [4.5, 12.5, 7.5, 15.5]
+UV_RING = [4.5, 8.5, 7.5, 11.5]
+UV_RING_UP = [0.5, 8.5, 3.5, 11.5]
+UV_RING_DOWN = [8.5, 8.5, 11.5, 11.5]
+
+
+def patch(name, f, t, faces):
+    """A cube with fixed palette UVs: faces {face: uv} on #metal."""
+    return {"name": name, "from": [r5(c) for c in f], "to": [r5(c) for c in t],
+            "faces": {face: {"uv": u, "texture": "#metal"} for face, u in faces.items()}}
+
+
+def latch():
+    z = LATCH_CENTRE_Z
+    sides = ("north", "east", "south", "west")
+    out = [
+        patch("washer", (6.75, 16, z - 1.25), (9.25, 16.4, z + 1.25),
+              {**{f: UV_PLATE for f in sides}, "up": UV_PLATE_UP}),
+        patch("shank", (7.7, 16.4, z - 0.3), (8.3, LATCH_RING_Y[0], z + 0.3), {f: UV_BOLT for f in sides}),
+    ]
+    y0, y1 = LATCH_RING_Y
+    z0, z1 = z - LATCH_RING_HALF, z + LATCH_RING_HALF
+    x0, x1 = LATCH_RING_X
+    bar = LATCH_BAR
+    ring = {**{f: UV_RING for f in sides}, "up": UV_RING_UP, "down": UV_RING_DOWN}
+    out.append(patch("ring_bottom", (x0, y0, z0), (x1, y0 + bar, z1), ring))
+    out.append(patch("ring_top", (x0, y1 - bar, z0), (x1, y1, z1), ring))
+    out.append(patch("ring_outer", (x0, y0 + bar, z0), (x1, y1 - bar, z0 + bar), {f: UV_RING for f in sides}))
+    out.append(patch("ring_inner", (x0, y0 + bar, z1 - bar), (x1, y1 - bar, z1), {f: UV_RING for f in sides}))
+    return out
+
+
 def used_textures(elements):
     keys = []
     for e in elements:
@@ -310,10 +361,10 @@ def used_textures(elements):
 
 def block_model(elements):
     textures = {}
-    for k, v in (("planks", PLANKS), ("log", LOG), ("iron", IRON)):
+    for k, v in (("planks", PLANKS), ("log", LOG), ("iron", IRON), ("metal", METAL)):
         if k in used_textures(elements):
             textures[k] = v
-    textures["particle"] = "#planks"
+    textures["particle"] = "#planks" if "planks" in textures else "#" + next(iter(textures))
     return {
         "credit": "Made with Blockbench, source art/models/railing.bbmodel",
         "parent": "minecraft:block/block",
@@ -328,17 +379,22 @@ def det_uuid(*parts):
     return str(uuid.uuid5(uuid.NAMESPACE_URL, "pirates_n_ships/railing/" + "/".join(parts)))
 
 
-TEXTURES = [  # (key, vanilla file name)
+TEXTURES = [  # (key, file name; vanilla's block textures, RL5 the mod's palette)
     ("planks", "oak_planks"),
     ("log", "stripped_oak_log"),
     ("iron", "anvil"),
+    ("metal", "palette_2"),
 ]
 
 
 def bb_texture(index, key, name):
+    own = key == "metal"
     return {
-        "name": name + ".png", "path": "", "relative_path": f"../vanilla/{name}.png", "folder": "block",
-        "namespace": "minecraft", "id": key, "group": "", "scope": 0, "width": 16, "height": 16, "uv_width": 16,
+        "name": name + ".png", "path": "",
+        "relative_path": (f"../../common/src/main/resources/assets/pirates_n_ships/textures/item/{name}.png" if own
+                          else f"../vanilla/{name}.png"),
+        "folder": "item" if own else "block",
+        "namespace": "pirates_n_ships" if own else "minecraft", "id": key, "group": "", "scope": 0, "width": 16, "height": 16, "uv_width": 16,
         "uv_height": 16, "particle": key == "planks", "use_as_default": False, "layers_enabled": False,
         "sync_to_project": "", "file_format": "png", "render_mode": "default", "render_sides": "auto",
         "wrap_mode": "limited", "pbr_channel": "color", "fps": 7, "frame_time": 1, "frame_order_type": "loop",
@@ -407,7 +463,7 @@ def main():
               ("railing_gate_item", gate_item()),
               ("bulwark_edge", bulwark_edge()), ("bulwark_stanchion", bulwark_stanchion()), ("bulwark_port", bulwark_port()),
               ("bulwark_port_lid", lid(False)), ("bulwark_port_lid_open", lid(True)), ("bulwark_item", bulwark_item()),
-              ("bulwark_port_item", bulwark_port_item())]
+              ("bulwark_port_item", bulwark_port_item()), ("railing_latch", latch())]
     for name, els in models:
         write(MODELS / f"block/{name}.json", block_model(els))
     write(ART / "railing.bbmodel", project(models))

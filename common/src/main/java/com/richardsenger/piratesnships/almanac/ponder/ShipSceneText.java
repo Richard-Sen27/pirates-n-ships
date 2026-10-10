@@ -266,16 +266,16 @@ public final class ShipSceneText {
         }
     }
 
-    /** {@link RatlineNetsScene} (ship/rigging nets and fans, RL2, RL3, RL4; design.md §4.8). */
+    /** {@link RatlineNetsScene} (ship/rigging nets and fans, RL2, RL3, RL4, RL5; design.md §4.8). */
     public enum Nets implements SceneLine {
-        FITTINGS("A chainplate on the rail, a mast hoop on the mast"),
-        STRING("Use a ratline net on one fitting, then on the other"),
+        FITTINGS("A mast hoop up the mast; the net ties to the railing's top rail"),
+        STRING("Use a ratline net on the rail, then on the hoop: an iron latch holds it"),
         LINE("The line must be clear, 30° steep or more and at most 32 blocks"),
         CLIMB("Walk into the net and hold forward to climb; sneak to hold on"),
-        FAN("Up to five chainplates can share one hoop"),
-        FILL("Neighbouring strands fan into one net: climb anywhere on it"),
+        FAN("Up to five latches or chainplates can share one hoop"),
+        FILL("Neighbouring strands join into one net: climb anywhere on it"),
         TOP("Climb on past the hoop and walk forward to step off"),
-        BREAK("Break a chainplate and its strand falls; break the hoop and all do");
+        BREAK("Break a latch and its strand falls; break the hoop and all do");
 
         static final String TITLE = "Ratline Nets";
         private final String english;

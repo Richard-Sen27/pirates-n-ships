@@ -47,9 +47,17 @@ import java.util.function.Function;
  * the earlier strand of its pair) and the hub. The cells of a fan are always brought in line with its strands as a
  * whole ({@link #sync}): adding or removing a strand re-fans the rest without touching anything else.
  *
+ * <p><b>Sheets (RL5).</b> A chainplate and a railing latch ({@link RailingLatchBlock}) hold one strand each, a hoop up
+ * to {@code net_max_strands} ({@link RatlineNetRules#capacity}), so a net is never wider at the top. Hoops in a row at
+ * one height within {@code net_max_spread} of each other form one <em>group</em> ({@link #group}); its strands join
+ * pairwise by RL5's row rule ({@link RatlineNetRules#sheetPartners}): one hub and a row of feet is RL4's triangle, a
+ * row of hubs over a row of feet a rectangle or a trapezoid ({@link RatlineNetRules#sheetCells}). A group's cells are
+ * brought in line as a whole ({@link #sync}). A fill cell between two hubs names both ({@link Placement#hub2}).
+ *
  * <p>Breaking a strand's cell, a fill cell it owns, or its chainplate takes that strand down
  * ({@link #removeStrands}): its net item drops at its chainplate (its foot), the hub and the other strands stay and
- * re-fan; breaking the hub takes every strand of its fan. Sable's assembly moves the blocks with
+ * re-fan; breaking the hub takes every strand of its fan. A railing latch that holds no strand any more goes
+ * ({@link #freeLatches}): no orphan latches. Sable's assembly moves the blocks with
  * {@code movedByPiston} set ({@code SubLevelAssemblyHelper#moveBlocks} l.409/452 call
  * {@code LevelChunk#setBlockState(pos, state, true)}), which is never a break.
  */
@@ -81,12 +89,40 @@ public final class RatlineNets {
         }
     }
 
-    /** Where a fan wants a net cell: the strand that owns it and whether it is a fill cell. */
-    public record Placement(Strand owner, boolean fill) {
+    /**
+     * Where a fan wants a net cell: the strand that owns it, whether it is a fill cell and (RL5) the pair's other hub
+     * when it is not the owner's.
+     */
+    public record Placement(Strand owner, boolean fill, @Nullable BlockPos hub2) {
+        public Placement(Strand owner, boolean fill) {
+            this(owner, fill, null);
+        }
     }
 
-    /** A hub's fan: its strands in fan order, which neighbours join, and every cell it wants. */
+    /**
+     * A hub's fan: its strands in fan order, whether each owns a pair (RL5: possibly with a strand of another hub of its
+     * group), and every cell its group wants.
+     */
     public record Fan(BlockPos hub, List<Strand> strands, boolean[] joinNext, Map<BlockPos, Placement> cells) {
+    }
+
+    /**
+     * RL5: a group of hubs with all their strands, for each strand the index of the strand it owns a pair with (or -1),
+     * and every cell the group wants.
+     */
+    public record Sheet(Set<BlockPos> hubs, List<Strand> strands, int[] partner, Map<BlockPos, Placement> cells) {
+        /** Whether strand {@code k} is in any pair. */
+        public boolean joined(int k) {
+            if (partner[k] >= 0) {
+                return true;
+            }
+            for (int p : partner) {
+                if (p == k) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /** Why a net cannot be strung, with the first blocked cell for {@link Refusal#BLOCKED}. */
@@ -98,12 +134,17 @@ public final class RatlineNets {
 
     /**
      * The outcome of {@link #check}; {@code apart} is the distance to the nearest neighbouring strand's foot when the
-     * new strand has neighbours in its fan but joins none of them (too far apart), else NaN; {@code boarding} when the
-     * net would hang along the rail as a boarding net (RAIL5, {@link BoardingNets}).
+     * new strand has neighbours on its hub but joins none of them, else NaN ({@code notInRow} when that neighbour is
+     * close enough but not in a row with it, RL5); {@code boarding} when the net would hang along the rail as a boarding
+     * net (RAIL5, {@link BoardingNets}).
      */
-    public record Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart, boolean boarding) {
+    public record Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart, boolean boarding, boolean notInRow) {
         public Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart) {
-            this(refusal, blocked, net, apart, false);
+            this(refusal, blocked, net, apart, false, false);
+        }
+
+        public Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart, boolean boarding) {
+            this(refusal, blocked, net, apart, boarding, false);
         }
     }
 
@@ -122,6 +163,14 @@ public final class RatlineNets {
 
     private static @Nullable Point ring(BlockState state, BlockPos pos) {
         return state.getBlock() instanceof NetFitting f ? f.ring(state, pos) : null;
+    }
+
+    /** RL5: what kind of anchor the fitting {@code state} is (a hoop holds several strands, the others one). */
+    static RatlineNetRules.Anchor anchor(BlockState state) {
+        if (state.getBlock() instanceof MastHoopBlock) {
+            return RatlineNetRules.Anchor.HOOP;
+        }
+        return state.getBlock() instanceof RailingLatchBlock ? RatlineNetRules.Anchor.LATCH : RatlineNetRules.Anchor.CHAINPLATE;
     }
 
     static Point point(Vec3 v) {
@@ -228,12 +277,21 @@ public final class RatlineNets {
                 return s.net();
             }
             Point hub = s.hubRing();
-            Point c = RatlineNetRules.centre(new Cell(pos.getX(), pos.getY(), pos.getZ()));
+            Cell here = new Cell(pos.getX(), pos.getY(), pos.getZ());
+            BlockPos topBlock = s.hub();
+            BlockPos h2 = cell.hub2();
+            Point r2 = h2 == null ? null : ring(level, h2);
+            if (r2 != null) {
+                // RL5: between two hubs, towards the nearest point of the top edge (its block is where the climb ends)
+                hub = RatlineNetRules.topPoint(here, hub, r2);
+                topBlock = BlockPos.containing(hub.x(), hub.y(), hub.z());
+            }
+            Point c = RatlineNetRules.centre(here);
             double dx = c.x() - hub.x(), dy = c.y() - hub.y(), dz = c.z() - hub.z();
             double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
             double k = len < 1.0e-9 ? 0 : (len + 1.0) / len;
             Point from = new Point(hub.x() + dx * k, hub.y() + dy * k, hub.z() + dz * k);
-            return new Net(s.foot(), s.hub(), from, hub);
+            return new Net(s.foot(), topBlock, from, hub);
         }
         return state.getBlock() instanceof NetFitting ? netOf(level, pos) : null;
     }
@@ -243,66 +301,115 @@ public final class RatlineNets {
         return level.getBlockEntity(pos) instanceof RatlineNetCellBlockEntity cell ? cell.hub() : null;
     }
 
-    /** Whether the block at {@code pos} is a net cell of the fan at {@code hub} (a cell strung before RL4 counts when its strand's hub is it). */
-    private static boolean ours(BlockGetter level, BlockPos pos, BlockPos hub) {
+    /** Whether the block at {@code pos} is a net cell of the group of {@code hubs} (a cell strung before RL4 counts when its strand's hub is one). */
+    private static boolean ours(BlockGetter level, BlockPos pos, Set<BlockPos> hubs) {
         if (!level.getBlockState(pos).is(RiggingContent.NET_CELL.get())) {
             return false;
         }
         BlockPos named = cellHub(level, pos);
         if (named != null) {
-            return named.equals(hub);
+            return hubs.contains(named);
         }
         Strand s = ownerStrand(level, pos);
-        return s == null || s.hub().equals(hub);
+        return s == null || hubs.contains(s.hub());
     }
 
-    // ------------------------------------------------------------------ the fan
-
-    /** The fan at {@code hub} made of {@code strands} (any order), with neighbours joined up to {@code maxSpread} apart. */
-    private static Fan fan(BlockPos hub, List<Strand> strands, double maxSpread) {
-        if (strands.isEmpty()) {
-            return new Fan(hub, List.of(), new boolean[0], Map.of());
-        }
-        Point hubRing = strands.get(0).hubRing();
-        List<Point> feet = new ArrayList<>();
-        for (Strand s : strands) {
-            feet.add(s.footRing());
-        }
-        int[] order = RatlineNetRules.fanOrder(hubRing, feet);
-        List<Strand> ordered = new ArrayList<>();
-        List<Point> orderedFeet = new ArrayList<>();
-        List<List<Cell>> strandCells = new ArrayList<>();
-        for (int i : order) {
-            ordered.add(strands.get(i));
-            orderedFeet.add(feet.get(i));
-            strandCells.add(strands.get(i).net().cells());
-        }
-        boolean[] join = new boolean[ordered.size()];
-        for (int k = 0; k + 1 < ordered.size(); k++) {
-            join[k] = RatlineNetRules.joins(orderedFeet.get(k), orderedFeet.get(k + 1), maxSpread);
-        }
-        Map<BlockPos, Placement> cells = new LinkedHashMap<>();
-        for (FanCell c : RatlineNetRules.fanCells(hubRing, orderedFeet, strandCells, join)) {
-            cells.put(new BlockPos(c.cell().x(), c.cell().y(), c.cell().z()), new Placement(ordered.get(c.owner()), c.fill()));
-        }
-        return new Fan(hub, ordered, join, cells);
-    }
+    // ------------------------------------------------------------------ groups and sheets (RL4, RL5)
 
     private static double maxSpread() {
         return RiggingConfig.NET_MAX_SPREAD.get();
     }
 
-    /** The fan at {@code hub} as it stands. */
+    /**
+     * The group of {@code start}: it, and when it is a mast hoop every hoop holding strands that is reached from it
+     * through hoops in a row (along x or z at one height) at most {@code net_max_spread} blocks apart; sorted, so a
+     * group's strands come in one order whichever hub it is found from.
+     */
+    static Set<BlockPos> group(BlockGetter level, Function<BlockPos, BlockState> states, BlockPos start) {
+        Set<BlockPos> out = new java.util.TreeSet<>();
+        out.add(start.immutable());
+        if (!(states.apply(start).getBlock() instanceof MastHoopBlock)) {
+            return out;
+        }
+        int reach = (int) Math.floor(maxSpread() + 1.0e-9);
+        java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+        queue.add(start.immutable());
+        while (!queue.isEmpty()) {
+            BlockPos h = queue.poll();
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                for (int i = 1; i <= reach; i++) {
+                    BlockPos p = h.relative(d, i).immutable();
+                    if (!out.contains(p) && states.apply(p).getBlock() instanceof MastHoopBlock
+                            && !hubStrands(level, states, p).isEmpty()) {
+                        out.add(p);
+                        queue.add(p);
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /** The sheet of the group {@code hubs} as it stands, with {@code extra} added (a strand being checked) when not null. */
+    private static Sheet sheet(BlockGetter level, Function<BlockPos, BlockState> states, Set<BlockPos> hubs,
+                               @Nullable Strand extra, double maxSpread) {
+        List<Strand> strands = new ArrayList<>();
+        for (BlockPos h : hubs) {
+            strands.addAll(hubStrands(level, states, h));
+        }
+        if (extra != null) {
+            strands.add(extra);
+        }
+        int n = strands.size();
+        List<Point> feet = new ArrayList<>(n);
+        List<Point> hubRings = new ArrayList<>(n);
+        List<List<Cell>> strandCells = new ArrayList<>(n);
+        boolean[] joinable = new boolean[n];
+        Set<Cell> fittings = new HashSet<>();
+        for (int k = 0; k < n; k++) {
+            Strand s = strands.get(k);
+            feet.add(s.footRing());
+            hubRings.add(s.hubRing());
+            strandCells.add(s.net().cells());
+            joinable[k] = states.apply(s.hub()).getBlock() instanceof MastHoopBlock;
+            fittings.add(new Cell(s.foot().getX(), s.foot().getY(), s.foot().getZ()));
+            fittings.add(new Cell(s.hub().getX(), s.hub().getY(), s.hub().getZ()));
+        }
+        int[] partner = RatlineNetRules.sheetPartners(feet, hubRings, joinable, maxSpread);
+        Map<BlockPos, Placement> cells = new LinkedHashMap<>();
+        for (RatlineNetRules.SheetCell c : RatlineNetRules.sheetCells(feet, hubRings, strandCells, partner, fittings)) {
+            BlockPos hub2 = c.otherHub() < 0 ? null : strands.get(c.otherHub()).hub();
+            cells.put(new BlockPos(c.cell().x(), c.cell().y(), c.cell().z()), new Placement(strands.get(c.owner()), c.fill(), hub2));
+        }
+        return new Sheet(hubs, strands, partner, cells);
+    }
+
+    /** The sheet of {@code hub}'s group as it stands. */
+    public static Sheet sheetAt(BlockGetter level, BlockPos hub) {
+        return sheet(level, level::getBlockState, group(level, level::getBlockState, hub), null, maxSpread());
+    }
+
+    /**
+     * The fan at {@code hub} as it stands: its strands in stored (bearing) order, whether each owns a pair, and every
+     * cell of its group ({@link #sheetAt}).
+     */
     public static Fan fanAt(BlockGetter level, BlockPos hub) {
-        return fan(hub, hubStrands(level, hub), maxSpread());
+        Sheet sheet = sheetAt(level, hub);
+        List<Strand> own = hubStrands(level, hub);
+        boolean[] join = new boolean[own.size()];
+        for (int k = 0; k < own.size(); k++) {
+            int i = sheet.strands().indexOf(own.get(k));
+            join[k] = i >= 0 && sheet.partner()[i] >= 0;
+        }
+        return new Fan(hub, own, join, sheet.cells());
     }
 
     // ------------------------------------------------------------------ stringing
 
     /**
-     * Whether a net may run from the fitting at {@code a} to the one at {@code b}: one body, a chainplate holds one net
-     * and a hoop up to {@code rigging.net_max_strands}, the line's length and pitch ({@link RatlineNetRules#check}),
-     * then every cell of the strand and of its fan's new fill air, water or already a cell of that fan.
+     * Whether a net may run from the fitting at {@code a} to the one at {@code b}: one body, a chainplate or latch holds
+     * one net and a hoop up to {@code rigging.net_max_strands}, the line's length and pitch ({@link RatlineNetRules#check}),
+     * then every cell of the strand and of its group's new fill air, water or already a cell of that group.
      */
     public static Check check(ServerLevel level, BlockPos a, BlockPos b, double maxLength, double minPitch) {
         Point ra = Objects.requireNonNull(ring(level, a)), rb = Objects.requireNonNull(ring(level, b));
@@ -352,50 +459,45 @@ public final class RatlineNets {
         }
         Strand added = strand(level, net);
         BlockPos hub = added.hub();
-        List<Strand> strands = new ArrayList<>(hubStrands(level, hub));
-        strands.add(added);
-        Fan fan = fan(hub, strands, maxSpread());
+        Set<BlockPos> hubs = group(level, level::getBlockState, hub);
+        Sheet sheet = sheet(level, level::getBlockState, hubs, added, maxSpread());
         for (Cell c : net.cells()) {
             BlockPos p = new BlockPos(c.x(), c.y(), c.z());
-            if (!acceptable(level, p, hub)) {
+            if (!acceptable(level, p, hubs)) {
                 return new Check(Refusal.BLOCKED, p, net, Double.NaN, boarding != null);
             }
         }
-        for (Map.Entry<BlockPos, Placement> e : fan.cells().entrySet()) {
+        for (Map.Entry<BlockPos, Placement> e : sheet.cells().entrySet()) {
             BlockPos p = e.getKey();
-            if (!acceptable(level, p, hub) && !(e.getValue().fill() && skipsFill(level.getBlockState(p)))) {
+            if (!acceptable(level, p, hubs) && !(e.getValue().fill() && skipsFill(level.getBlockState(p)))) {
                 return new Check(Refusal.BLOCKED, p, net, Double.NaN, boarding != null);
             }
         }
-        return new Check(Refusal.NONE, null, net, apart(fan, added), boarding != null);
-    }
-
-    /** NaN when {@code added} has no neighbour in {@code fan} or joins one; else the distance to its nearest neighbour's foot. */
-    private static double apart(Fan fan, Strand added) {
-        int k = fan.strands().indexOf(added);
-        if (k < 0 || fan.strands().size() < 2) {
-            return Double.NaN;
+        int k = sheet.strands().size() - 1;
+        if (sheet.joined(k)) {
+            return new Check(Refusal.NONE, null, net, Double.NaN, boarding != null);
         }
-        boolean joined = (k > 0 && fan.joinNext()[k - 1]) || (k + 1 < fan.strands().size() && fan.joinNext()[k]);
-        if (joined) {
-            return Double.NaN;
-        }
+        // strung alone: how far its nearest neighbour on the same hub is, and whether that one is just not in a row
         double nearest = Double.POSITIVE_INFINITY;
-        for (int n : new int[] {k - 1, k + 1}) {
-            if (n >= 0 && n < fan.strands().size()) {
-                nearest = Math.min(nearest, RatlineNetRules.spread(added.footRing(), fan.strands().get(n).footRing()));
+        for (int i = 0; i < k; i++) {
+            if (sheet.strands().get(i).hub().equals(hub)) {
+                nearest = Math.min(nearest, RatlineNetRules.spread(added.footRing(), sheet.strands().get(i).footRing()));
             }
         }
-        return nearest;
+        if (Double.isInfinite(nearest)) {
+            return new Check(Refusal.NONE, null, net, Double.NaN, boarding != null);
+        }
+        return new Check(Refusal.NONE, null, net, nearest, boarding != null, nearest <= maxSpread() + 1.0e-9);
     }
 
-    private static boolean acceptable(ServerLevel level, BlockPos p, BlockPos hub) {
-        return free(level.getBlockState(p)) || ours(level, p, hub);
+    private static boolean acceptable(ServerLevel level, BlockPos p, Set<BlockPos> hubs) {
+        return free(level.getBlockState(p)) || ours(level, p, hubs);
     }
 
     /**
-     * Whether the fitting at {@code pos} can take another net (to {@code other}, when given): a chainplate holds one, a
-     * hoop up to {@code rigging.net_max_strands}, and no two nets join the same two fittings.
+     * Whether the fitting at {@code pos} can take another net (to {@code other}, when given): a chainplate or a railing
+     * latch holds one, a hoop up to {@code rigging.net_max_strands} ({@link RatlineNetRules#takesAnother}), and no two
+     * nets join the same two fittings.
      */
     public static Refusal takesAnother(BlockGetter level, BlockPos pos, @Nullable BlockPos other) {
         if (!(level.getBlockEntity(pos) instanceof NetFittingBlockEntity be) || !be.hasNet()) {
@@ -404,10 +506,11 @@ public final class RatlineNets {
         if (other != null && be.holds(other)) {
             return Refusal.BUSY;
         }
-        if (!(level.getBlockState(pos).getBlock() instanceof MastHoopBlock)) {
-            return Refusal.BUSY;
+        RatlineNetRules.Anchor anchor = anchor(level.getBlockState(pos));
+        if (RatlineNetRules.takesAnother(anchor, be.netCount(), RiggingConfig.NET_MAX_STRANDS.get())) {
+            return Refusal.NONE;
         }
-        return be.netCount() >= RiggingConfig.NET_MAX_STRANDS.get() ? Refusal.FULL : Refusal.NONE;
+        return anchor == RatlineNetRules.Anchor.HOOP ? Refusal.FULL : Refusal.BUSY;
     }
 
     /**
@@ -423,38 +526,35 @@ public final class RatlineNets {
         return state.isAir() || state.is(Blocks.WATER);
     }
 
-    /** Server: strings {@code net} (checked by {@link #check}): both fittings' block entities, then its fan's cells. */
+    /** Server: strings {@code net} (checked by {@link #check}): both fittings' block entities, then its group's cells. */
     public static void string(ServerLevel level, Net net) {
         Strand added = strand(level, net);
         BlockPos hub = added.hub();
-        Set<BlockPos> stale = new HashSet<>(fanAt(level, hub).cells().keySet());
+        Set<BlockPos> before = group(level, level::getBlockState, hub);
+        Set<BlockPos> stale = new HashSet<>(sheet(level, level::getBlockState, before, null, maxSpread()).cells().keySet());
         if (level.getBlockEntity(net.a()) instanceof NetFittingBlockEntity fa) {
             fa.setNet(net.b(), true);
         }
         if (level.getBlockEntity(net.b()) instanceof NetFittingBlockEntity fb) {
             fb.setNet(net.a(), false);
         }
-        sync(level, level::getBlockState, hub, stale, Set.of());
+        Set<BlockPos> hubs = new java.util.TreeSet<>(before);
+        hubs.addAll(group(level, level::getBlockState, hub));
+        sync(level, level::getBlockState, hubs, stale, Set.of());
     }
 
     // ------------------------------------------------------------------ keeping a fan's cells in line
 
     /**
-     * Server: brings the cells of the fan at {@code hub} in line with its strands: stores the fan order and joins in the
-     * hub, places or re-owns every cell the fan wants (unless in {@code skip}), and removes every former cell of it in
-     * {@code stale} the fan no longer wants. A wanted strand cell taken by another block breaks that strand; a wanted
-     * fill cell taken is left out.
+     * Server: brings the cells of the group of {@code hubs} in line with its strands: stores each hub's strands in
+     * bearing order ({@link RatlineNetRules#fanOrder}) with their pairs, places or re-owns every cell the group wants
+     * (unless in {@code skip}), and removes every former cell of it in {@code stale} it no longer wants. A wanted strand
+     * cell taken by another block breaks that strand; a wanted fill cell taken is left out.
      */
-    static void sync(ServerLevel level, Function<BlockPos, BlockState> states, BlockPos hub, Collection<BlockPos> stale,
+    static void sync(ServerLevel level, Function<BlockPos, BlockState> states, Set<BlockPos> hubs, Collection<BlockPos> stale,
                      Set<BlockPos> skip) {
-        Fan fan = fan(hub, hubStrands(level, states, hub), maxSpread());
-        if (level.getBlockEntity(hub) instanceof NetFittingBlockEntity be) {
-            List<BlockPos> order = new ArrayList<>();
-            for (Strand s : fan.strands()) {
-                order.add(s.foot());
-            }
-            be.setFan(order, fan.joinNext());
-        }
+        Sheet fan = sheet(level, states, hubs, null, maxSpread());
+        storePairs(level, fan);
         List<Strand> broken = new ArrayList<>();
         BlockState cellState = RiggingContent.NET_CELL.get().defaultBlockState();
         // RAIL5: a boarding net's cells face its outboard side (read from the rails once per strand)
@@ -467,7 +567,7 @@ public final class RatlineNets {
                 if (skip.contains(p)) {
                     continue;
                 }
-                if (!ours(level, p, hub)) {
+                if (!ours(level, p, hubs)) {
                     if (!free(level.getBlockState(p))) {
                         if (!pl.fill() && !broken.contains(pl.owner())) {
                             broken.add(pl.owner());
@@ -485,7 +585,7 @@ public final class RatlineNets {
                 }
                 if (level.getBlockEntity(p) instanceof RatlineNetCellBlockEntity cell) {
                     Net n = pl.owner().net();
-                    cell.setOwner(n.a(), n.b(), hub, pl.fill());
+                    cell.setOwner(n.a(), n.b(), pl.owner().hub(), pl.fill(), pl.hub2());
                 }
             }
             for (BlockPos p : stale) {
@@ -495,7 +595,7 @@ public final class RatlineNets {
                 BlockState s = level.getBlockState(p);
                 if (s.is(RiggingContent.NET_CELL.get())) {
                     BlockPos named = cellHub(level, p);
-                    if (named == null || named.equals(hub)) {
+                    if (named == null || hubs.contains(named)) {
                         level.setBlock(p, Waterlogging.leftBehind(s), Block.UPDATE_ALL);
                     }
                 }
@@ -504,18 +604,58 @@ public final class RatlineNets {
             syncing--;
         }
         if (!broken.isEmpty()) {
-            removeStrands(level, states, hub, broken, true, skip);
+            removeStrands(level, states, broken, true, skip);
+        }
+    }
+
+    /** Stores in every hub of {@code sheet} its strands in bearing order with the pairs they own and are in. */
+    private static void storePairs(ServerLevel level, Sheet sheet) {
+        for (BlockPos h : sheet.hubs()) {
+            if (!(level.getBlockEntity(h) instanceof NetFittingBlockEntity be)) {
+                continue;
+            }
+            List<Integer> mine = new ArrayList<>();
+            List<Point> feet = new ArrayList<>();
+            for (int k = 0; k < sheet.strands().size(); k++) {
+                if (sheet.strands().get(k).hub().equals(h)) {
+                    mine.add(k);
+                    feet.add(sheet.strands().get(k).footRing());
+                }
+            }
+            if (mine.isEmpty()) {
+                be.setFan(List.of(), List.of(), new boolean[0]);
+                continue;
+            }
+            int[] order = RatlineNetRules.fanOrder(sheet.strands().get(mine.get(0)).hubRing(), feet);
+            List<BlockPos> feetOrder = new ArrayList<>();
+            List<BlockPos> partners = new ArrayList<>();
+            boolean[] joined = new boolean[order.length];
+            for (int i = 0; i < order.length; i++) {
+                int k = mine.get(order[i]);
+                feetOrder.add(sheet.strands().get(k).foot());
+                int p = sheet.partner()[k];
+                partners.add(p < 0 ? null : sheet.strands().get(p).foot());
+                for (int q : sheet.partner()) {
+                    joined[i] |= q == k;
+                }
+            }
+            be.setFan(feetOrder, partners, joined);
         }
     }
 
     /**
-     * Server: takes the {@code gone} strands of the fan at {@code hub} down: both fittings forget each, the fan re-fans
-     * without them ({@link #sync}, leaving {@code skip} alone: blocks being replaced right now) and, with {@code drop},
-     * each one's net item drops at its foot. When something was skipped the hub checks its fan again next tick.
+     * Server: takes the {@code gone} strands down: both fittings forget each, their groups re-join without them
+     * ({@link #sync}, leaving {@code skip} alone: blocks being replaced right now), a railing latch left without a strand
+     * goes ({@link #freeLatches}) and, with {@code drop}, each one's net item drops at its foot. When something was
+     * skipped the hubs check their nets again next tick.
      */
-    static void removeStrands(ServerLevel level, Function<BlockPos, BlockState> states, BlockPos hub, List<Strand> gone,
+    static void removeStrands(ServerLevel level, Function<BlockPos, BlockState> states, List<Strand> gone,
                               boolean drop, Set<BlockPos> skip) {
-        Set<BlockPos> stale = new HashSet<>(fan(hub, hubStrands(level, states, hub), maxSpread()).cells().keySet());
+        Set<BlockPos> hubs = new java.util.TreeSet<>();
+        for (Strand s : gone) {
+            hubs.addAll(group(level, states, s.hub()));
+        }
+        Set<BlockPos> stale = new HashSet<>(sheet(level, states, hubs, null, maxSpread()).cells().keySet());
         for (Strand s : gone) {
             for (Cell c : s.net().cells()) {
                 stale.add(new BlockPos(c.x(), c.y(), c.z()));
@@ -527,16 +667,35 @@ public final class RatlineNets {
                 fb.clearNet(s.net().a());
             }
         }
-        sync(level, states, hub, stale, skip);
+        sync(level, states, hubs, stale, skip);
         if (drop) {
             for (Strand s : gone) {
                 Block.popResource(level, s.foot(), new ItemStack(RiggingContent.NET_ITEM.get()));
             }
         }
-        if (!skip.isEmpty() && !skip.contains(hub)) {
-            BlockState h = level.getBlockState(hub);
-            if (h.getBlock() instanceof NetFitting) {
-                level.scheduleTick(hub, h.getBlock(), 1);
+        freeLatches(level, gone, skip);
+        if (!skip.isEmpty()) {
+            for (BlockPos hub : hubs) {
+                BlockState h = level.getBlockState(hub);
+                if (!skip.contains(hub) && h.getBlock() instanceof NetFitting) {
+                    level.scheduleTick(hub, h.getBlock(), 1);
+                }
+            }
+        }
+    }
+
+    /**
+     * RL5: no orphan latches: every railing latch end of the {@code gone} strands that holds no strand any more (and is
+     * not being replaced right now, {@code skip}) goes, and with it the railing's eye bolt.
+     */
+    private static void freeLatches(ServerLevel level, List<Strand> gone, Set<BlockPos> skip) {
+        for (Strand s : gone) {
+            for (BlockPos end : new BlockPos[] {s.net().a(), s.net().b()}) {
+                BlockState st = level.getBlockState(end);
+                if (!skip.contains(end) && st.getBlock() instanceof RailingLatchBlock
+                        && !(level.getBlockEntity(end) instanceof NetFittingBlockEntity be && be.hasNet())) {
+                    level.setBlock(end, Waterlogging.leftBehind(st), Block.UPDATE_ALL);
+                }
             }
         }
     }
@@ -544,7 +703,7 @@ public final class RatlineNets {
     /** A fitting's scheduled tick: its fan's cells brought in line again (fills a hole left by a block that was replaced). */
     static void resync(ServerLevel level, BlockPos hub) {
         if (!hubStrands(level, hub).isEmpty()) {
-            sync(level, level::getBlockState, hub, List.of(), Set.of());
+            sync(level, level::getBlockState, group(level, level::getBlockState, hub), List.of(), Set.of());
         }
     }
 
@@ -554,7 +713,7 @@ public final class RatlineNets {
      */
     public static void breakNet(ServerLevel level, Net net, boolean drop) {
         Strand s = strand(level, net);
-        removeStrands(level, level::getBlockState, s.hub(), List.of(s), drop, Set.of());
+        removeStrands(level, level::getBlockState, List.of(s), drop, Set.of());
     }
 
     /**
@@ -568,14 +727,11 @@ public final class RatlineNets {
         }
         BlockPos at = pos.immutable();
         Function<BlockPos, BlockState> states = p -> p.equals(at) ? state : level.getBlockState(p);
-        Map<BlockPos, List<Strand>> byHub = new LinkedHashMap<>();
+        List<Strand> gone = new ArrayList<>();
         for (Net n : netsOf(level, states, at)) {
-            Strand s = strand(states, n);
-            byHub.computeIfAbsent(s.hub(), h -> new ArrayList<>()).add(s);
+            gone.add(strand(states, n));
         }
-        for (Map.Entry<BlockPos, List<Strand>> e : byHub.entrySet()) {
-            removeStrands(server, states, e.getKey(), e.getValue(), true, Set.of(at));
-        }
+        removeStrands(server, states, gone, true, Set.of(at));
         be.clearNet();
     }
 
@@ -586,7 +742,7 @@ public final class RatlineNets {
         }
         Strand s = ownerStrand(level, pos);
         if (s != null) {
-            removeStrands(server, level::getBlockState, s.hub(), List.of(s), true, Set.of(pos.immutable()));
+            removeStrands(server, level::getBlockState, List.of(s), true, Set.of(pos.immutable()));
         }
     }
 

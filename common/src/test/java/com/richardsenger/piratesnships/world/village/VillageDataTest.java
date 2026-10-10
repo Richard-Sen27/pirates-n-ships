@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,7 +101,10 @@ class VillageDataTest {
         assertEquals("pirates_n_ships:port_village", json.get("type").getAsString());
         PortStructure s = PortStructure.CODEC.codec().parse(ops, json).getOrThrow();
         assertEquals(GenerationStep.Decoration.SURFACE_STRUCTURES, s.step());
-        assertEquals(TerrainAdjustment.NONE, s.terrainAdaptation());
+        assertEquals(TerrainAdjustment.BEARD_THIN, s.terrainAdaptation(), "STR3: the buildings sit on the slope");
+        assertTrue(s.landPiecesOnLand(), "STR3: no streets out over the sea");
+        assertTrue(s.unbeardedStart(), "STR3: the dock head (and the pier) stay out of the beard");
+        assertEquals(Optional.of(VillageKeys.START), s.startPool().unwrapKey());
         assertEquals(VillageData.SIZE, s.maxDepth());
         assertEquals(Optional.of(VillageKeys.HAS_SEAFARER_VILLAGE), s.biomes().unwrapKey());
         assertEquals(ShoreAnchor.VILLAGE, s.shoreAnchor());
@@ -122,16 +126,21 @@ class VillageDataTest {
     @Test
     void poolsParseAndNameCommittedPieces() throws IOException {
         Map<String, Integer> weights = new TreeMap<>();
+        Map<String, String> projections = new java.util.HashMap<>();
+        Map<String, String> processors = new java.util.HashMap<>();
         for (ResourceKey<StructureTemplatePool> key : List.of(VillageKeys.START, VillageKeys.STREETS,
-                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS)) {
+                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS, VillageKeys.STREETHEADS, VillageKeys.DECORATIONS)) {
             JsonObject json = generated("worldgen/template_pool/" + key.location().getPath()).getAsJsonObject();
             StructureTemplatePool pool = StructureTemplatePool.DIRECT_CODEC.parse(ops, json).getOrThrow();
             List<String> locations = new ArrayList<>();
             for (JsonElement e : json.getAsJsonArray("elements")) {
                 JsonObject entry = e.getAsJsonObject();
-                String location = entry.getAsJsonObject("element").get("location").getAsString();
+                JsonObject element = entry.getAsJsonObject("element");
+                String location = element.get("location").getAsString();
                 locations.add(location);
                 weights.put(location, entry.get("weight").getAsInt());
+                projections.put(location, element.get("projection").getAsString());
+                processors.put(location, element.get("processors").getAsString());
                 ResourceLocation id = ResourceLocation.parse(location);
                 Path nbt = root.resolve("common/src/main/resources/data/" + id.getNamespace() + "/structure/" + id.getPath() + ".nbt");
                 assertTrue(Files.exists(nbt), key.location() + ": " + location + " has no committed NBT");
@@ -141,9 +150,73 @@ class VillageDataTest {
             // vanilla skips a connector whose fallback pool is empty (unless it is minecraft:empty)
             assertTrue(!locations.isEmpty(), key.location() + " has pieces");
         }
-        assertEquals(Map.of("pirates_n_ships:village/dock_head", 1, "pirates_n_ships:village/house_small", 3,
-                "pirates_n_ships:village/pier", 1, "pirates_n_ships:village/shipwright", 1, "pirates_n_ships:village/street", 1,
-                "pirates_n_ships:village/street_end", 1, "pirates_n_ships:village/tavern", 1), weights);
+        Map<String, Integer> expected = new TreeMap<>();
+        expected.put("pirates_n_ships:village/dock_head", 1);
+        expected.put("pirates_n_ships:village/pier", 1);
+        for (Map<String, Integer> pool : List.of(VillageData.STREETS, VillageData.BUILDINGS, VillageData.TERMINATORS,
+                VillageData.STREETHEADS, VillageData.DECORATIONS)) {
+            pool.forEach((piece, weight) -> expected.put("pirates_n_ships:village/" + piece, weight));
+        }
+        assertEquals(expected, weights);
+    }
+
+    /**
+     * STR3's network (design.md §10.1, "Natural layouts"): bends, forks, a crossroads and squares besides the
+     * straights, which are the minority of the draws; a street piece leads on to about 1.2 street pieces; three to five
+     * looks of the house, two of the tavern and of the shipwright, the new buildings, ten decorations; the streetheads
+     * branch at once and lead on inland; streets are terrain matching with the boardwalk, buildings and decorations rigid.
+     */
+    @Test
+    void naturalLayoutWeights() throws IOException {
+        Map<String, Integer> streets = VillageData.STREETS;
+        for (String kind : List.of("street_bend_left", "street_bend_right", "street_fork_left", "street_fork_right",
+                "street_crossroads", "street_square_well", "street_square_market", "street_long", "street")) {
+            assertTrue(streets.containsKey(kind), kind);
+        }
+        int total = streets.values().stream().mapToInt(Integer::intValue).sum();
+        int straights = streets.get("street") + streets.get("street_long");
+        double share = (double) straights / total;
+        assertTrue(share >= 0.25 && share <= 0.4, "straights are about a third of the draws: " + straights + " of " + total);
+        Map<String, Integer> leads = Map.of("street", 1, "street_long", 1, "street_bend_left", 1, "street_bend_right", 1,
+                "street_fork_left", 2, "street_fork_right", 2, "street_crossroads", 3, "street_square_well", 1,
+                "street_square_market", 0);
+        double mean = streets.entrySet().stream().mapToDouble(e -> e.getValue() * leads.get(e.getKey())).sum() / total;
+        assertTrue(mean >= 1.1 && mean <= 1.35, "a street piece leads on to about 1.2: " + mean);
+        long houses = VillageData.BUILDINGS.keySet().stream().filter(k -> k.startsWith("house_")).count();
+        assertTrue(houses >= 3 && houses <= 5, "house looks " + houses);
+        assertTrue(VillageData.BUILDINGS.keySet().containsAll(List.of("tavern", "inn", "shipwright", "slipway", "warehouse",
+                "net_loft", "fish_market", "lighthouse", "chapel", "well")), VillageData.BUILDINGS.keySet().toString());
+        assertEquals(10, VillageData.DECORATIONS.size(), VillageData.DECORATIONS.keySet().toString());
+        assertTrue(VillageData.TERMINATORS.size() >= 2, "street ends " + VillageData.TERMINATORS.keySet());
+        VillageData.STREETHEADS.forEach((piece, weight) -> {
+            assertEquals(streets.get(piece), weight, piece);
+            assertTrue(piece.contains("fork") || piece.contains("crossroads"), piece + " does not branch at the dock head");
+        });
+        for (String pool : List.of("streets", "streetheads", "terminators", "buildings", "decorations")) {
+            JsonObject json = generated("worldgen/template_pool/village/" + pool).getAsJsonObject();
+            for (JsonElement e : json.getAsJsonArray("elements")) {
+                JsonObject element = e.getAsJsonObject().getAsJsonObject("element");
+                boolean street = pool.startsWith("street") || pool.equals("terminators");
+                assertEquals(street ? "terrain_matching" : "rigid", element.get("projection").getAsString(), pool);
+                assertEquals(street ? VillageKeys.STREET_PROCESSORS.location().toString() : "pirates_n_ships:connections",
+                        element.get("processors").getAsString(), pool);
+            }
+        }
+        JsonObject list = generated("worldgen/processor_list/village_street").getAsJsonObject();
+        List<String> types = list.getAsJsonArray("processors").asList().stream()
+                .map(e -> e.getAsJsonObject().get("processor_type").getAsString()).toList();
+        assertEquals(List.of("pirates_n_ships:connections", "pirates_n_ships:boardwalk"), types);
+        // every committed village piece is drawn by some pool
+        try (var files = Files.list(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/village"))) {
+            Set<String> drawn = new java.util.HashSet<>(List.of("dock_head", "pier"));
+            for (Map<String, Integer> pool : List.of(streets, VillageData.BUILDINGS, VillageData.TERMINATORS, VillageData.DECORATIONS)) {
+                drawn.addAll(pool.keySet());
+            }
+            files.forEach(f -> {
+                String name = f.getFileName().toString().replace(".nbt", "");
+                assertTrue(drawn.contains(name), name + " is in no pool");
+            });
+        }
     }
 
     @Test

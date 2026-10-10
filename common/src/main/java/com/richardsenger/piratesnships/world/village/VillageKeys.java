@@ -8,8 +8,9 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
-/** Data keys of the seafarer village (WG1): structure, structure set, biome tag and pools. No registration here. */
+/** Data keys of the seafarer village (WG1, STR3): structure, structure set, biome tag, pools and the streets' processor list. No registration here. */
 public final class VillageKeys {
 
     /** The structure type's id ({@code world.structure.PortStructures#PORT_STRUCTURE}). */
@@ -24,6 +25,13 @@ public final class VillageKeys {
     public static final ResourceKey<StructureTemplatePool> BUILDINGS = pool("buildings");
     public static final ResourceKey<StructureTemplatePool> PIER = pool("pier");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
+    /** STR3: what the dock head's inland street draws (straights, forks, a crossroads, the well square). */
+    public static final ResourceKey<StructureTemplatePool> STREETHEADS = pool("streetheads");
+    /** STR3: the small props on the streets' and squares' {@code deco_out} connectors. */
+    public static final ResourceKey<StructureTemplatePool> DECORATIONS = pool("decorations");
+    /** STR3: the streets' processor list, the connections and the boardwalk (a street over an inlet). */
+    public static final ResourceKey<StructureProcessorList> STREET_PROCESSORS =
+            ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("village_street"));
 
     private VillageKeys() {
     }

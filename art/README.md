@@ -2584,7 +2584,7 @@ operations):
 
 | name | target | pool | joint | used by |
 |---|---|---|---|---|
-| `pirates_n_ships:street_out` | `pirates_n_ships:street_in` | `pirates_n_ships:village/streets` | aligned | dock head (south edge), street (south end) |
+| `pirates_n_ships:street_out` | `pirates_n_ships:street_in` | `pirates_n_ships:village/streets` | aligned | every street piece that leads on (the dock head's is `streethead_out` since STR3) |
 | `pirates_n_ships:street_in` | `pirates_n_ships:street_out` | `minecraft:empty` | aligned | street (north end) |
 | `pirates_n_ships:building_out` | `pirates_n_ships:building_in` | `pirates_n_ships:village/buildings` | rollable | street (both verges) |
 | `pirates_n_ships:building_in` | `pirates_n_ships:building_out` | `minecraft:empty` | rollable | house, tavern, shipwright (north side, y 0) |
@@ -2617,7 +2617,7 @@ deeper, the footings hang in the water.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `dock_head` (start) | 11×8×11 | 308 | stone quay (mossy towards the sea, cracked inland), harbor master's hut (desk facing the door, cargo, lectern): render on a cobblestone plinth between spruce corner posts, framed door under a hood, windows with sills (shutters where the box allows), spruce band in the gables, rafter ends; notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels, a bench at the hut's west wall, a barrel with a flower pot by the street; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `dock_head` (start) | 11×8×11 | 308 | stone quay (mossy towards the sea, cracked inland), harbor master's hut (desk facing the door, cargo, lectern): render on a cobblestone plinth between spruce corner posts, framed door under a hood, windows with sills (shutters where the box allows), spruce band in the gables, rafter ends; notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels, a bench at the hut's west wall, a barrel with a flower pot by the street; `pier_out` [5, 0, 0], `streethead_out` [2, 0, 10] (`street_out` before STR3) | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
 | `pier` | 7×9×20 | 240 | 5 wide plank deck (a few weathered dark oak boards) on spruce piles with mostly mossy footings, cross beams, stripped spruce wales at the waterline, a rail and two lantern posts at the seaward end, a ladder down; at the landward end (clear of the berths) a lantern post and rail on each edge and cargo (barrels, crates); `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
 | `street` | 7×4×7 | 54 | cobbled crown with gravel and moss patches between stone brick kerbs (some mossy or cracked), dirt path verges with coarse patches, a lantern post, a barrel with a flower pot (both clear of the doors at z 3); `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
 | `street_end` (terminator) | 7×4×3 | 29 | cobbled turning place, the kerbs turning along the far edge, a lantern post between two benches, two barrels (one with a flower pot); `street_in` [3, 0, 0] | |
@@ -2893,6 +2893,142 @@ water darkened with depth, 8 px per block) and `_iso` (the south-east isometric 
 shapes and rough Minecraft colours, only exposed blocks). `--iso lab --port N` posts the region to the
 minecraft-schematic-lab as a build and saves its preview instead; the lab draws whole cubes in its own colour table,
 which paints most of a camp's stairs, slabs and wool blue, so it is only a cross-check.
+
+### Natural layout of the village (STR3)
+The human's report on the island (design.md §10.1, "Natural layouts") held for the village as well: one straight
+`street` piece, three buildings, no terrain adaptation, so every village was the dock head, a pier and one street running
+inland with the same three houses. STR3 gives the village a street network, fourteen buildings, a decoration pool, the
+beard and the headless check, with STR2's tooling (`StructureLayout`, `RegionSchematic`, `tools/structure_check.py`,
+`tools/render_generated_structure.py`, `tools/world_region.py`).
+
+**Sources.** Every new piece is a BuildSpec generator in `art/structures/village/`, built by
+`tools/build_structures.py` (STR3 used the lab on port 8771). Shared helpers: `_streets.py` (streets drawn along a
+centre line: each cell takes its kind from its distance to the nearest centre line, crown within 1.3, kerb within 2.3,
+verge within 3.3, so straights, bends, forks, the crossroads and the squares share ST1's 7 wide cross-section and the
+kerbs round the corners where streets meet; `lay`, `footpath`, `green`, `square_paving`; the mirrored `bend` and `fork`
+builders, since jigsaw never mirrors), `_houses.py` (`cottage`: ST1's small house generalised, options `storeys`, roof,
+gable infill, door column, chimney side; `furnish`), `_decos.py` (the ten decorations) and new fittings in `_style.py`
+(`jit`, `tree`, `bench`, `flower`, `awning`, `hanging_sign`, `ground_patch`). The crown is cobblestone with mossy
+cobblestone and andesite, never gravel, so a street the boardwalk processor lays over an inlet stays a cobbled
+causeway (only its dirt path and coarse dirt verges become planks). Hanging signs go out as `block_entity` operations
+with `Id` `minecraft:hanging_sign`, as on the island, so `tools/check_structures.py` passes. The dock head and the pier
+keep their blocks; only the dock head's inland jigsaw changed (below).
+
+**Connectors** (added to `buildspec.CONNECTORS` by `village/_style.py`):
+
+| name | target | pool | joint | selection priority | used by |
+|---|---|---|---|---|---|
+| `pirates_n_ships:streethead_out` | `pirates_n_ships:street_in` | `pirates_n_ships:village/streetheads` | aligned | 3 | dock head (south edge, was `street_out`) |
+| `pirates_n_ships:street_out` | (as ST1) | | | 2 | every street piece that leads on |
+| `pirates_n_ships:building_out` | (as ST1) | | | 1 | street pieces' verges, squares |
+| `pirates_n_ships:deco_out` | `pirates_n_ships:deco_in` | `pirates_n_ships:village/decorations` | rollable | 0 | long street, forks, squares |
+| `pirates_n_ships:deco_in` | `pirates_n_ships:deco_out` | `minecraft:empty` | rollable | 0 | every decoration (north edge, y 0) |
+
+The village places its next street piece **before** its buildings (the island does the opposite): with buildings
+first, a building claimed the corner a bend, a fork or a square needs, only the narrow straight still fitted, and the
+streets ran on in a line (37 % straights against 31 % by weight, one seed in sixteen with an aspect under 0.5). Placed
+after the streets, a building that does not fit gives way to a smaller one of the pool.
+
+**Pools and weights** (`world/village/VillageData`; weights expand in the pool):
+
+| pool | projection, processors | pieces (weight) |
+|---|---|---|
+| `start` | rigid | `dock_head` |
+| `pier` | rigid | `pier` |
+| `streetheads` (fallback `terminators`) | terrain matching, `village_street` | `street_fork_left` 2, `street_fork_right` 2, `street_crossroads` 1 |
+| `streets` (fallback `terminators`) | terrain matching, `village_street` | `street` 3, `street_long` 2, `street_bend_left` 2, `street_bend_right` 2, `street_fork_left` 2, `street_fork_right` 2, `street_crossroads` 1, `street_square_well` 1, `street_square_market` 1 |
+| `terminators` | terrain matching, `village_street` | `street_end` 1, `street_end_green` 1, `street_end_loop` 1 |
+| `buildings` | rigid | `house_small` 6, `house_tall` 4, `house_garden` 4, `house_fisher` 4, `tavern` 2, `inn` 2, `shipwright` 2, `slipway` 2, `warehouse` 2, `net_loft` 2, `fish_market` 2, `chapel` 2, `lighthouse` 1, `well` 1 |
+| `decorations` | rigid | `deco_cart` 2, `deco_barrels` 3, `deco_nets` 2, `deco_rowboat` 1, `deco_flowers` 3, `deco_bench_tree` 2, `deco_lantern` 1, `deco_fish_rack` 2, `deco_woodpile` 2, `deco_laundry` 2 |
+
+Why these numbers: straights are 5 of 16 draws of the streets pool and a street piece leads on to 1.3 street pieces
+on average (forks two, the crossroads three, the market square none). The dock head has one way inland, so the
+streetheads pool holds only pieces that branch at once and still lead on inland: with the straights and the well square
+there as well, every village of a scan of 80 seeds that ran inland in a line had started without a branch. A small
+piece that fits anywhere is drawn more often than its weight says (the jigsaw tries the shuffled pool until a piece
+fits), so the well and the beacon tower have half the weight of the rest. `max_distance_from_center` went from 80 to
+64: with the side streets a village spread up to 153 blocks along the beach and 70 inland.
+
+**Terrain and shore.** `terrain_adaptation: beard_thin`, `land_pieces_on_land: true` (`LandFilter`, as on the island)
+and the new `unbearded_start: true` (`PortStructure`): the dock head (the start) is copied out of the beard's reach like
+the pier (STR2's `PortStructure.unbearded`), and both copies drop their junctions to rigid pieces, because vanilla's
+beardifier also lays ground round every junction and the one between the dock head and the pier sits on the quay's sea
+edge. The dock head stays the shore anchor (WG1): its quay edge on the last land column, its paving one above the sea,
+the village climbing inland from it. The streets' processor list `pirates_n_ships:village_street` runs the connections
+and the boardwalk. A building on the beach beside the dock head may still beard the shore in front of the quay: in a
+scan of 100 seeds the beard over the pier's landward half reached 0.15 one below the sea surface, over its seaward half
+(the berths and the far end) at most 0.001.
+
+| piece | size (x×y×z) | blocks | contents and connectors |
+|---|---|---|---|
+| `street_long` | 7×4×13 | 97 | the long straight, a lantern post, a barrel with flowers, a bench; `street_in` [3, 0, 0], `street_out` [3, 0, 12], `building_out` [0, 0, 3] and [6, 0, 9], `deco_out` [6, 0, 3] and [0, 0, 9] |
+| `street_bend_left` / `_right` | 11×7×11 | 142 / 139 | a quarter bend on a radius of 7 to the east / west, a green with an oak and a bench in the inside corner, a trodden forecourt on the outside; `street_in` [3, 0, 0] / [7, 0, 0], `street_out` [10, 0, 7] east / [0, 0, 7] west, `building_out` on the outer side face at z 6 and [5, 0, 10] / [5, 0, 10] south |
+| `street_fork_left` / `_right` | 11×7×13 | 186 / 182 | on south and a branch sweeping east / west on a radius of 7, a green with an oak inside the branch, a lantern in the crotch; `street_in` [3, 0, 0] / [7, 0, 0], `street_out` south and east / west at z 9, `building_out` z 4 and `deco_out` z 10 on the other side |
+| `street_crossroads` | 11×4×11 | 123 | four ways with rounded kerbs, lantern posts, a barrel and a bench in the corners; `street_in` [5, 0, 0], `street_out` west, east, south |
+| `street_square_well` | 15×8×15 | 230 | a paved square (stone brick border, cobblestone, andesite and stone brick flags) round a roofed well, benches, lantern posts at the corners; `street_in` [7, 0, 0], `street_out` [7, 0, 14], `building_out` [0, 0, 8] and [14, 0, 8], `deco_out` [0, 0, 12] and [14, 0, 4] |
+| `street_square_market` | 15×7×15 | 251 | a paved dead end round a market stall under a striped awning (produce, ice, a cask); `street_in` [7, 0, 0], `building_out` west, east and south, `deco_out` [0, 0, 12] and [14, 0, 12] |
+| `street_end_green` | 7×7×6 | 88 | the cobbles stop at a kerb before a little green with a young oak, flowers, two benches and a lantern; `street_in` [3, 0, 0] |
+| `street_end_loop` | 11×5×11 | 103 | a cobbled turning loop round a planted island with a lantern post; `street_in` [5, 0, 0] |
+| `house_tall` | 7×14×9 | 407 | two storeys (kitchen below, a ladder to two beds above), boarded gables, flower pots on the upper sills; `building_in` [3, 0, 0] |
+| `house_garden` | 9×9×14 | 356 | a 7×6 cottage and a fenced kitchen garden behind it (farmland rows round a water channel, a scarecrow, a composter), a side path to the gate; `building_in` [3, 0, 0] |
+| `house_fisher` | 11×9×8 | 306 | a cottage under a dark shingle roof with a smoker; in the yard a rowing boat keel-up on trestles, a net drying on a rope frame, a lobster pot, rope and a tar pot; `building_in` [2, 0, 0] |
+| `inn` | 9×14×9 | 504 | "The Salty Anchor": two storeys, a hanging sign on a bracket, a bar of barrels and kegs, tables, beds upstairs; `building_in` [4, 0, 0] |
+| `slipway` | 11×10×15 | 321 | the second shipwright: a gravel slipway with a hull frame under construction (keel, stem and stern posts, flaring frames, the first strakes), staging with a ladder, sheer legs with a hoist, a steam box, timber; `building_in` [5, 0, 0] |
+| `warehouse` | 11×15×10 | 614 | gable-end to the street: a cobblestone ground storey with quoins and barred windows, a boarded upper storey, a loading way, a hoist beam with a crate, stacked cargo inside; `building_in` [5, 0, 0] |
+| `net_loft` | 7×13×8 | 301 | a boarded loft on spruce posts, a ladder to a landing before the door, nets drying underneath; `building_in` [3, 0, 0] |
+| `fish_market` | 9×6×7 | 155 | an open stall under a striped awning, the catch on ice on a barrel counter, a hanging sign "Fresh Fish"; `building_in` [4, 0, 0] |
+| `lighthouse` | 7×21×7 | 420 | a beacon tower of render banded with brick between stone brick quoins, a ladder to a gallery with a rail, a glazed lantern room with glowstone and a sea lantern, a brick pyramid roof; `building_in` [3, 0, 0] |
+| `chapel` | 9×17×11 | 478 | a whitewashed chapel gable-end to the street, tall windows, a steep tile roof, an open belfry with a bell, pews, an altar with candles; `building_in` [4, 0, 0] |
+| `well` | 7×7×7 | 79 | a roofed well on a small cobbled yard with a bench, a trough, a lantern post and a flower bed; `building_in` [3, 0, 0] |
+| `deco_*` | 3×5×3 to 7×8×8 | 8 to 51 | `cart`, `barrels`, `nets`, `rowboat` (on trestles), `flowers` (a raised bed), `bench_tree`, `lantern`, `fish_rack`, `woodpile`, `laundry`; `deco_in` in the middle of the north edge, y 0 |
+
+Renders: `art/renders/structures/village/*.png` (the lab's previews).
+
+**The layout check.** `world/village/VillageLayoutGameTests` (its own class, STR2's pattern):
+
+- `villageLayoutsAreNatural` plans the village through the real jigsaw assembler (`PortStructure.plan`) for six seeds
+  (7, 1234, 5150, 27182, 77777, 314159) at a fixed site on a straight shore (sea to the north), the streets' height from
+  a flat generator at the sand's surface. Per instance: at least 10 pieces, a footprint aspect of at least 0.5, at
+  least 4 distinct buildings of the buildings pool, the pier's far end over the water, the dock head the start; no two
+  instances with the same piece sequence. Each instance goes to `village-layout-<seed>.txt`.
+- `villageBeardSparesTheBerths` feeds each seed's pieces to vanilla's beardifier: under 0.01 over the pier's seaward
+  half (the far end and the berth row, four below the sea surface up to it), and the ground beside a building filled.
+- `villagePlaced1..3` place the seeds 7, 1234 and 5150 on a 160 by 160 beach: every piece inside the arena, the pier's
+  far end in water, every street on the sand, the port with its two berths (water, open above), the harbor master at
+  the dock head's desk, and the region written as `seafarer_village_<seed>.schem`.
+
+Layouts of the six seeds: 7: 49 pieces, 97×90, aspect 0.93, 11 buildings; 1234: 34, 67×90, 0.74, 7; 5150: 33, 104×90,
+0.87, 9; 27182: 42, 101×77, 0.76, 8; 77777: 45, 95×88, 0.93, 5; 314159: 58, 129×71, 0.55, 7. A scan of 100 other seeds
+(1009 i + 17) gave 14 to 72 pieces (median 39), aspects 0.51 to 1.0 and 3 to 11 distinct buildings; one seed (58539,
+16 pieces) had 3 buildings: its trunk ran into the market square and its branch turned seaward and was dropped.
+
+To regenerate the renders (`tools/structure_check.py` takes the village's dumps by name, the island's `layout-*` are in
+the same folder):
+
+```sh
+./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=VillageLayoutGameTests \
+    -Ppirates_n_ships.layout.dir=/tmp/layouts
+python3 tools/structure_check.py /tmp/layouts/village-layout-*.txt --map
+python3 tools/render_generated_structure.py /tmp/layouts/seafarer_village_{7,1234,5150}.schem --out art/renders/structures
+```
+
+`art/renders/structures/seafarer_village_<seed>_{top,iso}.png` show those three; the flat beach has no real terrain
+and no beard (the playtest covers those).
+
+**A real world.** `art/renders/structures/seafarer_village_smoke_{top,iso}.png` show the village the NeoForge smoke test
+generates (seed 2718281828, port `village_1192_1530`: a sandy spit between a jungle and the sea, the pier running south;
+the land filter dropped the streets that ran out over the water, so the village is a crossroads with a handful of buildings round it).
+To regenerate:
+
+```sh
+tools/server_smoke.sh neoforge
+python3 tools/world_region.py neoforge/build/server-smoke/world 1136 1472 1247 1583 --y0 45 --y1 100 \
+    --out /tmp/seafarer_village_smoke.schem
+python3 tools/render_generated_structure.py /tmp/seafarer_village_smoke.schem --out art/renders/structures
+```
+
+The tooling needed nothing new: `PortStructure` gained the codec field `unbearded_start` (and its unbearded copies may
+drop their rigid junctions), the rest is data and pieces.
 
 ### Navy outpost (ST3)
 The navy fort (design.md §10.1) as a third piece set, group `navy_outpost`, built with the same pipeline and

@@ -71,6 +71,8 @@ MOD_RULES: dict[str, Rule] = {
     "nameplate": always(f"{MOD}:nameplate"),
     "pantry": always(f"{MOD}:pantry"),
     "ratline_net_cell": always(f"{MOD}:ratline_net_cell"),
+    # RL5: a railing latch's net end (the railing itself never carries a block entity)
+    "railing_latch": always(f"{MOD}:net_fitting"),
     "sea_chest": always(f"{MOD}:sea_chest"),
     # a BedBlock without vanilla's BedBlockEntity: an entity block with no block entity, never in a generated structure
     "sea_cot": lambda props: None,

@@ -75,6 +75,41 @@
       "when": {
         "post_sw": "true"
       }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/railing_latch"
+      },
+      "when": {
+        "latch": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/railing_latch",
+        "y": 90
+      },
+      "when": {
+        "latch": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/railing_latch",
+        "y": 180
+      },
+      "when": {
+        "latch": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/railing_latch",
+        "y": 270
+      },
+      "when": {
+        "latch": "west"
+      }
     }
   ]
 }

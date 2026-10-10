@@ -14,9 +14,9 @@ The full feature list, as players see it on Modrinth and CurseForge, is in
 tracked in [`docs/progress.md`](docs/progress.md).
 
 **Status:** the first public release is **0.1.0**. It ships before the in-game playtest rounds, so reports on the
-[issue tracker](https://github.com/Richard-Sen27/pirates-n-ships/issues) are welcome. Railings, bulwarks and oar benches come in
-every vanilla wood and in the woods of eleven wood mods when installed; the other wooden blocks follow in the next
-release; 1.0.0 follows the playtest rounds.
+[issue tracker](https://github.com/Richard-Sen27/pirates-n-ships/issues) are welcome. Every wooden block, from railings and oar
+benches to the helm, the capstan, the crow's nest and the cargo crates, comes in every vanilla wood and in the woods of
+eleven wood mods when installed; 1.0.0 follows the playtest rounds.
 
 ## Screenshots
 

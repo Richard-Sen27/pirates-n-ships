@@ -41,9 +41,9 @@ uvlock, so the cap's grain follows the rail on every edge):
   straps and their hinge knuckles) and _lid_open (swung up and out about y 16, z 0). block/bulwark_item and
   bulwark_port_item, centred.
 - RAIL6 rope railing: block/rope_railing_edge, a 2 px stripped-log stanchion at the edge's x-0 end (x 0..2, z 0..2,
-  y 0..16.25, inside the post where the run ends there) and two rope lines along the edge (#rope: stripped birch, the
-  models' fixed rope texture as on the yards and halyards, its grain along the line; the mod's twisted block/rope
-  texture breaks into a checker at 1.5 px; 1.5 px thick on the line z 0.25..1.75): the top line y 14.5..16 (its top at the cap's y 16, so
+  y 0..16.25, inside the post where the run ends there) and two rope lines along the edge (#rope: pirates_n_ships:block/rope_line, a
+  two-strand twist drawn for a 1.5 px strip by tools/gen_rope_line_texture.py; the rigging's block/rope breaks into a
+  checker at that thickness and stripped birch reads as a pale wooden rail; 1.5 px thick on the line z 0.25..1.75): the top line y 14.5..16 (its top at the cap's y 16, so
   RL5's latch stands on it) and a middle line y 7..8.5. block/rope_railing_item: posts at both ends and the two lines,
   centred.
 - RL5 latch (see below): block/railing_latch on the cap, unchanged by RAIL6 (the cap's top stays at y 16 and the
@@ -51,7 +51,7 @@ uvlock, so the cap's grain follows the rail on every edge):
 
 Texture variables #planks, #log and #log_top (vanilla oak planks, stripped oak log and its top here); the wood family's
 datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. #iron (anvil), #metal (the
-chainplate's palette) and #rope (stripped birch) stay fixed.
+chainplate's palette) and #rope (rope_line) stay fixed.
 
 UVs are vanilla's position UVs wrapped into 0..16 (as tools/gen_ratlines_models.py). After a change run
 `python3 tools/lint_models.py` and rebuild the renders (art/README.md, "Railing rework (RAIL6)").
@@ -71,7 +71,7 @@ LOG = "minecraft:block/stripped_oak_log"
 LOG_TOP = "minecraft:block/stripped_oak_log_top"
 IRON = "minecraft:block/anvil"
 METAL = "pirates_n_ships:item/palette_2"  # RL5: the chainplate's iron
-ROPE = "minecraft:block/stripped_birch_log"  # RAIL6: the models' rope (yard bands, halyards), never #log
+ROPE = "pirates_n_ships:block/rope_line"  # RAIL6: the rope railing's lines (tools/gen_rope_line_texture.py), never #log
 
 INSET = 0.05  # the bulwark wall's outer face stands this far in from the block's edge
 RAIL_DEPTH = 2  # the balusters' and the toe rail's depth (z 0..2), the line at z 1
@@ -382,7 +382,8 @@ STANCHION_TOP = CAP[1] + 0.25  # a little over the top line, under a post's top
 
 
 def rope_parts(line=LINE, x=(0, 16)):
-    faces = {f: "rope@90" for f in ("north", "south", "up", "down")}  # the birch's grain along the line
+    # each face samples a strip 16 texels along the line and 1.5 across it: the twist runs along the line
+    faces = {f: "rope" for f in ("north", "south", "up", "down")}
     return [cube(f"rope_{n}", (x[0], y[0], line - ROPE_HALF), (x[1], y[1], line + ROPE_HALF), faces)
             for n, y in (("top", ROPE_TOP), ("middle", ROPE_MID))]
 
@@ -478,9 +479,9 @@ TEXTURES = [  # (key, file name; vanilla's block textures, RL5 the mod's palette
     ("iron", "anvil"),
     ("metal", "palette_2"),
     ("log_top", "stripped_oak_log_top"),
-    ("rope", "stripped_birch_log"),
+    ("rope", "rope_line"),
 ]
-OWN = {"metal": "item"}  # the mod's own textures, by folder
+OWN = {"metal": "item", "rope": "block"}  # the mod's own textures, by folder
 
 
 def bb_texture(index, key, name):

@@ -1170,9 +1170,13 @@ Railing rework (RAIL6):
 - **Rope railing** (`rope_railing_edge`, `rope_railing_item`; block `<wood>_rope_railing`): a 2 px log stanchion at the
   edge's x-0 end (x 0..2, z 0..2, y 0..16.25: inside the post where a run ends there, so no condition is needed) and two
   rope lines on the line z 0.25..1.75, the top y 14.5..16 (its top where the cap's is, so RL5's latch stands on it) and
-  the middle y 7..8.5. Rope texture: `#rope` = `minecraft:block/stripped_birch_log` turned 90 degrees, the models'
-  fixed rope (yard bands, halyards; never `#log`). The mod's twisted `pirates_n_ships:block/rope` was tried first: at
-  1.5 px its stripes break into a checker. Posts: `railing_post`.
+  the middle y 7..8.5. Rope texture: `#rope` = `pirates_n_ships:block/rope_line`, made for these lines by
+  `tools/gen_rope_line_texture.py` (committed with the PNG): every row the same 6-texel strand (flank, crown, flank,
+  shade, groove, shade in the rigging rope's hues) shifted two texels per row, so the 1.5-texel strip a face samples (16
+  along the line, 1.5 across; the top and bottom faces the same, the ends hidden in posts and neighbours) shows rounded
+  strands laid at a slant. Tried first and dropped, by renders in spruce and dark oak: the rigging's
+  `block/rope` (blotchy at 1.5 px), stripped birch turned along the line (reads as a pale wooden rail), a 4-texel ramp,
+  a 4-texel rounded strand, the 6-texel strand with a one-texel slant (the twist barely shows). Posts: `railing_post`.
 - **Not done:** the belaying-pin rail on the bulwark (three pins per block inboard of the cap). Left out: it would
   stand where RAIL5's leaners put their arms and RL5's nets leave the latch, and a pin rail on every bulwark block reads
   busy; it fits better as its own block (a pin rail placed on a bulwark) if wanted.
@@ -1187,8 +1191,8 @@ Railing rework (RAIL6):
   `renders/railing_before_after.png` (the same scene with the pre-RAIL6 model JSON from git and with the new, one
   camera), `renders/railing_item.png`, `renders/railing_gate.png` (each hinge closed and open between two railings,
   from inboard and outboard, and the item), `renders/bulwark.png` (a run, a shut and an open gun port with a cannon, a
-  corner, a railing beside it, the items), `renders/rope_railing.png` (a run of three with a latch and a net strand, a
-  lone block, a corner, the item), and RL5's `renders/railing_latch.png`, `railing_latch_bulwark.png` redrawn on the new
+  corner, a railing beside it, the items), `renders/rope_railing.png` (oak: a run of three with a latch and a net strand,
+  a lone block, a corner, the item; spruce and dark oak runs at deck distance; close-ups of the lines and the latch), and RL5's `renders/railing_latch.png`, `railing_latch_bulwark.png` redrawn on the new
   cap (the washer stands on the cap's band without clipping or floating; the ring and the strand unchanged).
 
 Ratline nets (RL2):

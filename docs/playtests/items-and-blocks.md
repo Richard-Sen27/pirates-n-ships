@@ -704,7 +704,8 @@ railing: three string over two planks with a gap between them, gives 4).
   his forearms on the cap (send a screenshot: the cap now reaches 1 px further inboard, check his belly does not sink
   into it visibly).
 - **Grapple:** throw the grappling hook at another ship's rope railing: it holds like on a railing.
-- **Other woods:** a spruce rope railing and a dark oak railing show their wood's log and planks; the rope stays pale.
+- **Other woods:** a spruce rope railing and a dark oak railing show their wood's log and planks; the rope keeps its colour. Say whether the lines read as twisted rope at a few
+  blocks' distance (the texture is `block/rope_line`, drawn for the 1.5 px lines).
 
 ## Ship's bell swing (BELL1)
 

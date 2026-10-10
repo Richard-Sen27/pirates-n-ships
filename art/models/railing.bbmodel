@@ -12812,11 +12812,10 @@
 					"uv": [
 						0,
 						0,
-						1.5,
-						16
+						16,
+						1.5
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"east": {
 					"uv": [
@@ -12831,11 +12830,10 @@
 					"uv": [
 						0,
 						0,
-						1.5,
-						16
+						16,
+						1.5
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"west": {
 					"uv": [
@@ -12848,23 +12846,21 @@
 				},
 				"up": {
 					"uv": [
-						0.25,
 						0,
-						1.75,
-						16
+						0.25,
+						16,
+						1.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"down": {
 					"uv": [
-						0.25,
 						0,
-						1.75,
-						16
+						0.25,
+						16,
+						1.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				}
 			},
 			"type": "cube",
@@ -12902,13 +12898,12 @@
 			"faces": {
 				"north": {
 					"uv": [
-						7.5,
 						0,
-						9,
-						16
+						7.5,
+						16,
+						9
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"east": {
 					"uv": [
@@ -12921,13 +12916,12 @@
 				},
 				"south": {
 					"uv": [
-						7.5,
 						0,
-						9,
-						16
+						7.5,
+						16,
+						9
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"west": {
 					"uv": [
@@ -12940,23 +12934,21 @@
 				},
 				"up": {
 					"uv": [
-						0.25,
 						0,
-						1.75,
-						16
+						0.25,
+						16,
+						1.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"down": {
 					"uv": [
-						0.25,
 						0,
-						1.75,
-						16
+						0.25,
+						16,
+						1.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				}
 			},
 			"type": "cube",
@@ -12996,11 +12988,10 @@
 					"uv": [
 						0,
 						0,
-						1.5,
-						16
+						16,
+						1.5
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"east": {
 					"uv": [
@@ -13015,11 +13006,10 @@
 					"uv": [
 						0,
 						0,
-						1.5,
-						16
+						16,
+						1.5
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"west": {
 					"uv": [
@@ -13032,23 +13022,21 @@
 				},
 				"up": {
 					"uv": [
-						7.25,
 						0,
-						8.75,
-						16
+						7.25,
+						16,
+						8.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"down": {
 					"uv": [
-						7.25,
 						0,
-						8.75,
-						16
+						7.25,
+						16,
+						8.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				}
 			},
 			"type": "cube",
@@ -13086,13 +13074,12 @@
 			"faces": {
 				"north": {
 					"uv": [
-						7.5,
 						0,
-						9,
-						16
+						7.5,
+						16,
+						9
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"east": {
 					"uv": [
@@ -13105,13 +13092,12 @@
 				},
 				"south": {
 					"uv": [
-						7.5,
 						0,
-						9,
-						16
+						7.5,
+						16,
+						9
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"west": {
 					"uv": [
@@ -13124,23 +13110,21 @@
 				},
 				"up": {
 					"uv": [
-						7.25,
 						0,
-						8.75,
-						16
+						7.25,
+						16,
+						8.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				},
 				"down": {
 					"uv": [
-						7.25,
 						0,
-						8.75,
-						16
+						7.25,
+						16,
+						8.75
 					],
-					"texture": 5,
-					"rotation": 90
+					"texture": 5
 				}
 			},
 			"type": "cube",
@@ -14736,11 +14720,11 @@
 			"uuid": "bb5c5e5a-5793-579f-8b22-fd2085fe8f22"
 		},
 		{
-			"name": "stripped_birch_log.png",
+			"name": "rope_line.png",
 			"path": "",
-			"relative_path": "../vanilla/stripped_birch_log.png",
+			"relative_path": "../../common/src/main/resources/assets/pirates_n_ships/textures/block/rope_line.png",
 			"folder": "block",
-			"namespace": "minecraft",
+			"namespace": "pirates_n_ships",
 			"id": "rope",
 			"group": "",
 			"scope": 0,

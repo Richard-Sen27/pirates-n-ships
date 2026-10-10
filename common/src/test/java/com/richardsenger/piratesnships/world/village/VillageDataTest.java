@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.world.village;
 
+import com.richardsenger.piratesnships.world.structure.ConfiguredSpreadPlacement;
+import com.richardsenger.piratesnships.world.structure.StandAloneOps;
 import com.google.gson.JsonElement;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
@@ -20,9 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -114,12 +114,13 @@ class VillageDataTest {
 
     @Test
     void structureSetParses() throws IOException {
-        StructureSet set = StructureSet.DIRECT_CODEC.parse(ops, generated("worldgen/structure_set/seafarer_villages")).getOrThrow();
+        StandAloneOps.ConfiguredSet set = StandAloneOps.configuredSet(ops, "seafarer_villages");
         assertEquals(1, set.structures().size());
         assertEquals(Optional.of(VillageKeys.SEAFARER_VILLAGE), set.structures().get(0).structure().unwrapKey());
-        RandomSpreadStructurePlacement placement = (RandomSpreadStructurePlacement) set.placement();
-        assertEquals(36, placement.spacing());
-        assertEquals(12, placement.separation());
+        ConfiguredSpreadPlacement placement = set.placement();
+        assertEquals("seafarer_village", placement.config());
+        assertEquals(30, placement.spacing(), "WG5: a little denser than 36");
+        assertEquals(10, placement.separation());
         assertTrue(placement.separation() < placement.spacing());
     }
 

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.world.outpost;
 
+import com.richardsenger.piratesnships.world.structure.ConfiguredSpreadPlacement;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.trade.market.PortKind;
@@ -16,9 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -77,12 +76,15 @@ class OutpostDataTest {
 
     @Test
     void structureSetSpreadsOutpostsWiderThanVillages() throws IOException {
-        StructureSet set = StructureSet.DIRECT_CODEC.parse(ops, StandAloneOps.generated("worldgen/structure_set/navy_outposts")).getOrThrow();
+        StandAloneOps.ConfiguredSet set = StandAloneOps.configuredSet(ops, "navy_outposts");
         assertEquals(1, set.structures().size());
         assertEquals(Optional.of(OutpostKeys.NAVY_OUTPOST), set.structures().get(0).structure().unwrapKey());
-        RandomSpreadStructurePlacement placement = (RandomSpreadStructurePlacement) set.placement();
-        assertEquals(48, placement.spacing());
-        assertEquals(20, placement.separation());
+        ConfiguredSpreadPlacement placement = set.placement();
+        assertEquals("navy_outpost", placement.config());
+        assertEquals(40, placement.spacing(), "WG5: a little denser than 48");
+        assertEquals(16, placement.separation());
+        assertTrue(placement.spacing() > StandAloneOps.configuredSet(ops, "seafarer_villages").placement().spacing(),
+                "outposts are rarer than villages");
         assertEquals(WorldConfig.NAVY_OUTPOST.spacing().defaultValue(), placement.spacing());
         assertEquals(WorldConfig.NAVY_OUTPOST_SEPARATION.defaultValue(), placement.separation());
         assertEquals(3, Set.of(OutpostData.SALT, VillageData.SALT, IslandData.SALT).size(), "own salt");

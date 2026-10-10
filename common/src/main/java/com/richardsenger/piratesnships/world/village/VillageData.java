@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.trade.market.PortKind;
-import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.world.structure.PortStructureData;
 import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
 import net.minecraft.data.PackOutput;
@@ -109,8 +108,7 @@ public final class VillageData {
 
     public static void gather(DataContributions data) {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", VillageKeys.SEAFARER_VILLAGE.location(), VillageData::structure);
-        PortStructureData.writeStructureSet(data, VillageKeys.SEAFARER_VILLAGES, VillageKeys.SEAFARER_VILLAGE, SALT,
-                WorldConfig.SEAFARER_VILLAGE.spacing().defaultValue(), WorldConfig.SEAFARER_VILLAGE_SEPARATION.defaultValue());
+        PortStructureData.writeStructureSet(data, VillageKeys.SEAFARER_VILLAGES, VillageKeys.SEAFARER_VILLAGE, "seafarer_village", SALT);
         String terminators = VillageKeys.TERMINATORS.location().toString();
         PortStructureData.pool(data, VillageKeys.START, GROUP, "minecraft:empty", "rigid", weights("dock_head", 1));
         PortStructureData.pool(data, VillageKeys.STREETS, GROUP, terminators, "terrain_matching", VillageKeys.STREET_PROCESSORS, STREETS);

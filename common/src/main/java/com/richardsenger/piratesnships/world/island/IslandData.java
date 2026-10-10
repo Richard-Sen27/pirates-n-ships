@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.trade.market.PortKind;
-import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.world.structure.PortStructureData;
 import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
 import net.minecraft.data.PackOutput;
@@ -104,8 +103,7 @@ public final class IslandData {
 
     public static void gather(DataContributions data) {
         PortStructureData.writeStructure(data, IslandKeys.PIRATE_ISLAND, spec());
-        PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, SALT,
-                WorldConfig.PIRATE_ISLAND.spacing().defaultValue(), WorldConfig.PIRATE_ISLAND_SEPARATION.defaultValue());
+        PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, "pirate_island", SALT);
         PortStructureData.pool(data, IslandKeys.START, GROUP, "minecraft:empty", "rigid", weights("camp_start", 1));
         PortStructureData.pool(data, IslandKeys.PATHS, GROUP, IslandKeys.TERMINATORS.location().toString(), "terrain_matching",
                 IslandKeys.TRAIL_PROCESSORS, PATHS);

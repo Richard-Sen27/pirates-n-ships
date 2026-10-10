@@ -3,7 +3,6 @@ package com.richardsenger.piratesnships.world.outpost;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.trade.market.PortKind;
-import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.world.structure.PortStructureData;
 import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
 
@@ -115,8 +114,7 @@ public final class OutpostData {
 
     public static void gather(DataContributions data) {
         PortStructureData.writeStructure(data, OutpostKeys.NAVY_OUTPOST, spec());
-        PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, SALT,
-                WorldConfig.NAVY_OUTPOST.spacing().defaultValue(), WorldConfig.NAVY_OUTPOST_SEPARATION.defaultValue());
+        PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, "navy_outpost", SALT);
         String terminators = OutpostKeys.TERMINATORS.location().toString();
         String laneEnds = OutpostKeys.LANE_ENDS.location().toString();
         PortStructureData.pool(data, OutpostKeys.START, GROUP, "minecraft:empty", "rigid", weights("fort_gate", 1));

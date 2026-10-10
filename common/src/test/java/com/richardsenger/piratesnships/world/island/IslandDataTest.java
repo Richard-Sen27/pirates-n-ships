@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.world.island;
 
+import com.richardsenger.piratesnships.world.structure.ConfiguredSpreadPlacement;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -15,10 +16,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.StructureSpawnOverride;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -93,16 +92,16 @@ class IslandDataTest {
 
     @Test
     void structureSetParsesWithAWiderSpreadThanVillages() throws IOException {
-        StructureSet set = StructureSet.DIRECT_CODEC.parse(ops, StandAloneOps.generated("worldgen/structure_set/pirate_islands")).getOrThrow();
+        StandAloneOps.ConfiguredSet set = StandAloneOps.configuredSet(ops, "pirate_islands");
         assertEquals(1, set.structures().size());
         assertEquals(Optional.of(IslandKeys.PIRATE_ISLAND), set.structures().get(0).structure().unwrapKey());
-        RandomSpreadStructurePlacement placement = (RandomSpreadStructurePlacement) set.placement();
-        assertEquals(64, placement.spacing());
-        assertEquals(24, placement.separation());
+        ConfiguredSpreadPlacement placement = set.placement();
+        assertEquals("pirate_island", placement.config());
+        assertEquals(52, placement.spacing(), "WG5: a little denser than 64");
+        assertEquals(20, placement.separation());
         assertEquals(WorldConfig.PIRATE_ISLAND.spacing().defaultValue(), placement.spacing());
         assertEquals(WorldConfig.PIRATE_ISLAND_SEPARATION.defaultValue(), placement.separation());
-        RandomSpreadStructurePlacement village = (RandomSpreadStructurePlacement) StructureSet.DIRECT_CODEC
-                .parse(ops, StandAloneOps.generated("worldgen/structure_set/seafarer_villages")).getOrThrow().placement();
+        ConfiguredSpreadPlacement village = StandAloneOps.configuredSet(ops, "seafarer_villages").placement();
         assertTrue(placement.spacing() > village.spacing(), "islands are rarer than villages");
         assertNotEquals(IslandData.SALT, com.richardsenger.piratesnships.world.village.VillageData.SALT, "own salt");
     }

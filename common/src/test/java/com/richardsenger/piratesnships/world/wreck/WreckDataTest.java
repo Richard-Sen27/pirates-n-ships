@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.world.wreck;
 
+import com.richardsenger.piratesnships.world.structure.ConfiguredSpreadPlacement;
+import com.richardsenger.piratesnships.world.structure.StandAloneOps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,9 +24,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -117,10 +117,11 @@ class WreckDataTest {
 
     @Test
     void structureSetParses() throws IOException {
-        StructureSet set = StructureSet.DIRECT_CODEC.parse(ops, generated("worldgen/structure_set/wrecks")).getOrThrow();
+        StandAloneOps.ConfiguredSet set = StandAloneOps.configuredSet(ops, "wrecks");
         assertEquals(1, set.structures().size());
         assertEquals(Optional.of(WreckKeys.WRECK), set.structures().get(0).structure().unwrapKey());
-        RandomSpreadStructurePlacement placement = (RandomSpreadStructurePlacement) set.placement();
+        ConfiguredSpreadPlacement placement = set.placement();
+        assertEquals("wreck", placement.config());
         assertEquals(24, placement.spacing());
         assertEquals(8, placement.separation());
         assertEquals(WreckData.SALT, generated("worldgen/structure_set/wrecks").getAsJsonObject()

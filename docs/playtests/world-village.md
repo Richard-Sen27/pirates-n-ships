@@ -53,7 +53,7 @@ chunks), cheats on. Please send `latest.log` and screenshots, and note the world
 10. **Toggle.** In the server config set `world.structures.seafarer_village.enabled = false`, restart, fly to an
    unexplored coast.
    - **Expected:** no new villages; existing ones stay. Set `frequency = 0.5`: about half as many new villages.
-   Changing `spacing` or `separation` in the config does nothing (they are datapack values, see the comments).
+   Since WG5 `spacing` and `separation` are read when new chunks generate: see "WG5" in `world-simulation.md`.
 11. **Restart.** Save and quit, reopen the world, `/pirates world ports`.
    - **Expected:** the same ports with their berths; the desk still opens the market.
 

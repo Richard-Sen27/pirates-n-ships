@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.world.WorldConfig;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +29,9 @@ public final class PortStructureData {
 
     /** The structure type's id ({@link PortStructures#PORT_STRUCTURE}). */
     public static final ResourceLocation TYPE = Constants.id("port_village");
+
+    /** The structure sets' placement type's id ({@link PortStructures#CONFIGURED_SPREAD}, WG5). */
+    public static final ResourceLocation PLACEMENT_TYPE = Constants.id("configured_spread");
 
     private PortStructureData() {
     }
@@ -69,17 +73,25 @@ public final class PortStructureData {
         return json;
     }
 
-    public static JsonObject structureSet(ResourceKey<Structure> structure, int salt, int spacing, int separation) {
+    /**
+     * A structure set of one structure with a {@code pirates_n_ships:configured_spread} placement (WG5): the server
+     * config section {@code world.structures.<config>} sets spacing and separation at runtime, {@code spacing} and
+     * {@code separation} here are the fallback while the config is not loaded (datagen passes the config defaults).
+     */
+    public static JsonObject structureSet(ResourceKey<Structure> structure, String config, int salt, int spacing, int separation) {
         JsonObject entry = new JsonObject();
         entry.addProperty("structure", structure.location().toString());
         entry.addProperty("weight", 1);
         JsonArray structures = new JsonArray();
         structures.add(entry);
         JsonObject placement = new JsonObject();
-        placement.addProperty("type", "minecraft:random_spread");
+        placement.addProperty("type", PLACEMENT_TYPE.toString());
+        placement.addProperty("config", config);
         placement.addProperty("salt", salt);
         placement.addProperty("spacing", spacing);
         placement.addProperty("separation", separation);
+        placement.addProperty("spread_type", "linear");
+        placement.addProperty("frequency", 1.0);
         JsonObject json = new JsonObject();
         json.add("structures", structures);
         json.add("placement", placement);
@@ -90,10 +102,12 @@ public final class PortStructureData {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", key.location(), () -> structure(spec));
     }
 
+    /** Writes {@link #structureSet} with the spacing and separation defaults of {@code WorldConfig.spread(config)}. */
     public static void writeStructureSet(DataContributions data, ResourceKey<StructureSet> key, ResourceKey<Structure> structure,
-                                         int salt, int spacing, int separation) {
+                                         String config, int salt) {
+        WorldConfig.Spread spread = WorldConfig.spread(config).orElseThrow(() -> new IllegalArgumentException("no spread " + config));
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure_set", key.location(),
-                () -> structureSet(structure, salt, spacing, separation));
+                () -> structureSet(structure, config, salt, spread.spacing().defaultValue(), spread.separation().defaultValue()));
     }
 
     /**

@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-10T19:35:52.296934	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-10T22:29:39.738161	Raw JSON (data): pirates_n_ships
 3ce816fd7340451afb94430040a861701c12caab data/pirates_n_ships/advancement/recipes/combat/aether_skyroot_cannon.json
 7f55ec7c85545983a22fefa4404ea406dcc1dfbe data/pirates_n_ships/advancement/recipes/combat/ars_nouveau_archwood_cannon.json
 b3ff43654026f2d72822850c74e5b6f7fed13162 data/pirates_n_ships/advancement/recipes/combat/biomesoplenty_dead_cannon.json
@@ -8211,10 +8211,10 @@ f97f6a9bd448a3eea8cc352004cdf3efc0cb08aa data/pirates_n_ships/worldgen/processor
 76a676de89172f6d6f5210b2a76cbdc03482b268 data/pirates_n_ships/worldgen/structure/pirate_island.json
 89bacf275a0ffe8001d98efbbca0e76e3c9b6645 data/pirates_n_ships/worldgen/structure/seafarer_village.json
 251023302fd8f076f6c85e28f31b2d1f97286ca3 data/pirates_n_ships/worldgen/structure/wreck.json
-500585a336c63db79aa027e28670c2e2ec91647c data/pirates_n_ships/worldgen/structure_set/navy_outposts.json
-4a8342bbc207a1ef17962d4240160f6211b820e5 data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
-94b31922c31621842e348214cfec91739d53ed1d data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
-04805a4044555b776c958b1cdfe380047a6d6300 data/pirates_n_ships/worldgen/structure_set/wrecks.json
+23c99a48ebaee72373a62109899076fd6233baa8 data/pirates_n_ships/worldgen/structure_set/navy_outposts.json
+12450c59b521b43ffbe7a06543bae764764c018e data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
+50fff6fca6a453a658b906ea9dcec339c2aecbeb data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
+172405f39257f92b1e7066294050e2fe16e0c43d data/pirates_n_ships/worldgen/structure_set/wrecks.json
 23566e34b56b08d198077657f3fdeed075fc63a9 data/pirates_n_ships/worldgen/template_pool/navy_outpost/buildings.json
 7ab35099513e55dc84cdcede18bb83310f613d8f data/pirates_n_ships/worldgen/template_pool/navy_outpost/decorations.json
 88c54321318bb65787941366002c2603b03e4779 data/pirates_n_ships/worldgen/template_pool/navy_outpost/lane_ends.json

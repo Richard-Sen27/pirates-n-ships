@@ -48,6 +48,14 @@ import org.joml.Vector3d;
  * keeps its own horizontal velocity, and is lifted on past the top fitting's block by up to {@link #EXIT_LIFT}
  * ({@link #liftingOff}), so forward walks it off onto whatever stands beside or over the top. Holding or climbing down
  * at the top it is pulled back onto the line; a player stepping off a platform into the top fitting is caught there.
+ *
+ * <p><b>Off the foot (RL6).</b> The latch's cell over the rail and the chainplate's cell on the deck are climbable, and
+ * so are the net's cells beside them, so a player standing there used to be pulled onto the line and carried up by any
+ * forward input: it could neither walk along the rail nor step down onto the deck. In the net's lowest layer the assist
+ * now lets go ({@link #releasedAtFoot}, {@link RatlineNetRules#footRelease}) of a player on the ground, sneaking, or
+ * walking along the rail or away from the net, and of one walking towards the net while looking down at the deck;
+ * forward towards the net (looking ahead) and a jump still climb. Released, the player walks as on any climbable block
+ * (vanilla's limits only); on a ship Sable carries it as any player standing on the ship's blocks.
  */
 public final class RatlineNetAssist {
 
@@ -64,6 +72,8 @@ public final class RatlineNetAssist {
      * vanilla's step height, so forward then walks it off onto a floor, a deck or a crow's nest beside or over the top.
      */
     public static final double EXIT_LIFT = 0.6;
+    /** A climber rising faster than this [blocks/tick] jumped or is lifted by vanilla's jump climb. */
+    private static final double RISING = 0.05;
 
     /** A ship's plot frame: world positions into the plot, plot directions out to the world and back, its motion. */
     public interface Frame {
@@ -136,6 +146,9 @@ public final class RatlineNetAssist {
             return;
         }
         Vec3 v = frame == null ? player.getDeltaMovement() : frame.dirToLocal(player.getDeltaMovement());
+        if (climbing && releasedAtFoot(player, net, frame, feet, v)) {
+            return;
+        }
         double[] out = RatlineNetRules.assist(net.ringA(), net.ringB(), new Point(feet.x, feet.y, feet.z),
                 climb(v.y, player.zza, player.isShiftKeyDown()), v.x, v.z);
         Vec3 local = new Vec3(out[0], out[1], out[2]);
@@ -153,6 +166,34 @@ public final class RatlineNetAssist {
     /** The net's top fitting: the one of the higher ring. */
     static BlockPos top(Net net) {
         return net.ringA().y() <= net.ringB().y() ? net.b() : net.a();
+    }
+
+    /**
+     * The net's bottom fitting: the one of the lower ring (a fill cell's line names its strand's foot as A, below the
+     * cell, so this is the strand's latch or chainplate there too).
+     */
+    static BlockPos bottom(Net net) {
+        return net.ringA().y() <= net.ringB().y() ? net.a() : net.b();
+    }
+
+    /**
+     * RL6, the foot exit ({@code rigging.net_foot_exit}): whether the assist lets go of {@code player}, its feet at
+     * {@code feet} and its velocity {@code v} in the net's frame, because it stands or hangs in the net's lowest layer and
+     * walks away from the net ({@link RatlineNetRules#footRelease}); ordinary walking (and, on a ship, Sable's carry of
+     * a player standing on its blocks) applies then. Its input is turned into the net's frame through {@code frame}.
+     */
+    private static boolean releasedAtFoot(Player player, Net net, @Nullable Frame frame, Vec3 feet, Vec3 v) {
+        if (!RiggingConfig.NET_FOOT_EXIT.get() || !RatlineNetRules.atFoot(bottom(net).getY(), feet.y)) {
+            return false;
+        }
+        double[] w = RatlineNetRules.wish(player.xxa, player.zza, player.getYRot());
+        Vec3 wish = new Vec3(w[0], 0, w[1]);
+        if (frame != null) {
+            wish = frame.dirToLocal(wish);
+        }
+        double[] heading = RatlineNetRules.heading(net.ringA(), net.ringB());
+        return RatlineNetRules.footRelease(player.onGround(), player.isShiftKeyDown(), v.y > RISING, player.zza,
+                player.getXRot(), wish.x, wish.z, heading[0], heading[1]);
     }
 
     /**
@@ -182,7 +223,7 @@ public final class RatlineNetAssist {
      * vanilla's slow slide.
      */
     public static double climb(double vy, float forward, boolean sneaking) {
-        if (forward > 0 || vy > 0.05) {
+        if (forward > 0 || vy > RISING) {
             return CLIMB_SPEED;
         }
         if (forward < 0) {

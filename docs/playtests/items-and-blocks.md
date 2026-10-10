@@ -671,6 +671,43 @@ four or five blocks inboard, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s p
 - **Ponder:** the Almanac's "Show me: stringing ratline nets" shows the bolt appearing on the rail when the net is
   strung, instead of chainplates on the rail.
 
+### The net's foot (RL6)
+
+Covered by JUnit (`RatlineFootRulesTest`: the foot layer, the net's heading, the input's direction, the release rule
+for sneaking, jumping, no input, forward towards the net looking ahead or down, along the rail, back) and 19
+GameTests (`ship/rigging/RatlineFootGameTests`: on the rail's top at a latch walking and strafing two blocks along the
+rail, stepping inboard onto the floor looking down, climbing down onto the rail, climbing from the rail's top with
+forward and with jump, at a chainplate walking two blocks along the deck and inboard under the net, sneaking at the
+foot, `rigging.net_foot_exit = false`; on a still ship and at 4 m/s along the rail and inboard from a latch, along the
+deck and inboard from a chainplate, and climbing from the rail's top under way). What the tests cannot show: how it
+feels with a real client's input and camera, and whether 30° down is the right look to step off.
+
+The rule at a net's foot (the latch's cell over the rail, the chainplate's cell on the deck, and the net's cells
+beside them at that height): forward towards the net (within 60° of its heading) while looking ahead or up climbs, as
+does a jump; looking down at the deck (30° or more) and walking steps off instead; walking or strafing along the rail,
+walking away from the net, backing off on the ground, standing still and sneaking all let go, so you walk as on the
+deck. Higher up the net nothing changed.
+
+Setup: a hull with a run of oak railings along one deck edge and a mast four or five blocks inboard, a latched net
+from the middle of the run to a hoop on the mast, and a chainplate net on the deck nearby.
+- **Down to the rail:** climb the latched net, then hold back (facing the net) to climb down. Expected: you come down
+  onto the rail's top at the latch and stop there; you do not slide off the outboard side while back is held in the
+  air. Let go of back once you stand.
+- **Along the rail:** standing on the rail's top at the latch, strafe left and right, or turn along the rail and walk:
+  you walk along the rail top away from the net (no pull back to the bolt, no climbing up). Walk back onto the latch
+  and through it.
+- **Down onto the deck:** on the rail's top at the latch, face inboard, look down at the deck and walk forward: you step
+  off the rail onto the deck under the net. Facing inboard but looking straight ahead and walking forward climbs the
+  net instead (that is the climb). Report if the 30° look feels wrong (too steep, too easy to trigger while climbing).
+- **Chainplate:** standing at a chainplate on the deck, walk around it in every direction; facing the mast, looking
+  ahead and walking climbs, looking down walks on under the net.
+- **Climbing from the foot:** forward towards the net or a jump at the latch and at the chainplate still starts the
+  climb. Sneaking at the foot never climbs.
+- **Under way:** the same at speed (all sail): walking along the rail and stepping down onto the deck at the latch keep
+  you on the ship.
+- **Config:** `rigging.net_foot_exit = false`: the foot holds you on the net as before (strafing does not move you
+  along the rail).
+
 ### Railing rework and rope railing (RAIL6)
 
 The railing family looks new; nothing about placing or using it changed. Compare with the renders

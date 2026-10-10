@@ -25,6 +25,10 @@ public final class RiggingConfig {
     public static final ConfigValue<Boolean> NET_ASSIST = S.bool("net_assist", true,
             "A player climbing a ratline net is carried along the net's line, so steep and diagonal nets climb like a ladder. Off = vanilla ladder climbing only (fine for vertical nets, jerky or stuck on diagonal ones)");
 
+    /** RL6: the assist lets go of a climber at a net's foot who walks away from it. */
+    public static final ConfigValue<Boolean> NET_FOOT_EXIT = S.bool("net_foot_exit", true,
+            "At the foot of a ratline net (on the rail at a latch, on the deck at a chainplate) the climbing assist lets go of a player on the ground, sneaking or walking along the rail or away from the net, and of one looking down at the deck while walking towards it; forward towards the net or a jump still climbs. Off = the foot holds a player like the rest of the net");
+
     /** RL4: several strands to one mast hoop form a triangular fan. */
     public static final ConfigValue<Integer> NET_MAX_STRANDS = S.intRange("net_max_strands", 5, 1, 8,
             "Most ratline nets one mast hoop holds, each from its own chainplate or railing latch (which hold one each, so a net is never wider at the top); together they form one fan or sheet");

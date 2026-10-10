@@ -258,6 +258,36 @@ public final class GalleyGameTests {
         helper.succeed();
     }
 
+    /**
+     * WOOD2: a cherry water barrel (not the legacy spruce one) takes a bucket, shows the fill level, gives a bottle of
+     * water, and breaks into its own item with the rations, which is a water provision ({@code provisions/water_barrel}
+     * is family-wide). The water's tint is client-only (CrewContentClient registers every member): see the playtest.
+     */
+    @ModGameTest
+    public static void aCherryWaterBarrelFillsAndGivesWater(GameTestHelper helper) {
+        ProvisionSettings s = ProvisionsConfig.settings();
+        WaterBarrelBlock cherry = CrewContent.WATER_BARRELS.get(com.richardsenger.piratesnships.ship.decor.wood.ShipWood.CHERRY);
+        helper.setBlock(P, cherry);
+        WaterBarrelBlockEntity barrel = (WaterBarrelBlockEntity) helper.getBlockEntity(P);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        use(helper, player, new ItemStack(Items.WATER_BUCKET));
+        helper.assertValueEqual(barrel.rations(), s.waterBucketRations(), "rations after a water bucket");
+        helper.assertValueEqual(fill(helper), WaterBarrelRules.fillLevel(barrel.rations(), WaterBarrelRules.capacity(s)), "fill level");
+        use(helper, player, new ItemStack(Items.GLASS_BOTTLE));
+        PotionContents potion = player.getMainHandItem().get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
+        helper.assertTrue(player.getMainHandItem().is(Items.POTION) && potion != null && potion.is(Potions.WATER), "should hold a water bottle");
+        helper.assertValueEqual(barrel.rations(), s.waterBucketRations() - 1, "rations after filling a bottle");
+        destroyWithDrops(helper, P);
+        List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(P)).inflate(2));
+        helper.assertTrue(drops.size() == 1 && drops.getFirst().getItem().is(cherry.asItem()), "should drop the cherry barrel, dropped " + drops);
+        ItemStack item = drops.getFirst().getItem();
+        helper.assertValueEqual(item.get(CrewContent.WATER_RATIONS.get()), s.waterBucketRations() - 1, "rations on the dropped item");
+        helper.assertTrue(item.is(com.richardsenger.piratesnships.crew.provisions.ProvisionTags.WATER_BARREL), "the cherry barrel is a water barrel provision");
+        helper.assertTrue(com.richardsenger.piratesnships.crew.provisions.ProvisionClassifier.classify(item, s)
+                .map(t -> t.valuePerUnit() == s.waterBucketRations() - 1).orElse(false), "the dropped cherry barrel counts its water");
+        helper.succeed();
+    }
+
     @ModGameTest
     public static void noRainNoRefill(GameTestHelper helper) {
         helper.setBlock(P, CrewContent.WATER_BARREL.get());

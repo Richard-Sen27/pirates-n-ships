@@ -1,0 +1,10 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/water_still",
+    "log": "regions_unexplored:block/stripped_magnolia_log",
+    "log_top": "regions_unexplored:block/stripped_magnolia_log_top",
+    "particle": "regions_unexplored:block/magnolia_planks",
+    "planks": "regions_unexplored:block/magnolia_planks"
+  }
+}

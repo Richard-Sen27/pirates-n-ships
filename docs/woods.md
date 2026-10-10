@@ -37,7 +37,8 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 
 - **Registration:** every vanilla wood always; a mod's wood only when its mod is loaded. WOOD1's 6 families x 11
   woods = 66 blocks with items (it had the 6 oak members); WOOD4's 5 machine families add 5 x 11 = 55 (they had the 5
-  legacy members: 50 new blocks); each loaded wood mod adds one member per family and wood.
+  legacy members: 50 new blocks); WOOD2's 6 storage families add 6 x 11 = 66 (they had the 6 legacy members: 60 new
+  blocks); each loaded wood mod adds one member per family and wood.
 - **Creative tab:** registration order, so family-major: oak railing, spruce railing, ... warped railing, the loaded
   mods' railings, then the ports, and so on (like vanilla's fences).
 - **Names:** "Spruce Railing", "Redwood Railing". No mod name in the name or a tooltip: two mods with the same wood
@@ -52,6 +53,12 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 |---|---|---|---|---|
 | `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak leads) | `#planks`, `#log` | `ship/decor/railing/RailingContent` | `RailingData` |
 | `oar_bench` | none | `#planks`, `#log` | `sailing/oars/OarsContent` | `OarsData` |
+| `cargo_crate` | `cargo_crate` (oak) | `#planks`, `#log`, `#log_top` | `ShipDecor.CARGO_CRATES` | `trade/cargo/CargoContainerData` |
+| `cargo_barrel` | `cargo_barrel` (spruce) | `#planks` | `ShipDecor.CARGO_BARRELS` | `trade/cargo/CargoContainerData` |
+| `pantry` | `pantry` (spruce) | `#planks`, `#log` | `crew/content/CrewContent.PANTRIES` | `CrewContentModule` |
+| `water_barrel` | `water_barrel` (spruce) | `#planks` (five parents: `water_barrel`, `_fill0..3`) | `CrewContent.WATER_BARRELS` | `CrewContentModule` |
+| `harbor_desk` | `harbor_desk` (dark oak) | `#planks` | `trade/desk/HarborDesks.HARBOR_DESKS` | `HarborDeskData` |
+| `sea_chest` | `sea_chest` (dark oak) | `#planks`, `#log` | `seachest/SeaChestContent.CHESTS` | `SeaChestModule` |
 | `nameplate` (the name board) | `nameplate` (oak) | `#planks`, `#log` | `ShipDecor.NAMEPLATES` | `ShipDecorModule` |
 | `flagpole` | `flagpole` (spruce) | `#log` | `ShipDecor.FLAGPOLES` | `flag/FlagData` |
 | `flag_pedestal` | `flag_pedestal` (spruce) | `#log`, `#log_top` | `ShipDecor.FLAG_PEDESTALS` | `ShipDecorModule` |
@@ -68,6 +75,26 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 
 The machines' (WOOD4) renderer parts, recipes and properties are detailed in "The machines (WOOD4)" below.
 
+WOOD2 (the storage blocks), what changed besides the members (block entities: `cargo_container` for every crate and
+barrel, `pantry`, `water_barrel`, `harbor_desk`, `sea_chest` each valid for every member):
+
+- **Identity checks:** the cargo container type lists every crate and barrel; `PortService.bindDesks` binds any
+  `HarborDeskBlock` (was `is(HARBOR_DESK)`); JEI's market and provisions catalysts are every desk, pantry and water
+  barrel (legacy first; the category icons stay the legacy members); `CrewContentClient` tints every water barrel,
+  block and item; the floating `SeaChestEntity` carries its wood (synced data, saved as `Wood`; a chest saved before
+  WOOD2 or of a wood whose mod is gone is dark oak) and draws and drops that wood's chest. The old fields
+  (`ShipDecor.CARGO_CRATE`, `CrewContent.PANTRY`, `HarborDesks.HARBOR_DESK`, `SeaChestContent.BLOCK`/`ITEM`, ...) are
+  the families' legacy members.
+- **Tags:** `c:chests` (block and item) and `provisions/water_barrel` are family-wide; every container family has a block
+  tag (`cargo_crates`, `cargo_barrels`, `pantries`, `water_barrels`) that its Sable physics file selects (the file keeps
+  the legacy name, `physics_block_properties/cargo_crate.json`): Sable's loader reads no load conditions and logs an
+  error per unknown block id, so a mod's wood's member is only an optional tag entry, never a selector.
+- **Recipes:** each from that wood's planks, in a recipe group per family; the sea chest had no planks, its recipe is
+  now `LLL / ICI / PPP` (leather, iron, a chest, and three of the wood's planks as the base). `WoodFamily` gained
+  `register(suffix, legacyWood, factory, item)` (the sea chest's wearable item), `itemTag` and `entries()`.
+- **Not done:** the paddle's recipe still unlocks with the legacy sea chest; Ponder scenes and the Almanac show the
+  legacy members (the Almanac's recipe panel cycles the woods).
+
 WOOD3 (the fittings): each content class keeps its old constant as the legacy member (`ShipDecor.YARD` is
 `YARDS.entry(SPRUCE)`), so tests, schematics and templates that name it still work; everything that asks "is this a
 yard" asks `instanceof YardBlock` (or the family's tag) instead, never `is(YARD)`. The family block entities
@@ -82,7 +109,7 @@ crow's nests of every wood are `ratlines_anchors`; `pirates_n_ships:yards` and `
 block that is not registered (a mod's wood without its mod) logs "Unknown block" on every level load
 (`refs/sable/common/.../PhysicsBlockPropertiesDefinitionLoader#applyToBlocks`), and Sable's own loader applies no load
 conditions, so a family's file keeps the legacy path and selects the family's tag (`"selector": "#pirates_n_ships:yards"`),
-whose compat entries are optional. WOOD2 and WOOD4 (cargo, pantry, water barrel, bilge pump, cannon) should do the same.
+whose compat entries are optional. WOOD2 and WOOD4 do the same (`cargo_crates`, `cargo_barrels`, `pantries`, `water_barrels`, `bilge_pumps`, `cannons`).
 
 ## Datagen and the compat files
 

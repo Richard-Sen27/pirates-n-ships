@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock;
+import com.richardsenger.piratesnships.trade.cargo.CargoContainers;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -56,8 +58,19 @@ public final class ShipDecor {
     /** The spruce flag pedestal, legacy id {@code flag_pedestal}. */
     public static final RegistryEntry<Block, FlagPedestalBlock> FLAG_PEDESTAL = FLAG_PEDESTALS.entry(ShipWood.SPRUCE);
 
-    public static final RegistryEntry<Block, Block> CARGO_CRATE = ModRegistry.blockWithItem("cargo_crate", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.CRATE));
-    public static final RegistryEntry<Block, Block> CARGO_BARREL = ModRegistry.blockWithItem("cargo_barrel", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.BARREL));
+    /**
+     * The cargo crate in every wood (WOOD2, docs/woods.md): {@code cargo_crate} is oak's legacy id (structures, Ponder
+     * schematics and ship templates name it), {@code <wood>_cargo_crate} every other wood's.
+     */
+    public static final WoodFamily<CargoContainerBlock> CARGO_CRATES = WoodFamily.register("cargo_crate", ShipWood.OAK,
+            wood -> new CargoContainerBlock(wood, cargoProps(wood), CargoContainers.Kind.CRATE));
+    /** The cargo barrel in every wood (WOOD2): {@code cargo_barrel} is spruce's legacy id. */
+    public static final WoodFamily<CargoContainerBlock> CARGO_BARRELS = WoodFamily.register("cargo_barrel", ShipWood.SPRUCE,
+            wood -> new CargoContainerBlock(wood, cargoProps(wood), CargoContainers.Kind.BARREL));
+    /** The legacy oak crate (the family's lead). */
+    public static final RegistryEntry<Block, CargoContainerBlock> CARGO_CRATE = CARGO_CRATES.lead();
+    /** The legacy spruce barrel (the family's lead). */
+    public static final RegistryEntry<Block, CargoContainerBlock> CARGO_BARREL = CARGO_BARRELS.lead();
 
     // ---------------------------------------------------------------- ART2: ship decor with hand-made models
 
@@ -104,6 +117,11 @@ public final class ShipDecor {
     private static RegistryEntry<Block, FigureheadBlock> figurehead(String name) {
         return ModRegistry.blockWithItem(name, () -> new FigureheadBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
                 .instrument(NoteBlockInstrument.BASS).strength(2.0f, 3.0f).sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    }
+
+    /** A cargo container of {@code wood}: like a vanilla barrel (strength 2.5), in the wood's colour and sound. */
+    private static BlockBehaviour.Properties cargoProps(ShipWood wood) {
+        return WoodFamily.properties(wood).strength(2.5f).noOcclusion();
     }
 
     /** Like a vanilla barrel. */

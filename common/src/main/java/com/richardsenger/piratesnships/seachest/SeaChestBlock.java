@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.seachest;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -38,16 +40,26 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * (art/models/sea_chest.bbmodel) rotates with it. The outline and collision shape is the model's footprint: 14 px wide
  * (rope handles included), 12 px deep (hasp to hinges) and 10 px high.
  */
-public class SeaChestBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
+public class SeaChestBlock extends BaseEntityBlock implements SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<SeaChestBlock> CODEC = simpleCodec(SeaChestBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<SeaChestBlock> CODEC = simpleCodec(p -> new SeaChestBlock(ShipWood.DARK_OAK, p));
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape SHAPE_NS = Block.box(1, 0, 2, 15, 10, 14);
     private static final VoxelShape SHAPE_EW = Block.box(2, 0, 1, 14, 10, 15);
 
-    public SeaChestBlock(Properties properties) {
+    /** The wood of this member (WOOD2). */
+    private final ShipWood wood;
+
+    public SeaChestBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

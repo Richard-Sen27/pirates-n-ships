@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.seachest;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.survival.SurvivalConfig;
@@ -12,6 +13,8 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -57,6 +60,13 @@ public class SeaChestEntity extends Entity implements Container {
     private static final int WIND_SAMPLE_INTERVAL = 5;
     private static final double MAX_OPEN_DISTANCE_SQR = 8.0 * 8.0;
 
+    /**
+     * The wood of the chest this entity was launched from (WOOD2), by {@link ShipWood#id()}: synced for the renderer,
+     * saved as {@value #WOOD_TAG}; absent (a chest saved before WOOD2) or a wood without a member is the legacy dark oak.
+     */
+    private static final EntityDataAccessor<String> DATA_WOOD = SynchedEntityData.defineId(SeaChestEntity.class, EntityDataSerializers.STRING);
+    static final String WOOD_TAG = "Wood";
+
     private NonNullList<ItemStack> items = SeaChestContents.emptySlots();
 
     private double windAccelX;
@@ -82,13 +92,30 @@ public class SeaChestEntity extends Entity implements Container {
         SeaChestEntity chest = new SeaChestEntity(SeaChestContent.ENTITY.get(), level);
         chest.moveTo(at.x, at.y, at.z, yaw, 0f);
         chest.items = SeaChestContents.fromItem(stack);
+        if (stack.getItem() instanceof net.minecraft.world.item.BlockItem item && item.getBlock() instanceof SeaChestBlock block) {
+            chest.setWood(block.wood());
+        }
         chest.setCustomName(stack.get(DataComponents.CUSTOM_NAME));
         return chest;
     }
 
     /** The chest as an item with copies of the contents and the custom name. Does not empty the entity. */
     public ItemStack toItem() {
-        return SeaChestContents.toItem(SeaChestContent.ITEM.get(), items, getCustomName());
+        return SeaChestContents.toItem(block().asItem(), items, getCustomName());
+    }
+
+    /** The chest block of this entity's wood (the legacy dark oak one for an unknown wood): its look and its item. */
+    public SeaChestBlock block() {
+        return SeaChestContent.block(ShipWood.byId(entityData.get(DATA_WOOD)));
+    }
+
+    /** The wood this chest is made of (the legacy dark oak for an unknown wood). */
+    public ShipWood wood() {
+        return block().wood();
+    }
+
+    void setWood(ShipWood wood) {
+        entityData.set(DATA_WOOD, wood.id());
     }
 
     /** Takes the chest as an item and removes the entity; afterwards it holds nothing. */
@@ -103,17 +130,20 @@ public class SeaChestEntity extends Entity implements Container {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_WOOD, ShipWood.DARK_OAK.id());
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         items = SeaChestContents.emptySlots();
         ContainerHelper.loadAllItems(tag, items, registryAccess());
+        entityData.set(DATA_WOOD, tag.contains(WOOD_TAG) ? tag.getString(WOOD_TAG) : ShipWood.DARK_OAK.id());
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         ContainerHelper.saveAllItems(tag, items, false, registryAccess());
+        tag.putString(WOOD_TAG, entityData.get(DATA_WOOD));
     }
 
     // --- interaction --------------------------------------------------------------------------------------------

@@ -80,9 +80,18 @@ public final class PiratesJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalyst(HarborDesks.HARBOR_DESK.get(), MarketCategory.TYPE);
-        registration.addRecipeCatalyst(CrewContent.PANTRY.get(), ProvisionCategory.TYPE);
-        registration.addRecipeCatalyst(CrewContent.WATER_BARREL.get(), ProvisionCategory.TYPE);
+        // every wood's member (WOOD2), the legacy one first (the family's lead)
+        for (var desk : leadFirst(HarborDesks.HARBOR_DESKS)) registration.addRecipeCatalyst(desk, MarketCategory.TYPE);
+        for (var pantry : leadFirst(CrewContent.PANTRIES)) registration.addRecipeCatalyst(pantry, ProvisionCategory.TYPE);
+        for (var barrel : leadFirst(CrewContent.WATER_BARRELS)) registration.addRecipeCatalyst(barrel, ProvisionCategory.TYPE);
+    }
+
+    /** The members of {@code family}, its lead (the legacy member) first, then the others in shipped order. */
+    static <B extends net.minecraft.world.level.block.Block> List<B> leadFirst(com.richardsenger.piratesnships.ship.decor.wood.WoodFamily<B> family) {
+        List<B> out = new ArrayList<>();
+        out.add(family.lead().get());
+        for (B b : family.blocks()) if (b != out.getFirst()) out.add(b);
+        return out;
     }
 
     @Override

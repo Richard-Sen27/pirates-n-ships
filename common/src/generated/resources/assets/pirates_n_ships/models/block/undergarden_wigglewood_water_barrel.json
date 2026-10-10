@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "log": "undergarden:block/stripped_wigglewood_log_side",
+    "log_top": "undergarden:block/stripped_wigglewood_log_end",
+    "particle": "undergarden:block/wigglewood_planks",
+    "planks": "undergarden:block/wigglewood_planks"
+  }
+}

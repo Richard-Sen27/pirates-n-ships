@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.trade.cargo;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -130,6 +131,48 @@ public final class CargoWeightGameTests {
             double expected = CargoMass.CRATE.fullExtraMass();
             h.assertTrue(Math.abs(after - before[0] - expected) < 1e-3,
                     "mass grew by " + (after - before[0]) + ", expected " + expected + " (before " + before[0] + ")");
+            h.succeed();
+        });
+    }
+
+    /** WOOD2: a birch crate (not the legacy oak one) holds cargo and adds the full crate's mass like the oak crate. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120)
+    public static void aBirchCrateHoldsCargoAndWeighs(GameTestHelper h) {
+        containerOfAnotherWoodWeighs(h, ShipDecor.CARGO_CRATES.get(ShipWood.BIRCH), CargoMass.CRATE);
+    }
+
+    /** WOOD2: a jungle barrel (not the legacy spruce one) holds cargo and weighs like the spruce barrel. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120)
+    public static void aJungleBarrelHoldsCargoAndWeighs(GameTestHelper h) {
+        containerOfAnotherWoodWeighs(h, ShipDecor.CARGO_BARRELS.get(ShipWood.JUNGLE), CargoMass.BARREL);
+    }
+
+    /**
+     * {@code block} in the hold of an assembled ship takes a full crate's worth of iron ingots (a barrel up to its
+     * capacity), its load rises and the ship's Sable mass grows by its profile's extra mass for that load: the family
+     * tag's physics file covers the member.
+     */
+    private static void containerOfAnotherWoodWeighs(GameTestHelper h, CargoContainerBlock block, CargoMass.Profile profile) {
+        h.assertTrue(block.wood() != ShipWood.OAK && block.wood() != ShipWood.SPRUCE, "not a legacy member: " + block);
+        DryHullGameTests.basin(h, 0, 23, true);
+        Ship ship = assemble(h, hullWith(h, 9, block));
+        ServerLevel level = h.getLevel();
+        double[] before = {0};
+        h.runAfterDelay(10, () -> {
+            h.assertTrue(level.getBlockState(ship.cornerPlot()).is(block), "the " + block.wood().id() + " container is aboard");
+            before[0] = ship.body().mass();
+            CargoContainerBlockEntity be = (CargoContainerBlockEntity) level.getBlockEntity(ship.cornerPlot());
+            fillCrate(be, Math.min(FULL_CRATE_INGOTS, block.kind() == CargoContainers.Kind.BARREL ? TradeConfig.BARREL_CAPACITY_ITEMS.get() : FULL_CRATE_INGOTS));
+            h.assertTrue(be.heldKind().is(Items.IRON_INGOT), "the container holds the iron");
+        });
+        h.runAfterDelay(30, () -> {
+            int load = level.getBlockState(ship.cornerPlot()).getValue(CargoLoad.LOAD);
+            double after = ship.body().mass();
+            SableShips.remove(ship.body());
+            h.assertTrue(load > 0, "the load did not rise");
+            double expected = profile.mass(load) - profile.mass(0);
+            h.assertTrue(Math.abs(after - before[0] - expected) < 1e-3,
+                    "mass grew by " + (after - before[0]) + ", expected " + expected + " at load " + load + " (before " + before[0] + ")");
             h.succeed();
         });
     }

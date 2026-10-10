@@ -47,15 +47,25 @@ final class SeaChestTestSupport {
 
     /** A sea chest item holding 5 diamonds in slot 0 and 12 apples in slot 30, named "Loot". */
     static ItemStack filledChest() {
+        return filledChest(SeaChestContent.ITEM.get());
+    }
+
+    /** {@link #filledChest()} as {@code item} (WOOD2: any wood's sea chest). */
+    static ItemStack filledChest(net.minecraft.world.item.Item item) {
         java.util.List<ItemStack> slots = SeaChestContents.emptySlots();
         slots.set(0, new ItemStack(Items.DIAMOND, 5));
         slots.set(30, new ItemStack(Items.APPLE, 12));
-        return SeaChestContents.toItem(SeaChestContent.ITEM.get(), slots, net.minecraft.network.chat.Component.literal("Loot"));
+        return SeaChestContents.toItem(item, slots, net.minecraft.network.chat.Component.literal("Loot"));
     }
 
     /** Whether the stack is a sea chest holding exactly the contents of {@link #filledChest()}. */
     static boolean holdsFilledContents(ItemStack stack) {
-        if (!stack.is(SeaChestContent.ITEM.get())) return false;
+        return holdsFilledContents(stack, SeaChestContent.ITEM.get());
+    }
+
+    /** {@link #holdsFilledContents(ItemStack)} for {@code item} (WOOD2: any wood's sea chest). */
+    static boolean holdsFilledContents(ItemStack stack, net.minecraft.world.item.Item item) {
+        if (!stack.is(item)) return false;
         java.util.List<ItemStack> slots = SeaChestContents.fromItem(stack);
         return slots.get(0).is(Items.DIAMOND) && slots.get(0).getCount() == 5
                 && slots.get(30).is(Items.APPLE) && slots.get(30).getCount() == 12

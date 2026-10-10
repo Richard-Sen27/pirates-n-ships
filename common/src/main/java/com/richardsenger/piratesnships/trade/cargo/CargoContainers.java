@@ -24,7 +24,8 @@ import java.util.Locale;
 
 /**
  * Registration of the bulk cargo containers (design.md §10.3, §4.9). The blocks themselves stay registered in
- * {@code ship.decor.ShipDecor} ({@code cargo_crate}, {@code cargo_barrel}); this class adds their block entity type,
+ * {@code ship.decor.ShipDecor} (the wood families {@code cargo_crate} and {@code cargo_barrel}, WOOD2: oak's crate
+ * and spruce's barrel keep the legacy ids); this class adds their block entity type,
  * the {@code bulk_cargo} item component and the capacity rules.
  */
 public final class CargoContainers {
@@ -55,8 +56,11 @@ public final class CargoContainers {
     public static final RegistryEntry<DataComponentType<?>, DataComponentType<BulkCargo>> BULK_CARGO = ModRegistry.dataComponent("bulk_cargo",
             b -> b.persistent(BulkCargo.CODEC).networkSynchronized(BulkCargo.STREAM_CODEC));
 
+    /** One block entity type for every crate and barrel of every wood (WOOD2: both families' members are valid blocks). */
+    @SuppressWarnings("unchecked")
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<CargoContainerBlockEntity>> BLOCK_ENTITY = ModRegistry.blockEntity(
-            "cargo_container", CargoContainerBlockEntity::new, ShipDecor.CARGO_CRATE, ShipDecor.CARGO_BARREL);
+            "cargo_container", CargoContainerBlockEntity::new, java.util.stream.Stream.concat(ShipDecor.CARGO_CRATES.entries().stream(),
+                    ShipDecor.CARGO_BARRELS.entries().stream()).toArray(java.util.function.Supplier[]::new));
 
     private CargoContainers() {
     }

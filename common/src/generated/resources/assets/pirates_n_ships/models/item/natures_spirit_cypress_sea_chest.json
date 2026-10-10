@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_chest",
+  "textures": {
+    "log": "natures_spirit:block/stripped_cypress_log",
+    "log_top": "natures_spirit:block/stripped_cypress_log_top",
+    "particle": "natures_spirit:block/cypress_planks",
+    "planks": "natures_spirit:block/cypress_planks"
+  }
+}

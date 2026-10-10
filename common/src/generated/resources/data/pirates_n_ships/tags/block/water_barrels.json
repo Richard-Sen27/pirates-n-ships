@@ -1,0 +1,403 @@
+{
+  "values": [
+    "pirates_n_ships:oak_water_barrel",
+    "pirates_n_ships:water_barrel",
+    "pirates_n_ships:birch_water_barrel",
+    "pirates_n_ships:jungle_water_barrel",
+    "pirates_n_ships:acacia_water_barrel",
+    "pirates_n_ships:dark_oak_water_barrel",
+    "pirates_n_ships:mangrove_water_barrel",
+    "pirates_n_ships:cherry_water_barrel",
+    "pirates_n_ships:bamboo_water_barrel",
+    "pirates_n_ships:crimson_water_barrel",
+    "pirates_n_ships:warped_water_barrel",
+    {
+      "id": "pirates_n_ships:aether_skyroot_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ars_nouveau_archwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_dead_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_empyreal_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_fir_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_hellbark_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_jacaranda_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_magic_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_mahogany_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_maple_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_palm_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_pine_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_redwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_umbran_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_willow_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_aspen_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_baobab_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_blue_enchanted_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cika_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cypress_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ebony_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_fir_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_florus_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_green_enchanted_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_holly_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ironwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_jacaranda_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_mahogany_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_maple_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_palm_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_pine_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_rainbow_eucalyptus_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_redwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_sakura_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_skyris_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_spirit_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_white_mangrove_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_willow_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_witch_hazel_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_zelkova_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:deeperdarker_echo_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_azalea_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_coconut_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_walnut_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_aspen_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cedar_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_coconut_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cypress_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_fir_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_ghaf_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_joshua_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_larch_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_mahogany_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_maple_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_olive_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_palo_verde_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_redwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_saxaul_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_sugi_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_willow_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_wisteria_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_ancient_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_azalea_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_blossom_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_baobab_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blackwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blue_bioshroom_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_brimwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cobalt_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cypress_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_dead_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_eucalyptus_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_green_bioshroom_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_joshua_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_kapok_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_larch_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_magnolia_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_maple_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_palm_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pine_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pink_bioshroom_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_redwood_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_socotra_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_willow_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_wisteria_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_yellow_bioshroom_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_canopy_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_dark_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mangrove_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mining_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_sorting_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_time_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_transformation_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_twilight_oak_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_grongle_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_smogstem_water_barrel",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_wigglewood_water_barrel",
+      "required": false
+    }
+  ]
+}

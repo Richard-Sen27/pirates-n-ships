@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "pirates_n_ships:block/harbor_desk",
+      "model": "pirates_n_ships:block/dark_oak_harbor_desk",
       "y": 90
     },
     "facing=north": {
-      "model": "pirates_n_ships:block/harbor_desk"
+      "model": "pirates_n_ships:block/dark_oak_harbor_desk"
     },
     "facing=south": {
-      "model": "pirates_n_ships:block/harbor_desk",
+      "model": "pirates_n_ships:block/dark_oak_harbor_desk",
       "y": 180
     },
     "facing=west": {
-      "model": "pirates_n_ships:block/harbor_desk",
+      "model": "pirates_n_ships:block/dark_oak_harbor_desk",
       "y": 270
     }
   }

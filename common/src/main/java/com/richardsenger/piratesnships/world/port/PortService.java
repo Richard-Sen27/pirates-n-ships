@@ -2,9 +2,9 @@ package com.richardsenger.piratesnships.world.port;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.trade.TradeService;
+import com.richardsenger.piratesnships.trade.desk.HarborDeskBlock;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskBlockEntity;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
-import com.richardsenger.piratesnships.trade.desk.HarborDesks;
 import com.richardsenger.piratesnships.trade.market.Climate;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.world.WorldConfig;
@@ -150,7 +150,7 @@ public final class PortService {
             for (int cz = min.z; cz <= max.z; cz++) {
                 ChunkAccess chunk = level.getChunk(cx, cz);
                 for (BlockPos pos : List.copyOf(chunk.getBlockEntitiesPos())) {
-                    if (!area.isInside(pos) || !chunk.getBlockState(pos).is(HarborDesks.HARBOR_DESK.get())) continue;
+                    if (!area.isInside(pos) || !(chunk.getBlockState(pos).getBlock() instanceof HarborDeskBlock)) continue;
                     if (level.getBlockEntity(pos) instanceof HarborDeskBlockEntity desk) {
                         desk.setPort(Optional.of(port));
                         bound++;

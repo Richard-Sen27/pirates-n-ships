@@ -1,0 +1,10 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/water_still",
+    "log": "ars_nouveau:block/stripped_archwood_log",
+    "log_top": "ars_nouveau:block/stripped_archwood_log_top",
+    "particle": "ars_nouveau:block/archwood_planks",
+    "planks": "ars_nouveau:block/archwood_planks"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cargo_barrel",
+  "textures": {
+    "log": "minecraft:block/stripped_crimson_stem",
+    "log_top": "minecraft:block/stripped_crimson_stem_top",
+    "particle": "minecraft:block/crimson_planks",
+    "planks": "minecraft:block/crimson_planks"
+  }
+}

@@ -3,6 +3,9 @@ package com.richardsenger.piratesnships.crew.content.client;
 import com.richardsenger.piratesnships.crew.content.CrewContent;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.world.item.Item;
+
+import java.util.function.Supplier;
 
 /** Client setup of the {@code crew.content} module (physical client only, from {@code CrewContentModule.initClient()}). */
 public final class CrewContentClient {
@@ -15,6 +18,7 @@ public final class CrewContentClient {
     private CrewContentClient() {
     }
 
+    @SuppressWarnings("unchecked")
     public static void init() {
         ClientEvents.registerEntityRenderer(CrewContent.HAMMOCK_SEAT, net.minecraft.client.renderer.entity.NoopRenderer::new);
         ClientEvents.registerEntityRenderer(CrewContent.MEAL_SEAT, net.minecraft.client.renderer.entity.NoopRenderer::new);
@@ -23,10 +27,11 @@ public final class CrewContentClient {
         ClientEvents.registerBlockColor((state, level, pos, tintIndex) -> {
             if (tintIndex != WATER_TINT_INDEX) return -1;
             return level != null && pos != null ? BiomeColors.getAverageWaterColor(level, pos) : DEFAULT_WATER_COLOR;
-        }, CrewContent.WATER_BARREL);
+        }, CrewContent.WATER_BARRELS.entries().toArray(Supplier[]::new)); // every wood's barrel (WOOD2)
         // The item's model (the full block model) draws the same greyscale water_still surface. An item stack has no
         // position and so no biome: it shows vanilla's default water colour
-        ClientEvents.registerItemColor((stack, tintIndex) -> itemColor(tintIndex), () -> CrewContent.WATER_BARREL.get().asItem());
+        ClientEvents.registerItemColor((stack, tintIndex) -> itemColor(tintIndex), CrewContent.WATER_BARRELS.entries().stream()
+                .map(e -> (Supplier<Item>) () -> e.get().asItem()).toArray(Supplier[]::new));
     }
 
     /**

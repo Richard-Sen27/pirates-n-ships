@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.seachest;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
@@ -11,7 +14,6 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -67,41 +69,45 @@ public final class SeaChestModule implements ModModule {
 
     @Override
     public void gatherData(DataContributions data) {
-        SeaChestBlock block = SeaChestContent.BLOCK.get();
+        WoodFamily<SeaChestBlock> chests = SeaChestContent.CHESTS;
+        data.lang(lang -> chests.lang(lang, "Sea Chest"));
         data.lang(lang -> lang
-                .block(SeaChestContent.BLOCK, "Sea Chest")
                 .add(SeaChestContent.ENTITY.get().getDescriptionId(), "Sea Chest")
                 .add(SeaChestBlockEntity.TITLE_KEY, "Sea Chest")
                 .add(SeaChestItem.WORN_HINT_KEY, "Use in the air to carry it on your back: no jumping, sprinting or swimming"));
         data.models(m -> {
-            // Hand-made Blockbench model (art/models/sea_chest.bbmodel, design.md §4.8): only the block state is
-            // generated. The model's north side (hasp and lock plate) is the front, unrotated for FACING north; the
-            // block item delegates to the block model.
-            ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
+            // Hand-made Blockbench model (art/models/sea_chest.bbmodel, design.md §4.8) with the wood family's texture
+            // variables (WOOD2: the dark oak planks are #planks, the stripped dark oak lid and feet #log; the iron and
+            // the rope handles stay): a child per wood and its block state. The model's north side (hasp and lock
+            // plate) is the front, unrotated for FACING north; the item uses the wood's child.
+            chests.childModels(m, MODEL);
+            chests.itemModels(m, MODEL);
+            chests.forEach((wood, block) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(block,
+                            Variant.variant().with(VariantProperties.MODEL, WoodFamily.child(wood, MODEL)))
                     .with(PropertyDispatch.property(SeaChestBlock.FACING)
                             .select(Direction.NORTH, Variant.variant())
                             .select(Direction.EAST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
-                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
+                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270)))));
         });
         // Like the shulker box: the contents and the name go with the item, also in explosions
-        data.blockLoot(loot -> loot.add(block, LootTable.lootTable().withPool(LootPool.lootPool()
+        chests.loot(data, block -> LootTable.lootTable().withPool(LootPool.lootPool()
                 .setRolls(ConstantValue.exactly(1.0f))
                 .add(LootItem.lootTableItem(block).apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
-                        .include(DataComponents.CONTAINER).include(DataComponents.CUSTOM_NAME))))));
-        data.blockTags(tags -> {
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(block);
-            tags.tag(C_CHESTS_BLOCK).add(block);
-        });
-        data.itemTags(tags -> tags.tag(C_CHESTS_ITEM).add(SeaChestContent.ITEM.get()));
-        data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, SeaChestContent.ITEM.get())
-                .pattern("LLL").pattern("ICI")
-                .define('L', Items.LEATHER).define('I', Items.IRON_INGOT).define('C', Items.CHEST)
-                .unlockedBy("has_chest", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHEST))
-                .save(out, SeaChestContent.ITEM.id()));
+                        .include(DataComponents.CONTAINER).include(DataComponents.CUSTOM_NAME)))));
+        data.blockTags(tags -> chests.tag(tags, BlockTags.MINEABLE_WITH_AXE, C_CHESTS_BLOCK));
+        data.itemTags(tags -> chests.itemTag(tags, C_CHESTS_ITEM));
+        // WOOD2: the chest's wooden input is that wood's planks, a bottom row of three under the chest (before: leather,
+        // iron and a chest only, "LLL / ICI")
+        chests.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 1, "LLL", "ICI", "PPP")
+                .define('L', WoodRecipe.item(Items.LEATHER)).define('I', WoodRecipe.item(Items.IRON_INGOT))
+                .define('C', WoodRecipe.item(Items.CHEST)).define('P', WoodRecipe.planks())
+                .group(Constants.MOD_ID + ":sea_chest").unlockedBy("has_chest", WoodRecipe.item(Items.CHEST)));
         gatherPaddleData(data);
     }
+
+    /** The sea chest's hand-made parent model. */
+    static final ResourceLocation MODEL = Constants.id("block/sea_chest");
 
     /** The paddle (SC2): name, hints, refusals and the recipe; its model is hand-made (ART8, {@code item/paddle}). */
     private static void gatherPaddleData(DataContributions data) {

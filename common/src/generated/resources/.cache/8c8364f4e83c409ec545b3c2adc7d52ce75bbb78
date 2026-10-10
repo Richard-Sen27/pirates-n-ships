@@ -1,5 +1,5 @@
-// 1.21.1	2026-10-09T10:42:35.147681	Tags for minecraft:item mod id vanilla
-4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/item/chests.json
+// 1.21.1	2026-10-10T15:38:34.629093	Tags for minecraft:item mod id vanilla
+2c8eb52bdd56b61e29cd0f2efc460d97112cd559 data/c/tags/item/chests.json
 791e79cd83476b7ba87ecc885196eaa5364463fd data/c/tags/item/drinks.json
 0dfa7bb3735796e28b32944f14d9b6d5ca3eb866 data/c/tags/item/foods.json
 74ec066d50bbbe8edba4b0dfbfd83b83c5cc07b6 data/c/tags/item/foods/bread.json
@@ -16,5 +16,5 @@ c0bd5bbd8e967b153d06e7b6139d0188fbf64135 data/pirates_n_ships/tags/item/flags.js
 c62b9be8a52938b166add3c15cf8fe7b6021f08a data/pirates_n_ships/tags/item/provisions/fresh_water.json
 168e04c95e10f9c3cadae12f1aa6bf661436b9d4 data/pirates_n_ships/tags/item/provisions/preserved.json
 791e79cd83476b7ba87ecc885196eaa5364463fd data/pirates_n_ships/tags/item/provisions/rum.json
-5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/pirates_n_ships/tags/item/provisions/water_barrel.json
+389daa77531c92034ffd17d1b95a491b547112d2 data/pirates_n_ships/tags/item/provisions/water_barrel.json
 791e79cd83476b7ba87ecc885196eaa5364463fd data/pirates_n_ships/tags/item/warming.json

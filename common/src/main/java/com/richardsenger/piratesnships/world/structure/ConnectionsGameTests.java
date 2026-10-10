@@ -95,9 +95,13 @@ public final class ConnectionsGameTests {
             for (StructurePoolElement element : entry.getValue().getShuffledTemplates(RandomSource.create(0L))) {
                 JsonObject json = encode(level, element);
                 if (json == null || !json.has("location")) continue;
+                // the connections list, or a list that runs the connections processor too (STR2: the island's trails)
                 String processors = json.get("processors").getAsString();
-                helper.assertValueEqual(processors, ConnectionsProcessor.LIST.location().toString(),
-                        entry.getKey().location() + ": " + json.get("location").getAsString() + " processors");
+                var list = level.registryAccess().registryOrThrow(Registries.PROCESSOR_LIST)
+                        .get(net.minecraft.resources.ResourceLocation.parse(processors));
+                helper.assertTrue(list != null && list.list().stream().anyMatch(p -> p instanceof ConnectionsProcessor),
+                        entry.getKey().location() + ": " + json.get("location").getAsString() + " processors " + processors
+                                + " run the connections processor");
                 elements++;
             }
         }

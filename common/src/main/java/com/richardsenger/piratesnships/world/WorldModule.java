@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.world.outpost.OutpostData;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.ConnectionsGameTests;
 import com.richardsenger.piratesnships.world.structure.StructureBlockEntityGameTests;
+import com.richardsenger.piratesnships.world.structure.StructureLayoutGameTests;
 import com.richardsenger.piratesnships.world.structure.ConnectionsProcessor;
 import com.richardsenger.piratesnships.world.structure.PortStructures;
 import com.richardsenger.piratesnships.world.treasure.TreasureMapGameTests;
@@ -87,6 +88,6 @@ public final class WorldModule implements ModModule {
     public List<Class<?>> gameTestClasses() {
         return List.of(WorldGameTests.class, PirateIslandGameTests.class, NavyOutpostGameTests.class, WreckGameTests.class,
                 TreasureMapGameTests.class, ConnectionsGameTests.class,
-                StructureBlockEntityGameTests.class);
+                StructureBlockEntityGameTests.class, StructureLayoutGameTests.class);
     }
 }

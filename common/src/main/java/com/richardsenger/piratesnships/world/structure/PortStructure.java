@@ -65,8 +65,10 @@ import java.util.Optional;
  *     places the garrison posts of the chunk being placed ({@link PortService}, {@link TreasureChests},
  *     {@link Garrison}); a pirate island places its named captain (BOS1, {@link IslandCaptains}).</li>
  * </ol>
- * Terrain adaptation comes from the JSON; all three ports use {@code none}, because vanilla's beardifier treats every
- * rigid piece alike and would raise land under the pier and around the quay (see {@code VillageData}).
+ * Terrain adaptation comes from the JSON; the village and the outpost use {@code none}, because vanilla's beardifier
+ * treats every rigid piece alike and would raise land under the pier and around the quay (see {@code VillageData}); the
+ * pirate island uses {@code beard_thin} since STR2 (its jetty's foot is under water, so the beard there only shapes the
+ * shore and the seabed round it; {@code IslandData}).
  */
 public final class PortStructure extends Structure {
 
@@ -81,7 +83,8 @@ public final class PortStructure extends Structure {
             Codec.intRange(-16, 16).optionalFieldOf("start_height", 1).forGetter(s -> s.startHeight),
             Codec.intRange(1, 128).fieldOf("max_distance_from_center").forGetter(s -> s.maxDistanceFromCenter),
             ShoreAnchor.CODEC.optionalFieldOf("shore_anchor", ShoreAnchor.VILLAGE).forGetter(s -> s.shoreAnchor),
-            PortKind.CODEC.optionalFieldOf("port_kind", PortKind.SEAFARER_VILLAGE).forGetter(s -> s.portKind)
+            PortKind.CODEC.optionalFieldOf("port_kind", PortKind.SEAFARER_VILLAGE).forGetter(s -> s.portKind),
+            Codec.BOOL.optionalFieldOf("land_pieces_on_land", false).forGetter(s -> s.landPiecesOnLand)
     ).apply(i, PortStructure::new));
 
     /** Salt of the frequency roll (independent of the layout random); the port kind is mixed in. */
@@ -93,10 +96,11 @@ public final class PortStructure extends Structure {
     private final int maxDistanceFromCenter;
     private final ShoreAnchor shoreAnchor;
     private final PortKind portKind;
+    private final boolean landPiecesOnLand;
     private volatile boolean warnedUnconfigured;
 
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
-                         int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind) {
+                         int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand) {
         super(settings);
         this.startPool = startPool;
         this.maxDepth = maxDepth;
@@ -104,6 +108,7 @@ public final class PortStructure extends Structure {
         this.maxDistanceFromCenter = maxDistanceFromCenter;
         this.shoreAnchor = shoreAnchor;
         this.portKind = portKind;
+        this.landPiecesOnLand = landPiecesOnLand;
     }
 
     /** First free (non-solid, fluids ignored) height of a column: water there iff it is at most the sea surface. */
@@ -130,6 +135,11 @@ public final class PortStructure extends Structure {
 
     public PortKind portKind() {
         return portKind;
+    }
+
+    /** STR2: whether land pieces over open water are dropped after the jigsaw ({@link LandFilter}). */
+    public boolean landPiecesOnLand() {
+        return landPiecesOnLand;
     }
 
     public Holder<StructureTemplatePool> startPool() {
@@ -201,12 +211,44 @@ public final class PortStructure extends Structure {
                 Optional.empty(), maxDistanceFromCenter, PoolAliasLookup.EMPTY, DimensionPadding.ZERO, LiquidSettings.APPLY_WATERLOGGING);
         return stub.map(s -> new GenerationStub(s.position(), builder -> {
             List<StructurePiece> pieces = s.getPiecesBuilder().build().pieces();
+            boolean[] keep = landPiecesOnLand
+                    ? LandFilter.keep(landNodes(pieces), (x, z) -> terrain.firstFree(x, z) <= seaSurface)
+                    : null;
             for (int i = 0; i < pieces.size(); i++) {
                 StructurePiece piece = pieces.get(i);
+                if (keep != null && !keep[i]) continue;
                 if (i > 0 && sinksIntoTerrain(piece)) piece.move(0, -1, 0);
                 builder.addPiece(piece);
             }
         }));
+    }
+
+    /**
+     * The pieces as {@link LandFilter} sees them: a piece's parent is the earlier piece that holds the jigsaw its first
+     * junction starts from (a child's first junction is the one to its parent); a land piece is terrain matching
+     * (a trail) or hangs rigidly from one ({@link #sinksIntoTerrain}: a building or decoration on a trail).
+     */
+    static List<LandFilter.Node> landNodes(List<StructurePiece> pieces) {
+        List<LandFilter.Node> out = new java.util.ArrayList<>(pieces.size());
+        for (int i = 0; i < pieces.size(); i++) {
+            StructurePiece piece = pieces.get(i);
+            int parent = -1;
+            boolean land = false;
+            if (i > 0 && piece instanceof PoolElementStructurePiece p && !p.getJunctions().isEmpty()) {
+                JigsawJunction up = p.getJunctions().get(0);
+                for (int j = 0; j < i; j++) {
+                    BoundingBox b = pieces.get(j).getBoundingBox();
+                    if (up.getSourceX() >= b.minX() && up.getSourceX() <= b.maxX()
+                            && up.getSourceZ() >= b.minZ() && up.getSourceZ() <= b.maxZ()) {
+                        parent = j;
+                        if (up.getSourceGroundY() >= b.minY() - 1 && up.getSourceGroundY() <= b.maxY() + 1) break;
+                    }
+                }
+                land = p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING || sinksIntoTerrain(piece);
+            }
+            out.add(new LandFilter.Node(piece.getBoundingBox(), i == 0 ? -1 : Math.max(parent, 0), land));
+        }
+        return out;
     }
 
     /**

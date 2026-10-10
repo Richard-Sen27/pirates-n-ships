@@ -45,6 +45,38 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
   mangrove is "Twilight Mangrove" so it does not read like vanilla's.
 - **Recipes:** each member from that wood's planks (and sticks, nuggets as before), in the family's recipe group.
 
+## The families
+
+| Family (suffix) | Legacy id (wood) | Variables | Block entity | Since |
+|---|---|---|---|---|
+| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak's member is `oak_railing`, ...) | `#planks`, `#log` | none | WOOD1 |
+| `oar_bench` | none | `#planks`, `#log` | none | WOOD1 |
+| `cargo_crate` | `cargo_crate` (oak) | `#planks`, `#log`, `#log_top` | `cargo_container`, shared with the barrels | WOOD2 |
+| `cargo_barrel` | `cargo_barrel` (spruce) | `#planks` | `cargo_container` | WOOD2 |
+| `pantry` | `pantry` (spruce) | `#planks`, `#log` | `pantry` | WOOD2 |
+| `water_barrel` | `water_barrel` (spruce) | `#planks` (five parents: `water_barrel`, `_fill0..3`) | `water_barrel` | WOOD2 |
+| `harbor_desk` | `harbor_desk` (dark oak) | `#planks` | `harbor_desk` | WOOD2 |
+| `sea_chest` | `sea_chest` (dark oak) | `#planks`, `#log` | `sea_chest` | WOOD2 |
+
+WOOD2's storage blocks, what changed besides the members:
+
+- **Identity checks:** the cargo container type lists every crate and barrel; `PortService.bindDesks` binds any
+  `HarborDeskBlock` (was `is(HARBOR_DESK)`); JEI's market and provisions catalysts are every desk, pantry and water
+  barrel (legacy first; the category icons stay the legacy members); `CrewContentClient` tints every water barrel,
+  block and item; the floating `SeaChestEntity` carries its wood (synced data, saved as `Wood`; a chest saved before
+  WOOD2 or of a wood whose mod is gone is dark oak) and draws and drops that wood's chest. The old fields
+  (`ShipDecor.CARGO_CRATE`, `CrewContent.PANTRY`, `HarborDesks.HARBOR_DESK`, `SeaChestContent.BLOCK`/`ITEM`, ...) are
+  the families' legacy members.
+- **Tags:** `c:chests` (block and item) and `provisions/water_barrel` are family-wide; every container family has a block
+  tag (`cargo_crates`, `cargo_barrels`, `pantries`, `water_barrels`) that its Sable physics file selects (the file keeps
+  the legacy name, `physics_block_properties/cargo_crate.json`): Sable's loader reads no load conditions and logs an
+  error per unknown block id, so a mod's wood's member is only an optional tag entry, never a selector.
+- **Recipes:** each from that wood's planks, in a recipe group per family; the sea chest had no planks, its recipe is
+  now `LLL / ICI / PPP` (leather, iron, a chest, and three of the wood's planks as the base). `WoodFamily` gained
+  `register(suffix, legacyWood, factory, item)` (the sea chest's wearable item), `itemTag` and `entries()`.
+- **Not done:** the paddle's recipe still unlocks with the legacy sea chest; Ponder scenes and the Almanac show the
+  legacy members (the Almanac's recipe panel cycles the woods).
+
 ## Datagen and the compat files
 
 Datagen writes every wood, vanilla and compat alike (models, block states, item models, lang, loot, recipes,

@@ -33,7 +33,8 @@ import java.util.List;
  * net hung on a mast or laid sloped from the gunwale to the masthead ({@link RatlinesBlock}); RL2's ratline nets,
  * strung between a chainplate and a mast hoop at any pitch ({@link RatlineNets}) and climbed along their line
  * ({@link RatlineNetAssist}); RL4's fans, several nets to one hoop netted together into a triangle; RAIL5's boarding
- * nets, strung along the rail between two chainplates on railings ({@link BoardingNets}).
+ * nets, strung along the rail between two chainplates on railings ({@link BoardingNets}); RL5's sheets (rows of strands
+ * joined into a rectangle or a trapezoid) and railing latches ({@link RailingLatches}).
  */
 public final class RiggingModule implements ModModule {
 
@@ -74,7 +75,7 @@ public final class RiggingModule implements ModModule {
                 .block(RiggingContent.MAST_HOOP, "Mast Hoop")
                 .block(RiggingContent.NET_CELL, "Ratline Net")
                 .item(RiggingContent.NET_ITEM, "Ratline Net")
-                .add(RatlineNetItem.KEY_TOOLTIP, "Use on a chainplate, then on a mast hoop, to string a net to climb")
+                .add(RatlineNetItem.KEY_TOOLTIP, "Use on a chainplate or a railing's top rail, then on a mast hoop, to string a net to climb")
                 .add(RatlineNetItem.KEY_MARKED, "Net tied: now use the other fitting")
                 .add(RatlineNetItem.KEY_STRUNG, "Net strung through %s blocks")
                 .add(RatlineNetItem.KEY_SAME, "Use the net on a second fitting")
@@ -90,7 +91,13 @@ public final class RiggingModule implements ModModule {
                 // RAIL5: boarding nets along the rail
                 .add(RatlineNetItem.KEY_BOARDING_STRUNG, "Boarding net strung along the rail")
                 .add(RatlineNetItem.KEY_NOT_ALONG, "Boarding nets run along one rail edge")
-                .add(RatlineNetItem.KEY_TOO_SHORT, "Leave a block between the chainplates"));
+                .add(RatlineNetItem.KEY_TOO_SHORT, "Leave a block between the two ends")
+                // RL5: railing latches and sheets
+                .block(RiggingContent.RAILING_LATCH, "Railing Latch")
+                .add(RatlineNetItem.KEY_LATCHES_OFF, "No latches here: use a chainplate")
+                .add(RatlineNetItem.KEY_NO_LATCH, "No latch on a gate or a port")
+                .add(RatlineNetItem.KEY_NO_RAIL, "No rail on that edge")
+                .add(RatlineNetItem.KEY_NOT_IN_ROW, "Strung alone: ends not in one row"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
             // against the south side, the sloped net rising to the north. Only the block state is generated; the item
@@ -114,7 +121,7 @@ public final class RiggingModule implements ModModule {
         });
         data.blockTags(tags -> {
             tags.tag(BlockTags.CLIMBABLE).add(RiggingContent.RATLINES.get()).add(RiggingContent.NET_CELL.get())
-                    .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
+                    .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get()).add(RiggingContent.RAILING_LATCH.get());
             // RL1b: a net hangs on a yard and a sloped run leans on a yard or the crow's nest (RatlinesRules)
             tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS)
                     .add(SailingBlocks.YARD.get()).add(LookoutContent.CROWS_NEST.get());
@@ -124,9 +131,10 @@ public final class RiggingModule implements ModModule {
                     .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
             tags.tag(SableWeightTags.QUARTER_VOLUME).add(RiggingContent.RATLINES.get())
                     .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get())
-                    .add(RiggingContent.NET_CELL.get());
-            // RL2: a net cell weighs nothing (the drawn net is a few ropes across a block of air)
-            tags.tag(RiggingContent.SABLE_WEIGHTLESS).add(RiggingContent.NET_CELL.get());
+                    .add(RiggingContent.NET_CELL.get()).add(RiggingContent.RAILING_LATCH.get());
+            // RL2: a net cell weighs nothing (the drawn net is a few ropes across a block of air); RL5: nor does a
+            // railing latch (a small eye bolt)
+            tags.tag(RiggingContent.SABLE_WEIGHTLESS).add(RiggingContent.NET_CELL.get()).add(RiggingContent.RAILING_LATCH.get());
             tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
         });
         data.recipes(out -> {
@@ -194,10 +202,19 @@ public final class RiggingModule implements ModModule {
                 TextureMapping.particle(ResourceLocation.fromNamespaceAndPath(com.richardsenger.piratesnships.Constants.MOD_ID, "block/rope")),
                 m.models());
         m.blockStates().accept(MultiVariantGenerator.multiVariant(cell, Variant.variant().with(VariantProperties.MODEL, cellModel)));
+        // RL5: the railing latch's hand-made eye bolt (tools/gen_railing_models.py, made on the north edge), turned by
+        // facing; fixed palette UVs, so no uvlock
+        Block latch = RiggingContent.RAILING_LATCH.get();
+        ResourceLocation latchModel = ModelLocationUtils.getModelLocation(latch);
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(latch, Variant.variant().with(VariantProperties.MODEL, latchModel))
+                .with(PropertyDispatch.property(BlockStateProperties.HORIZONTAL_FACING).generate(facing -> {
+                    VariantProperties.Rotation y = yRot(facing);
+                    return y == VariantProperties.Rotation.R0 ? Variant.variant() : Variant.variant().with(VariantProperties.Y_ROT, y);
+                })));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class, BoardingNetGameTests.class);
+        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class, BoardingNetGameTests.class, RatlineSheetGameTests.class);
     }
 }

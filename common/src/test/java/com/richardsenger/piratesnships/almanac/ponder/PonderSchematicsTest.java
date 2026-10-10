@@ -273,8 +273,10 @@ class PonderSchematicsTest {
         size(ShipSceneText.RATLINE_NETS, 9, 9, 9);
         CompoundTag nets = schematic(ShipSceneText.RATLINE_NETS);
         for (BlockPos plate : RatlineNetsScene.FAN) {
-            assertEquals(MOD + ":chainplate[face=floor,facing=east,waterlogged=false]", stateAt(nets, plate));
+            // RL5: the latch's net end over the rail (the scene sets the railing's latch when it strings the net)
+            assertEquals(MOD + ":railing_latch[facing=west,waterlogged=false]", stateAt(nets, plate));
             assertTrue(stateAt(nets, plate.below()).startsWith(MOD + ":oak_railing["), "the rail under " + plate);
+            assertTrue(stateAt(nets, plate.below()).contains("west=true"), "the rail under " + plate + " is railed on the latch's edge");
         }
         assertEquals(MOD + ":mast_hoop[facing=west,waterlogged=false]", stateAt(nets, RatlineNetsScene.HOOP));
         assertEquals("minecraft:oak_log[axis=y]", stateAt(nets, RatlineNetsScene.HOOP.east()), "the hoop's mast");

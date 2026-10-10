@@ -27,15 +27,19 @@ public final class RiggingConfig {
 
     /** RL4: several strands to one mast hoop form a triangular fan. */
     public static final ConfigValue<Integer> NET_MAX_STRANDS = S.intRange("net_max_strands", 5, 1, 8,
-            "Most ratline nets one mast hoop holds, each from its own chainplate; together they form one fan (a chainplate always holds one)");
+            "Most ratline nets one mast hoop holds, each from its own chainplate or railing latch (which hold one each, so a net is never wider at the top); together they form one fan or sheet");
     public static final ConfigValue<Double> NET_MAX_SPREAD = S.doubleRange("net_max_spread", 6.0, 1.0, 16.0,
-            "Widest gap between the chainplates of two neighbouring nets on one hoop that is still netted in between [blocks]; wider ones stay separate nets");
+            "Widest gap between the bottom ends (or the hoops) of two neighbouring nets in one row that is still netted in between [blocks]; wider ones stay separate nets");
 
-    /** RAIL5: a boarding net strung along the rail between two chainplates on railing blocks. */
+    /** RL5: a net used on a railing or bulwark ties to an iron latch on its cap. */
+    public static final ConfigValue<Boolean> RAILING_LATCHES = S.bool("railing_latches", true,
+            "A ratline net used on a railing's or bulwark's top rail ties to an iron latch set on that edge (no gate or port; one latch, one net per block). Off = railings take no nets: use a chainplate");
+
+    /** RAIL5: a boarding net strung along the rail between two latches (or chainplates) on railing blocks. */
     public static final ConfigValue<Boolean> BOARDING_NETS = S.bool("boarding_nets", true,
-            "A ratline net strung between two chainplates on top of railings along one rail edge hangs as a boarding net a block above the rail; a boarder crossing it from outboard is held, then climbs over, while the ship's own crew pass freely. Off = such nets are refused as too flat, and boarding nets already strung hold nobody");
+            "A ratline net strung between two latches (or chainplates) on railings along one rail edge hangs as a boarding net a block above the rail; a boarder crossing it from outboard is held, then climbs over, while the ship's own crew pass freely. Off = such nets are refused as too flat, and boarding nets already strung hold nobody");
     public static final ConfigValue<Integer> BOARDING_NET_LENGTH = S.intRange("boarding_net_length", 8, 2, 32,
-            "Longest boarding net, chainplate to chainplate along the rail [blocks]");
+            "Longest boarding net, end to end along the rail [blocks]");
     public static final ConfigValue<Integer> BOARDING_NET_HOLD = S.intRange("boarding_net_hold", 20, 0, 200,
             "Ticks a boarding net holds a boarder who crosses the rail from outboard (slowed like a cobweb at half strength), before it climbs over (0 = nobody is held)");
     public static final ConfigValue<Integer> BOARDING_NET_CUT_HITS = S.intRange("boarding_net_cut_hits", 3, 1, 20,

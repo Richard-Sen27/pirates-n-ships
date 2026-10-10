@@ -60,8 +60,9 @@ the command prints them as well).
    cost of a first search; expected tens of milliseconds for ~2000 blocks). Running the command again recomputes.
    Two ports separated by a continent: either a longer lane around it or "No lane … (no_path / budget …)".
    LANE1: a port in a bay ringed by beach gets its lane over the beach; ports on separate seas answer "… the sea
-   around A (x …, z …) is closed … the two lie on separate seas" (seed 2718281828: village_1192_1530 and
-   pirate_island_-3012_4328), and a pair whose search runs out of cells answers "… the search budget of N cells for M
+   around A (x …, z …) is closed … the two lie on separate seas" (seed 2718281828 before WG5: village_1192_1530 and
+   pirate_island_-3012_4328; with WG5's spacing the seed's ports differ, e.g. village_5017_2200 and
+   pirate_island_-3931_-9000), and a pair whose search runs out of cells answers "… the search budget of N cells for M
    blocks ran out".
 2. **List:** `/pirates world voyages` → "0 voyages under way (0 lanes queued)" in a fresh world.
 3. **Prices before:** at port A's harbor desk note the price of a good A produces (cheap, e.g. sugar); at port B's

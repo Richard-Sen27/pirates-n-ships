@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "aether"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "aether:stripped_skyroot_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "aether:skyroot_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "aether"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "aether:stripped_skyroot_log",
+        "aether:skyroot_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:cannon",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "aether:stripped_skyroot_log"
+    },
+    "N": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "aether:skyroot_planks"
+    }
+  },
+  "pattern": [
+    "NIN",
+    "LPL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:aether_skyroot_cannon"
+  }
+}

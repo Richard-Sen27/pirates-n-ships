@@ -71,6 +71,10 @@
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:helm"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p3.text2"
         }
       ]
     },

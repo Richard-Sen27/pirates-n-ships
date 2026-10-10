@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -55,15 +57,24 @@ import org.jetbrains.annotations.Nullable;
  * synced pumping flag and {@code client/PumpHandleRenderer} draws the handle rocking about its pin and the rod riding
  * under it.
  */
-public class BilgePumpBlock extends Block implements StationBlock, EntityBlock, SimpleWaterloggedBlock {
+public class BilgePumpBlock extends Block implements StationBlock, EntityBlock, SimpleWaterloggedBlock, WoodBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape SHAPE = Shapes.or(box(3, 0, 3, 13, 2, 13), box(5, 2, 5, 11, 14, 11));
 
-    public BilgePumpBlock(Properties properties) {
+    private final ShipWood wood;
+
+    /** WOOD4: one pump per wood ({@code HullRepairContent.BILGE_PUMPS}); every member pumps the same. */
+    public BilgePumpBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     @Override

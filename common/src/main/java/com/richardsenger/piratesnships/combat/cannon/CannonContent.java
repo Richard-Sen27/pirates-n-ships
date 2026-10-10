@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
@@ -24,17 +26,26 @@ import net.minecraft.world.level.material.PushReaction;
  */
 public final class CannonContent {
 
-    public static final RegistryEntry<Block, CannonBlock> CANNON = ModRegistry.blockWithItem("cannon",
-            () -> new CannonBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5f, 6.0f)
+    /**
+     * WOOD4: the cannon in every carriage wood ({@code <wood>_cannon}); dark oak keeps the legacy id {@code cannon}. An
+     * iron gun on a wooden carriage: metal map colour, sound and strength as before WOOD4, mined with a pickaxe.
+     */
+    public static final WoodFamily<CannonBlock> CANNONS = WoodFamily.register("cannon", ShipWood.DARK_OAK,
+            wood -> new CannonBlock(wood, BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5f, 6.0f)
                     .sound(SoundType.METAL).noOcclusion()));
+    /** The legacy member ({@code cannon}, dark oak), for placing one; every member is a cannon ({@code instanceof}). */
+    public static final RegistryEntry<Block, CannonBlock> CANNON = CANNONS.lead();
 
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<CannonBlockEntity>> CANNON_ENTITY =
-            ModRegistry.blockEntity("cannon", CannonBlockEntity::new, CANNON);
+            CANNONS.blockEntity("cannon", CannonBlockEntity::new);
 
-    /** The rear half's empty block entity (FIX3, {@link PartBlockEntity}: worldgen needs one on every cannon state). */
+    /**
+     * The rear half's empty block entity (FIX3, {@link PartBlockEntity}: worldgen needs one on every cannon state); valid
+     * for every member (WOOD4: the rear stays a state of the member's block, drawn by nothing).
+     */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PartBlockEntity>> CANNON_REAR_ENTITY =
-            ModRegistry.blockEntity("cannon_rear",
-                    (pos, state) -> new PartBlockEntity(CannonContent.CANNON_REAR_ENTITY.get(), pos, state), CANNON);
+            CANNONS.blockEntity("cannon_rear",
+                    (pos, state) -> new PartBlockEntity(CannonContent.CANNON_REAR_ENTITY.get(), pos, state));
 
     public static final RegistryEntry<EntityType<?>, EntityType<CannonballEntity>> CANNONBALL = ModRegistry.entity("cannonball",
             () -> EntityType.Builder.<CannonballEntity>of(CannonballEntity::new, MobCategory.MISC)

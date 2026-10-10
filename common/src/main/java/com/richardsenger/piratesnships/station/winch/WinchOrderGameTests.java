@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.station.winch;
 
+import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.mojang.authlib.GameProfile;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -105,6 +107,11 @@ public final class WinchOrderGameTests {
 
     /** The long hull in water (afloat) or on land (resting on stone) with {@code rig} on deck, assembled. */
     static Ship ship(GameTestHelper h, boolean water, Rig rig) {
+        return ship(h, water, rig, ShipWood.SPRUCE);
+    }
+
+    /** {@link #ship(GameTestHelper, boolean, Rig)} with a winch of {@code wood} (WOOD4; spruce is the legacy winch). */
+    static Ship ship(GameTestHelper h, boolean water, Rig rig, ShipWood wood) {
         StationGameTests.basin(h, water);
         SailingGameTestsShips.openSky(h, 40);
         for (int x = 16; x <= 22; x++) {
@@ -116,7 +123,7 @@ public final class WinchOrderGameTests {
             }
         }
         h.setBlock(HELM, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        h.setBlock(WINCH, SailingBlocks.SAIL_WINCH.get());
+        h.setBlock(WINCH, SailingBlocks.SAIL_WINCHES.get(wood));
         if (rig != Rig.NONE) {
             rig(rig, e -> h.setBlock(e.getKey(), e.getValue()));
         }
@@ -124,7 +131,7 @@ public final class WinchOrderGameTests {
         if (r.shipId() == null) throw new AssertionError("assembly failed: " + r);
         ShipBody body = SableShips.byId(h.getLevel(), r.shipId());
         if (body == null) throw new AssertionError("no ship after assembly");
-        return new Ship(body, StationGameTests.find(h, body, SailingBlocks.SAIL_WINCH.get()), StationGameTests.find(h, body, AssemblyContent.HELM.get()));
+        return new Ship(body, StationGameTests.find(h, body, SailingBlocks.SAIL_WINCHES.get(wood)), StationGameTests.find(h, body, AssemblyContent.HELM.get()));
     }
 
     /** Plot position on {@code s} of the relative position {@code rel} the fixture built it at. */
@@ -288,6 +295,24 @@ public final class WinchOrderGameTests {
         assertOrdered(h, run(h, p, "pirates crew order hoist"), 1, 1);
         h.runAfterDelay(2 * STEP + MARGIN, () -> {
             h.assertTrue(headTrim(h, s) == SailTrim.FULL, "sail not hoisted: " + headTrim(h, s));
+            c.discard();
+            h.succeed();
+        });
+    }
+
+    /** WOOD4: a winch of another wood than the legacy spruce one (jungle) is the same station: its crew sets sail. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "assigned_jungle")
+    public static void jungleWinchSetsSail(GameTestHelper h) {
+        ConfigOverrides.during(h, StationConfig.TICKS_PER_TRIM_STEP, STEP);
+        Ship s = ship(h, false, Rig.SAIL, ShipWood.JUNGLE);
+        h.assertTrue(h.getLevel().getBlockState(s.winch()).getBlock() instanceof SailWinchBlock w && w.wood() == ShipWood.JUNGLE,
+                "the ship's winch is no jungle winch: " + h.getLevel().getBlockState(s.winch()));
+        Captain p = captain(h, s, DECK);
+        CrewMember c = spawn(h, p);
+        assignToWinch(h, s, p, c);
+        assertOrdered(h, run(h, p, "pirates crew order hoist"), 1, 1);
+        h.runAfterDelay(2 * STEP + MARGIN, () -> {
+            h.assertTrue(headTrim(h, s) == SailTrim.FULL, "the jungle winch's crew did not set sail: " + headTrim(h, s));
             c.discard();
             h.succeed();
         });

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/capstan_bars",
+  "textures": {
+    "log": "ecologics:block/stripped_azalea_log",
+    "log_top": "ecologics:block/stripped_azalea_log_top",
+    "particle": "ecologics:block/azalea_planks",
+    "planks": "ecologics:block/azalea_planks"
+  }
+}

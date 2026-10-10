@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bilge_pump_item",
+  "textures": {
+    "log": "biomeswevegone:block/florus/stripped_stem",
+    "log_top": "biomeswevegone:block/florus/stripped_stem_top",
+    "particle": "biomeswevegone:block/florus/planks",
+    "planks": "biomeswevegone:block/florus/planks"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "pirates_n_ships:cannon",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "minecraft:stripped_oak_log"
+    },
+    "N": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "minecraft:oak_planks"
+    }
+  },
+  "pattern": [
+    "NIN",
+    "LPL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:oak_cannon"
+  }
+}

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -60,15 +61,20 @@ public final class PumpPatchGameTests {
     }
 
     private static Ship ship(GameTestHelper h) {
+        return ship(h, ShipWood.DARK_OAK);
+    }
+
+    /** The test hull with two pumps of {@code wood} (WOOD4; dark oak is the legacy pump), assembled. */
+    private static Ship ship(GameTestHelper h, ShipWood wood) {
         DryHullGameTests.basin(h, 0, 23, true);
         BlockPos helm = DryHullGameTests.hull(h, 9, false);
-        h.setBlock(new BlockPos(12, 6, 12), HullRepairContent.BILGE_PUMP.get());
-        h.setBlock(new BlockPos(10, 9, 10), HullRepairContent.BILGE_PUMP.get());
+        h.setBlock(new BlockPos(12, 6, 12), HullRepairContent.BILGE_PUMPS.get(wood));
+        h.setBlock(new BlockPos(10, 9, 10), HullRepairContent.BILGE_PUMPS.get(wood));
         Fixture f = DryHullGameTests.assemble(h, helm);
         BlockPos hold = f.hold(1, -3, 1), deck = f.hold(-1, 0, -1);
         ServerLevel level = h.getLevel();
-        h.assertTrue(level.getBlockState(hold).is(HullRepairContent.BILGE_PUMP.get())
-                && level.getBlockState(deck).is(HullRepairContent.BILGE_PUMP.get()), "the pumps are not in the plot");
+        h.assertTrue(level.getBlockState(hold).is(HullRepairContent.BILGE_PUMPS.get(wood))
+                && level.getBlockState(deck).is(HullRepairContent.BILGE_PUMPS.get(wood)), "the pumps are not in the plot");
         h.assertTrue(f.runtime().pumps().contains(hold) && f.runtime().pumps().contains(deck),
                 "the hull runtime did not find the pumps: " + f.runtime().pumps().positions());
         HullAnalysis a = f.runtime().simulation().analysis();
@@ -118,6 +124,32 @@ public final class PumpPatchGameTests {
             h.assertTrue(seen[2] < seen[1], "no water went after tick 46");
             h.assertTrue(seen[2] == seen[3], "the pump kept working after the player stopped: " + seen[2] + " -> " + seen[3]);
             h.assertTrue(seen[3] > 7, "more water went than pumped: " + seen[3]);
+            h.succeed();
+        });
+    }
+
+    /** WOOD4: a pump of another wood than the legacy dark oak one (acacia) drains the flooded hold the same. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void acaciaPumpDrainsTheHold(GameTestHelper h) {
+        Ship s = ship(h, ShipWood.ACACIA);
+        ServerLevel level = h.getLevel();
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        double perTick = FloodingConfig.params().pumpPerTick();
+        s.f().runtime().simulation().setVolume(0, 10);
+        double[] seen = new double[2];
+        for (int t = 10; t <= 50; t += 4) {
+            int tick = t;
+            h.runAfterDelay(t, () -> {
+                BilgePumps.Use use = BilgePumps.operate(level, s.holdPump(), player);
+                h.assertTrue(use.outcome() == BilgePumps.Outcome.PUMPING, "the acacia pump did not pump: " + use);
+                if (tick == 14) seen[0] = s.water();
+                if (tick == 46) seen[1] = s.water();
+            });
+        }
+        h.runAfterDelay(60, () -> {
+            double drop = seen[0] - seen[1], expected = 32 * perTick;
+            h.assertTrue(Math.abs(drop - expected) < 0.5 * perTick,
+                    "over 32 ticks of pumping the acacia pump took " + drop + " blocks, expected " + expected);
             h.succeed();
         });
     }

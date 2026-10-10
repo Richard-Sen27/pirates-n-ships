@@ -1,7 +1,7 @@
 package com.richardsenger.piratesnships.ship.template;
 
 import com.richardsenger.piratesnships.Constants;
-import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.assembly.HullWater;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
@@ -124,7 +124,7 @@ public final class ShipTemplatePlacer {
         if (template.helm().isPresent()) {
             return template.helm().get();
         }
-        return blocks.stream().filter(b -> b.state().is(AssemblyContent.HELM.get())).map(LocalBlock::pos).findFirst().orElse(null);
+        return blocks.stream().filter(b -> b.state().getBlock() instanceof HelmBlock).map(LocalBlock::pos).findFirst().orElse(null);
     }
 
     /**
@@ -207,7 +207,7 @@ public final class ShipTemplatePlacer {
         BlockPos helmWorld = helmLocal == null ? null : TemplatePlacement.toWorld(helmLocal, rotation, origin);
         AssemblyResult assembly = null;
         if (assemble) {
-            if (!level.getBlockState(helmWorld).is(AssemblyContent.HELM.get())) {
+            if (!(level.getBlockState(helmWorld).getBlock() instanceof HelmBlock)) {
                 Constants.LOG.warn("Ship template {}: no helm at template position {} (world {})", id, helmLocal, helmWorld);
             }
             assembly = ShipAssembler.assemble(level, helmWorld, player);

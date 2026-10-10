@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/capstan_item",
+  "textures": {
+    "log": "biomeswevegone:block/pine/stripped_log",
+    "log_top": "biomeswevegone:block/pine/stripped_log_top",
+    "particle": "biomeswevegone:block/pine/planks",
+    "planks": "biomeswevegone:block/pine/planks"
+  }
+}

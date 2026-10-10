@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cannon_carriage_rammer",
+  "textures": {
+    "log": "minecraft:block/stripped_acacia_log",
+    "log_top": "minecraft:block/stripped_acacia_log_top",
+    "particle": "minecraft:block/acacia_planks",
+    "planks": "minecraft:block/acacia_planks"
+  }
+}

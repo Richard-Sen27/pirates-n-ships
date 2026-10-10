@@ -96,9 +96,12 @@ Gradle does not forward stdin):
    `/pirates hazard spawn waterspout`.
 3. Ports through worldgen: locates the nearest seafarer village, pirate island and navy outpost and generates their
    chunks, so the structures place and the port registry records them (fails the test if fewer than two ports
-   appear); then `/pirates world voyages lane` and `… spawn convoy` for each pair until one sails. On the default seed
-   none does (the village's lane search ends after 6 cells, the island to outpost one hits the 20000-cell budget), so
-   the convoy runs up to the lane search and the summary lists the sailing convoy as skipped. Then `/reload`.
+   appear); then `/pirates world voyages lane` and `… spawn convoy` for each pair until one sails. When none does
+   (on the default seed the three lie on three separate seas, and each lane reply says so), it locates the nearest
+   port of each kind from the middle and the quarters of the largest closed sea a lane reply names, generates them and
+   tries each pair with a new port: on the default seed a convoy then sails from pirate_island_-3012_4328 to
+   village_-5449_10600 (a 12 217-block lane, LANE1). If none sails, the summary lists the sailing convoy as skipped.
+   Then `/reload`.
 4. Lets the server tick for 30 s (`SMOKE_TICK_SECONDS`), then `/pirates world voyages`, `/pirates hazard clear`,
    `/pirates waves clear`, `/save-all flush` and `/stop`, and waits up to 120 s for the process to exit.
 5. Fails on: no `Done (`, a process that does not exit (it is then stopped by its own pid, nothing else is touched),

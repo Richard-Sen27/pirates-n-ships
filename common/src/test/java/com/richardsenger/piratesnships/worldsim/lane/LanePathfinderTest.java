@@ -172,7 +172,7 @@ class LanePathfinderTest {
         assertEquals(lane, Lane.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow());
         assertEquals(lane, Lane.CODEC.parse(JsonOps.INSTANCE, Lane.CODEC.encodeStart(JsonOps.INSTANCE, lane).getOrThrow()).getOrThrow());
 
-        LaneData.Snapshot snap = new LaneData.Snapshot(3, List.of(lane),
+        LaneData.Snapshot snap = new LaneData.Snapshot(3, Lanes.RULES, List.of(lane),
                 List.of(new LaneData.Failure(ResourceLocation.parse("pirates_n_ships:c"), ResourceLocation.parse("pirates_n_ships:d"), 99L)));
         Tag st = LaneData.Snapshot.CODEC.encodeStart(NbtOps.INSTANCE, snap).getOrThrow();
         assertEquals(snap, LaneData.Snapshot.CODEC.parse(NbtOps.INSTANCE, st).getOrThrow());
@@ -189,5 +189,123 @@ class LanePathfinderTest {
         assertEquals(b, data.lane(b, a).orElseThrow().from());
         data.checkVersion(2);
         assertFalse(data.lane(a, b).isPresent(), "a new version drops the cache");
+        data.putLane(Lane.of(a, b, List.of(new Lane.Point(0, 0), new Lane.Point(10, 0)), 0));
+        data.checkVersion(2, Lanes.RULES + 1);
+        assertFalse(data.lane(a, b).isPresent(), "new search rules drop the cache");
+    }
+
+    @Test
+    void cacheSavedBeforeLane1CarriesTheOldRules() {
+        // A WS2 save has no "rules" field: it reads as rules 1 and is dropped by the current rules
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putInt("version", 2);
+        LaneData.Snapshot old = LaneData.Snapshot.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
+        assertEquals(1, old.rules());
+        assertTrue(Lanes.RULES > 1, "LANE1 raised the rules");
+    }
+
+    // ------------------------------------------------------------------ LANE1: start cell, shores, budget
+
+    @Test
+    void berthWithNoSeaWithinTheRadiusReportsNoStart() {
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> cx > 20);
+        LanePathfinder.Result r = LanePathfinder.find(grid, 16, 16, 40 * CELL, 16, P);
+        assertEquals(LanePathfinder.Status.NO_START, r.status());
+        assertEquals(0, r.expanded());
+        assertTrue(r.start() == null && r.end() == null);
+    }
+
+    @Test
+    void berthOnLandStartsInTheNearestWaterCellWithinTheRadius() {
+        // The berth's cell (0,0) and its ring are land; the sea starts 3 cells east
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> cx >= 3);
+        LanePathfinder.Result r = LanePathfinder.find(grid, 16, 16, 30 * CELL + 16, 16, P);
+        assertTrue(r.found(), r.status().name());
+        assertEquals(new LanePathfinder.Cell(3, 0), r.start(), "the nearest water cell");
+        assertEquals(new Lane.Point(3 * CELL + 16, 16), r.waypoints().get(0), "the lane starts at that cell's centre");
+    }
+
+    /**
+     * The LANE1 case (seed 2718281828, the seafarer village): the berth's own cell is beach and its nearest ocean cell a
+     * small pocket ringed by beach; the open sea lies beyond the beach. Beaches as land: the search dies in the pocket
+     * (no_path after a handful of cells). Beaches as shore: the lane crosses the beach and reaches the far port.
+     */
+    @Test
+    void bayRingedByBeachReachesTheSeaOverTheShore() {
+        // ocean pocket (cx 1..2, cz -1..1), beach ring around it and the berth cell, open sea from cx >= 6
+        SeaGrid.CellPredicate ocean = (cx, cz) -> cx >= 6 || (cx >= 1 && cx <= 2 && Math.abs(cz) <= 1);
+        SeaGrid.CellPredicate beach = (cx, cz) -> cx >= -1 && cx <= 5 && Math.abs(cz) <= 3 && !ocean.test(cx, cz);
+        SeaGrid landBeaches = SeaGrid.of(CELL, ocean);
+        SeaGrid shores = SeaGrid.of(CELL, ocean, beach);
+        int toX = 60 * CELL + 16;
+        LanePathfinder.Result blocked = LanePathfinder.find(landBeaches, 16, 16, toX, 16, P);
+        assertEquals(LanePathfinder.Status.NO_PATH, blocked.status());
+        assertTrue(blocked.expanded() <= 6, "only the pocket: " + blocked.expanded());
+        LanePathfinder.Result open = LanePathfinder.find(shores, 16, 16, toX, 16, P);
+        assertTrue(open.found(), open.status().name());
+        assertEquals(new LanePathfinder.Cell(0, 0), open.start(), "the berth's own beach cell");
+        assertAllAtSea(shores, open.waypoints());
+    }
+
+    @Test
+    void lanesPreferOpenSeaToShore() {
+        // A beach strip along cz = 0 (the straight line) and open sea everywhere else
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> cz != 0 || cx <= 0 || cx >= 40, (cx, cz) -> cz == 0);
+        LanePathfinder.Result r = LanePathfinder.find(grid, 16, 16, 40 * CELL + 16, 16, P);
+        assertTrue(r.found());
+        long onShore = 0;
+        List<Lane.Point> pts = r.waypoints();
+        for (int i = 1; i < pts.size() - 1; i++) if (grid.isShore(grid.cellOf(pts.get(i).x()), grid.cellOf(pts.get(i).z()))) onShore++;
+        assertEquals(0, onShore, "no interior waypoint on the shore: " + pts);
+        assertTrue(pts.size() > 2, "steps off the beach strip: " + pts);
+    }
+
+    @Test
+    void budgetGrowsWithTheStraightDistance() {
+        LanePathfinder.Params p = new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 20_000, 400);
+        assertEquals(20_000, p.budget(0), "the floor for neighbours");
+        assertEquals(20_000, p.budget(50), "400 x 50 = the floor");
+        assertEquals(63_200, p.budget(158), "a 5050-block pair at 32-block cells");
+        assertEquals(200_000, p.budget(10_000), "capped");
+        assertEquals(200_000, new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 20_000, 0).budget(10), "0 per cell: always the cap");
+        assertEquals(500, new LanePathfinder.Params(4.0, 500, 8).budget(1_000), "the fixed-budget constructor");
+        assertEquals(1_000, new LanePathfinder.Params(4.0, 1_000, 8, 4.0, 5_000, 400).budget(1), "min above max: max wins");
+    }
+
+    @Test
+    void searchUsesTheDistanceBudget() {
+        // A closed sea of 141 x 141 = 19881 cells: with the old fixed 20000 it is searched to the end (NO_PATH); a budget
+        // of 400 per straight cell for 30 cells (12000) gives up first, and is reported as BUDGET with that number
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> Math.abs(cx) <= 70 && Math.abs(cz) <= 70);
+        LanePathfinder.Params scaled = new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 1_000, 400);
+        LanePathfinder.Result r = LanePathfinder.find(grid, 16, 16, 16 + 30 * CELL, 16 + 75 * CELL, scaled);
+        // the end (cell 30, 75) is land; its nearest sea cell within 8 is (30, 70): straight octile distance 30 + 0.414 * 70
+        assertEquals(LanePathfinder.Status.FOUND, r.status(), "inside the closed sea the end cell is reachable");
+        LanePathfinder.Result cut = LanePathfinder.find(grid, 16, 16, 16 + 30 * CELL, 16 + 200 * CELL, scaled);
+        assertEquals(LanePathfinder.Status.NO_END, cut.status());
+        SeaGrid split = SeaGrid.of(CELL, (cx, cz) -> (Math.abs(cx) <= 70 && Math.abs(cz) <= 70) || cx >= 100);
+        LanePathfinder.Result closed = LanePathfinder.find(split, 16, 16, 101 * CELL + 16, 16, new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 20_000, 400));
+        assertEquals(LanePathfinder.Status.NO_PATH, closed.status(), "separate seas: the whole closed sea searched");
+        assertEquals(141 * 141, closed.expanded());
+        assertEquals(new LanePathfinder.Bounds(-70, -70, 70, 70), closed.searched(), "the closed sea's extent");
+        assertEquals(40_400, closed.budget(), "400 x 101 cells");
+        LanePathfinder.Result tight = LanePathfinder.find(split, 16, 16, 101 * CELL + 16, 16, new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 1_000, 100));
+        assertEquals(LanePathfinder.Status.BUDGET, tight.status());
+        assertEquals(10_100, tight.expanded());
+        assertEquals(10_100, tight.budget());
+    }
+
+    @Test
+    void laneCrossesA400CellSeaAroundAnIsland() {
+        // 400 cells of sea (12800 blocks at 32), an island of 41 x 81 cells across the straight line in the middle
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> cx >= -5 && cx <= 405 && Math.abs(cz) <= 200
+                && !(cx >= 180 && cx <= 220 && Math.abs(cz) <= 40));
+        LanePathfinder.Result r = LanePathfinder.find(grid, 16, 16, 400 * CELL + 16, 16, LanePathfinder.Params.DEFAULT);
+        assertTrue(r.found(), r.status() + " after " + r.expanded() + " of " + r.budget());
+        assertAllAtSea(grid, r.waypoints());
+        assertTrue(r.waypoints().stream().anyMatch(p -> Math.abs(grid.cellOf(p.z())) > 40), "goes round the island: " + r.waypoints());
+        double straight = 400.0 * CELL;
+        assertTrue(Lane.length(r.waypoints()) < straight * 1.15, "not a long detour: " + Lane.length(r.waypoints()));
+        assertTrue(r.expanded() < r.budget(), "within the budget: " + r.expanded() + " of " + r.budget());
     }
 }

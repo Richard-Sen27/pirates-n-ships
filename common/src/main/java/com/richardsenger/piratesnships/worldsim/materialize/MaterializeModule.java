@@ -54,6 +54,6 @@ public final class MaterializeModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MaterializeGameTests.class, ArmedShipGameTests.class);
+        return List.of(MaterializeGameTests.class, ArmedShipGameTests.class, LaneVoyageGameTests.class);
     }
 }

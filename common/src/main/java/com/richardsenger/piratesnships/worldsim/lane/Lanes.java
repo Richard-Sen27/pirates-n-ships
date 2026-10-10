@@ -37,8 +37,17 @@ import java.util.Optional;
  */
 public final class Lanes {
 
-    /** A searched pair: the lane (if found), the pathfinder's result and the time it took. */
-    public record Computed(Optional<Lane> lane, LanePathfinder.Result result, long nanos, long biomeSamples) {
+    /**
+     * The version of the search rules, stored with the cache: a cache made under other rules is dropped. 1: WS2;
+     * 2: LANE1 (beach cells passable as shore, the budget scales with the distance).
+     */
+    public static final int RULES = 2;
+
+    /**
+     * A searched pair: the lane (if found), the pathfinder's result, the time it took, the biome samples it took and the
+     * straight distance between the two endpoints in blocks.
+     */
+    public record Computed(Optional<Lane> lane, LanePathfinder.Result result, long nanos, long biomeSamples, double straight) {
     }
 
     public enum Status { READY, QUEUED, FAILED, UNKNOWN_PORT }
@@ -149,13 +158,19 @@ public final class Lanes {
         Optional<Port> pa = PortRegistry.get(server).index().byId(a);
         Optional<Port> pb = PortRegistry.get(server).index().byId(b);
         if (pa.isEmpty() || pb.isEmpty() || !pa.get().dimension().equals(pb.get().dimension())) {
-            return new Computed(Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.NO_PATH, List.of(), 0, 0), 0, 0);
+            return new Computed(Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.NO_PATH, List.of(), 0, 0), 0, 0, 0);
         }
         ServerLevel level = server.getLevel(pa.get().dimension());
         if (level == null) {
-            return new Computed(Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.NO_PATH, List.of(), 0, 0), 0, 0);
+            return new Computed(Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.NO_PATH, List.of(), 0, 0), 0, 0, 0);
         }
         return compute(server, pa.get(), pb.get(), grid(level));
+    }
+
+    /** The straight distance in blocks between the lane endpoints of two ports. */
+    public static double straight(Port from, Port to) {
+        BlockPos s = endpoint(from), e = endpoint(to);
+        return Math.hypot(s.getX() - e.getX(), s.getZ() - e.getZ());
     }
 
     /** Searches the lane between two ports on {@code grid} now and caches the outcome (tests pass their own grid). */
@@ -175,16 +190,18 @@ public final class Lanes {
         LaneData data = data(server);
         long now = server.overworld().getGameTime();
         QUEUE.remove(LaneData.key(from.id(), to.id()));
+        double straight = straight(from, to);
         if (!r.found()) {
             data.putFailure(from.id(), to.id(), now);
-            Constants.LOG.debug("No lane {} -> {}: {} after {} cells", from.id(), to.id(), r.status(), r.expanded());
-            return new Computed(Optional.empty(), r, nanos, samples);
+            Constants.LOG.debug("No lane {} -> {}: {} after {} of {} cells (start cell {}, end cell {}, straight {} blocks, {} ms)",
+                    from.id(), to.id(), r.status(), r.expanded(), r.budget(), r.start(), r.end(), Math.round(straight), nanos / 1_000_000);
+            return new Computed(Optional.empty(), r, nanos, samples, straight);
         }
         Lane lane = Lane.of(from.id(), to.id(), r.waypoints(), now);
         data.putLane(lane);
-        Constants.LOG.debug("Lane {} -> {}: {} blocks, {} waypoints, {} cells, {} samples, {} ms", from.id(), to.id(),
-                Math.round(lane.length()), lane.waypoints().size(), r.expanded(), samples, nanos / 1_000_000);
-        return new Computed(Optional.of(lane), r, nanos, samples);
+        Constants.LOG.debug("Lane {} -> {}: {} blocks, {} waypoints, {} of {} cells, {} samples, {} ms", from.id(), to.id(),
+                Math.round(lane.length()), lane.waypoints().size(), r.expanded(), r.budget(), samples, nanos / 1_000_000);
+        return new Computed(Optional.of(lane), r, nanos, samples, straight);
     }
 
     /** Where a lane starts or ends at {@code port}: its first berth, else its centre. */
@@ -248,12 +265,16 @@ public final class Lanes {
         return data.failure(a, b).filter(f -> server.overworld().getGameTime() - f.tick() < VoyageConfig.RETRY_FAILED_TICKS.get()).isPresent();
     }
 
-    /** The dimension's grid, rebuilt when the cell size changed or it grew too large. */
-    static BiomeSeaGrid grid(ServerLevel level) {
+    /**
+     * The dimension's lane grid ({@code lanes.cross_shores}: beach cells are shore), rebuilt when the cell size or the
+     * shore setting changed or it grew too large.
+     */
+    public static BiomeSeaGrid grid(ServerLevel level) {
         int cell = VoyageConfig.CELL_BLOCKS.get();
+        boolean shores = VoyageConfig.CROSS_SHORES.get();
         BiomeSeaGrid g = GRIDS.get(level.dimension());
-        if (g == null || g.cellBlocks() != cell || g.samples() > MAX_GRID_SAMPLES) {
-            g = BiomeSeaGrid.of(level, cell);
+        if (g == null || g.cellBlocks() != cell || g.shores() != shores || g.samples() > MAX_GRID_SAMPLES) {
+            g = BiomeSeaGrid.of(level, cell, shores);
             GRIDS.put(level.dimension(), g);
         }
         return g;

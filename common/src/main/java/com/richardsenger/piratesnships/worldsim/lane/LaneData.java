@@ -20,8 +20,9 @@ import java.util.Optional;
 /**
  * The lane cache (WS2), saved with the overworld ({@code data/pirates_n_ships_lanes.dat}): one {@link Lane} per
  * unordered port pair, stored in the direction it was computed, and the game time of the last failed search per pair.
- * {@code version} is {@code world_simulation.lanes.version} at the time of saving; a different version empties the
- * cache ({@link Lanes} checks it). Server thread only.
+ * {@code version} is {@code world_simulation.lanes.version} at the time of saving and {@code rules} the code's
+ * {@link Lanes#RULES} (raised when the search rules change, LANE1); a different value of either empties the cache
+ * ({@link Lanes} checks it). Server thread only.
  */
 public final class LaneData extends SavedData {
 
@@ -37,9 +38,10 @@ public final class LaneData extends SavedData {
     }
 
     /** Everything stored, as one codec value. */
-    public record Snapshot(int version, List<Lane> lanes, List<Failure> failures) {
+    public record Snapshot(int version, int rules, List<Lane> lanes, List<Failure> failures) {
         public static final Codec<Snapshot> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("version", 0).forGetter(Snapshot::version),
+                Codec.INT.optionalFieldOf("rules", 1).forGetter(Snapshot::rules),
                 Lane.CODEC.listOf().optionalFieldOf("lanes", List.of()).forGetter(Snapshot::lanes),
                 Failure.CODEC.listOf().optionalFieldOf("failures", List.of()).forGetter(Snapshot::failures)
         ).apply(i, Snapshot::new));
@@ -49,6 +51,7 @@ public final class LaneData extends SavedData {
             new SavedData.Factory<>(LaneData::new, LaneData::load, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
 
     private int version = -1;
+    private int rules = -1;
     private final Map<String, Lane> lanes = new HashMap<>();
     private final Map<String, Failure> failures = new HashMap<>();
 
@@ -66,15 +69,29 @@ public final class LaneData extends SavedData {
         return version;
     }
 
-    /** Empties the cache if it was made with another version, and stamps it with {@code current}. */
+    public int rules() {
+        return rules;
+    }
+
+    /** {@link #checkVersion(int, int)} with the current {@link Lanes#RULES}. */
     public void checkVersion(int current) {
-        if (version == current) return;
+        checkVersion(current, Lanes.RULES);
+    }
+
+    /**
+     * Empties the cache if it was made with another config version or other search rules, and stamps it with
+     * {@code current} and {@code currentRules}.
+     */
+    public void checkVersion(int current, int currentRules) {
+        if (version == current && rules == currentRules) return;
         if (!lanes.isEmpty() || !failures.isEmpty()) {
-            Constants.LOG.info("Lane cache version {} != {}: dropping {} lanes", version, current, lanes.size());
+            Constants.LOG.info("Lane cache version {} (rules {}) != {} (rules {}): dropping {} lanes and {} failures", version, rules,
+                    current, currentRules, lanes.size(), failures.size());
         }
         lanes.clear();
         failures.clear();
         version = current;
+        rules = currentRules;
         setDirty();
     }
 
@@ -119,11 +136,12 @@ public final class LaneData extends SavedData {
     }
 
     public Snapshot snapshot() {
-        return new Snapshot(version, new ArrayList<>(lanes.values()), new ArrayList<>(failures.values()));
+        return new Snapshot(version, rules, new ArrayList<>(lanes.values()), new ArrayList<>(failures.values()));
     }
 
     void restore(Snapshot s) {
         version = s.version();
+        rules = s.rules();
         lanes.clear();
         failures.clear();
         for (Lane l : s.lanes()) lanes.put(key(l.from(), l.to()), l);

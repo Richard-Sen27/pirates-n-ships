@@ -122,19 +122,46 @@ public final class VoyageCommands {
         CommandSourceStack source = c.getSource();
         ResourceLocation from = ResourceLocationArgument.getId(c, "from");
         ResourceLocation to = ResourceLocationArgument.getId(c, "to");
+        PortRegistry ports = PortRegistry.get(source.getServer());
+        Optional<Port> pf = ports.index().byId(from), pt = ports.index().byId(to);
+        if (pf.isEmpty() || pt.isEmpty() || !pf.get().dimension().equals(pt.get().dimension())) {
+            source.sendFailure(Component.translatable(KEY + "no_lane.unknown", from.toString(), to.toString()));
+            return 0;
+        }
         Lanes.Computed r = Lanes.compute(source.getServer(), from, to);
         long ms = r.nanos() / 1_000_000;
         if (r.lane().isEmpty()) {
-            source.sendFailure(Component.translatable(KEY + "no_lane", from.toString(), to.toString(),
-                    r.result().status().name().toLowerCase(java.util.Locale.ROOT), r.result().expanded(), ms));
+            source.sendFailure(noLane(from, to, r, ms));
             return 0;
         }
         Lane lane = r.lane().get();
         source.sendSuccess(() -> Component.translatable(KEY + "lane", from.toString(), to.toString(), Math.round(lane.length()),
-                lane.waypoints().size(), r.result().expanded(), r.biomeSamples(), ms), false);
+                lane.waypoints().size(), r.result().expanded(), r.result().budget(), r.biomeSamples(), ms), false);
         String points = lane.waypoints().stream().map(p -> p.x() + " " + p.z()).collect(Collectors.joining("; "));
         source.sendSuccess(() -> Component.literal(points), false);
         return (int) Math.round(lane.length());
+    }
+
+    /** Why there is no lane, in words: no sea at a berth, separate seas, or the budget. */
+    static Component noLane(ResourceLocation from, ResourceLocation to, Lanes.Computed r, long ms) {
+        com.richardsenger.piratesnships.worldsim.lane.LanePathfinder.Result res = r.result();
+        String status = res.status().name().toLowerCase(java.util.Locale.ROOT);
+        return switch (res.status()) {
+            case NO_START -> Component.translatable(KEY + "no_lane.no_start", from.toString(), to.toString(), status,
+                    VoyageConfig.ENDPOINT_RADIUS_CELLS.get(), from.toString(), ms);
+            case NO_END -> Component.translatable(KEY + "no_lane.no_start", from.toString(), to.toString(), status,
+                    VoyageConfig.ENDPOINT_RADIUS_CELLS.get(), to.toString(), ms);
+            case NO_PATH -> {
+                int cell = VoyageConfig.CELL_BLOCKS.get();
+                var b = res.searched();
+                yield Component.translatable(KEY + "no_lane.no_path", from.toString(), to.toString(), status, res.expanded(),
+                        from.toString(), b == null ? "-" : b.minX() * cell, b == null ? "-" : b.maxX() * cell + cell - 1,
+                        b == null ? "-" : b.minZ() * cell, b == null ? "-" : b.maxZ() * cell + cell - 1, to.toString(), ms);
+            }
+            case BUDGET -> Component.translatable(KEY + "no_lane.budget", from.toString(), to.toString(), status, res.expanded(),
+                    res.budget(), Math.round(r.straight()), ms);
+            case FOUND -> Component.translatable(KEY + "no_lane", from.toString(), to.toString(), status, res.expanded(), ms);
+        };
     }
 
     public static void lang(LangBuilder lang) {
@@ -145,6 +172,10 @@ public final class VoyageCommands {
                 .add(KEY + "unknown", "No single voyage with an id starting %s")
                 .add(KEY + "arrived", "Voyage %s arrived at %s")
                 .add(KEY + "no_lane", "No lane from %s to %s (%s after %s cells, %s ms)")
-                .add(KEY + "lane", "Lane %s -> %s: %s blocks, %s waypoints, %s cells searched, %s biome samples, %s ms");
+                .add(KEY + "no_lane.unknown", "No lane from %s to %s: unknown port, or the two are in different dimensions")
+                .add(KEY + "no_lane.no_start", "No lane from %s to %s (%s): no sea within %s cells of the berth of %s (%s ms)")
+                .add(KEY + "no_lane.no_path", "No lane from %s to %s (%s after %s cells): the sea around %s (x %s..%s, z %s..%s) is closed and never reaches %s, the two lie on separate seas (%s ms)")
+                .add(KEY + "no_lane.budget", "No lane from %s to %s (%s after %s cells): the search budget of %s cells for %s blocks ran out (%s ms)")
+                .add(KEY + "lane", "Lane %s -> %s: %s blocks, %s waypoints, %s of %s cells searched, %s biome samples, %s ms");
     }
 }

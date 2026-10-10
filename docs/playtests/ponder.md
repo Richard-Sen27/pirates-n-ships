@@ -256,3 +256,29 @@ anything hidden, cut off, missing or wrong.
 5. **Cargo and Weight** (cargo crate): after the two empty crates appear aft, a new green line "Placed empty, the
    crates leave her level: her ballast is worked out again for new blocks" points at the starboard crate; the ship stays
    level until the crates fill. The rest is unchanged.
+
+# PND5: the Ponder hint on every subject
+
+Before PND5 only the 21 items the scenes were registered under showed Ponder's hint (hold W to ponder); now every block
+and item a scene shows does, in every wood. Headless: the JUnit tests read every schematic's palette and every
+`SceneKit` item of the storyboards and fail if one is not a subject of its scene; the plugin test registers against
+Ponder's own registry; a GameTest checks every subject against the real item registry and wood families on both
+loaders. What only a client shows: the tooltip hint itself, the order of an item's scenes and Ponder's index.
+
+Setup: `./gradlew :neoforge:runClient` (then `./gradlew :fabric:runClient`), a creative world, the mod's creative tab.
+
+1. **A spruce railing.** Hover it in the creative tab or the inventory. Check: the tooltip shows Ponder's hint
+   (hold W to ponder) and its progress bar while W is held. Hold W: Ponder opens on **Railings and Bulwarks**, then (arrows)
+   **On Deck**, **Oars** and **Ratline Nets**. Same for a jungle railing port, a birch bulwark, an oak rope railing.
+2. **A cannon** (the dark oak one, then an acacia cannon). Check: the hint; hold W: **Loading and Firing the Cannon**
+   first, then Crew Orders and Railings and Bulwarks.
+3. **A water barrel** (any wood). Check: the hint; hold W: **Galley and Provisions**.
+4. **A spruce helm.** Check: Ship Assembly and Steering first, then Crew Orders, Oars and Her Name and Figurehead.
+5. **The captain's whistle.** Check: Crew Orders comes first, the scenes that only show the whistle after it.
+6. **More hints:** cargo barrel, cannonball, chainplate, mast hoop, flag pedestal, navy flag, harbor master's desk,
+   sea cot, ratlines, grappling hook, cutlass, figurehead (any). Each shows the hint and opens a scene with it in it.
+7. **No hint:** a sea chest, a chart table, a pistol, a spawn egg (these have no scene yet).
+8. **Ponder's index** (the index button in any Ponder scene). Check: one railing (oak), one helm,
+   one cannon, one cargo barrel and so on, **not one entry per wood**; clicking the oak railing opens its scenes.
+9. **The Almanac** still opens each scene with its "Show me" buttons (try the railings and the cannon ones).
+   Send `latest.log` if anything in Ponder fails to open.

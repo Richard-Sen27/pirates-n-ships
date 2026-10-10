@@ -1,21 +1,30 @@
 package com.richardsenger.piratesnships.almanac.ponder;
 
 import com.richardsenger.piratesnships.Constants;
+import net.createmod.ponder.api.registration.IndexExclusionHelper;
 import net.createmod.ponder.api.registration.PonderPlugin;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.createmod.ponder.api.registration.SharedTextRegistrationHelper;
 import net.createmod.ponder.api.scene.PonderStoryBoard;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Our Ponder plugin (docs/design.md §3.4, ALM4), added to {@code PonderIndex} on the physical client by
- * {@link AlmanacPonder#register()}. It registers every scene of {@link AlmanacScenes#ALL} for its item (so Ponder's key
- * on the item, "hold W", plays it) and the scenes' shared text (the English defaults Ponder's editing mode shows; the
- * game reads the generated lang).
+ * {@link AlmanacPonder#register()}. It registers every scene of {@link AlmanacScenes#ALL} for every item it shows (its
+ * subjects with their wood families, PND5; so Ponder's key on any of them, "hold W", plays it) and the scenes' shared
+ * text (the English defaults Ponder's editing mode shows; the game reads the generated lang).
  *
- * <p>No tags: Ponder's index lists every item with scenes without one.
+ * <p>No tags: Ponder's index lists every item with scenes without one; it shows one member per wood family
+ * ({@link #indexExclusions}).
  */
 public final class AlmanacPonderPlugin implements PonderPlugin {
 
@@ -51,13 +60,50 @@ public final class AlmanacPonderPlugin implements PonderPlugin {
 
     @Override
     public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
+        registerScenes(helper, SceneSubjects.registered());
+    }
+
+    /**
+     * Registers every scene for each of its subjects, {@code subjects} giving the item ids a subject stands for (its wood
+     * family's members that are items, {@link SceneSubjects}). Two passes, so that an item's own scenes (those it is the
+     * component of, with its wood family) come first in its Ponder list and the scenes that merely show it after them;
+     * the component is registered even if {@code subjects} drops it.
+     */
+    void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper,
+                        Function<ResourceLocation, List<ResourceLocation>> subjects) {
+        Map<ResourceLocation, List<ResourceLocation>> own = new LinkedHashMap<>();
         for (AlmanacScenes.Scene scene : AlmanacScenes.ALL) {
-            PonderStoryBoard board = STORYBOARDS.get(scene.id());
-            if (board == null) {
-                throw new IllegalStateException("no storyboard for the Ponder scene " + scene.id());
-            }
-            helper.addStoryBoard(scene.component(), scene.schematic(), board);
+            Set<ResourceLocation> components = new LinkedHashSet<>();
+            components.add(scene.component());
+            components.addAll(subjects.apply(scene.component()));
+            own.put(scene.id(), List.copyOf(components));
+            helper.forComponents(components).addStoryBoard(scene.schematic(), board(scene));
         }
+        for (AlmanacScenes.Scene scene : AlmanacScenes.ALL) {
+            List<ResourceLocation> others = new ArrayList<>(scene.expand(subjects));
+            others.removeAll(own.get(scene.id()));
+            if (!others.isEmpty()) {
+                helper.forComponents(others).addStoryBoard(scene.schematic(), board(scene));
+            }
+        }
+    }
+
+    private static PonderStoryBoard board(AlmanacScenes.Scene scene) {
+        PonderStoryBoard board = STORYBOARDS.get(scene.id());
+        if (board == null) {
+            throw new IllegalStateException("no storyboard for the Ponder scene " + scene.id());
+        }
+        return board;
+    }
+
+    /**
+     * PND5: Ponder's index lists every item with scenes; of a wood family it shows only the family's face (the oak
+     * railing, the helm), not one entry per wood ({@link SceneSubjects#hiddenFromIndex}).
+     */
+    @Override
+    public void indexExclusions(IndexExclusionHelper helper) {
+        Set<ResourceLocation> hidden = SceneSubjects.hiddenFromIndex();
+        helper.exclude(item -> hidden.contains(BuiltInRegistries.ITEM.getKey(item.asItem())));
     }
 
     @Override

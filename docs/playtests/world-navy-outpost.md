@@ -161,3 +161,51 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
 - **Ladders.** Vanilla mobs don't climb ladders on purpose: tower roof guards are never drafted, and a soldier who
   fell off a wall and can only get back by ladder keeps trying to reach his post.
 - **Terrain.** A waypoint that terrain filled is skipped; a post filled by terrain has no guard (WG3).
+
+## STR4: a natural layout (walls that bend, a court inside)
+Every outpost is different now: the gate and the quay as before, a wall trace that runs along the shore, turns inland
+round a corner, may step out again or turn back toward the other run, with bastions, sally ports, stairs and three
+kinds of tower; inside, lanes of gravel and cobbles from the land gate with buildings (barracks of three kinds, two
+brigs, a watchtower, a signal tower, the officers' quarters, a powder magazine, an armoury, a gun battery, a store
+house, a chapel), a parade ground with the navy ensign and a well, and props (shot, crates, a drill target, a bell, a
+cart, a tree, benches). Renders of three generated outposts: `art/renders/structures/navy_outpost_*_{top,iso}.png`.
+
+Use a **new** world (old outposts keep their old shape). Find three outposts: `/locate structure
+pirates_n_ships:navy_outpost`, teleport there, then `/locate` again from a few hundred blocks further along the coast.
+
+1. **The trace.** Walk round each fort on the outside, then along the walkway (court stairs, then the wall pieces' own
+   stairs).
+   - **Expected:** no two forts share a shape and none is a straight line. Each run leaves the gate along the shore for
+     at least one piece, most turn inland at a corner (a lantern on the corner merlon) and some turn back toward the
+     other run with a corner tower; the run always ends in a tower (the square corner tower, the round tower or the
+     squat battery). Bastions on the shore stand in the water on their footings, with two guns facing out to sea;
+     every wall piece but the steps has a gun facing outward. Walkways join piece to piece without gaps or steps, including round the
+     corners and onto the bastions. Report any wall piece floating over a dip or buried in a hill (the walls are level
+     at the gate's height on purpose; how often it looks wrong matters).
+2. **The court.** Walk the lanes from the land gate.
+   - **Expected:** lanes of gravel and cobbles between andesite kerbs, lying on the ground (no paved rectangles, grass
+     between the kerbs), bending and forking; buildings stand beside them with their doors to the lane, sitting on the
+     ground (the beard levels a little ground round them; no floating corners, no buried doors); decorations fill the
+     gaps; lanes end at a store shed, the privy or a woodpile. Most courts lie inside the walls; some lanes run on past
+     the towers inland (report how it looks).
+3. **The buildings.** Open a few doors: the powder magazine (iron door, earth bank on three sides), the larger brig
+   (four cells), the officers' quarters (ladder to the bedrooms), the chapel (bell in the gable), the signal tower (climb
+   the ladder to the gallery: a smoking fire on a hay bale).
+   - **Expected:** furnished, lit (the magazine dark on purpose), nothing poking through walls; the smoke column of the
+     signal fire is visible from the sea.
+4. **The brig.** Shackle a pirate and put him in a cell of the larger brig, lock the brig door with a key.
+   - **Expected:** the cell counts as a cell (the prisoner stays, the brig code's cell check passes), as in the ST3
+     brig.
+5. **The garrison.** Count the navy mobs (`/pirates mob squad info` near the officer).
+   - **Expected:** with the defaults six soldiers and one officer: the officer by the office door in the gate, two
+     guards at the land gate, the rest on the nearest wall pieces or towers facing outward (out to sea on the shore,
+     out to the land on a flank); none stands inside a block. With `garrison_soldiers` raised, the buildings get their
+     guards (inside the barracks, in the brig's guard room facing the cells, on the watchtower's lookout and so on).
+6. **The patrol.** `/pirates mob squad patrol`, follow the squad.
+   - **Expected:** the file walks the court, the gates, the quay, then out along the east run piece by piece round its
+     corners to the last wall before the tower, back, and the same on the west run; nobody gets stuck on a corner, a
+     bastion or a stair piece. Report any waypoint skipped as stuck.
+7. **The quay.** Sail in.
+   - **Expected:** the quay runs out into the water with both berths free and in water; no sand bar along it, the sea
+     in front of the walls stays sea (the walls and the quay are kept out of the beard; the gate's own beard may widen
+     the beach a few blocks beside the quay's root).

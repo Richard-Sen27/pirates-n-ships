@@ -5,14 +5,17 @@ The sea is to the north. The seaward side is a stretch of the curtain wall (_sty
 parapet and merlons on z 0, recessed bays between pilasters) pierced by an arched sea gate (x 6..8) through which
 ``quay_out`` [7, 0, 0] hangs the quay: its deck continues the paving (y 0), which sits one block above sea level. Over
 the sea gate a timber guard shelter with the alarm bell stands on the walkway. The curtain continues east and west
-through ``wall_east_out`` [14, 0, 2] and ``wall_west_out`` [0, 0, 3].
+through ``gate_east_out`` [14, 0, 2] and ``gate_west_out`` [0, 0, 3] (``wall_*_out`` before STR4; the gate's pair
+draws from ``navy_outpost/walls_gate``, the shore pieces without the angles).
 
 The flanks and the landward wall are two blocks thick: an outer skin of pilasters and recessed bays on a sloped, mossy
 plinth under a corbel table, an inner wall behind the recesses, the walkway (y 4) on top behind a parapet with
 slab-capped merlons. The landward wall's walkway has two embrasures where the garrison's guards stand (x 3 and x 11).
 The gatehouse in its middle: an arched land gate (x 6..8) between two square towers (lanterns on their merlons, blue
 banners on their faces), a raised portcullis showing in its slot over the arch under the navy's colours, buttresses on
-the apron (row z 14) where ``building_out`` [14, 0, 14] attaches the fort's buildings landward, clear of the gate.
+the apron (row z 14). Since STR4 the court's lanes leave through the land gate: ``lanehead_out`` [7, 0, 14] on the
+apron's cobbles pulls a lane, a fork or the parade ground from ``navy_outpost/laneheads``, so the court always grows
+inland (before STR4 a ``building_out`` [14, 0, 14] hung one building there).
 
 Inside, the parade court: an andesite path from gate to gate, the navy flag on a pole, lantern posts, stores, and
 stairs up to the walkway on the east side. On the west side the harbor master's office (door east onto the court,
@@ -194,13 +197,13 @@ p.put(13, 1, 8, "pirates_n_ships:cargo_crate")
 age(p, where=lambda x, y, z: y > 0 or not (0 < x < S - 1 and COURT_Z0 <= z < SOUTH_Z))
 
 connector(p, 7, 0, 0, "quay_out", "north", "minecraft:chiseled_stone_bricks")
-connector(p, S - 1, 0, 2, "wall_east_out", "east", "minecraft:stone_bricks")
-connector(p, 0, 0, 3, "wall_west_out", "west", "minecraft:stone_bricks")
-connector(p, S - 1, 0, APRON_Z, "building_out", "south", "minecraft:gravel")
+connector(p, S - 1, 0, 2, "gate_east_out", "east", "minecraft:stone_bricks")
+connector(p, 0, 0, 3, "gate_west_out", "west", "minecraft:stone_bricks")
+connector(p, 7, 0, APRON_Z, "lanehead_out", "south", "minecraft:cobblestone")
 
 dry(p)
 p.emit("walled fort gate: sea gate to the quay under a guard shelter, parade court with the navy flag, harbor master's "
        "office, towered gatehouse with a portcullis",
        ["Start piece. Sea to the north: quay_out [7, 0, 0]; the paving (y 0) sits one block above sea level.",
-        "Curtain wall east and west: wall_east_out [14, 0, 2], wall_west_out [0, 0, 3]; walkway top y 4.",
-        "building_out [14, 0, 14] on the landward apron, clear of the land gate (x 6..8)."])
+        "Curtain wall east and west: gate_east_out [14, 0, 2], gate_west_out [0, 0, 3]; walkway top y 4.",
+        "lanehead_out [7, 0, 14] on the landward apron, in the land gate (x 6..8): the court's lanes (STR4)."])

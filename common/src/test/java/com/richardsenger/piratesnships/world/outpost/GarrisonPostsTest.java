@@ -101,6 +101,37 @@ class GarrisonPostsTest {
         }
     }
 
+    /** STR4: every piece of the wall trace, every tower and every building has its guard; the quarters an officer. */
+    @Test
+    void everyWallTowerAndBuildingHasItsPosts() {
+        Set<String> guarded = new HashSet<>(OutpostPieces.WALLS.keySet());
+        guarded.addAll(OutpostPieces.TOWERS);
+        guarded.addAll(OutpostPieces.BUILDINGS);
+        for (String name : guarded) {
+            List<Post> posts = GarrisonPosts.POSTS.getOrDefault(name, List.of());
+            assertTrue(posts.stream().anyMatch(p -> p.role() == Role.SOLDIER), name + " has a soldier's post");
+            int tier = OutpostPieces.BUILDINGS.contains(name) ? GarrisonPosts.TIER_BUILDING : GarrisonPosts.TIER_WALLS;
+            assertTrue(posts.stream().filter(p -> p.role() == Role.SOLDIER).allMatch(p -> p.tier() == tier), name + ": tier " + tier);
+        }
+        assertEquals(guarded.size() + 1, GarrisonPosts.POSTS.size(), "the gate and the guarded pieces, nothing else");
+        assertTrue(GarrisonPosts.POSTS.get("officers_quarters").stream().anyMatch(p -> p.role() == Role.OFFICER));
+        // the gate's officers come first: one officer stays at the office door even with the quarters in the court
+        PlacedPiece quarters = new PlacedPiece("officers_quarters", new BlockPos(120, 64, 230), Rotation.NONE);
+        List<Assignment> two = GarrisonPosts.plan(List.of(quarters, gate(Rotation.NONE)), 0, 4);
+        assertEquals(new BlockPos(106, 65, 207), two.get(0).pos(), "the office door first");
+        assertEquals(new BlockPos(123, 65, 234), two.get(3).pos(), "then the quarters");
+    }
+
+    /** STR4: a flank wall's guard faces outward, the land beside the fort (east for the east run turned south). */
+    @Test
+    void aFlankGuardFacesOutward() {
+        PlacedPiece flank = new PlacedPiece("flank_long", new BlockPos(130, 64, 215), Rotation.CLOCKWISE_90);
+        Assignment guard = GarrisonPosts.plan(List.of(gate(Rotation.NONE), flank), 16, 0).stream()
+                .filter(a -> a.pos().getY() == 69 && a.pos().getX() > 120).findFirst().orElseThrow();
+        assertEquals(Direction.EAST, guard.facing());
+        assertEquals(new BlockPos(130 - 2, 69, 215 + 1), guard.pos(), "local (1, 5, 2) turned clockwise");
+    }
+
     @Test
     void theGateAloneHoldsTheDefaultGarrison() {
         long soldiers = GarrisonPosts.POSTS.get(GarrisonPosts.FORT_GATE).stream().filter(p -> p.role() == Role.SOLDIER).count();

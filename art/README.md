@@ -3068,7 +3068,7 @@ tower, the fallback once the walls' depth runs out). WG1 defines them.
 | `pirates_n_ships:wall_east_in` | `pirates_n_ships:wall_east_out` | `minecraft:empty` | aligned | wall, wall tower [0, 0, 2]; west (stone bricks) |
 | `pirates_n_ships:wall_west_out` | `pirates_n_ships:wall_west_in` | `pirates_n_ships:navy_outpost/walls` | aligned | fort gate, wall [0, 0, 3]; west (stone bricks) |
 | `pirates_n_ships:wall_west_in` | `pirates_n_ships:wall_west_out` | `minecraft:empty` | aligned | wall, wall tower [6, 0, 3]; east (stone bricks) |
-| `pirates_n_ships:building_out` | `pirates_n_ships:building_in` | `pirates_n_ships:navy_outpost/buildings` | rollable | fort gate [14, 0, 14] south (gravel) |
+| `pirates_n_ships:building_out` | `pirates_n_ships:building_in` | `pirates_n_ships:navy_outpost/buildings` | rollable | fort gate [14, 0, 14] south (gravel) until STR4; since STR4 the court's lanes (see "Natural layout of the outpost (STR4)") |
 | `pirates_n_ships:building_in` | `pirates_n_ships:building_out` | `minecraft:empty` | rollable | barracks, brig, watchtower (north side, y 0; cobblestone) |
 | `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | quay [0, 4, 9] and [6, 4, 9], north (water) |
 
@@ -3127,6 +3127,189 @@ Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,ba
 - **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
   placement), and a locked door without an owner would open only with a key.
 - Chests and barrels are empty (no loot tables yet).
+
+### Natural layout of the outpost (STR4)
+The human's words for the island hold for the fort (design.md §10.1, "Natural layouts"): the ST3 outpost was the gate
+with one straight wall and a tower each way and one building on the apron, the same every time. STR4 keeps the fort
+gate and the quay as they were (the harbor master's office, the officer posts and the berths depend on them) and gives
+the outpost a **wall trace** that bends inland round bastions and towers, a **court** of lanes, buildings and
+decorations inside it, the beard for the court and STR2's headless check and renders.
+
+**Sources.** `_walls.py` (the wall pieces in their states, the angles and steps, the round tower and the battery),
+`_court.py` (the lanes drawn along a centre line like the island's trails, the parade ground, the dead ends),
+`_buildings.py` (the new buildings and variants) and `_decos.py` (the decorations); every piece file is a two-line
+stub that calls one builder, as on the island. The palette and fittings stay `_style.py`'s (ST4c). Built with
+`python3 tools/build_structures.py --port 8772 navy_outpost/<piece>` (any free port; 8765 is the human's lab).
+
+**The wall trace.** A jigsaw only turns a piece, so the trace is a small state machine of pools, each state's pieces
+naming the next state's pool in their out connectors (every wall piece attaches by `wall_east_in` / `wall_west_in`):
+
+| state | pool | drawn by | pieces |
+|---|---|---|---|
+| gate | `walls_gate` | the gate's `gate_east_out` / `gate_west_out` | the shore's straights, bastion, sally port, stair: never an angle, so every run stands at least one piece along the shore |
+| shore | `walls` | `wall_*_out` (shore pieces, the flank's steps) | `wall`, `wall_long`, `wall_bastion`, `wall_sally_port`, `wall_stair`, `wall_angle_east` / `_west` (salient angle: turns the run inland) |
+| flank head | `walls_flank_head` | the shore angle's `flankhead_*_out` | the flank's straights only, so the flank runs inland before it may turn |
+| flank | `walls_flank` | `flank_*_out` | `flank_wall`, `flank_long`, `flank_bastion`, `flank_sally_port`, `flank_stair`, `flank_angle_east` / `_west` (a second salient angle: turns the run back toward the other run), `flank_step_east` / `_west` (a re-entrant angle: steps the trace outward, back to the shore state) |
+| end | `terminators` | the flank angle's `end_*_out`, and every wall pool's fallback | `wall_tower`, `round_tower`, `battery` |
+
+So a run turns inland at most twice and never toward the sea; after its second angle a corner tower closes it (a run
+that went on toward the other one ran into the court's first lane, which the gate lays before the walls grow, and lost
+its tower). The towers' pool falls back to itself: at the depth limit vanilla tries only a pool's fallback, so an angle
+there still gets its tower. The shore and flank pieces of a kind are the same build with other out connectors
+(`_walls.straight("flank")`). Symmetric pieces carry both runs' pairs (east pair z 2, west pair z 3); the angles and
+steps come in mirrored pairs. **Placement priority:** every wall out connector has `placement_priority` 2
+(`buildspec.Piece._jigsaw` gained the parameter, default 0), so vanilla's jigsaw lays both runs end to end before it
+processes any lane: the court grows into the space the walls leave.
+
+Geometry of the turns (the next piece's section continues the turned stretch): the east run's salient angle leaves
+through its south face at x 4 (the next piece, turned clockwise, has its skin two columns east of its in connector, on
+the angle's x 6); the west run's at x 3 (turned anticlockwise, the skin three columns west, on x 0). The steps leave
+through the north face, the next piece's skin on the step's x 2 (east) or x 6 (west). `StructurePiecesTest
+.anglesHandTheirSectionOn` checks them.
+
+| piece | size | blocks | contents |
+|---|---|---|---|
+| `wall_long` (`flank_long`) | 11×8×7 | 341 | two embrasures with cannons (x 3 and 7) on dark oak decks, three pilasters, a store niche, the hoarding, a ladder, a bench under the hoarding |
+| `wall_bastion` (`flank_bastion`) | 11×11×12 | 766 | a 7 wide gun platform projecting outward from the line with two cannons, merlons round it, the fort's skin on its three faces down to footings three rows under the walls' foundation row (a shore bastion stands in the water); the line on the footings behind it; connectors on y 3, rows z 7 and 8 |
+| `wall_sally_port` (`flank_sally_port`) | 9×8×7 | 257 | an arched passage through the body with a spruce door in a stone plug, a keystone, a gun over the passage, lanterns at the inner mouth |
+| `wall_stair` (`flank_stair`) | 9×8×7 | 286 | a gun, and a two wide stone stair from the walkway down to the court (z 5..6) |
+| `wall_angle_east` / `_west` (`flank_angle_*`) | 7×8×7 | 244 | the wall turning round a corner pilaster with a lantern on its merlon, a gun over the outer face, a gravel yard with the ladder in the inner corner |
+| `flank_step_east` / `_west` | 9×8×7 | 244 | the line's skin stepping out at a re-entrant corner, the hoarding round the inner corner, a ladder, stores |
+| `round_tower` | 7×12×7 | 278 | a rounded drum with stubs of curtain on both sides (the walkway runs on to the landing's doors), a corbel table under a crenellated roof platform with lanterns, a ladder to the roof, a door landward, a banner |
+| `battery` | 5×8×7 | 193 | a squat gun platform: one cannon, merlons on the outer sides, shot heaps, a timber powder hut landward |
+
+**The court.** The gate's `lanehead_out` [7, 0, 14] (on the land gate's cobbles; `building_out` [14, 0, 14] before
+STR4) draws from `laneheads` (never an end, a bend or a T, so the court always grows inland). Lanes are terrain matching
+and leave every cell they do not need empty: a 3 wide bed of gravel, cobbles, mossy cobbles and andesite setts between
+polished andesite kerbs with gaps. Their side connectors are `building_out` (selection priority 2) and `deco_out` (1),
+so a lane places its buildings, then its decorations, then the next lane. Lane connectors: `lane_in` (north edge) and
+`lane_out` (pool `lanes`, fallback `lane_ends`).
+
+| piece | size | blocks | contents and connectors |
+|---|---|---|---|
+| `lane` | 7×4×7 | 43 | straight; a lantern post, a barrel; `building_out` both sides |
+| `lane_long` | 7×4×11 | 64 | wandering half a block aside and back; a lantern, a crate; two `building_out`, two `deco_out` |
+| `lane_bend_left` / `_right` | 9×4×9 | 59 / 53 | a quarter bend on a radius of 6, a lantern and a bench in the inside corner; `building_out` on the outside |
+| `lane_fork_left` / `_right` | 9×4×11 | 73 / 77 | on south and a branch sweeping off; a building and a decoration on the other side, a lantern and a crate in the crotch |
+| `lane_junction` | 11×4×7 | 69 | a T with a signpost lantern and barrels; `building_out` south |
+| `parade_ground` | 13×9×13 | 195 | a paved square in an andesite border, the navy ensign on a five-block pole on a stepped pedestal, a well under a slab roof, lantern posts, benches, a musket rack, a banner; the lane on south, `building_out` east and west |
+| `lane_end_store` / `_privy` / `_woodpile` | 7×6×6 / 7×5×5 / 7×5×5 | 110 / 42 / 49 | dead ends against the wall: a lean-to store shed, the garrison's privy with a hay bale, a woodpile under a lean-to with a chopping block |
+
+**Buildings** (pool `buildings`, rigid, `building_in` on the north side, y 0; sunk one row onto the surface like every
+building on a lane):
+
+| piece | size | blocks | contents | garrison post |
+|---|---|---|---|---|
+| `barracks_long` | 15×9×9 | 513 | ten bunks, two hearths with chimneys, two mess tables, weapon racks | soldier [10, 1, 3] |
+| `barracks_mess` | 11×10×14 | 555 | a mess hall in front (long table, benches, hearth, dresser of barrels) and a bunk room behind a partition; ridge north-south | soldier [3, 1, 4] |
+| `brig_large` | 13×8×10 | 523 | the brig's masonry round a guard room and four cells of brig bars with brig doors (closed, unlocked), straw, buckets, barred windows | soldier [6, 1, 3] facing the cells |
+| `signal_tower` | 7×14×7 | 300 | a stone shaft, a gallery on dark oak corbels, a signal fire (a lit campfire on a hay bale in an iron cage) | soldier [1, 11, 1] |
+| `officers_quarters` | 11×13×9 | 572 | stone below, timber above, a balcony over the door, the captain's office (cartography table, lectern, bookshelves), a dining table, two bedrooms | officer [3, 1, 4], soldier [8, 1, 3] |
+| `powder_magazine` | 9×8×9 | 310 | thick stone walls sunk into an earth bank to two rows, a turf vault, an iron door, kegs, crates and shot, no flame | soldier [2, 1, 5] |
+| `armoury` | 9×10×9 | 341 | stone walls with barred windows under a spruce gable, a forge (blast furnace, anvil, grindstone, smithing table), racks, chests | soldier [6, 1, 3] |
+| `gun_battery` | 11×6×9 | 240 | a raised stone platform with two cannons in embrasures facing away from its lane, gabions (composters), shot | soldier [5, 3, 4] |
+| `store_house` | 11×10×9 | 399 | a stable-sized timber store with double doors under a hoist beam, a loft, hay, barrels, crates | soldier [2, 1, 3] |
+| `chapel` | 9×14×13 | 434 | a stone nave with buttresses and tall windows, a bell gable over the door, pews, an altar with candles | soldier [2, 1, 2] |
+
+A jigsaw piece cannot carve a room below the ground (`schem_to_structure` drops air, the terrain stays in every cell a
+template leaves empty), so the powder magazine sinks by its earth bank, not by its floor. The larger brig's cells are
+found by their blocks like the ST3 brig's (`law/brig/WorldCells`: brig bars, brig doors, walls); no code knows the
+brig by name.
+
+**Decorations** (pool `decorations`, rigid, `deco_in` in the middle of the north edge): `deco_cannon_balls` (a spare
+gun and pyramids of shot on a pallet; vanilla's heavy core is the shot), `deco_crates`, `deco_drill_target` (a target
+between two straw men), `deco_lantern_post`, `deco_bell_post` (the alarm bell under a little roof), `deco_notice_board`
+(an orders board of boards between posts), `deco_water_trough` (water cauldrons), `deco_cart`, `deco_tree` (an oak in a
+stone ring, persistent leaves), `deco_benches`; 3×3 to 5×5, 8 to 56 blocks.
+
+**Pools and weights** (`world/outpost/OutpostData`; weights expand in the pool):
+
+| pool | projection | pieces (weight) |
+|---|---|---|
+| `start` | rigid | `fort_gate` |
+| `quay` | rigid | `quay` |
+| `walls_gate` (fallback `terminators`) | rigid | `wall` 2, `wall_long` 3, `wall_bastion` 2, `wall_sally_port` 1, `wall_stair` 1 |
+| `walls` (fallback `terminators`) | rigid | `wall` 2, `wall_long` 2, `wall_bastion` 2, `wall_sally_port` 1, `wall_stair` 1, `wall_angle_east` 5, `wall_angle_west` 5 |
+| `walls_flank_head` (fallback `terminators`) | rigid | `flank_wall` 2, `flank_long` 3, `flank_bastion` 1, `flank_sally_port` 1, `flank_stair` 1 |
+| `walls_flank` (fallback `terminators`) | rigid | `flank_wall` 2, `flank_long` 3, `flank_bastion` 1, `flank_sally_port` 1, `flank_stair` 1, `flank_angle_east` 1, `flank_angle_west` 1, `flank_step_east` 1, `flank_step_west` 1 |
+| `terminators` (fallback itself) | rigid | `wall_tower` 2, `round_tower` 2, `battery` 1 |
+| `laneheads` (fallback `lane_ends`) | terrain matching | `lane` 2, `lane_long` 2, `parade_ground` 3, `lane_fork_left` 1, `lane_fork_right` 1 |
+| `lanes` (fallback `lane_ends`) | terrain matching | `lane` 4, `lane_long` 3, `lane_bend_left` 2, `lane_bend_right` 2, `lane_fork_left` 1, `lane_fork_right` 1, `lane_junction` 1, `parade_ground` 1 |
+| `lane_ends` | terrain matching | `lane_end_store` 1, `lane_end_privy` 1, `lane_end_woodpile` 1 |
+| `buildings` | rigid | `barracks` 2, `brig` 1, `watchtower` 1, `barracks_long` 2, `barracks_mess` 1, `brig_large` 1, `signal_tower` 1, `officers_quarters` 2, `powder_magazine` 1, `armoury` 2, `gun_battery` 1, `store_house` 2, `chapel` 1 |
+| `decorations` | rigid | `deco_cannon_balls` 3, `deco_crates` 3, `deco_drill_target` 2, `deco_lantern_post` 2, `deco_bell_post` 1, `deco_notice_board` 1, `deco_water_trough` 2, `deco_cart` 1, `deco_tree` 2, `deco_benches` 2 |
+
+Size 7 (was 5), `max_distance_from_center` 96 (was 64: a run of seven of the longest pieces and its tower,
+7 + 7 × 11 + 7 = 91, still fits). Why these weights: per run an angle is 5 of 13 shore draws, so a run turns inland
+after two or three shore pieces as a rule; the flank turns or steps only 2 of 11, so it runs well inland and the court
+has room. Forks are rare in the lanes: their branches run parallel to the trunk a few blocks off and leave room only for
+the watchtower and the signal tower between them (with forks at 4 of 15 the courts filled with those two). The lanes'
+dead ends are only the fallback (drawn in the lanes pool as well, they cut the courts short).
+
+**Garrison and patrols.** `world/outpost/OutpostPieces` names the wall pieces (with each one's guard post and the
+patrol's spots at the far end of its walkway for either run), the towers and the buildings; `GarrisonPosts.POSTS` gives
+every wall piece its guard (tier walls, facing outward: the sea on the shore, the land on the flanks), every tower its
+roof or platform guard and every building its guard, the officers' quarters an officer after the gate's three.
+`GarrisonPostsTest` reads every committed template and proves each post a free cell (and the one above) on a sturdy
+floor. `mob/squad/SquadRoutes` walks every wall piece of `OutpostPieces.WALLS` (the run decided by the side of the gate
+the piece's spots lie on) in walking order: from the gate's walkway each time the nearest piece not yet walked, so a
+bent run is followed round its angles; `SquadRoutesTest` checks every spot and the two wide walkway of every straight
+piece and both bastions.
+
+**Terrain.** `terrain_adaptation: beard_thin` and `land_pieces_on_land: true` (`LandFilter` drops a lane over open
+water with what hangs from it). `PortStructure.rigidChain` (new) keeps the whole rigid chain from the gate out of the
+beard: every rigid piece hanging rigidly from the start or from another such piece (the quay, every wall, every tower)
+is copied `unbearded`, so the walls stay level and the beard neither raises the sea in front of them nor under the
+quay; the gate itself and the court's buildings and decorations keep it. (STR2's rule took only the start's direct
+children; the island's and the village's chains are one piece long, so nothing changes for them.) The gate stays the
+shore anchor (7, 0) at sea level + 1 with the quay running into the water.
+
+**The layout check.** `world/structure/OutpostLayoutGameTests` (its own class, with `StructureLayout`,
+`RegionSchematic` and the island test's site and helpers):
+
+- `navyOutpostLayoutsAreNatural` plans the outpost for the seeds 11, 2024, 4242, 31337, 65536 and 99991 at the island
+  test's fixed site; per instance at least 12 pieces, an aspect of at least 0.5, at least 4 distinct buildings, both
+  wall runs from the gate ending in a tower (followed piece by piece through `PortStructure.landNodes`), the quay's far
+  end over the water; no two instances with the same piece sequence. Dumps go to `navy_outpost-layout-<seed>.txt`.
+- `navyOutpostBeardSparesTheQuayAndTheWalls` feeds three plans to vanilla's beardifier: the quay, the walls and the
+  towers carry the unbearded ground level, the beard adds nothing at the berths and the quay's far end, and fills the
+  ground beside a building.
+- `navyOutpostPlaced1..3` place the seeds 11, 2024 and 4242 on the island test's 160 by 160 beach: the berths and the
+  quay's far end in water, every wall level with the gate (bastions three rows deeper on their footings), the port with
+  two berths, the default garrison (6 + 1) at its posts and not in a block; the region goes to `navy_outpost_<seed>.schem`.
+
+Layout numbers of the six seeds (pieces, size, aspect, distinct buildings): in the STR4 hand-back. A scan of 60 more
+seeds (not committed): 24 to 54 pieces (median 37), aspect 0.44 to 0.99 (median 0.83), 3 to 8 distinct buildings
+(median 5); 53 of 60 meet every threshold (four courts with only three kinds of building, three wide forts with an aspect
+of 0.44 to 0.50); every one of the 120 runs ends in a tower, 116 turn inland, 81 carry a bastion; no two the same.
+
+`NavyOutpostGameTests` and `OutpostFixture` (the squads' fixture) keep the 48 block shore at depth 1 and leave the court
+out (`OutpostFixture.withoutTheCourt`): the gate, the quay and one wall piece of any kind each way with its tower.
+
+**Renders for the human:** `art/renders/structures/navy_outpost_{11,2024,4242}_{top,iso}.png` (the placed instances on
+the flat beach; no real terrain, no beard) and `navy_outpost_smoke_{top,iso}.png` (the NeoForge smoke world). To
+regenerate:
+
+```sh
+./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=OutpostLayoutGameTests \
+    -Ppirates_n_ships.layout.dir=/tmp/layouts
+python3 tools/structure_check.py /tmp/layouts --prefix navy_outpost-layout- --min-pieces 12 --map
+python3 tools/render_generated_structure.py /tmp/layouts/navy_outpost_{11,2024,4242}.schem --out art/renders/structures
+```
+
+The smoke render shows the outpost the NeoForge dedicated-server smoke test generates (seed 2718281828, port
+`navy_outpost_-5240_2455`: real terrain, the beard round the court, the shore bastions in the water; the world's saved
+entities there hold the garrison of six soldiers and an officer and the harbor master). To regenerate:
+
+```sh
+tools/server_smoke.sh neoforge
+python3 tools/world_region.py neoforge/build/server-smoke/world -5330 2370 -5166 2534 --y0 45 --y1 95 \
+    --out /tmp/navy_outpost_smoke.schem
+python3 tools/render_generated_structure.py /tmp/navy_outpost_smoke.schem --out art/renders/structures
+```
+
+`tools/structure_check.py` gained `--prefix` (the dumps' file name prefix in a folder; default `layout-`, the island's)
+and lists the outpost's lanes and flank pieces among the trail pieces.
 
 ### Wrecks (ST5)
 Wrecks (`wreck`, design.md §10.1) use the ST1 pipeline but are **single pieces**: no jigsaw blocks, no pools. A later

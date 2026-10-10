@@ -2,7 +2,7 @@
 
 Usage:
     python3 tools/structure_check.py [DIR | layout-<seed>.txt ...] [--min-pieces 10] [--min-aspect 0.5]
-                                     [--min-variants 4] [--map]
+                                     [--min-variants 4] [--map] [--prefix layout-]
 
 Reads the layout dumps ``StructureLayoutGameTests`` writes (``layout-<seed>.txt``, one per generated instance; default
 folder ``neoforge/build/gametest/structure-layouts``, the GameTest run directory's ``structure-layouts``; format in
@@ -16,7 +16,8 @@ folder ``neoforge/build/gametest/structure-layouts``, the GameTest run directory
 
 It prints one row per instance (pieces, size, aspect, buildings, the kinds of trail pieces) and, with ``--map``, a
 top-down sketch of the piece boxes (one letter per piece, ``#`` where boxes overlap in plan). Exit code 1 when any
-check fails. Standard library only. To make the dumps: ``./gradlew :neoforge:runGameTestServer
+check fails. ``--prefix`` picks another structure's dumps in a folder (STR4: ``--prefix navy_outpost-layout-``, written
+by ``OutpostLayoutGameTests``). Standard library only. To make the dumps: ``./gradlew :neoforge:runGameTestServer
 -Ppirates_n_ships.gametest.only=StructureLayoutGameTests`` (``art/README.md``, "Natural layout (STR2)").
 """
 from __future__ import annotations
@@ -28,6 +29,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DIR = ROOT / "neoforge" / "build" / "gametest" / "structure-layouts"
+# STR4: the outpost's lanes and wall trace (its flank and back states) show in the trail column as well
+TRACE_PREFIXES = ("lane", "flank", "back", "parade")
 
 
 def parse(path: Path) -> dict:
@@ -101,10 +104,12 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--min-aspect", type=float, default=0.5)
     parser.add_argument("--min-variants", type=int, default=4)
     parser.add_argument("--map", action="store_true", help="print a top-down sketch of each instance's piece boxes")
+    parser.add_argument("--prefix", default="layout-", help="file name prefix of the dumps in a folder (STR4: "
+                                                             "navy_outpost-layout-)")
     args = parser.parse_args(argv)
     files = []
     for path in args.paths or [DEFAULT_DIR]:
-        files += sorted(path.glob("layout-*.txt")) if path.is_dir() else [path]
+        files += sorted(path.glob(f"{args.prefix}*.txt")) if path.is_dir() else [path]
     if not files:
         print(f"no layout dumps in {args.paths or [DEFAULT_DIR]}", file=sys.stderr)
         return 1
@@ -115,7 +120,7 @@ def main(argv: list[str]) -> int:
         b = bounds(pieces)
         buildings = set(filter(None, lay.get("buildings", "").split(",")))
         variants = sorted({name for name, _ in pieces if name in buildings})
-        trails = sorted({name for name, _ in pieces if name.startswith(("path", "street", "wall"))})
+        trails = sorted({name for name, _ in pieces if name.startswith(("path", "street", "wall") + TRACE_PREFIXES)})
         print(f"{lay.get('seed', '?'):>8} {len(pieces):>6} {b[3] - b[0] + 1:>4}x{b[5] - b[2] + 1:<4} {aspect(pieces):6.2f}  "
               f"{len(variants)}: {', '.join(variants)}")
         print(f"{'':>34}{', '.join(trails)}")

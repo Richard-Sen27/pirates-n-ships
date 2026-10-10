@@ -9098,14 +9098,14 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				6.75,
+				7,
 				0,
-				0.25
+				0.3
 			],
 			"to": [
-				9.25,
+				9,
 				0.4,
-				2.75
+				2
 			],
 			"autouv": 0,
 			"color": 0,

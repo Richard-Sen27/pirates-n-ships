@@ -40,7 +40,8 @@ common/src/main/resources/assets/pirates_n_ships/models/block/ and their Blockbe
 - RL5, the railing latch: block/railing_latch: an iron eye bolt standing on the cap of the north edge, for the railing
   and the bulwark alike (both caps end at y 16). It is the model of its own block, ship/rigging/RailingLatchBlock, in
   the cell over the rail, so it is made in that block's frame (the cap's top at y 0) and turned by the block's facing
-  (without uvlock): a washer on the cap (x 6.75..9.25, y 0..0.4, z 0.25..2.75), a short shank and a square ring
+  (without uvlock): a washer on the cap (x 7..9, y 0..0.4, z 0.3..2, inside the railing's 2 px rail as on the
+  bulwark's cap), a short shank and a square ring
   standing across the rail (x 7.6..8.4, outer y 0.55..2.95, z 0.3..2.7, 0.6 px bars), its centre (y 1.75, z 1.5) the
   net's ring point (RailingLatchBlock RING_INSET, RING_HEIGHT). Iron only: the chainplate's palette (#metal,
   pirates_n_ships:item/palette_2) with the chainplate's UV patches, so it has no #planks or #log and every wood shares
@@ -314,6 +315,7 @@ LATCH_CENTRE_Z = 1.5  # RailingLatchBlock.RING_INSET (px)
 LATCH_CAP = 0  # the cap's top in the latch block's own frame (y 16 of the railing below)
 LATCH_RING_Y = (0.55, 2.95)  # outer; the centre 1.75 = RailingLatchBlock.RING_HEIGHT (px)
 LATCH_RING_X = (7.6, 8.4)
+LATCH_WASHER_Z = (0.3, 2.0)  # on the railing's 2 px rail (0.05..2) as on the bulwark's cap (0.05..3.95): never overhanging
 LATCH_BAR = 0.6
 LATCH_RING_HALF = 1.2
 # the chainplate's palette patches: plate sides, plate top, bolt sides, ring sides, ring top, ring bottom
@@ -335,7 +337,7 @@ def latch():
     z = LATCH_CENTRE_Z
     sides = ("north", "east", "south", "west")
     out = [
-        patch("washer", (6.75, LATCH_CAP, z - 1.25), (9.25, LATCH_CAP + 0.4, z + 1.25),
+        patch("washer", (7, LATCH_CAP, LATCH_WASHER_Z[0]), (9, LATCH_CAP + 0.4, LATCH_WASHER_Z[1]),
               {**{f: UV_PLATE for f in sides}, "up": UV_PLATE_UP}),
         patch("shank", (7.7, LATCH_CAP + 0.4, z - 0.3), (8.3, LATCH_RING_Y[0], z + 0.3), {f: UV_BOLT for f in sides}),
     ]

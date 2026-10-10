@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-10T14:20:10.859586	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-10T15:48:16.52014	Block states and models: pirates_n_ships
 09b44accb692e055e87d96cedda0431ff16bc347 assets/pirates_n_ships/blockstates/acacia_bilge_pump.json
 026bde66fc0634b9bc388ef10bf3800e07af8bcb assets/pirates_n_ships/blockstates/acacia_bulwark.json
 150abc19a472f4f998f5f720e9735df3977053bc assets/pirates_n_ships/blockstates/acacia_bulwark_port.json
@@ -827,6 +827,7 @@ f3c103d3800f27c2f90422192bd8f759acafc5c1 assets/pirates_n_ships/blockstates/quar
 840a0456dea20d2171c26c81345ba56e4c2c3bdd assets/pirates_n_ships/blockstates/quark_blossom_railing_gate.json
 be9fd2806cbc348025134d063362d309b39b79b4 assets/pirates_n_ships/blockstates/quark_blossom_railing_port.json
 6b73efaeb993d0bf0801ccaa32035677d012b432 assets/pirates_n_ships/blockstates/quark_blossom_sail_winch.json
+121ce23eb8ee46c5f9814ef30364e1ea8e190412 assets/pirates_n_ships/blockstates/railing_latch.json
 b54d4b77f6c804581226b00bbea56bfb92bdcd2f assets/pirates_n_ships/blockstates/ratline_net_cell.json
 395ca8d1ceaec6a3713f98fc0d57bb33a9862428 assets/pirates_n_ships/blockstates/ratlines.json
 37cb102f84306345c5574fc6042d8d9adbceb96f assets/pirates_n_ships/blockstates/regions_unexplored_baobab_bilge_pump.json

@@ -2846,8 +2846,8 @@ The files go to the folder in the system property `pirates_n_ships.layout.dir`, 
 GameTest run directory (`neoforge/build/gametest/structure-layouts`, `fabric/build/gametest/structure-layouts`); both
 GameTest runs forward the Gradle property `-Ppirates_n_ships.layout.dir=<dir>` to it (a relative path is taken from
 the run directory, so give an absolute one, e.g. a scratch folder outside the repository). Both
-loaders give byte-identical dumps, the layout files and the region schematics alike (`cmp` on all eighteen files of
-the island's and the village's tests, STR5). The schematics once differed: `RegionSchematic` wrote the region's
+loaders give byte-identical dumps, the layout files and the region schematics alike (`cmp` on all 27 files of
+the island's, the village's and the outpost's tests, STR5). The schematics once differed: `RegionSchematic` wrote the region's
 absolute world corner as the Sponge `Offset`, and the GameTest framework lays the arenas out at different world
 positions on NeoForge and Fabric (and in scoped and full runs); palette, block data and every block were already equal.
 `Offset` is now the corner relative to the test's origin (`helper.absolutePos(BlockPos.ZERO)`), so a dump depends on

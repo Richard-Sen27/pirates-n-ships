@@ -1,58 +1,60 @@
 #!/usr/bin/env python3
-"""Part lists of the railing models (RAIL1, design.md §4.8 "Railings (RAIL1/RAIL2)").
+"""Part lists of the railing models (RAIL1, RAIL6; design.md §4.8 "Railings (RAIL1/RAIL2)", "Railing rework (RAIL6)").
 
-Writes the four hand-made parent models of the railing family to
-common/src/main/resources/assets/pirates_n_ships/models/block/ and their Blockbench project art/models/railing.bbmodel
-(one group per exported model, all at the same place, only the first visible):
+Writes the hand-made parent models of the railing family to common/src/main/resources/assets/pirates_n_ships/models/
+block/ and their Blockbench project art/models/railing.bbmodel (one group per exported model, all at the same place,
+only the first visible). RAIL6 (the human, 2026-10-10: "it obviously just looks like a fence ... very bulky ... the
+few openings also seem to me so small") turned the fence into an open ship's rail: a cap rail on top, a toe rail at
+the deck, two slim turned balusters per block, turned posts with a finial only where a run ends or turns.
 
-- block/railing_edge: the rail along the north edge of the block (x 0..16, z 0..2): a top rail (y 14..16), a lower
-  rail (y 7..9) and four balusters 1 px square every 4 px (x centres 2, 6, 10, 14, so the spacing runs on across
-  blocks) standing on the deck up to the top rail. The rails stand 0.05 px off the outer face (z 0.05), so a post's
-  outer face never fights them; their end faces are left out (a neighbour's rail or a post always covers them).
-- block/railing_post: the post at the north-west corner (x 0..3, z 0..3): a stripped-log post y 0..16 and a 1 px plank
-  cap to y 17.
-- block/railing_port: the railing port facing north: the two posts at the ends of the north edge and a 4 px sill
-  between them (x 3..13, y 0..4, z 0.05..2), no rails.
-- block/railing_item: the item: one edge with a post at either end, centred in the block (z 6.5..9.5).
-- RAIL3, the railing gate's leaf (the gate's posts and sill are block/railing_port, drawn by the same block state):
-  block/railing_gate_left and _right: the closed leaf between the posts (x 3..13): the edge's top and lower rail and
-  the two balusters between them (x centres 6 and 10) standing on the sill (y 4) up to the top rail, two iron hinge
-  straps (#iron, vanilla anvil) round the rails at the hinge post's end, reaching 1 px onto the post, and a latch bar
-  with a handle on the inboard face at the other end, its tongue running into the latch post; left = hinged on the
-  west post (looking outboard, north), right = mirrored on the east post. block/railing_gate_left_open and
-  _right_open: the same leaf turned 90 degrees outboard (to the north, out of the block) about the hinge post's inner
-  outer corner (x 3 or 13, z 0), like a fence gate's leaf turn. block/railing_gate_item: the port's posts and sill with
-  the closed left leaf, centred like the railing's item.
+All in the north frame (the outboard edge is z 0; the block state turns it to the other edges by y rotation, without
+uvlock, so the cap's grain follows the rail on every edge):
 
-- RAIL4, the bulwark (the railing's solid variant, the same edges and posts): block/bulwark_edge: a plank wall along
-  the north edge (x 0..16, y 0..14, z 0.05..2, its end faces left out: a neighbour's wall or a stanchion covers them)
-  and a stripped-log cap rail on it (y 14..16, z 0.05..3.95, 2 px proud of the wall's inboard face; 3.95 so its inboard
-  face hides in a stanchion's instead of fighting it). block/bulwark_stanchion: the 4 x 4 px north-west stanchion, a
-  log post y 0..17 and a plank head to y 18. block/bulwark_port: the gun port's frame facing north: the two jambs
-  (x 0..3 and 13..16, y 0..14) with their cap rail ends, and the 4 px sill between them (x 3..13); the notch is open
-  from the sill up through the cap (a carriage cannon's barrel crosses the wall 12 to 22 px above the deck).
-  block/bulwark_port_lid: the shut lid filling the notch (x 3..13, y 4..16, z 0.05..1.05) with two iron straps on its
-  outer face and their hinge knuckles at its top; block/bulwark_port_lid_open: the same lid swung up and out 90 degrees
-  about its hinge (the notch's top outer edge, y 16, z 0), lying flat outboard. block/bulwark_item and
-  block/bulwark_port_item: a wall with a stanchion at either end, and the gun port with its shut lid, centred like the
-  railing's item.
+- The **cap rail** (every railing, gate leaf and bulwark): a stripped-log handrail y 14..16 on the balusters' line
+  (z 1), 4 px wide (z -1..3, overhanging the 2 px balusters 1 px on each side and the block's outer face by 1 px), in
+  two steps so it reads rounded: the body y 14..15.5, z -1..3 and a band y 15.5..16, z -0.45..2.45 on it. The grain runs
+  along the rail (the long faces' log turned 90 degrees), the ends show the log's end grain (#log_top). Its top stays
+  at y 16, where RL5's latch stands and RAIL5's leaners rest their arms.
+- block/railing_edge: the cap rail and a plank **toe rail** at the deck (y 0..2, z 0..2). No middle rail.
+- block/railing_baluster_west and _east: one **turned baluster** each, at x 4 and x 12 (so the spacing runs on evenly
+  across blocks, 8 px apart, a 6 px opening between two shafts): a stripped-log shaft 2 px square from the toe rail to
+  the cap (y 2..14, z 0..2) with a turned bulge at y 6..9 (a 3 px belly
+  y 6.5..8.5 between 2.5 px collars). Two models because the block state leaves out a baluster
+  where a post stands at that end of the edge (the west one with the edge's x-0 corner post, the east one with its
+  x-16 corner post), so a post never stands against a baluster.
+- block/railing_post: the **turned post** where a run ends or turns (RailingRules.posts): a stripped-log post 3 px
+  square centred on the corner of the two rail lines (x and z -0.5..2.5), from the deck to y 16.5 (half a pixel over
+  the cap, so the cap rails' tops never fight it), a 2 px finial y 16.5..18.5 and a 1 px tip to y 19.5. The bulwark
+  and the rope railing use it too.
+- block/railing_port: the port's two posts and a 4 px plank sill between them (x 2.5..13.5, y 0..4, z 0..2).
+- block/railing_item: posts at both ends, the cap, the toe rail and one baluster in the middle, centred (z 6..10).
+- RAIL3 gate leaf, block/railing_gate_left and _right (between the port's posts, u 0..11 from the hinge post's inner
+  face at x 2.5): the cap rail, a plank bottom rail on the sill (y 4..6, z 0..2), one turned baluster in the middle
+  (x 8) and iron hinge straps (#iron) round the cap and the bottom rail at the hinge end, reaching 1 px onto the post;
+  a latch bar on the cap's inboard face at the other end, its tongue in the latch post, with a grip. left = hinged on
+  the west post looking outboard (north), right mirrored. _open: the same leaf turned 90 degrees outboard about the
+  hinge corner of the cap (x 2.5 or 13.5, z -1). block/railing_gate_item: posts, sill and the closed left leaf,
+  centred.
+- RAIL4 bulwark: block/bulwark_edge, a plank wall (x 0..16, y 0..14, z 0.05..2) under the same cap rail; its posts are
+  block/railing_post. block/bulwark_port: the jambs x 0..3 and 13..16 (wall and cap ends) and the sill x 3..13; the
+  notch is open from the sill up through the cap. block/bulwark_port_lid (x 3..13, y 4..16, z 0.05..1.05, two iron
+  straps and their hinge knuckles) and _lid_open (swung up and out about y 16, z 0). block/bulwark_item and
+  bulwark_port_item, centred.
+- RAIL6 rope railing: block/rope_railing_edge, a 2 px stripped-log stanchion at the edge's x-0 end (x 0..2, z 0..2,
+  y 0..16.25, inside the post where the run ends there) and two rope lines along the edge (#rope: stripped birch, the
+  models' fixed rope texture as on the yards and halyards, its grain along the line; the mod's twisted block/rope
+  texture breaks into a checker at 1.5 px; 1.5 px thick on the line z 0.25..1.75): the top line y 14.5..16 (its top at the cap's y 16, so
+  RL5's latch stands on it) and a middle line y 7..8.5. block/rope_railing_item: posts at both ends and the two lines,
+  centred.
+- RL5 latch (see below): block/railing_latch on the cap, unchanged by RAIL6 (the cap's top stays at y 16 and the
+  washer, z 0.3..2, stands on the cap's band, z -0.5..2.5).
 
-- RL5, the railing latch: block/railing_latch: an iron eye bolt standing on the cap of the north edge, for the railing
-  and the bulwark alike (both caps end at y 16). It is the model of its own block, ship/rigging/RailingLatchBlock, in
-  the cell over the rail, so it is made in that block's frame (the cap's top at y 0) and turned by the block's facing
-  (without uvlock): a washer on the cap (x 7..9, y 0..0.4, z 0.3..2, inside the railing's 2 px rail as on the
-  bulwark's cap), a short shank and a square ring
-  standing across the rail (x 7.6..8.4, outer y 0.55..2.95, z 0.3..2.7, 0.6 px bars), its centre (y 1.75, z 1.5) the
-  net's ring point (RailingLatchBlock RING_INSET, RING_HEIGHT). Iron only: the chainplate's palette (#metal,
-  pirates_n_ships:item/palette_2) with the chainplate's UV patches, so it has no #planks or #log and every wood shares
-  it without a child model.
-
-Every model uses two texture variables, #planks and #log (vanilla oak planks and stripped oak log here); the wood
-family's datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. The block state turns the
-north-frame parts by y rotation (multipart): an edge model per railed edge, a post model per post corner.
+Texture variables #planks, #log and #log_top (vanilla oak planks, stripped oak log and its top here); the wood family's
+datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. #iron (anvil), #metal (the
+chainplate's palette) and #rope (stripped birch) stay fixed.
 
 UVs are vanilla's position UVs wrapped into 0..16 (as tools/gen_ratlines_models.py). After a change run
-`python3 tools/lint_models.py` and rebuild the renders (art/README.md, "Railings (RAIL1)").
+`python3 tools/lint_models.py` and rebuild the renders (art/README.md, "Railing rework (RAIL6)").
 
 Run from the repository root: python3 tools/gen_railing_models.py
 """
@@ -66,21 +68,36 @@ ART = ROOT / "art/models"
 
 PLANKS = "minecraft:block/oak_planks"
 LOG = "minecraft:block/stripped_oak_log"
+LOG_TOP = "minecraft:block/stripped_oak_log_top"
 IRON = "minecraft:block/anvil"
 METAL = "pirates_n_ships:item/palette_2"  # RL5: the chainplate's iron
+ROPE = "minecraft:block/stripped_birch_log"  # RAIL6: the models' rope (yard bands, halyards), never #log
 
-INSET = 0.05  # the rails' and the sill's outer face stand this far in from the block's edge
-RAIL_DEPTH = 2
-POST = 3
-POST_TOP = 16
-CAP_TOP = 17
-TOP_RAIL = (14, 16)
-LOWER_RAIL = (7, 9)
-BALUSTER_X = (2, 6, 10, 14)
-BALUSTER_TOP = TOP_RAIL[0]
+INSET = 0.05  # the bulwark wall's outer face stands this far in from the block's edge
+RAIL_DEPTH = 2  # the balusters' and the toe rail's depth (z 0..2), the line at z 1
+LINE = RAIL_DEPTH / 2
+CAP = (14, 16)
+CAP_STEP = 15.5  # the cap's body ends here, the band runs on to the top
+CAP_HALF = 2  # the body z -1..3
+BAND_HALF = 1.45  # the band z -0.45..2.45, inside a post's faces (a post is 1.5 either side of the line)
+TOE_TOP = 2
+BALUSTER_X = (4, 12)
+BALUSTER_HALF = 1
+BULGE = (6, 9)
+BULGE_HALF = 1.5
+COLLAR_HALF = 1.25  # the bulge's collars above and below its belly, 2.5 px
+COLLAR = 0.5
+POST_HALF = 1.5  # the post x and z -0.5..2.5
+POST_TOP = 16.5
+FINIAL_HALF = 1
+FINIAL_TOP = 18.5
+TIP_HALF = 0.5
+TIP_TOP = 19.5
 SILL_TOP = 4
+SILL = (LINE - POST_HALF + 2 * POST_HALF, 16 - (LINE - POST_HALF + 2 * POST_HALF))  # x 2.5..13.5, post to post
 
 ALL = ("north", "east", "south", "west", "up", "down")
+SIDES = ("north", "east", "south", "west")
 
 
 def r5(v):
@@ -99,8 +116,9 @@ def span(a, b):
     return a, b
 
 
-def uv(face, f, t):
-    """Vanilla's position UV of a face (north/south x and 16-y, east/west z and 16-y, up/down x and z)."""
+def uv(face, f, t, turned=False):
+    """Vanilla's position UV of a face (north/south x and 16-y, east/west z and 16-y, up/down x and z). turned: the
+    rectangle transposed for a face drawn with a 90 degree texture rotation (the log's grain along the face's width)."""
     x0, y0, z0 = f
     x1, y1, z1 = t
     if face in ("north", "south"):
@@ -109,124 +127,186 @@ def uv(face, f, t):
         u, v = span(z0, z1), span(16 - y1, 16 - y0)
     else:
         u, v = span(x0, x1), span(z0, z1)
+    if turned:
+        u, v = v, u
     return [r5(u[0]), r5(v[0]), r5(u[1]), r5(v[1])]
 
 
 def cube(name, f, t, faces):
-    """faces: {face: texture key} for the faces that are drawn."""
-    return {"name": name, "from": [r5(c) for c in f], "to": [r5(c) for c in t],
-            "faces": {face: {"uv": uv(face, f, t), "texture": "#" + tex} for face, tex in faces.items()}}
+    """faces: {face: texture key} for the faces that are drawn; a key ending in '@90' is drawn turned 90 degrees."""
+    out = {}
+    for face, tex in faces.items():
+        turned = tex.endswith("@90")
+        key = tex[:-3] if turned else tex
+        entry = {"uv": uv(face, f, t, turned), "texture": "#" + key}
+        if turned:
+            entry["rotation"] = 90
+        out[face] = entry
+    return {"name": name, "from": [r5(c) for c in f], "to": [r5(c) for c in t], "faces": out}
 
 
-def rail_parts(z0, prefix=""):
-    """A rail along x (0..16) whose outer face is at z0: top rail, lower rail and the balusters."""
+def box(c, half, y0, y1):
+    """A box `half` either side of (c[0], c[1]) in x and z, from y0 to y1."""
+    return (c[0] - half, y0, c[1] - half), (c[0] + half, y1, c[1] + half)
+
+
+# ---------------------------------------------------------------------- the cap rail, the railing (RAIL1, RAIL6)
+
+def cap_parts(x, line=LINE, prefix="", ends=True):
+    """The cap rail along x[0]..x[1] on the line z = line: the body and the band on it. ends: the end faces drawn (the
+    overhang past a post shows them; inside a post or a neighbour's cap they hide)."""
+    end = {"east": "log_top", "west": "log_top"} if ends else {}
+    long_ = "log@90"
+    return [
+        cube(prefix + "cap", (x[0], CAP[0], line - CAP_HALF), (x[1], CAP_STEP, line + CAP_HALF),
+             {"north": long_, "south": long_, "up": long_, "down": long_, **end}),
+        cube(prefix + "cap_band", (x[0], CAP_STEP, line - BAND_HALF), (x[1], CAP[1], line + BAND_HALF),
+             {"north": long_, "south": long_, "up": long_, **end}),
+    ]
+
+
+def toe_parts(x=(0, 16), line=LINE, prefix=""):
+    return [cube(prefix + "toe_rail", (x[0], 0, line - LINE), (x[1], TOE_TOP, line + LINE),
+                 {"north": "planks", "south": "planks", "up": "planks"})]
+
+
+def baluster_parts(x, line=LINE, y0=TOE_TOP, prefix="baluster"):
+    """A turned baluster at x on the line: the 2 px shaft from y0 to the cap and the 3 px bulge."""
+    f, t = box((x, line), BALUSTER_HALF, y0, CAP[0])
+    return [cube(prefix, f, t, {s: "log" for s in SIDES})] + bulge_parts(x, line, prefix)
+
+
+def bulge_parts(x, line, prefix):
+    """The baluster's turned bulge: a 3 px belly between two 2.5 px collars, so it reads round, not as a block."""
     out = []
-    rail_faces = {f: "planks" for f in ("north", "south", "up", "down")}
-    out.append(cube(prefix + "top_rail", (0, TOP_RAIL[0], z0 + INSET), (16, TOP_RAIL[1], z0 + RAIL_DEPTH), rail_faces))
-    out.append(cube(prefix + "lower_rail", (0, LOWER_RAIL[0], z0 + INSET), (16, LOWER_RAIL[1], z0 + RAIL_DEPTH), rail_faces))
-    side = {f: "planks" for f in ("north", "east", "south", "west")}
-    for i, c in enumerate(BALUSTER_X):
-        out.append(cube(f"{prefix}baluster_{i}", (c - 0.5, 0, z0 + 0.5), (c + 0.5, BALUSTER_TOP, z0 + 1.5), side))
+    for name, half, (y0, y1) in (("_collar_low", COLLAR_HALF, (BULGE[0], BULGE[0] + COLLAR)),
+                                  ("_bulge", BULGE_HALF, (BULGE[0] + COLLAR, BULGE[1] - COLLAR)),
+                                  ("_collar_high", COLLAR_HALF, (BULGE[1] - COLLAR, BULGE[1]))):
+        bf, bt = box((x, line), half, y0, y1)
+        ends = {k: "log_top" for k in ("up", "down") if not (name == "_collar_low" and k == "up" or name == "_collar_high" and k == "down")}
+        out.append(cube(prefix + name, bf, bt, {**{s: "log" for s in SIDES}, **ends}))
     return out
 
 
-def post_parts(x0, z0, name):
-    """A 3 x 3 px post with its corner at (x0, z0): the stripped-log post and the plank cap."""
+def post_parts(c, name="post", y0=0):
+    """A turned post centred on (c[0], c[1]): the 3 px post to just over the cap, the finial and its tip."""
+    pf, pt = box(c, POST_HALF, y0, POST_TOP)
+    ff, ft = box(c, FINIAL_HALF, POST_TOP, FINIAL_TOP)
+    tf, tt = box(c, TIP_HALF, FINIAL_TOP, TIP_TOP)
     return [
-        cube(name, (x0, 0, z0), (x0 + POST, POST_TOP, z0 + POST), {f: "log" for f in ("north", "east", "south", "west")}),
-        cube(name + "_cap", (x0, POST_TOP, z0), (x0 + POST, CAP_TOP, z0 + POST),
-             {f: "planks" for f in ("north", "east", "south", "west", "up")}),
+        cube(name, pf, pt, {**{s: "log" for s in SIDES}, "up": "log_top"}),
+        cube(name + "_finial", ff, ft, {**{s: "log" for s in SIDES}, "up": "log_top"}),
+        cube(name + "_tip", tf, tt, {**{s: "log" for s in SIDES}, "up": "log_top"}),
     ]
 
 
 def edge():
-    return rail_parts(0)
+    return cap_parts((0, 16)) + toe_parts()
+
+
+def baluster(west):
+    return baluster_parts(BALUSTER_X[0] if west else BALUSTER_X[1])
 
 
 def post():
-    return post_parts(0, 0, "post")
+    return post_parts((LINE, LINE))
 
 
-def port():
-    out = post_parts(0, 0, "post_west") + post_parts(16 - POST, 0, "post_east")
-    out.append(cube("sill", (POST, 0, INSET), (16 - POST, SILL_TOP, RAIL_DEPTH),
+def port(dz=0.0):
+    out = post_parts((LINE, LINE + dz), "post_west") + post_parts((16 - LINE, LINE + dz), "post_east")
+    out.append(cube("sill", (SILL[0], 0, dz), (SILL[1], SILL_TOP, dz + RAIL_DEPTH),
                     {f: "planks" for f in ("north", "south", "up")}))
     return out
 
 
+ITEM_DZ = 8 - LINE  # the line through the block's centre (z 8)
+
+
 def item():
-    z0 = 8 - RAIL_DEPTH / 2  # the rail centred in the block
-    pz = 8 - POST / 2
-    return rail_parts(z0) + post_parts(0, pz, "post_west") + post_parts(16 - POST, pz, "post_east")
+    line = LINE + ITEM_DZ
+    return (cap_parts((0, 16), line) + toe_parts(line=line) + baluster_parts(8, line)
+            + post_parts((LINE, line), "post_west") + post_parts((16 - LINE, line), "post_east"))
 
 
-# ---------------------------------------------------------------------- the gate (RAIL3)
+# ---------------------------------------------------------------------- the gate (RAIL3, RAIL6)
 
-LEAF = 16 - 2 * POST  # the leaf's length between the posts (u 0..10)
-GATE_BALUSTER_U = (3, 7)  # x centres 6 and 10, the edge's spacing
-STRAP_U = (-1, 3)  # the straps reach 1 px onto the hinge post
-STRAP_W = (-0.25, 2.25)
-STRAP_Y = ((13.75, 16.25), (6.75, 9.25))
-LATCH = ((8, 11.5), (11, 12), (2, 2.6))  # u, y, w of the latch bar
-HANDLE = ((8, 8.75), (10.5, 12.5), (2.6, 3.2))
+HINGE_X = SILL[0]  # the hinge post's inner face; the leaf runs u 0..LEAF from it
+LEAF = SILL[1] - SILL[0]
+LEAF_RAIL = (SILL_TOP, SILL_TOP + 2)  # the leaf's bottom rail, on the sill
+HINGE_PIVOT_W = LINE - CAP_HALF  # the open leaf turns about the cap's outer corner at the hinge post (w -1)
+STRAP_U = (-1, 4)  # the straps reach 1 px onto the hinge post
 
 
 def leaf_parts():
-    """The leaf in its own frame: (name, (u0, u1), (y0, y1), (w0, w1), texture, end faces drawn closed).
+    """The leaf in its own frame: (name, (u0, u1), (y0, y1), (w0, w1), texture faces).
 
-    u runs along the edge from the hinge post's inner face (0) to the latch post's (10), w is the depth from the
-    block's outer face (0) inboard.
+    u runs along the edge from the hinge post's inner face (0) to the latch post's (LEAF), w is the depth from the
+    block's outer face (0) inboard. Faces are given closed; open, every face is drawn.
     """
+    c = LEAF / 2
+    long_ = "log@90"
+    cap_ends = {"east": "log_top", "west": "log_top"}
+    rail = {"north": "planks", "south": "planks", "up": "planks", "down": "planks"}
     out = [
-        ("top_rail", (0, LEAF), TOP_RAIL, (INSET, RAIL_DEPTH), "planks", False),
-        ("lower_rail", (0, LEAF), LOWER_RAIL, (INSET, RAIL_DEPTH), "planks", False),
+        ("cap", (0, LEAF), (CAP[0], CAP_STEP), (LINE - CAP_HALF, LINE + CAP_HALF),
+         {"north": long_, "south": long_, "up": long_, "down": long_, **cap_ends}),
+        ("cap_band", (0, LEAF), (CAP_STEP, CAP[1]), (LINE - BAND_HALF, LINE + BAND_HALF),
+         {"north": long_, "south": long_, "up": long_, **cap_ends}),
+        ("bottom_rail", (0, LEAF), LEAF_RAIL, (0, RAIL_DEPTH), rail),
+        ("baluster", (c - BALUSTER_HALF, c + BALUSTER_HALF), (LEAF_RAIL[1], CAP[0]), (LINE - BALUSTER_HALF, LINE + BALUSTER_HALF),
+         {s: "log" for s in SIDES}),
     ]
-    for i, u in enumerate(GATE_BALUSTER_U):
-        out.append((f"baluster_{i}", (u - 0.5, u + 0.5), (SILL_TOP, BALUSTER_TOP), (0.5, 1.5), "planks", True))
-    for i, y in enumerate(STRAP_Y):
-        out.append((f"hinge_strap_{i}", STRAP_U, y, STRAP_W, "iron", True))
-    out.append(("latch", LATCH[0], LATCH[1], LATCH[2], "iron", True))
-    out.append(("latch_handle", HANDLE[0], HANDLE[1], HANDLE[2], "iron", True))
+    turned = {**{s: "log" for s in SIDES}, "up": "log_top", "down": "log_top"}
+    for name, half, y in (("baluster_collar_low", COLLAR_HALF, (BULGE[0], BULGE[0] + COLLAR)),
+                          ("baluster_bulge", BULGE_HALF, (BULGE[0] + COLLAR, BULGE[1] - COLLAR)),
+                          ("baluster_collar_high", COLLAR_HALF, (BULGE[1] - COLLAR, BULGE[1]))):
+        hidden = "up" if name.endswith("low") else "down" if name.endswith("high") else None
+        out.append((name, (c - half, c + half), y, (LINE - half, LINE + half), {k: v for k, v in turned.items() if k != hidden}))
+    strap = {f: "iron" for f in ALL}
+    # slim bands round the cap's body and the bottom rail, 1 px tall
+    out.append(("hinge_strap_0", STRAP_U, (CAP[0] + 0.25, CAP[0] + 1.25), (LINE - CAP_HALF - 0.25, LINE + CAP_HALF + 0.25), strap))
+    out.append(("hinge_strap_1", STRAP_U, (LEAF_RAIL[0] + 0.5, LEAF_RAIL[0] + 1.5), (-0.25, RAIL_DEPTH + 0.25), strap))
+    inboard = LINE + CAP_HALF
+    out.append(("latch", (LEAF - 3, LEAF + 0.5), (14.5, 15.5), (inboard, inboard + 0.6), strap))
+    out.append(("latch_handle", (LEAF - 3, LEAF - 2.25), (12.5, 15.5), (inboard + 0.6, inboard + 1.2), strap))
     return out
 
 
 def leaf(hinge_left, open_, dz=0.0):
     """The leaf in the block's north frame: closed between the posts, or open, turned 90 degrees outboard (to -z)
-    about the hinge post's inner outer corner. Closed, the rails' end faces against the posts are left out."""
+    about the cap's outer corner at the hinge post (x 2.5 or 13.5, z -1), every face drawn."""
     out = []
-    for name, (u0, u1), (y0, y1), (w0, w1), tex, ends in leaf_parts():
+    for name, (u0, u1), (y0, y1), (w0, w1), faces in leaf_parts():
         if not open_:
-            x = (POST + u0, POST + u1) if hinge_left else (16 - POST - u1, 16 - POST - u0)
+            x = (HINGE_X + u0, HINGE_X + u1) if hinge_left else (16 - HINGE_X - u1, 16 - HINGE_X - u0)
             z = (w0 + dz, w1 + dz)
-            faces = ("north", "south", "up", "down") + (("east", "west") if ends else ())
+            if name == "bottom_rail":
+                faces = {f: t for f, t in faces.items() if f != "down"}  # on the sill
         else:
-            x = (POST + w0, POST + w1) if hinge_left else (16 - POST - w1, 16 - POST - w0)
-            z = (-u1 + dz, -u0 + dz)
-            faces = ALL
-        if name.startswith("baluster"):
-            # the top rail covers a baluster's top, and closed the sill its foot (as on the edge)
-            faces = tuple(f for f in faces if f != "up" and (open_ or f != "down"))
-        out.append(cube(name, (x[0], y0, z[0]), (x[1], y1, z[1]), {f: tex for f in faces}))
+            a, b = w0 - HINGE_PIVOT_W, w1 - HINGE_PIVOT_W
+            x = (HINGE_X + a, HINGE_X + b) if hinge_left else (16 - HINGE_X - b, 16 - HINGE_X - a)
+            z = (HINGE_PIVOT_W - u1 + dz, HINGE_PIVOT_W - u0 + dz)
+            faces = dict(faces)
+            base = next(iter(faces.values())).replace("@90", "")
+            for end in ("east", "west"):
+                faces.setdefault(end, "log_top" if name.startswith("cap") else base)
+            # a quarter turn about y: the ends (+u, -u) face north and south, the long faces east and west; the top's
+            # grain already runs along the open leaf (z) unturned
+            turn = {"east": "north", "west": "south", "south": "east" if hinge_left else "west",
+                    "north": "west" if hinge_left else "east", "up": "up", "down": "down"}
+            faces = {turn[f]: (tex.replace("@90", "") if f in ("up", "down") else tex) for f, tex in faces.items()}
+        out.append(cube(name, (x[0], y0, z[0]), (x[1], y1, z[1]), faces))
     return out
 
 
 def gate_item():
-    pz = 8 - POST / 2  # the posts centred as on the railing's item
-    dz = 8 - RAIL_DEPTH / 2  # the leaf's rails centred
-    out = post_parts(0, pz, "post_west") + post_parts(16 - POST, pz, "post_east")
-    out.append(cube("sill", (POST, 0, dz + INSET), (16 - POST, SILL_TOP, dz + RAIL_DEPTH),
-                    {f: "planks" for f in ("north", "south", "up")}))
-    return out + leaf(True, False, dz)
+    return port(ITEM_DZ) + leaf(True, False, ITEM_DZ)
 
 
-# ---------------------------------------------------------------------- the bulwark (RAIL4)
+# ---------------------------------------------------------------------- the bulwark (RAIL4, RAIL6)
 
-WALL_TOP = 14  # the plank wall; the cap rail runs on from here
-RIM_TOP = 16  # the cap rail's top
-CAP_DEPTH = 3.95  # 2 px proud of the wall (4), short of the stanchion's inboard face
-STANCHION = 4
-STANCHION_TOP = 17
-STANCHION_HEAD = 18
+WALL_TOP = CAP[0]  # the plank wall; the cap rail runs on top of it
+RIM_TOP = CAP[1]
 OPENING = (3, 13)  # the gun port's notch, x
 LID_DEPTH = 1.0
 STRAP_X = (4.5, 10.5)  # the lid's two iron straps, 1 px wide
@@ -234,31 +314,15 @@ STRAP_PROUD = 0.5  # how far the straps stand off the lid's outer face
 HINGE_AXIS = (16, 0)  # (y, z) of the lid's hinge: the notch's top outer edge
 
 
-def wall_parts(z0, x=(0, 16), prefix="", ends=()):
-    """The plank wall and its log cap rail with their outer face at z0 (+ the inset), from x[0] to x[1]."""
+def wall_parts(dz, x=(0, 16), prefix="", ends=()):
+    """The plank wall from x[0] to x[1] (its outer face at dz + the inset) and the cap rail on it."""
     wall_faces = {f: "planks" for f in ("north", "south") + ends}
-    cap_faces = {f: "log" for f in ("north", "south", "up", "down") + ends}
-    return [
-        cube(prefix + "wall", (x[0], 0, z0 + INSET), (x[1], WALL_TOP, z0 + RAIL_DEPTH), wall_faces),
-        cube(prefix + "cap_rail", (x[0], WALL_TOP, z0 + INSET), (x[1], RIM_TOP, z0 + CAP_DEPTH), cap_faces),
-    ]
-
-
-def stanchion_parts(x0, z0, name):
-    """A 4 x 4 px stanchion with its corner at (x0, z0): a log post and a plank head 1 px above the cap's top + 1."""
-    return [
-        cube(name, (x0, 0, z0), (x0 + STANCHION, STANCHION_TOP, z0 + STANCHION), {f: "log" for f in ("north", "east", "south", "west")}),
-        cube(name + "_head", (x0, STANCHION_TOP, z0), (x0 + STANCHION, STANCHION_HEAD, z0 + STANCHION),
-             {f: "planks" for f in ("north", "east", "south", "west", "up")}),
-    ]
+    return ([cube(prefix + "wall", (x[0], 0, dz + INSET), (x[1], WALL_TOP, dz + RAIL_DEPTH), wall_faces)]
+            + cap_parts(x, LINE + dz, prefix))
 
 
 def bulwark_edge():
     return wall_parts(0)
-
-
-def bulwark_stanchion():
-    return stanchion_parts(0, 0, "stanchion")
 
 
 def bulwark_port(dz=0.0):
@@ -300,13 +364,38 @@ def lid(open_, dz=0.0):
 
 
 def bulwark_item():
-    z0 = 8 - 2  # the wall and cap centred (4 px deep together)
-    return wall_parts(z0) + stanchion_parts(0, z0, "stanchion_west") + stanchion_parts(16 - STANCHION, z0, "stanchion_east")
+    line = LINE + ITEM_DZ
+    return wall_parts(ITEM_DZ) + post_parts((LINE, line), "post_west") + post_parts((16 - LINE, line), "post_east")
 
 
 def bulwark_port_item():
-    dz = 8 - 2
-    return bulwark_port(dz) + lid(False, dz)
+    return bulwark_port(ITEM_DZ) + lid(False, ITEM_DZ)
+
+
+# ---------------------------------------------------------------------- the rope railing (RAIL6)
+
+ROPE_HALF = 0.75
+ROPE_TOP = (CAP[1] - 2 * ROPE_HALF, CAP[1])  # y 14.5..16: its top where the cap's is, for RL5's latch
+ROPE_MID = (7, 7 + 2 * ROPE_HALF)
+STANCHION_X = (0, RAIL_DEPTH)  # inside the post where a run ends at x 0
+STANCHION_TOP = CAP[1] + 0.25  # a little over the top line, under a post's top
+
+
+def rope_parts(line=LINE, x=(0, 16)):
+    faces = {f: "rope@90" for f in ("north", "south", "up", "down")}  # the birch's grain along the line
+    return [cube(f"rope_{n}", (x[0], y[0], line - ROPE_HALF), (x[1], y[1], line + ROPE_HALF), faces)
+            for n, y in (("top", ROPE_TOP), ("middle", ROPE_MID))]
+
+
+def rope_railing_edge():
+    stanchion = cube("stanchion", (STANCHION_X[0], 0, LINE - 1), (STANCHION_X[1], STANCHION_TOP, LINE + 1),
+                     {**{s: "log" for s in SIDES}, "up": "log_top"})
+    return [stanchion] + rope_parts()
+
+
+def rope_railing_item():
+    line = LINE + ITEM_DZ
+    return rope_parts(line) + post_parts((LINE, line), "post_west") + post_parts((16 - LINE, line), "post_east")
 
 
 # ---------------------------------------------------------------------- the railing latch (RL5)
@@ -365,10 +454,10 @@ def used_textures(elements):
 
 def block_model(elements):
     textures = {}
-    for k, v in (("planks", PLANKS), ("log", LOG), ("iron", IRON), ("metal", METAL)):
+    for k, v in (("planks", PLANKS), ("log", LOG), ("log_top", LOG_TOP), ("iron", IRON), ("metal", METAL), ("rope", ROPE)):
         if k in used_textures(elements):
             textures[k] = v
-    textures["particle"] = "#planks" if "planks" in textures else "#" + next(iter(textures))
+    textures["particle"] = "#planks" if "planks" in textures else "#log" if "log" in textures else "#" + next(iter(textures))
     return {
         "credit": "Made with Blockbench, source art/models/railing.bbmodel",
         "parent": "minecraft:block/block",
@@ -383,21 +472,24 @@ def det_uuid(*parts):
     return str(uuid.uuid5(uuid.NAMESPACE_URL, "pirates_n_ships/railing/" + "/".join(parts)))
 
 
-TEXTURES = [  # (key, file name; vanilla's block textures, RL5 the mod's palette)
+TEXTURES = [  # (key, file name; vanilla's block textures, RL5 the mod's palette, RAIL6 its rope)
     ("planks", "oak_planks"),
     ("log", "stripped_oak_log"),
     ("iron", "anvil"),
     ("metal", "palette_2"),
+    ("log_top", "stripped_oak_log_top"),
+    ("rope", "stripped_birch_log"),
 ]
+OWN = {"metal": "item"}  # the mod's own textures, by folder
 
 
 def bb_texture(index, key, name):
-    own = key == "metal"
+    own = key in OWN
     return {
         "name": name + ".png", "path": "",
-        "relative_path": (f"../../common/src/main/resources/assets/pirates_n_ships/textures/item/{name}.png" if own
+        "relative_path": (f"../../common/src/main/resources/assets/pirates_n_ships/textures/{OWN[key]}/{name}.png" if own
                           else f"../vanilla/{name}.png"),
-        "folder": "item" if own else "block",
+        "folder": OWN.get(key, "block"),
         "namespace": "pirates_n_ships" if own else "minecraft", "id": key, "group": "", "scope": 0, "width": 16, "height": 16, "uv_width": 16,
         "uv_height": 16, "particle": key == "planks", "use_as_default": False, "layers_enabled": False,
         "sync_to_project": "", "file_format": "png", "render_mode": "default", "render_sides": "auto",
@@ -414,6 +506,8 @@ def bb_element(group, index, el):
         if face in el["faces"]:
             f = el["faces"][face]
             faces[face] = {"uv": f["uv"], "texture": tex_index[f["texture"][1:]]}
+            if "rotation" in f:
+                faces[face]["rotation"] = f["rotation"]
         else:
             faces[face] = {"uv": [0, 0, 1, 1], "texture": None}
     return {
@@ -461,15 +555,20 @@ def write(path, model):
 
 
 def main():
-    models = [("railing_edge", edge()), ("railing_post", post()), ("railing_port", port()), ("railing_item", item()),
+    models = [("railing_edge", edge()), ("railing_baluster_west", baluster(True)), ("railing_baluster_east", baluster(False)),
+              ("railing_post", post()), ("railing_port", port()), ("railing_item", item()),
               ("railing_gate_left", leaf(True, False)), ("railing_gate_right", leaf(False, False)),
               ("railing_gate_left_open", leaf(True, True)), ("railing_gate_right_open", leaf(False, True)),
               ("railing_gate_item", gate_item()),
-              ("bulwark_edge", bulwark_edge()), ("bulwark_stanchion", bulwark_stanchion()), ("bulwark_port", bulwark_port()),
+              ("bulwark_edge", bulwark_edge()), ("bulwark_port", bulwark_port()),
               ("bulwark_port_lid", lid(False)), ("bulwark_port_lid_open", lid(True)), ("bulwark_item", bulwark_item()),
-              ("bulwark_port_item", bulwark_port_item()), ("railing_latch", latch())]
+              ("bulwark_port_item", bulwark_port_item()), ("railing_latch", latch()),
+              ("rope_railing_edge", rope_railing_edge()), ("rope_railing_item", rope_railing_item())]
     for name, els in models:
         write(MODELS / f"block/{name}.json", block_model(els))
+    stale = MODELS / "block/bulwark_stanchion.json"  # RAIL6: the bulwark's posts are the railing's
+    if stale.exists():
+        stale.unlink()
     write(ART / "railing.bbmodel", project(models))
     for name, els in models:
         print(f"{name}: {len(els)} elements")

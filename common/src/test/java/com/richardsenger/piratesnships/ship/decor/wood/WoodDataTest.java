@@ -30,7 +30,7 @@ class WoodDataTest {
     private static final Path DATA = GENERATED.resolve("data/pirates_n_ships");
     private static final Path ASSETS = GENERATED.resolve("assets/pirates_n_ships");
     /** The families WOOD1 converts; WOOD2-WOOD4 add theirs. */
-    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench");
+    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "rope_railing", "oar_bench");
 
     private static JsonObject read(Path p) throws IOException {
         return JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();

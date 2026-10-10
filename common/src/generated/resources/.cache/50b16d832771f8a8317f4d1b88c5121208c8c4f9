@@ -1,14 +1,14 @@
-// 1.21.1	2026-10-10T14:34:27.160444	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-10T16:12:34.925739	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
 6855f60c6e803939aafda3340d36fb30b062d510 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-c2f66ff013dce613ee13fefda92cdb216b418b53 data/minecraft/tags/block/mineable/axe.json
+7987ee404cab7c2c00d089d3aafcfa2b606450bf data/minecraft/tags/block/mineable/axe.json
 13ad1bcec5e42f643ce71e43388406f047890d96 data/minecraft/tags/block/mineable/pickaxe.json
 d203a86a191efea5b043ecfbd6050cc6e1731b62 data/pirates_n_ships/tags/block/barrel_blocking.json
-d1a9d654018d87e309dea75aaec0ce831977a495 data/pirates_n_ships/tags/block/cannon_breakable.json
+7c8f3b73e381bcb389abd6d86897bdccd2c083a1 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
 582cf2be0ef0a019ed330dac0e8b4887d62df4f6 data/pirates_n_ships/tags/block/gangway_openings.json
-03c7637845c1f1466e57392cd1bcd8dac1491025 data/pirates_n_ships/tags/block/grapple_latches.json
+815e3515a8e2e62b7334b78b46f8b29bd6ad0fa0 data/pirates_n_ships/tags/block/grapple_latches.json
 bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple_slips.json
 5c74d862842eaf4e01fa20f29baa9b0978038023 data/pirates_n_ships/tags/block/hammock_supports.json
 887c34f0e030ffaf5d7773678f9a9fbb0fca851f data/pirates_n_ships/tags/block/hidden_in_dry_hull.json
@@ -23,6 +23,6 @@ bb169b9e5997d40072757d8e612623b7c9775438 data/pirates_n_ships/tags/block/test_gr
 1a6606b59646e30901e8ced8c7447d19dcc5fedf data/pirates_n_ships/tags/block/watertight.json
 5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
 2aa7eb384e3141db2538aa90c848431276b18bb2 data/sable/tags/block/light.json
-38b8aa1c333475d91d98b5260b56a1f162ee5985 data/sable/tags/block/quarter_volume.json
-1c76d604fb52fae4f3f1b862f32c861ef4b624e2 data/sable/tags/block/super_light.json
+de187353a65b7fe1a8a3fb23cac6793a02fefa9c data/sable/tags/block/quarter_volume.json
+8c3317b0570a14c9af5bac83d77d36157f8b6580 data/sable/tags/block/super_light.json
 40a32ce559ac94d99abe262a7f15d22c43d18144 data/sable/tags/block/weightless.json

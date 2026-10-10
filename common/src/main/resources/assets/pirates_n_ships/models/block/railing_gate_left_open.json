@@ -3,175 +3,199 @@
 	"parent": "minecraft:block/block",
 	"textures": {
 		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
 		"iron": "minecraft:block/anvil",
 		"particle": "#planks"
 	},
 	"elements": [
 		{
-			"name": "top_rail",
+			"name": "cap",
 			"from": [
-				3.05,
+				2.5,
 				14,
-				-10
+				-12
 			],
 			"to": [
-				5,
+				6.5,
+				15.5,
+				-1
+			],
+			"faces": {
+				"west": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						11
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						11
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						2.5,
+						0,
+						6.5,
+						11
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						2.5,
+						0,
+						6.5,
+						11
+					],
+					"texture": "#log"
+				},
+				"north": {
+					"uv": [
+						2.5,
+						0.5,
+						6.5,
+						2
+					],
+					"texture": "#log_top"
+				},
+				"south": {
+					"uv": [
+						2.5,
+						0.5,
+						6.5,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "cap_band",
+			"from": [
+				3.05,
+				15.5,
+				-12
+			],
+			"to": [
+				5.95,
 				16,
-				0
+				-1
 			],
 			"faces": {
-				"north": {
+				"west": {
 					"uv": [
-						3.05,
 						0,
-						5,
-						2
+						0,
+						0.5,
+						11
 					],
-					"texture": "#planks"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"east": {
 					"uv": [
 						0,
 						0,
-						10,
-						2
+						0.5,
+						11
 					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						3.05,
-						0,
-						5,
-						2
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						0,
-						0,
-						10,
-						2
-					],
-					"texture": "#planks"
+					"texture": "#log",
+					"rotation": 90
 				},
 				"up": {
 					"uv": [
 						3.05,
 						0,
-						5,
-						10
+						5.95,
+						11
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
-				"down": {
+				"north": {
 					"uv": [
 						3.05,
 						0,
-						5,
-						10
+						5.95,
+						0.5
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
+				},
+				"south": {
+					"uv": [
+						3.05,
+						0,
+						5.95,
+						0.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
-			"name": "lower_rail",
+			"name": "bottom_rail",
 			"from": [
-				3.05,
-				7,
-				-10
+				3.5,
+				4,
+				-12
 			],
 			"to": [
-				5,
-				9,
-				0
+				5.5,
+				6,
+				-1
 			],
 			"faces": {
-				"north": {
+				"west": {
 					"uv": [
-						3.05,
-						7,
-						5,
-						9
+						0,
+						10,
+						11,
+						12
 					],
 					"texture": "#planks"
 				},
 				"east": {
 					"uv": [
 						0,
-						7,
 						10,
-						9
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						3.05,
-						7,
-						5,
-						9
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						0,
-						7,
-						10,
-						9
+						11,
+						12
 					],
 					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
-						3.05,
+						3.5,
 						0,
-						5,
-						10
+						5.5,
+						11
 					],
 					"texture": "#planks"
 				},
 				"down": {
 					"uv": [
-						3.05,
-						0,
-						5,
-						10
-					],
-					"texture": "#planks"
-				}
-			}
-		},
-		{
-			"name": "baluster_0",
-			"from": [
-				3.5,
-				4,
-				-3.5
-			],
-			"to": [
-				4.5,
-				14,
-				-2.5
-			],
-			"faces": {
-				"north": {
-					"uv": [
 						3.5,
-						2,
-						4.5,
-						12
+						0,
+						5.5,
+						11
 					],
 					"texture": "#planks"
 				},
-				"east": {
+				"north": {
 					"uv": [
-						0,
-						2,
-						1,
+						3.5,
+						10,
+						5.5,
 						12
 					],
 					"texture": "#planks"
@@ -179,156 +203,318 @@
 				"south": {
 					"uv": [
 						3.5,
-						2,
-						4.5,
+						10,
+						5.5,
 						12
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						0,
-						2,
-						1,
-						12
-					],
-					"texture": "#planks"
-				},
-				"down": {
-					"uv": [
-						3.5,
-						0,
-						4.5,
-						1
 					],
 					"texture": "#planks"
 				}
 			}
 		},
 		{
-			"name": "baluster_1",
+			"name": "baluster",
 			"from": [
 				3.5,
-				4,
+				6,
 				-7.5
 			],
 			"to": [
-				4.5,
+				5.5,
 				14,
-				-6.5
+				-5.5
 			],
 			"faces": {
+				"west": {
+					"uv": [
+						0,
+						2,
+						2,
+						10
+					],
+					"texture": "#log"
+				},
 				"north": {
 					"uv": [
 						3.5,
 						2,
-						4.5,
-						12
+						5.5,
+						10
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
 						0,
 						2,
-						1,
-						12
+						2,
+						10
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
 						3.5,
 						2,
-						4.5,
-						12
+						5.5,
+						10
 					],
-					"texture": "#planks"
-				},
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "baluster_collar_low",
+			"from": [
+				3.25,
+				6,
+				-7.75
+			],
+			"to": [
+				5.75,
+				6.5,
+				-5.25
+			],
+			"faces": {
 				"west": {
 					"uv": [
 						0,
-						2,
-						1,
-						12
+						9.5,
+						2.5,
+						10
 					],
-					"texture": "#planks"
+					"texture": "#log"
+				},
+				"north": {
+					"uv": [
+						3.25,
+						9.5,
+						5.75,
+						10
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						9.5,
+						2.5,
+						10
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3.25,
+						9.5,
+						5.75,
+						10
+					],
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
-						3.5,
+						3.25,
 						0,
-						4.5,
-						1
+						5.75,
+						2.5
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "baluster_bulge",
+			"from": [
+				3,
+				6.5,
+				-8
+			],
+			"to": [
+				6,
+				8.5,
+				-5
+			],
+			"faces": {
+				"west": {
+					"uv": [
+						0,
+						7.5,
+						3,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"north": {
+					"uv": [
+						3,
+						7.5,
+						6,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						7.5,
+						3,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3,
+						7.5,
+						6,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						3,
+						0,
+						6,
+						3
+					],
+					"texture": "#log_top"
+				},
+				"down": {
+					"uv": [
+						3,
+						0,
+						6,
+						3
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "baluster_collar_high",
+			"from": [
+				3.25,
+				8.5,
+				-7.75
+			],
+			"to": [
+				5.75,
+				9,
+				-5.25
+			],
+			"faces": {
+				"west": {
+					"uv": [
+						0,
+						7,
+						2.5,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"north": {
+					"uv": [
+						3.25,
+						7,
+						5.75,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						7,
+						2.5,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3.25,
+						7,
+						5.75,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						3.25,
+						0,
+						5.75,
+						2.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
 			"name": "hinge_strap_0",
 			"from": [
-				2.75,
-				13.75,
-				-3
+				2.25,
+				14.25,
+				-5
 			],
 			"to": [
-				5.25,
-				16.25,
-				1
+				6.75,
+				15.25,
+				0
 			],
 			"faces": {
+				"west": {
+					"uv": [
+						0,
+						0.75,
+						5,
+						1.75
+					],
+					"texture": "#iron"
+				},
 				"north": {
 					"uv": [
-						2.75,
-						0,
-						5.25,
-						2.5
+						2.25,
+						0.75,
+						6.75,
+						1.75
 					],
 					"texture": "#iron"
 				},
 				"east": {
 					"uv": [
 						0,
-						0,
-						4,
-						2.5
+						0.75,
+						5,
+						1.75
 					],
 					"texture": "#iron"
 				},
 				"south": {
 					"uv": [
-						2.75,
-						0,
-						5.25,
-						2.5
-					],
-					"texture": "#iron"
-				},
-				"west": {
-					"uv": [
-						0,
-						0,
-						4,
-						2.5
+						2.25,
+						0.75,
+						6.75,
+						1.75
 					],
 					"texture": "#iron"
 				},
 				"up": {
 					"uv": [
-						2.75,
+						2.25,
 						0,
-						5.25,
-						4
+						6.75,
+						5
 					],
 					"texture": "#iron"
 				},
 				"down": {
 					"uv": [
-						2.75,
+						2.25,
 						0,
-						5.25,
-						4
+						6.75,
+						5
 					],
 					"texture": "#iron"
 				}
@@ -337,67 +523,67 @@
 		{
 			"name": "hinge_strap_1",
 			"from": [
-				2.75,
-				6.75,
-				-3
+				3.25,
+				4.5,
+				-5
 			],
 			"to": [
-				5.25,
-				9.25,
-				1
+				5.75,
+				5.5,
+				0
 			],
 			"faces": {
+				"west": {
+					"uv": [
+						0,
+						10.5,
+						5,
+						11.5
+					],
+					"texture": "#iron"
+				},
 				"north": {
 					"uv": [
-						2.75,
-						6.75,
-						5.25,
-						9.25
+						3.25,
+						10.5,
+						5.75,
+						11.5
 					],
 					"texture": "#iron"
 				},
 				"east": {
 					"uv": [
 						0,
-						6.75,
-						4,
-						9.25
+						10.5,
+						5,
+						11.5
 					],
 					"texture": "#iron"
 				},
 				"south": {
 					"uv": [
-						2.75,
-						6.75,
-						5.25,
-						9.25
-					],
-					"texture": "#iron"
-				},
-				"west": {
-					"uv": [
-						0,
-						6.75,
-						4,
-						9.25
+						3.25,
+						10.5,
+						5.75,
+						11.5
 					],
 					"texture": "#iron"
 				},
 				"up": {
 					"uv": [
-						2.75,
+						3.25,
 						0,
-						5.25,
-						4
+						5.75,
+						5
 					],
 					"texture": "#iron"
 				},
 				"down": {
 					"uv": [
-						2.75,
+						3.25,
 						0,
-						5.25,
-						4
+						5.75,
+						5
 					],
 					"texture": "#iron"
 				}
@@ -406,66 +592,66 @@
 		{
 			"name": "latch",
 			"from": [
-				5,
-				11,
-				-11.5
+				6.5,
+				14.5,
+				-12.5
 			],
 			"to": [
-				5.6,
-				12,
-				-8
+				7.1,
+				15.5,
+				-9
 			],
 			"faces": {
+				"west": {
+					"uv": [
+						0,
+						0.5,
+						3.5,
+						1.5
+					],
+					"texture": "#iron"
+				},
 				"north": {
 					"uv": [
-						5,
-						4,
-						5.6,
-						5
+						6.5,
+						0.5,
+						7.1,
+						1.5
 					],
 					"texture": "#iron"
 				},
 				"east": {
 					"uv": [
 						0,
-						4,
+						0.5,
 						3.5,
-						5
+						1.5
 					],
 					"texture": "#iron"
 				},
 				"south": {
 					"uv": [
-						5,
-						4,
-						5.6,
-						5
-					],
-					"texture": "#iron"
-				},
-				"west": {
-					"uv": [
-						0,
-						4,
-						3.5,
-						5
+						6.5,
+						0.5,
+						7.1,
+						1.5
 					],
 					"texture": "#iron"
 				},
 				"up": {
 					"uv": [
-						5,
+						6.5,
 						0,
-						5.6,
+						7.1,
 						3.5
 					],
 					"texture": "#iron"
 				},
 				"down": {
 					"uv": [
-						5,
+						6.5,
 						0,
-						5.6,
+						7.1,
 						3.5
 					],
 					"texture": "#iron"
@@ -475,66 +661,66 @@
 		{
 			"name": "latch_handle",
 			"from": [
-				5.6,
-				10.5,
-				-8.75
+				7.1,
+				12.5,
+				-9.75
 			],
 			"to": [
-				6.2,
-				12.5,
-				-8
+				7.7,
+				15.5,
+				-9
 			],
 			"faces": {
+				"west": {
+					"uv": [
+						0,
+						0.5,
+						0.75,
+						3.5
+					],
+					"texture": "#iron"
+				},
 				"north": {
 					"uv": [
-						5.6,
-						3.5,
-						6.2,
-						5.5
+						7.1,
+						0.5,
+						7.7,
+						3.5
 					],
 					"texture": "#iron"
 				},
 				"east": {
 					"uv": [
 						0,
-						3.5,
+						0.5,
 						0.75,
-						5.5
+						3.5
 					],
 					"texture": "#iron"
 				},
 				"south": {
 					"uv": [
-						5.6,
-						3.5,
-						6.2,
-						5.5
-					],
-					"texture": "#iron"
-				},
-				"west": {
-					"uv": [
-						0,
-						3.5,
-						0.75,
-						5.5
+						7.1,
+						0.5,
+						7.7,
+						3.5
 					],
 					"texture": "#iron"
 				},
 				"up": {
 					"uv": [
-						5.6,
+						7.1,
 						0,
-						6.2,
+						7.7,
 						0.75
 					],
 					"texture": "#iron"
 				},
 				"down": {
 					"uv": [
-						5.6,
+						7.1,
 						0,
-						6.2,
+						7.7,
 						0.75
 					],
 					"texture": "#iron"

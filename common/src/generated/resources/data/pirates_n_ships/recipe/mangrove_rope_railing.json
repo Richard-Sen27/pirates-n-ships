@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:rope_railing",
+  "key": {
+    "P": {
+      "item": "minecraft:mangrove_planks"
+    },
+    "T": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "TTT",
+    "P P"
+  ],
+  "result": {
+    "count": 4,
+    "id": "pirates_n_ships:mangrove_rope_railing"
+  }
+}

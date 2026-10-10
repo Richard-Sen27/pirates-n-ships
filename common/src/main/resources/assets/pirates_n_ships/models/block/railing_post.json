@@ -2,22 +2,22 @@
 	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"planks": "minecraft:block/oak_planks",
 		"log": "minecraft:block/stripped_oak_log",
-		"particle": "#planks"
+		"log_top": "minecraft:block/stripped_oak_log_top",
+		"particle": "#log"
 	},
 	"elements": [
 		{
 			"name": "post",
 			"from": [
+				-0.5,
 				0,
-				0,
-				0
+				-0.5
 			],
 			"to": [
-				3,
-				16,
-				3
+				2.5,
+				16.5,
+				2.5
 			],
 			"faces": {
 				"north": {
@@ -55,57 +55,6 @@
 						16
 					],
 					"texture": "#log"
-				}
-			}
-		},
-		{
-			"name": "post_cap",
-			"from": [
-				0,
-				16,
-				0
-			],
-			"to": [
-				3,
-				17,
-				3
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
-				},
-				"east": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -114,7 +63,127 @@
 						3,
 						3
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_finial",
+			"from": [
+				0,
+				16.5,
+				0
+			],
+			"to": [
+				2,
+				18.5,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_tip",
+			"from": [
+				0.5,
+				18.5,
+				0.5
+			],
+			"to": [
+				1.5,
+				19.5,
+				1.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0.5,
+						0.5,
+						1.5,
+						1.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		}

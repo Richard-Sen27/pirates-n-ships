@@ -1,0 +1,251 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
+		"particle": "#log"
+	},
+	"elements": [
+		{
+			"name": "baluster",
+			"from": [
+				3,
+				2,
+				0
+			],
+			"to": [
+				5,
+				14,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						3,
+						2,
+						5,
+						14
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						2,
+						2,
+						14
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3,
+						2,
+						5,
+						14
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						2,
+						2,
+						14
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "baluster_collar_low",
+			"from": [
+				2.75,
+				6,
+				-0.25
+			],
+			"to": [
+				5.25,
+				6.5,
+				2.25
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2.75,
+						9.5,
+						5.25,
+						10
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						9.5,
+						2.5,
+						10
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						2.75,
+						9.5,
+						5.25,
+						10
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						9.5,
+						2.5,
+						10
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						2.75,
+						0,
+						5.25,
+						2.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "baluster_bulge",
+			"from": [
+				2.5,
+				6.5,
+				-0.5
+			],
+			"to": [
+				5.5,
+				8.5,
+				2.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2.5,
+						7.5,
+						5.5,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						7.5,
+						3,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						2.5,
+						7.5,
+						5.5,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						7.5,
+						3,
+						9.5
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						2.5,
+						0,
+						5.5,
+						3
+					],
+					"texture": "#log_top"
+				},
+				"down": {
+					"uv": [
+						2.5,
+						0,
+						5.5,
+						3
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "baluster_collar_high",
+			"from": [
+				2.75,
+				8.5,
+				-0.25
+			],
+			"to": [
+				5.25,
+				9,
+				2.25
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2.75,
+						7,
+						5.25,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						7,
+						2.5,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						2.75,
+						7,
+						5.25,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						7,
+						2.5,
+						7.5
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						2.75,
+						0,
+						5.25,
+						2.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		}
+	]
+}

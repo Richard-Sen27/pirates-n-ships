@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/rope_railing_edge",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_joshua_log",
+    "log_top": "regions_unexplored:block/stripped_joshua_log_top",
+    "particle": "regions_unexplored:block/joshua_planks",
+    "planks": "regions_unexplored:block/joshua_planks"
+  }
+}

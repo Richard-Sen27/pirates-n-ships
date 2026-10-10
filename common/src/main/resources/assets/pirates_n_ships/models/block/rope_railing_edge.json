@@ -1,0 +1,182 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
+		"rope": "minecraft:block/stripped_birch_log",
+		"particle": "#log"
+	},
+	"elements": [
+		{
+			"name": "stanchion",
+			"from": [
+				0,
+				0,
+				0
+			],
+			"to": [
+				2,
+				16.25,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "rope_top",
+			"from": [
+				0,
+				14.5,
+				0.25
+			],
+			"to": [
+				16,
+				16,
+				1.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						1.5,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						1.5,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0.25,
+						0,
+						1.75,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"down": {
+					"uv": [
+						0.25,
+						0,
+						1.75,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				}
+			}
+		},
+		{
+			"name": "rope_middle",
+			"from": [
+				0,
+				7,
+				0.25
+			],
+			"to": [
+				16,
+				8.5,
+				1.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						0,
+						9,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						7.5,
+						0,
+						9,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						0.25,
+						0,
+						1.75,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				},
+				"down": {
+					"uv": [
+						0.25,
+						0,
+						1.75,
+						16
+					],
+					"texture": "#rope",
+					"rotation": 90
+				}
+			}
+		}
+	]
+}

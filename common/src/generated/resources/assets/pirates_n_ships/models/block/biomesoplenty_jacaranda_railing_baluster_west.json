@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_baluster_west",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_jacaranda_log",
+    "log_top": "biomesoplenty:block/stripped_jacaranda_log_top",
+    "particle": "biomesoplenty:block/jacaranda_planks",
+    "planks": "biomesoplenty:block/jacaranda_planks"
+  }
+}

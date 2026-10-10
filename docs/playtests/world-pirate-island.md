@@ -60,3 +60,43 @@ screenshots, and note the world seed.
 - Do camps land on narrow beaches often enough with spacing 64, or do we need a lower spacing?
 - Huts hung from terrain-following paths sit on the surface row; on steep beaches they may stand in the slope.
 - The jetty's posts stop five blocks under the deck, as the village pier's do: on a deep seabed they hang in the water.
+
+## STR2: natural layout
+
+Headless, `StructureLayoutGameTests` plans six islands through the real jigsaw and checks each is not a line (footprint
+aspect at least 0.5), has at least 10 pieces and 4 distinct buildings and its jetty's far end over the water, and
+places three of them on a flat test beach; the renders `art/renders/structures/pirate_island_{11,2024,4242}_{top,iso}.png`
+show those three. Real terrain, the beard (terrain adaptation) and the land filter on a real coastline only show in a
+world. Setup as above (a **new** world; old camps keep their old layout), cheats on, ideally a few F2 screenshots from
+high above (`/tp ~ ~40 ~`, look down) and from the side.
+
+1. **Three islands.** `/locate structure pirates_n_ships:pirate_island`, `/tp` there, look at it from above; then find
+   two more (`/tp` a few thousand blocks along the coast, `/locate` again).
+   - **Expected:** each camp starts at the beach with the palisaded landing and the jetty running out into the water;
+     from it trails of gravel, trodden dirt and sand with pale driftwood edges branch along the beach both ways and
+     climb inland, bending, forking and ending in clearings or at a palm or rocks. No camp is one straight row; the
+     three look different (layout and buildings).
+2. **Buildings.** Walk the trails.
+   - **Expected:** a mix from tents (four looks: the striped A-frame, a small grey pup tent, a big open mess tent, a
+     sail lean-to), huts (on stilts, with a deep porch, a steep thatch), taverns (the open hut, the long hall with the
+     hanging sign "The Rusty Cutlass", the deck tavern with "The Drunken Kraken"), captain's huts (the stilt hut, one
+     with a lookout platform, a cabin in a beached stern), a lookout tower, a smokehouse with fish racks, a stone powder
+     store, a beached longboat with nets, treasure under crossed logs, by a cairn or among boat ribs; between them
+     decorations (fire rings, crates, a hammock between two palms, rocks, washing lines, rum casks, skull posts, a Jolly
+     Roger, palms). Every door faces its trail; hanging signs show their text.
+3. **Huts on slopes.** Find a camp that climbs a slope or a dune.
+   - **Expected:** huts stand on levelled ground with the terrain eased round them (the beard), not floating with air
+     under a corner and not half buried; trails follow the ground. Report a hut that floats or sinks, with coordinates.
+4. **The jetty in the water.** Walk out on the jetty, look down at the berths.
+   - **Expected:** the jetty's end stands in open water and both berths are water (`/pirates world port nearest` lists
+     two). The beard may have shaped the shore and the seabed round the jetty (a dip in the beach beside it, about
+     three blocks of water at the berths): report if the jetty stands on a sand bar or the berths are dry.
+5. **Nothing out at sea.** Look along the shoreline on both sides of the camp.
+   - **Expected:** no trail, hut or decoration out over the open sea (the land filter drops those); a trail may cross a
+     narrow inlet on spruce boards. Report anything floating on the water.
+6. **Captain and crew.** `/pirates mob captain list`, walk to the island's captain.
+   - **Expected:** the captain stands in the classic captain's hut if the camp has one, else on the camp's inland trail
+     (the two new captain's huts do not hold him yet); pirates spawn in the camp's pieces as in step 6 above.
+
+Open questions: are the camps the right size (16 to 81 pieces across 60 seeds, median 41, often 80 to 100 blocks
+across)? Are three treasure looks per island too generous (about one building slot in ten)?

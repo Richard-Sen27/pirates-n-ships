@@ -2825,8 +2825,8 @@ keep `none`.
 | `deco_*` | 3×4×3 to 7×9×5 | 9 to 43 | `campfire` (a lit fire ring with seats), `crates`, `hammock` (a hammock between two leaning palms), `rocks`, `fish_rack`, `washing_line`, `rum_cask`, `skull_post`, `jolly_roger` (a flagpole), `palm`; `deco_in` in the middle of the north edge, y 0 |
 
 The captain's post (`CaptainPosts.HUT_POST`, (4, 3, 5) on the floor at y 2, the door at (4, 3, 3)) is the same in the
-two new captain's huts, but `CaptainPosts` only knows the name `captains_hut`, so a camp whose captain's hut is one of
-the variants puts the captain at the camp's post (as a camp without a captain's hut always did).
+two new captain's huts, and `CaptainPosts.CAPTAINS_HUTS` lists all three: the island's first captain's hut of any kind
+holds the captain; only a camp without one puts him at the camp's post.
 
 **The layout check.** `world/structure/StructureLayoutGameTests` (STR3 and STR4 add their structures there):
 
@@ -2843,7 +2843,9 @@ the variants puts the captain at the camp's post (as a camp without a captain's 
   round it) is written as a Sponge schematic `pirate_island_<seed>.schem` (`world/structure/RegionSchematic`).
 
 The files go to the folder in the system property `pirates_n_ships.layout.dir`, default `structure-layouts` in the
-GameTest run directory (`neoforge/build/gametest/structure-layouts`, `fabric/build/gametest/structure-layouts`). Both
+GameTest run directory (`neoforge/build/gametest/structure-layouts`, `fabric/build/gametest/structure-layouts`); both
+GameTest runs forward the Gradle property `-Ppirates_n_ships.layout.dir=<dir>` to it (a relative path is taken from
+the run directory, so give an absolute one, e.g. a scratch folder outside the repository). Both
 loaders give byte-identical layout files. A seed's layout depends on the site's chunk as well, so the seeds are planned
 at a fixed site and moved into the arena; neighbouring seeds can share a layout (`PortStructure.plan` takes the first
 of `seed`, `seed + 1`, ... that gives the shore's rotation), so the seeds lie far apart.
@@ -2857,11 +2859,14 @@ and 4242: the placed instances of the GameTest on its flat beach (no real terrai
 those). To regenerate them:
 
 ```sh
-./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=StructureLayoutGameTests
-python3 tools/structure_check.py --map
-python3 tools/render_generated_structure.py neoforge/build/gametest/structure-layouts/pirate_island_{11,2024,4242}.schem \
-    --out art/renders/structures
+./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=StructureLayoutGameTests \
+    -Ppirates_n_ships.layout.dir=/tmp/layouts
+python3 tools/structure_check.py /tmp/layouts --map
+python3 tools/render_generated_structure.py /tmp/layouts/pirate_island_{11,2024,4242}.schem --out art/renders/structures
 ```
+
+Without `-Ppirates_n_ships.layout.dir` the files stay in `neoforge/build/gametest/structure-layouts`, the folder
+`tools/structure_check.py` reads by default.
 
 **A real world.** `art/renders/structures/pirate_island_smoke_top.png` and `_iso.png` show the island the NeoForge
 dedicated-server smoke test generates (seed 2718281828, port `pirate_island_-3012_4328`: a narrow sandy spit with the

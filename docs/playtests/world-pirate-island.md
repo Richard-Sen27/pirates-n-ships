@@ -95,8 +95,9 @@ high above (`/tp ~ ~40 ~`, look down) and from the side.
    - **Expected:** no trail, hut or decoration out over the open sea (the land filter drops those); a trail may cross a
      narrow inlet on spruce boards. Report anything floating on the water.
 6. **Captain and crew.** `/pirates mob captain list`, walk to the island's captain.
-   - **Expected:** the captain stands in the classic captain's hut if the camp has one, else on the camp's inland trail
-     (the two new captain's huts do not hold him yet); pirates spawn in the camp's pieces as in step 6 above.
+   - **Expected:** the captain stands in the room of the camp's captain's hut (any of the three: the stilt hut, the
+     one with the lookout, the beached stern), facing the door; without one, on the camp's inland trail. Pirates spawn
+     in the camp's pieces as in step 6 above.
 
 Open questions: are the camps the right size (16 to 81 pieces across 60 seeds, median 41, often 80 to 100 blocks
 across)? Are three treasure looks per island too generous (about one building slot in ten)?

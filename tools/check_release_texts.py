@@ -13,7 +13,8 @@ What fails, per file and line:
   has no `pirates_n_ships.configuration.<key>` entry in that lang;
 - an in-game name in italics (`*Sail Winch*`, `_Bilge Pumps_`): in these texts italics are reserved for the names of
   our items, blocks, mobs and effects, so every italic span must be one of their English names (case-insensitive, a
-  plural "s" or "es" allowed); write emphasis in bold instead;
+  plural "s" or "es" allowed) or the noun of a wood family (`*Helm*` stands for the Oak Helm, the Spruce Helm, ...;
+  WOOD1); write emphasis in bold instead;
 - a dependency named with a version (`Sable 2.0.6`, `GeckoLib: 4.9.3`, `| JEI | 19.39.0.372 |`) whose version is not
   the one in gradle.properties (a Maven suffix such as `+mc.1.21.1` may be left out);
 - in a release-notes file (`*-notes.md`), a dependency of the release that is not named with its version at all.
@@ -105,13 +106,29 @@ class Facts:
         self.config_keys = {k[len(config_prefix):] for k in lang if k.startswith(config_prefix)
                             and not k.endswith(".tooltip")}
         self.config_sections = {k for k in self.config_keys if "." not in k}
+        self.family_nouns = family_nouns(self.names)
         self.props = props
 
     def is_name(self, text):
         text = text.strip().casefold()
         text = re.sub(r"^(the|a|an) ", "", text)
         candidates = {text, text.removesuffix("s"), text.removesuffix("es")}
-        return any(c in self.names for c in candidates)
+        return any(c in self.names or c in self.family_nouns for c in candidates)
+
+
+FAMILY_MIN_WOODS = 5
+
+
+def family_nouns(names):
+    """The nouns of the wood families (WOOD1): "helm" is a name when "oak helm", "spruce helm", ... exist. A suffix
+    after a space counts when at least FAMILY_MIN_WOODS distinct prefixes carry it, so a one-off like "jolly roger
+    flag" does not make "flag" a name."""
+    prefixes = {}
+    for name in names:
+        words = name.split(" ")
+        for cut in range(1, len(words)):
+            prefixes.setdefault(" ".join(words[cut:]), set()).add(" ".join(words[:cut]))
+    return {noun for noun, heads in prefixes.items() if len(heads) >= FAMILY_MIN_WOODS}
 
 
 def check_text(name, text, facts):
@@ -159,6 +176,9 @@ def self_test():
         "item.pirates_n_ships.sail_winch": "Sail Winch",
         "block.pirates_n_ships.bilge_pump": "Bilge Pump",
         "entity.pirates_n_ships.kraken": "Kraken",
+        **{f"block.pirates_n_ships.{w}_helm": f"{w.replace('_', ' ').title()} Helm"
+           for w in ("oak", "spruce", "birch", "jungle", "dark_oak")},
+        "item.pirates_n_ships.jolly_roger_flag": "Jolly Roger Flag",
         "pirates_n_ships.configuration.almanac": "Almanac",
         "pirates_n_ships.configuration.almanac.give_on_first_join": "Gift",
         "pirates_n_ships.configuration.almanac.give_on_first_join.tooltip": "…",
@@ -167,15 +187,16 @@ def self_test():
     props.update(sable_version="2.0.6", pal_version="1.1.6+mc.1.21.1", fabric_version="0.116.12+1.21.1",
                  minecraft_version="1.21.1", java_version="21")
     facts = Facts(lang, props)
-    good = ("Use the *Sail Winch* and two *Bilge Pumps*; beware the _Kraken_.\n"
+    good = ("Use the *Sail Winch* and two *Bilge Pumps*; beware the _Kraken_. A *Helm* or two *Helms*, a *Dark Oak Helm*.\n"
             "`pirates_n_ships:sail_winch`, `almanac.give_on_first_join`, `en_us.json`, `/pirates wind set`.\n"
             "Sable 2.0.6 | Player Animation Library | 1.1.6 | Fabric API 0.116.12+1.21.1, Minecraft 1.21.1, Java 21\n"
             "snake_case_word and **bold** and a * bullet, `boarding.png`, `net.foo.*` or `net.bar.*`.\n")
     assert check_text("store.md", good, facts) == [], check_text("store.md", good, facts)
-    bad = ("A *Sea Serpent* and `pirates_n_ships:sea_serpent` and `almanac.give_on_join`.\n"
+    bad = ("A *Sea Serpent* and `pirates_n_ships:sea_serpent` and `almanac.give_on_join`; an *Oak* and a *Flag*.\n"
            "Sable 2.0.5, Fabric API 0.115.0, GeckoLib: 4.9.2\n")
     problems = check_text("store.md", bad, facts)
-    expected = ["sea_serpent is no item", "*Sea Serpent* is in italics", "`almanac.give_on_join` does not exist",
+    expected = ["sea_serpent is no item", "*Sea Serpent* is in italics", "*Oak* is in italics", "*Flag* is in italics",
+                "`almanac.give_on_join` does not exist",
                 "Sable 2.0.5 differs", "Fabric API 0.115.0 differs", "GeckoLib 4.9.2 differs"]
     for fragment in expected:
         assert any(fragment in p for p in problems), f"missed {fragment!r}: {problems}"

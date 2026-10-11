@@ -139,7 +139,7 @@ Typical times on a laptop: startup to `Done` about 20 s in either mode once buil
 - **Art and sounds**: `feat(art)`, `feat(audio)`
 - **Other**: everything else, including subjects that are not in Angular format. `build`, `ci`, `chore`, `docs`, `refactor`, `style` and `test` are left out unless `--all` is passed or the commit is marked breaking (`type!:`).
 
-The script knows nothing about loaders. The workflow puts one line above its output in `build/release-notes.md`: the release is for NeoForge and Fabric, and which mods each loader needs. Both loaders' versions get the same notes.
+The script knows nothing about loaders. The workflow puts one line above its output in `build/release/release-notes.md`: the release is for NeoForge and Fabric, and which mods each loader needs. Both loaders' versions get the same notes.
 
 Commits are listed oldest first, merge commits are skipped, and the output depends only on the subjects. Pass `""` as the previous tag for the first release. `--self-test` checks the grouping on fixed input; the workflow runs it before using the script.
 
@@ -167,7 +167,7 @@ Before tagging, check:
 6. Check the release texts: `python3 tools/check_release_texts.py` passes, and `docs/release/store-page.md` and the version's notes still describe what is on `main` (paste the store page into both platforms when it changed).
 7. The configuration table in `docs/guide.md` §13 matches the code: `python3 tools/check_config_docs.py` prints `ok` (it fails on a config section without a row, a row without a section, a nested group its row does not name, or a backticked name that is no longer a key; `--keys` lists the keys a row leaves out, `--self-test` checks the parser). Values whose defaults changed since the last release belong in the release notes.
 8. The structure files carry no misplaced block entities: `python3 tools/check_structures.py` ends with `0 with problems` (it fails on block entity data on a state without one or with another block's id, and on an entity block without a block entity in a generated structure, which worldgen logs as "Tried to load a block entity … but failed"; keep its `MOD_RULES` in step with every new entity block).
-9. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
+9. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the build job's summary and attaches both jars as a workflow artifact; the publish job shows as skipped.
 
 Then tag and push:
 
@@ -180,31 +180,45 @@ The tag push starts the workflow. After a final (non-pre-release) version, bump 
 
 A failed publish can be retried with Actions → Release → Run workflow, `version` = the existing tag, `dry_run` unchecked, and `publish` = the loader that failed (`neoforge` or `fabric`; the default `both` publishes both). It checks out the tag, not the branch. Retry only the failed loader: Modrinth accepts a second version with the same number, so republishing a loader that already went out makes a duplicate there.
 
-The two loaders publish in two separate steps, NeoForge first. A failed NeoForge publish does not stop the Fabric one, and a failed Fabric publish does not touch the NeoForge version already published (nothing is rolled back); the job ends red and the failed loader is retried as above. Within one step mc-publish uploads to Modrinth, CurseForge and GitHub in turn, carries on past a platform that fails and fails the step at the end. A retry of that loader uploads to all three again, so first delete the version it did publish on Modrinth or CurseForge (GitHub just replaces the jar on the release), or upload the missing platform by hand instead.
+A retry runs the whole workflow again (build, both suites, about half an hour) before it publishes. When nothing went out at all (say a secret was missing: the publish job fails on its first check), "Re-run failed jobs" on the failed run is quicker: it re-runs only the publish job with the artifact the build job already uploaded. Never use it after one loader did publish: the re-run publishes both again.
+
+The two loaders publish in two separate steps of the publish job, NeoForge first. A failed NeoForge publish does not stop the Fabric one, and a failed Fabric publish does not touch the NeoForge version already published (nothing is rolled back); the publish job ends red and the failed loader is retried as above. Within one step mc-publish uploads to Modrinth, CurseForge and GitHub in turn, carries on past a platform that fails and fails the step at the end. A retry of that loader uploads to all three again, so first delete the version it did publish on Modrinth or CurseForge (GitHub just replaces the jar on the release), or upload the missing platform by hand instead.
 
 ## What the workflow does
 
-`.github/workflows/release.yml`, on a `v*` tag push or on `workflow_dispatch` (inputs `version`, `dry_run`, default true):
+`.github/workflows/release.yml`, on a `v*` tag push or on `workflow_dispatch` (inputs `version`, `dry_run` default true, `publish` default `both`). Three jobs (REL6): the cheap checks first, then the NeoForge and the Fabric suite side by side, then the publish. Before REL6 it was one job that ran every check in turn, and both v0.1.0 runs failed on a cheap check (a JUnit test, then the Fabric jar check) after the expensive steps had already run, the second after 47 minutes. Release covers everything the `Build` workflow does (build, JUnit, both loaders' GameTests) plus the jar checks, the release texts and the smoke tests; `Build` no longer runs on tags.
+
+**`build`** (Build, JUnit and checks; about 6 minutes, the Gradle build being 5 of them):
 
 1. Checks out with full history and tags.
-2. Resolves the version from the tag (rejects anything but `vX.Y.Z[-alpha.N|-beta.N]`), the channel (after a self-check of the rule), and the previous `v*` tag for the notes. A non-dry run needs the tag to exist and checks it out; a dry run of a tag that does not exist uses the selected branch.
-3. JDK 21 (Temurin), Gradle with caching.
-4. `./gradlew build -Pversion=<version>` (includes JUnit).
-5. `./gradlew :neoforge:runGameTestServer -Pversion=<version>` (headless; the normal CI runs it on ubuntu too).
-6. `./gradlew :fabric:runGameTest -Pversion=<version>` (headless, like the CI's Fabric GameTests). Then the [dedicated-server smoke test](#dedicated-server-smoke-test) on both release jars, NeoForge first (`tools/server_smoke.sh <loader> --jar` with `SMOKE_GRADLE_ARGS=-Pversion=<version>`; about 3 minutes per loader), then uploads its logs (`server-smoke-<version>`, also when it failed).
-7. Checks there is exactly one release jar `neoforge/build/libs/*-neoforge-*-<version>.jar` (sources and javadoc jars do not match) and that its `neoforge.mods.toml` has that version.
-8. Checks there is exactly one release jar `fabric/build/libs/*-fabric-*-<version>.jar` and that its `fabric.mod.json` has `"version": "<version>"`.
-9. Writes the notes (`tools/release_notes.py --self-test`, then the loader line and the notes into `build/release-notes.md` and the job summary).
-10. Uploads both jars and the notes as a workflow artifact.
-11. Unless dry run: checks the secrets exist, then [`Kira-NT/mc-publish@v3.3.1`](https://github.com/Kira-NT/mc-publish) (formerly `Kir-Antipov/mc-publish`; NeoForge support since v3.3.0) publishes the NeoForge jar to Modrinth and CurseForge and creates the GitHub release for the tag with the notes and the jar (skipped when `publish` is `fabric`).
-12. Unless dry run: a second mc-publish call publishes the Fabric jar to Modrinth and CurseForge (loader `fabric`, the Fabric dependencies) and adds it to the GitHub release of the tag (mc-publish finds the release by its tag; it creates it if the NeoForge step did not). It runs when every check passed, also after a failed NeoForge publish (skipped when `publish` is `neoforge`).
+2. Resolves the version from the tag (rejects anything but `vX.Y.Z[-alpha.N|-beta.N]`), the channel (after a self-check of the rule), and the previous `v*` tag for the notes. A non-dry run needs the tag to exist and checks it out; a dry run of a tag that does not exist uses the selected branch. Version, channel, the notes' ref, the commit sha and the previous tag become the job's outputs.
+3. The release notes and texts, before any Gradle run (they need only Python and the committed generated lang, so they fail within the first minute): `tools/release_notes.py --self-test`, `tools/check_release_texts.py` with `VERSION` set, then the loader line, the hand-written `docs/release/<version>-notes.md` below its `PUBLISHED NOTES` marker (when it exists) and the generated commit list (when a previous tag exists) into `build/release/release-notes.md` and the job summary.
+4. JDK 21 (Temurin), Gradle with caching, then `./gradlew build -Pversion=<version>` (includes JUnit).
+5. Checks there is exactly one release jar `neoforge/build/libs/*-neoforge-*-<version>.jar` (sources and javadoc jars do not match) and that its `neoforge.mods.toml` has that version.
+6. Checks there is exactly one release jar `fabric/build/libs/*-fabric-*-<version>.jar` and that its `fabric.mod.json` (parsed as JSON; Loom writes it minified) has `"version": "<version>"`.
+7. Uploads both jars and `release-notes.md` as the workflow artifact `pirates_n_ships-<version>` (flat, no folders).
+
+**`gametest`** (GameTests and server smoke; needs `build`; one job per loader, `neoforge` and `fabric`, running in parallel with `fail-fast: false`, so one loader's failure does not cancel the other's run; about 25 minutes each: setup and compile, the loader's GameTests about 12 minutes, the smoke test about 10):
+
+1. Checks out the commit the build job resolved, JDK 21, Gradle with caching.
+2. The loader's GameTests with `-Pversion=<version>`: `./gradlew :neoforge:runGameTestServer` or `./gradlew :fabric:runGameTest` (headless, as in CI).
+3. The [dedicated-server smoke test](#dedicated-server-smoke-test) on that loader's release jar (`tools/server_smoke.sh <loader> --jar` with `SMOKE_GRADLE_ARGS=-Pversion=<version>`). The job builds that jar again from the same commit and version; the jars published are the build job's.
+4. Uploads the smoke logs as `server-smoke-<loader>-<version>`, also when the run failed.
+
+**`publish`** (needs `build` and both `gametest` jobs; skipped on a dry run; about 2 minutes; the only job with `contents: write`, the others read only):
+
+1. Downloads the artifact `pirates_n_ships-<version>` into `dist/`, then checks the secrets exist and both jars and the notes are there.
+2. [`Kira-NT/mc-publish@v3.3.1`](https://github.com/Kira-NT/mc-publish) (formerly `Kir-Antipov/mc-publish`; NeoForge support since v3.3.0) publishes the NeoForge jar to Modrinth and CurseForge and creates the GitHub release for the tag with the notes and the jar (skipped when `publish` is `fabric`).
+3. A second mc-publish call publishes the Fabric jar to Modrinth and CurseForge (loader `fabric`, the Fabric dependencies) and adds it to the GitHub release of the tag (mc-publish finds the release by its tag; it creates it if the NeoForge step did not). It runs when the download and the secrets check passed, also after a failed NeoForge publish (skipped when `publish` is `neoforge`).
+
+So a release takes about half an hour from tag to published versions (build about 6 minutes, the two suites side by side about 25, publish about 2), down from about 50 minutes in one job; a cheap failure shows within the first few minutes.
 
 The manual performance test (PERF1, `PerformanceGameTests`) is not part of the pipeline: it registers only with
 `-Ppirates_n_ships.perf=true`, which neither the release workflow nor CI passes, and its timings depend on the
 machine. Run it by hand before a release that touches ship, crew or physics code (see [`guide.md`](guide.md),
 "Testing note: the performance test", and [`audit/performance.md`](audit/performance.md)).
 
-Releases run one at a time (`concurrency: release`). A second tag pushed meanwhile waits; GitHub keeps only one waiting run per group, so a third would cancel the waiting second one. Push release tags one by one. A tag push also triggers the normal `Build` workflow; that is harmless duplicate work.
+Releases run one at a time (`concurrency: release`). A second tag pushed meanwhile waits; GitHub keeps only one waiting run per group, so a third would cancel the waiting second one. Push release tags one by one. A tag push no longer triggers the normal `Build` workflow (it runs on branch pushes and pull requests only); the release workflow tests the tagged commit itself.
 
 ## One-time setup (the maintainer)
 

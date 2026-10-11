@@ -538,7 +538,10 @@ many regions. [V code; I cost]
   some sank into the stone at 12,000,000 and 13,600,000. [V]
 - **The vanilla GameTest server places its test grid at a random X/Z of up to ±14,999,992** (`GameTestServer#startTests`).
   That made physics tests fail at random: a ship "moving at 72 m/s" was in free fall through the world. Our
-  `mixin/MixinGameTestServer` keeps the grid within ±250,000 blocks. [V]
+  `mixin/MixinGameTestServer` first kept the grid within ±250,000 blocks, then ±4,096; since TST1 (2026-10-11) it lays
+  the grid out as a square centred on the origin (`core/gametest/GameTestGrid`, about ±1,050 blocks for 1,330 tests)
+  and `ModGameTests` fails any test placed beyond `GameTestGrid.SAFE_RANGE` (4096 − 256): Sable computes in `f32`,
+  and past 8,192 blocks a ship against a wall reports ~0.3 m/s without moving. [V]
 - Sable's GameTest cleanup removes only sub-levels that intersect the test box, on success and when the space is
   cleared (`GameTestInfoMixin`, `StructureUtilsMixin`). Ships of failed or timed-out tests, and ships that drifted out,
   stay alive. Tests that create ships must use `ship/ShipTestCleanup`. [V]

@@ -44,9 +44,14 @@ class LocaleSafeFormattingTest {
     private static final Pattern NUMBER_FORMAT = Pattern.compile("\\bNumberFormat\\.get\\w*Instance\\(\\s*\\)");
     private static final List<Pattern> BAD = List.of(FORMAT, FORMATTED, DECIMAL_FORMAT, NUMBER_FORMAT);
 
-    /** Line comments and block comments blanked out (newlines kept, so line numbers stay right). */
+    /**
+     * Line comments and block comments blanked out (newlines kept, so line numbers stay right). The block comment
+     * is matched with a character class, not {@code (?:.|\n)*?}: Java's regex engine recurses once per character
+     * of an alternation under a quantifier, and a long javadoc overflowed the 1 MB thread stack of the Linux release
+     * runner (the first v0.1.0 run) while passing on macOS.
+     */
     static String stripComments(String src) {
-        Matcher m = Pattern.compile("'(?:\\\\.|[^'\\\\\\n])+'|\"(?:\\\\.|[^\"\\\\\\n])*\"|//[^\\n]*|/\\*(?:.|\\n)*?\\*/")
+        Matcher m = Pattern.compile("'(?:\\\\.|[^'\\\\\\n])+'|\"(?:\\\\.|[^\"\\\\\\n])*\"|//[^\\n]*|/\\*[\\s\\S]*?\\*/")
                 .matcher(src);
         StringBuilder out = new StringBuilder();
         while (m.find()) {

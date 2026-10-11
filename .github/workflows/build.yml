@@ -2,6 +2,7 @@ name: Build
 
 on:
   push:
+    branches: ['**']   # not on tags: a tag push runs the Release workflow, which builds and tests the same commit
   pull_request:
 
 jobs:

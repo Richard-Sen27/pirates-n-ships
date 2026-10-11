@@ -16,8 +16,8 @@ Local check of both release jars (what the workflow's two jar checks test):
 ```sh
 ./gradlew build -Pversion=0.0.0-beta.1
 ls neoforge/build/libs fabric/build/libs   # one jar each without -sources/-javadoc
-unzip -p neoforge/build/libs/pirates_n_ships-neoforge-1.21.1-0.0.0-beta.1.jar META-INF/neoforge.mods.toml | grep 'version = "0.0.0-beta.1"'
-unzip -p fabric/build/libs/pirates_n_ships-fabric-1.21.1-0.0.0-beta.1.jar fabric.mod.json | grep '"version": "0.0.0-beta.1"'
+unzip -p neoforge/build/libs/pirates_n_ships-neoforge-1.21.1-0.0.0-beta.1.jar META-INF/neoforge.mods.toml | grep -E '^\s*version\s*=\s*"0.0.0-beta.1"'
+unzip -p fabric/build/libs/pirates_n_ships-fabric-1.21.1-0.0.0-beta.1.jar fabric.mod.json | python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])'   # Loom minifies the JSON, so grep for a spaced "version": never matches
 ```
 
 ### Release channel

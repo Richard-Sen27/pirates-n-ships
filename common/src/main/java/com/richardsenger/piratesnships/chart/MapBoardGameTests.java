@@ -187,6 +187,33 @@ public final class MapBoardGameTests {
         finish(helper, p);
     }
 
+    /**
+     * CHART2: a chart with more markers than the old limit of 64 (no limit by default) draws every one of them onto a
+     * board, split over the tiles they lie on.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aBoardTakesMoreMarkersThanTheOldLimit(GameTestHelper helper) {
+        List<BlockPos> tiles = floorBoard(helper, 2, 2, 2, 1);
+        int bx = base(tiles.get(0).getX());
+        int bz = base(tiles.get(0).getZ());
+        int cb = cb();
+        ChartData data = chart(cb, bx, bz, 2 * size(), size(), bx + size());
+        int count = 100;
+        for (int i = 0; i < count; i++) {
+            MarkerRules.Outcome o = MarkerRules.add(data, (bx + 4 + (i % 50) * 5) * cb + 1, (bz + 10 + (i / 50) * 40) * cb + 1,
+                    MarkerIcon.values()[i % 5], "m" + i, ChartConfig.MAX_MARKERS.get());
+            helper.assertTrue(o.ok(), "marker " + i + " placed with the default max_markers");
+            data = o.data();
+        }
+        ServerPlayer p = drawer(helper, "board_many", tiles.get(0), data, 10);
+        MapTileService.Outcome out = MapTileService.draw(p, new DrawTilePayload(tiles.get(0), bx, bz, 1, true, false));
+        helper.assertTrue(out.ok(), "drawn, got " + out.refusal());
+        Set<String> names = new HashSet<>();
+        for (BlockPos t : tiles) be(helper, t).drawing().markers().forEach(m -> names.add(m.name()));
+        helper.assertValueEqual(names.size(), count, "every marker is on the board");
+        finish(helper, p);
+    }
+
     /** A wall board of one column and three rows: the top tile is row 0, slices go south down the wall. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aWallBoardDrawsTopDown(GameTestHelper helper) {

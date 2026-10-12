@@ -18,8 +18,7 @@ and 8 GameTests. Nothing has been seen in game: the look, the textures, the key 
 5. **Key without the option:** M with empty hands gives an action-bar hint; with the chart in hand it opens; M inside
    closes.
 6. **Key with the option:** `open_without_item = true` and `/reload`: M opens with empty hands; the tooltip says so.
-7. **Other players:** two clients and `show_other_players = true`: the other appears as a ship with heading and a
-   name on hover; off by default.
+7. ~~**Other players:**~~ withdrawn by CHART2: the chart never shows other players (see CHART2 step 9).
 8. **Disabled:** `enabled = false`: the item and the key say charts are disabled, nothing is charted.
 9. **Doodles:** over open ocean serpents, whales and small roses appear only over wide deep water; `chart_visuals
    .doodles = false` removes them.
@@ -136,3 +135,59 @@ stack of ink sacs, a few glow ink sacs, one kraken ink (`/give @s pirates_n_ship
 14. **Redraw off:** `chart.tiles.redraw_allowed = false`: a drawn board opens with only Update (no New, no Clear);
     updating works; a board with leftovers of another drawing (step 12's mixed case) says "This tile's drawing is
     permanent".
+
+## CHART2: zoom out, markers list, your icon, ships, structures
+
+What changed: three more zoom-out steps (`chart.max_zoom_out` 3, up to 5), no marker limit (`chart.max_markers` 0 =
+none), a **Markers (n)** button where the "n / 64 markers" count stood, the player as a compass needle, the ship you
+stand on and your own ships with their headings (`chart.show_ships`), ports, wrecks and the mod's other structures with
+icons and a hover legend (`chart.show_structures`, `chart.ports_always_known`, `chart.structure_reveal_distance` 96).
+**Rule (the human, 2026-10-12): the chart shows only its owner.** Other players and their ships never appear, on any
+setting; `chart.show_other_players` (MAP1's step 7) is gone. NPC convoys and patrols do not appear either.
+
+Covered headlessly: `ChartProjectionTest` (the scales), `ChartZoomOutTest` (far pixels = a board's zoomed pixels),
+`MarkerListTest` (order and bearings), `StructureRevealTest` (the reveal rule), `MarkerRulesTest` (0 = no limit),
+`ChartCodecsTest` (the new state payload, 4096 markers in one payload), `ChartTexturesTest` (the new icons) and the
+GameTests `ChartGameTests` (unlimited markers, the cap when set, ports in the state and no other player, ports
+revealed by distance, a wreck start revealed and a vanilla one not, only the owner's chart showing a ship, the
+switches) and `MapBoardGameTests` (100 markers on a board). The screen itself needs a client.
+
+Preparation: an old dev config file still has `max_markers = 64`; delete that line (or the file) to get the new default.
+A world with a few ports (`/pirates world ports` or `/locate structure pirates_n_ships:seafarer_village`), a wreck
+nearby (`/locate structure pirates_n_ships:wreck`), a ship of your own, a second account for step 9.
+
+1. **Zoom out:** open the chart, press − (or scroll down) repeatedly: after MAP1's widest step come three more; the
+   scale bar reads about 250, 500 and 1000 blocks at the last steps (32 blocks per pixel at 4-block cells, a 400 px
+   map spans about 13,000 blocks). The coasts stay recognisable: land and sea in their colours, the coast inked, small
+   islands may vanish into the sea around them. No doodles beyond MAP1's widest step. Zooming back in is instant and
+   the point under the cursor stays put. Pan around at the widest step: no stutter, textures fill in within a second.
+   `max_zoom_out = 0` and `/reload` (or a relog): only MAP1's three steps; `5`: two more (128 blocks per pixel).
+2. **No limit:** place more than 64 markers (a quick way: give yourself a chart, right-click, Enter, repeat); the 65th
+   is accepted, no "Your chart holds no more markers". With `max_markers = 3` the 4th is refused in red.
+3. **Markers list:** the bottom-right button reads "Markers (n)" with your count. Click it: a parchment panel on the
+   right lists every marker, nearest first, icon, name (an unnamed one reads "Marker at x, z") and "NW, 340 blocks"
+   (or "here" on top of it). The wheel over the panel scrolls it (a scroll bar shows when it is longer than the panel).
+   Click a row: the chart centres on that marker, its ring flashes for about 3 seconds and the row gets a red edge; the
+   list stays open. Click the button again or press Esc to close it (Esc with the list closed closes the chart). With
+   no markers it says how to place one. Clicks on the list never pan the map or place markers.
+4. **Map board:** use a map tile with your chart: the footer has the same "Markers (n)" button left of the Markers
+   toggle; the list and focusing work the same while you pick the board's area.
+5. **Your icon:** you are a small compass needle, red tip forward: turn on the spot and the tip turns with you (north =
+   up when you look north). Hover it: "You". It is clearly not a marker or a ship.
+6. **Your ships:** stand on your assembled ship: a parchment-sailed ship icon sits on the ship and points along the bow
+   (sail a circle: it turns with the ship, about once a second); hover: "Aboard: <name>". Step ashore and walk 50
+   blocks off: the ship stays on the chart with navy sails, hover "Your ship: <name>". A ship far away in unloaded
+   chunks is not shown. `show_ships = false`: no ships, the needle stays.
+7. **Ports:** every port of the world is on the chart from the start with its icon (village: red-roofed houses, navy
+   outpost: a grey tower with a navy flag, pirate island: a palm on sand) and, from MAP1's widest step inward, its
+   name or (until ports have names) its id under it; hover: the name and the kind. `ports_always_known = false`: a new
+   player sees no ports; sail within 96 blocks of a port's walls and it appears for good (also after a relog and death).
+8. **Wrecks:** dive or sail within 96 blocks of a wreck: within two seconds a wreck icon (a broken hull in the waves)
+   appears at it, hover "Wreck"; it stays after you leave. Vanilla shipwrecks, ruins and monuments never appear.
+   `structure_reveal_distance = 16`: you have to pass right over it. `show_structures = false`: no ports or wrecks.
+9. **Other players never:** two clients, both with charts, standing next to each other, one on the other's ship: each
+   chart shows only its own needle and its own ships; nothing of the other player, not even their ship when you stand
+   beside it. (The old option `show_other_players` no longer exists.)
+10. **Nether:** open the chart in the Nether: no needle, no ships, no structures, the "Only the overworld's seas are
+    charted" line, as before.
+11. **Art:** the needle, the five structure icons and the list read at GUI scale 2 and 3; labels do not cover the icons.

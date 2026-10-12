@@ -92,8 +92,9 @@ public final class MarketNoticeBoardGameTests {
         return p;
     }
 
-    /** Uses a board item of {@code wood} on the top of the block below {@code rel}. */
+    /** Uses a board item of {@code wood} on the top of a stone set below {@code rel}. */
     private static InteractionResult place(GameTestHelper h, Player player, ShipWood wood, BlockPos rel) {
+        h.setBlock(rel.below(), Blocks.STONE); // something to click on (an air block below would be replaced itself)
         BlockPos below = h.absolutePos(rel.below());
         ItemStack stack = new ItemStack(LawContent.MARKET_NOTICE_BOARDS.get(wood));
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);

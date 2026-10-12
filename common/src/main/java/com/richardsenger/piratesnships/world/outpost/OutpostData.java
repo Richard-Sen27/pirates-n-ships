@@ -90,8 +90,14 @@ public final class OutpostData {
      * Forks are rare: their branches run parallel to the trunk a few blocks off and leave room only for the smallest
      * buildings between them.
      */
-    public static final Map<String, Integer> LANES = weights("lane", 4, "lane_long", 3, "lane_bend_left", 2,
-            "lane_bend_right", 2, "lane_fork_left", 1, "lane_fork_right", 1, "lane_junction", 1, "parade_ground", 1);
+    public static final Map<String, Integer> LANES = weights("lane", 5, "lane_long", 4, "lane_bend_left", 1,
+            "lane_bend_right", 1, "lane_fork_left", 1, "lane_fork_right", 1, "lane_junction", 1, "parade_ground", 1);
+    /**
+     * STR8 (the human: the paths are "too curly"): what a bend's, a fork's and the junction's ways on draw, the
+     * straights only, so two turns never follow each other. With it the lanes pool moved toward the straights (9 of 15
+     * draws, were 7 of 15; the bends 2 of 15, were 4 of 15).
+     */
+    public static final Map<String, Integer> LANES_STRAIGHT = weights("lane", 3, "lane_long", 2);
     /** The lanes' dead ends against the wall (their fallback): a store shed, the privy, a woodpile. */
     public static final Map<String, Integer> LANE_ENDS = weights("lane_end_store", 1, "lane_end_privy", 1,
             "lane_end_woodpile", 1);
@@ -121,10 +127,13 @@ public final class OutpostData {
     }
 
     public static void gather(DataContributions data) {
-        PortStructureData.writeStructure(data, OutpostKeys.NAVY_OUTPOST, spec(), OutpostKeys.QUAY_EXTENSION);
-        PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, "navy_outpost", SALT,
-                java.util.List.of(new PortStructureData.Exclusion(
-                        com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES, VILLAGE_EXCLUSION_CHUNKS)));
+        // STR8: the outpost and the cold shores' outpost share the placement and the zones (the villages' and vanilla's)
+        java.util.List<PortStructureData.Exclusion> exclusions = new java.util.ArrayList<>(java.util.List.of(new PortStructureData.Exclusion(
+                com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES, VILLAGE_EXCLUSION_CHUNKS)));
+        exclusions.addAll(PortStructureData.vanillaExclusions());
+        PortStructureData.writePort(data, OutpostKeys.NAVY_OUTPOST, OutpostKeys.NAVY_OUTPOST_COLD,
+                () -> PortStructureData.withExtension(PortStructureData.structure(spec()), OutpostKeys.QUAY_EXTENSION),
+                OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOSTS_COLD, "navy_outpost", SALT, exclusions);
         String terminators = OutpostKeys.TERMINATORS.location().toString();
         String laneEnds = OutpostKeys.LANE_ENDS.location().toString();
         PortStructureData.pool(data, OutpostKeys.START, GROUP, "minecraft:empty", "rigid", weights("fort_gate", 1));
@@ -138,11 +147,16 @@ public final class OutpostData {
         PortStructureData.pool(data, OutpostKeys.TERMINATORS, GROUP, terminators, "rigid", TERMINATORS);
         PortStructureData.pool(data, OutpostKeys.QUAY, GROUP, "minecraft:empty", "rigid", weights("quay", 1));
         PortStructureData.pool(data, OutpostKeys.QUAY_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("quay_extension", 1));
-        PortStructureData.pool(data, OutpostKeys.LANEHEADS, GROUP, laneEnds, "terrain_matching", LANEHEADS);
-        PortStructureData.pool(data, OutpostKeys.LANES, GROUP, laneEnds, "terrain_matching", LANES);
-        PortStructureData.pool(data, OutpostKeys.LANE_ENDS, GROUP, "minecraft:empty", "terrain_matching", LANE_ENDS);
+        PortStructureData.pool(data, OutpostKeys.LANEHEADS, GROUP, laneEnds, "terrain_matching", OutpostKeys.LANE_PROCESSORS, LANEHEADS);
+        PortStructureData.pool(data, OutpostKeys.LANES, GROUP, laneEnds, "terrain_matching", OutpostKeys.LANE_PROCESSORS, LANES);
+        PortStructureData.pool(data, OutpostKeys.LANES_STRAIGHT, GROUP, laneEnds, "terrain_matching", OutpostKeys.LANE_PROCESSORS,
+                LANES_STRAIGHT);
+        PortStructureData.pool(data, OutpostKeys.LANE_ENDS, GROUP, "minecraft:empty", "terrain_matching", OutpostKeys.LANE_PROCESSORS,
+                LANE_ENDS);
         PortStructureData.pool(data, OutpostKeys.BUILDINGS, GROUP, "minecraft:empty", "rigid", BUILDINGS);
         PortStructureData.pool(data, OutpostKeys.DECORATIONS, GROUP, "minecraft:empty", "rigid", DECORATIONS);
-        PortStructureData.biomeTag(data, OutpostKeys.HAS_NAVY_OUTPOST, "#minecraft:is_beach");
+        // STR8: the lanes' own list (the court's lanes named the connections list before)
+        PortStructureData.processorList(data, OutpostKeys.LANE_PROCESSORS, "connections", "loot_chests", "trail_bed");
+        PortStructureData.biomeTag(data, OutpostKeys.HAS_NAVY_OUTPOST, "#" + PortStructureData.PORT_SHORES.location());
     }
 }

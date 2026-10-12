@@ -77,8 +77,15 @@ public final class IslandData {
      * trail ends drawn here as well, a camp died out after two or three pieces in one seed of ten).
      */
     public static final Map<String, Integer> PATHS = weights(
-            "path", 3, "path_long", 2, "path_bend_left", 2, "path_bend_right", 2,
+            "path", 4, "path_long", 4, "path_bend_left", 1, "path_bend_right", 1,
             "path_fork_left", 2, "path_fork_right", 2, "path_junction", 1, "path_clearing", 2);
+
+    /**
+     * STR8 (the human: the trails are "too curly"): what a bend's, a fork's and the junction's ways on draw, the
+     * straights only, so two turns never follow each other. With it the paths pool moved toward the straights (8 of 17
+     * draws, were 5 of 16; the bends 2 of 17, were 4 of 16).
+     */
+    public static final Map<String, Integer> PATHS_STRAIGHT = weights("path", 3, "path_long", 2);
 
     /**
      * The trailheads pool (STR2): what the camp's inland trailhead draws, the trail pieces that lead straight on
@@ -88,7 +95,7 @@ public final class IslandData {
      * beach and never just its start.
      */
     public static final Map<String, Integer> TRAILHEADS = weights(
-            "path", 3, "path_long", 2, "path_fork_left", 2, "path_fork_right", 2);
+            "path", 4, "path_long", 4, "path_fork_left", 2, "path_fork_right", 2);
 
     /** The trails' ends (STR2): the skull warning post, rocks, a palm. */
     public static final Map<String, Integer> TERMINATORS = weights("path_end", 1, "path_end_rocks", 1, "path_end_palm", 1);
@@ -109,28 +116,35 @@ public final class IslandData {
     }
 
     public static void gather(DataContributions data) {
-        PortStructureData.writeStructure(data, IslandKeys.PIRATE_ISLAND, spec(), IslandKeys.JETTY_EXTENSION);
-        PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, "pirate_island", SALT,
-                java.util.List.of(
-                        new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES,
-                                PORT_EXCLUSION_CHUNKS),
-                        new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.outpost.OutpostKeys.NAVY_OUTPOSTS,
-                                PORT_EXCLUSION_CHUNKS)));
+        // STR8: the island and the cold shores' island share the placement and the zones (the ports' and vanilla's)
+        java.util.List<PortStructureData.Exclusion> exclusions = new java.util.ArrayList<>(java.util.List.of(
+                new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES,
+                        PORT_EXCLUSION_CHUNKS),
+                new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.outpost.OutpostKeys.NAVY_OUTPOSTS,
+                        PORT_EXCLUSION_CHUNKS)));
+        exclusions.addAll(PortStructureData.vanillaExclusions());
+        PortStructureData.writePort(data, IslandKeys.PIRATE_ISLAND, IslandKeys.PIRATE_ISLAND_COLD,
+                () -> PortStructureData.withExtension(PortStructureData.structure(spec()), IslandKeys.JETTY_EXTENSION),
+                IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLANDS_COLD, "pirate_island", SALT, exclusions);
         PortStructureData.pool(data, IslandKeys.START, GROUP, "minecraft:empty", "rigid", weights("camp_start", 1));
         PortStructureData.pool(data, IslandKeys.PATHS, GROUP, IslandKeys.TERMINATORS.location().toString(), "terrain_matching",
-                IslandKeys.TRAIL_PROCESSORS, PATHS);
+                IslandKeys.TRAIL_LEVEL_PROCESSORS, PATHS);
+        PortStructureData.pool(data, IslandKeys.PATHS_STRAIGHT, GROUP, IslandKeys.TERMINATORS.location().toString(), "terrain_matching",
+                IslandKeys.TRAIL_LEVEL_PROCESSORS, PATHS_STRAIGHT);
         PortStructureData.pool(data, IslandKeys.TRAILHEADS, GROUP, IslandKeys.TERMINATORS.location().toString(),
-                "terrain_matching", IslandKeys.TRAIL_PROCESSORS, TRAILHEADS);
+                "terrain_matching", IslandKeys.TRAIL_LEVEL_PROCESSORS, TRAILHEADS);
         PortStructureData.pool(data, IslandKeys.HUTS, GROUP, "minecraft:empty", "rigid", HUTS);
         PortStructureData.pool(data, IslandKeys.JETTY, GROUP, "minecraft:empty", "rigid", weights("jetty", 1));
         PortStructureData.pool(data, IslandKeys.JETTY_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("jetty_extension", 1));
         // The paths' fallback once the depth runs out; never empty (vanilla skips a connector with an empty fallback)
         PortStructureData.pool(data, IslandKeys.TERMINATORS, GROUP, "minecraft:empty", "terrain_matching",
-                IslandKeys.TRAIL_PROCESSORS, TERMINATORS);
+                IslandKeys.TRAIL_LEVEL_PROCESSORS, TERMINATORS);
         PortStructureData.pool(data, IslandKeys.DECORATIONS, GROUP, "minecraft:empty", "rigid", DECORATIONS);
+        // the STR2 list stays: the trails of islands planned before STR8 name it and keep their look
         data.json(PackOutput.Target.DATA_PACK, "worldgen/processor_list", IslandKeys.TRAIL_PROCESSORS.location(),
                 IslandData::trailProcessors);
-        PortStructureData.biomeTag(data, IslandKeys.HAS_PIRATE_ISLAND, "#minecraft:is_beach");
+        PortStructureData.processorList(data, IslandKeys.TRAIL_LEVEL_PROCESSORS, "connections", "trail_bed", "boardwalk");
+        PortStructureData.biomeTag(data, IslandKeys.HAS_PIRATE_ISLAND, "#" + PortStructureData.PORT_SHORES.location());
         data.encoded(PackOutput.Target.DATA_PACK, "loot_table", TreasureChests.LOOT_TABLE.location(), LootTable.DIRECT_CODEC,
                 TreasureLoot.buriedTreasure());
     }

@@ -3,6 +3,7 @@ real world generated it (terrain, beard, coastline) with ``tools/render_generate
 
 Usage:
     python3 tools/world_region.py WORLD_DIR X0 Z0 X1 Z1 --out FILE.schem [--y0 40] [--y1 100] [--dimension overworld]
+    python3 tools/world_region.py WORLD_DIR X0 Z0 X1 Z1 --doors     # STR8: list the blocked doors in the box
 
 ``WORLD_DIR`` is a world folder (with ``region/*.mca``; e.g. the dedicated-server smoke test's
 ``neoforge/build/server-smoke/world`` after ``tools/server_smoke.sh neoforge``, which generates a pirate island, a
@@ -123,6 +124,47 @@ def extract(world: Path, x0: int, z0: int, x1: int, z1: int, y0: int, y1: int, d
     return grid, (width, height, length)
 
 
+def parse_state(state: str) -> tuple[str, dict]:
+    """``ns:block[k=v,...]`` as (name, properties)."""
+    name, _, rest = state.partition("[")
+    return name, dict(kv.split("=", 1) for kv in rest.rstrip("]").split(",") if "=" in kv)
+
+
+def blocked_doors(grid: list[str], size: tuple[int, int, int], origin: tuple[int, int, int]) -> tuple[list[str], int]:
+    """STR8: the doors (lower halves) of a cut-out region whose approach is blocked, by the rule
+    ``tools/check_structures.py`` applies to the templates (both sides, the door's two rows, a bottom slab a step).
+    Returns the problems (world coordinates) and the number of doors."""
+    import check_structures  # noqa: E402  (same folder)
+    width, height, length = size
+
+    def at(x, y, z):
+        if not (0 <= x < width and 0 <= y < height and 0 <= z < length):
+            return None, {}
+        return parse_state(grid[x + z * width + y * width * length])
+
+    problems = []
+    doors = 0
+    for y in range(height):
+        for z in range(length):
+            for x in range(width):
+                name, props = at(x, y, z)
+                if not name.endswith("_door") or props.get("half") != "lower" or "facing" not in props:
+                    continue
+                doors += 1
+                dx, dz = check_structures.DOOR_SIDES[props["facing"]]
+                for sign in (1, -1):
+                    cx, cz = x + dx * sign, z + dz * sign
+                    rows = (y, y + 1)
+                    if check_structures.is_step(*at(cx, y, cz)):
+                        rows = (y + 1, y + 2)
+                    blocked = [(r, at(cx, r, cz)[0]) for r in rows if not check_structures.passable(*at(cx, r, cz))]
+                    if blocked:
+                        what = ", ".join(f"{n} at y {r + origin[1]}" for r, n in blocked)
+                        problems.append(f"{name} at {x + origin[0]} {y + origin[1]} {z + origin[2]} (facing {props['facing']}): "
+                                        f"the cell {cx + origin[0]} {cz + origin[2]} is blocked ({what})")
+    return problems, doors
+
+
 def to_schem(grid: list[str], size: tuple[int, int, int], origin: tuple[int, int, int]) -> bytes:
     palette: dict[str, int] = {}
     data = bytearray()
@@ -156,12 +198,23 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--y0", type=int, default=40)
     parser.add_argument("--y1", type=int, default=100)
     parser.add_argument("--dimension", default="overworld", help="overworld, or a folder like DIM-1")
-    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--doors", action="store_true",
+                        help="STR8: list every door in the box whose approach (either side, its two rows) is blocked; exit 1 if any")
     args = parser.parse_args(argv)
+    if args.out is None and not args.doors:
+        parser.error("--out or --doors is required")
     x0, z0, x1, z1 = args.box
     x0, x1 = sorted((x0, x1))
     z0, z1 = sorted((z0, z1))
     grid, size = extract(args.world, x0, z0, x1, z1, args.y0, args.y1, args.dimension)
+    if args.doors:
+        problems, doors = blocked_doors(grid, size, (x0, args.y0, z0))
+        for p in problems:
+            print(p)
+        print(f"{doors} doors, {len(problems)} blocked sides")
+        if args.out is None:
+            return 1 if problems else 0
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(to_schem(grid, size, (x0, args.y0, z0)))
     filled = sum(1 for s in grid if s != AIR)

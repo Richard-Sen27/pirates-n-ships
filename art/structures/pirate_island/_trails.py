@@ -38,7 +38,7 @@ def bend(left: bool):
     lantern_post(p, 0 if left else W - 1, 1, 2, height=1, post="drift")
     rope_coil(p, 4 if left else 4, 1, 8, layers=1)
     p.connector(x_in, 0, 0, "path_in", "north", "minecraft:gravel")
-    p.connector(out[0], 0, out[1], "path_out", out_face, "minecraft:gravel")
+    p.connector(out[0], 0, out[1], "path_straight_out", out_face, "minecraft:gravel")
     p.connector(deco_x, 0, L - 1, "hut_out", "south", "minecraft:coarse_dirt")
     p.connector(hut[0], 0, hut[1], "hut_out", hut_face, "minecraft:coarse_dirt")
     p.emit(f"a gentle quarter bend of the trail ({side}), a palm in the inside corner",
@@ -78,8 +78,8 @@ def fork(left: bool):
             else:
                 lantern_post(p, cx, 1, cz, height=1, post="drift")
     p.connector(x, 0, 0, "path_in", "north", "minecraft:gravel")
-    p.connector(x, 0, L - 1, "path_out", "south", "minecraft:gravel")
-    p.connector(out[0], 0, out[1], "path_out", out_face, "minecraft:gravel")
+    p.connector(x, 0, L - 1, "path_straight_out", "south", "minecraft:gravel")
+    p.connector(out[0], 0, out[1], "path_straight_out", out_face, "minecraft:gravel")
     p.connector(deco[0], 0, deco[1], "deco_out", deco[2], "minecraft:coarse_dirt")
     p.connector(hut[0], 0, hut[1], "hut_out", hut[2], "minecraft:coarse_dirt")
     p.emit(f"a fork of the trail ({side}): on south, and a branch sweeping off to the {out_face}",

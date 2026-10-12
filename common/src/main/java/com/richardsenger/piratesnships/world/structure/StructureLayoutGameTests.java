@@ -338,6 +338,13 @@ public final class StructureLayoutGameTests {
     public static ChunkGenerator beachGenerator(GameTestHelper helper, ServerLevel level, int firstFree) {
         ChunkGenerator base = level.getChunkSource().getGenerator();
         helper.assertTrue(base instanceof FlatLevelSource, "the GameTest level is flat: " + base);
+        return beachGenerator(level, firstFree);
+    }
+
+    /** As {@link #beachGenerator(GameTestHelper, ServerLevel, int)}, for callers without a helper (the level must be flat). */
+    public static ChunkGenerator beachGenerator(ServerLevel level, int firstFree) {
+        ChunkGenerator base = level.getChunkSource().getGenerator();
+        if (!(base instanceof FlatLevelSource)) throw new IllegalStateException("the GameTest level is not flat: " + base);
         FlatLevelGeneratorSettings settings = ((FlatLevelSource) base).settings();
         int layers = firstFree - level.getMinBuildHeight();
         return new FlatLevelSource(settings.withBiomeAndLayers(List.of(new FlatLayerInfo(layers, Blocks.STONE)),

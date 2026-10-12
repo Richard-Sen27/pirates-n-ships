@@ -158,7 +158,7 @@ class IslandDataTest {
         });
         for (String piece : IslandData.PATHS.keySet()) {
             assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/" + piece), piece);
-            assertEquals(IslandKeys.TRAIL_PROCESSORS.location().toString(), processors.get("pirates_n_ships:pirate_island/" + piece), piece);
+            assertEquals(IslandKeys.TRAIL_LEVEL_PROCESSORS.location().toString(), processors.get("pirates_n_ships:pirate_island/" + piece), piece);
         }
         for (String piece : IslandData.TERMINATORS.keySet()) {
             assertEquals("terrain_matching", projections.get("pirates_n_ships:pirate_island/" + piece), piece);
@@ -195,7 +195,7 @@ class IslandDataTest {
     @Test
     void biomeTagHasTheBeaches() throws IOException {
         JsonObject json = StandAloneOps.generated("tags/worldgen/biome/has_structure/pirate_island").getAsJsonObject();
-        assertEquals("#minecraft:is_beach", json.getAsJsonArray("values").get(0).getAsString());
+        assertEquals("#pirates_n_ships:port_shores", json.getAsJsonArray("values").get(0).getAsString(), "STR8");
     }
 
     @Test

@@ -34,6 +34,19 @@ public final class VillageKeys {
     /** STR3: the streets' processor list, the connections and the boardwalk (a street over an inlet). */
     public static final ResourceKey<StructureProcessorList> STREET_PROCESSORS =
             ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("village_street"));
+    /**
+     * STR8: the streets' processors since STR8 (the connections, {@code TrailBedProcessor}: level on a cut and filled bed,
+     * the boardwalk). {@link #STREET_PROCESSORS} stays for the streets of villages planned before.
+     */
+    public static final ResourceKey<StructureProcessorList> STREET_LEVEL_PROCESSORS =
+            ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("village_street_level"));
+    /** STR8: what a bend's, a fork's and the crossroads' ways on draw (straights only). */
+    public static final ResourceKey<StructureTemplatePool> STREETS_STRAIGHT = pool("streets_straight");
+    /** STR8: the village on a snowy or frozen shore (its own structure set, {@code cold_frequency}). */
+    public static final ResourceKey<Structure> SEAFARER_VILLAGE_COLD = ResourceKey.create(Registries.STRUCTURE,
+            Constants.id("seafarer_village_cold"));
+    public static final ResourceKey<StructureSet> SEAFARER_VILLAGES_COLD = ResourceKey.create(Registries.STRUCTURE_SET,
+            Constants.id("seafarer_villages_cold"));
 
     private VillageKeys() {
     }

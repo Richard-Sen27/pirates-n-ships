@@ -2809,11 +2809,11 @@ hull, spruce decks, masts and yards, the railing family in dark oak, like the sl
   `barrel_blocking`). **Weather deck** 7 with the dark oak railing at y 8, a wide port (two ports) a side at z 13..14
   and a gate a side at z 17. **Cabin** y 8..9 aft of z 25 under the raised **quarterdeck** (floor 10), its rails at
   y 11: dark oak railing at the sides and the taffrail, a dark oak rope railing along the break (z 25) with gaps over
-  the two stair landings.
+  the two stair landings (x 2 and 6).
 - **Waterline row 3**: keel, bottom and hold under water, the gun deck floor just above it, the ports 1.9 blocks clear.
   The auto-ballast keeps her level (BrigGameTests measures it).
-- **Getting about:** stairs from the weather deck to the quarterdeck on both sides (x 1 and 7, z 22..24, landing on
-  z 25); the **companion**: a three-block opening in the weather deck (x 4, z 14..16, rope railing on both sides) with
+- **Getting about:** stairs from the weather deck to the quarterdeck on both sides (x 2 and 6, z 22..24, landing on
+  z 25; one block in from the rail, so the deck beside the ratline latches stays free for a climber); the **companion**: a three-block opening in the weather deck (x 4, z 14..16, rope railing on both sides) with
   a stair in the deck at z 17 and two below, down to the gun deck at z 14, all in half steps a crew member walks;
   hatches and ladders into the holds (the pathfinder has no ladders: only players and the pump reach the hold).
 - **Rig:** fore mast z 11 (y 1..22), main mast z 19 (y 1..24); three yards each, one block forward of the mast (the
@@ -2823,9 +2823,9 @@ hull, spruce decks, masts and yards, the railing family in dark oak, like the sl
   bowsprit [4, 9, 1]: 0.5 x 11 x 9 = 49.5 blocks².
 - **Stations and gear:** helm on the quarterdeck [4, 11, 27] (facing south), capstan forward [4, 8, 7] (the anchor),
   bilge pump on the gun deck over the main hold [5, 5, 20] (its intake reaches the hold, `pump_reach` 4), the ship's
-  bell on the cabin front [3, 9, 24], the flag on a three-block staff in a flag pedestal at the taffrail
+  bell on the fore mast's after face over the fore winch [4, 9, 12], the flag on a three-block staff in a flag pedestal at the taffrail
   [4, 11..14, 29], a lion figurehead under the bowsprit, three name boards on the transom [3..5, 6, 31], three stern
-  windows in the cabin's stern [2|4|6, 9, 30], ship's lanterns on the cabin front, the gun deck sides and in the cabin.
+  windows in the cabin's stern [2|4|6, 9, 30], ship's lanterns on the cabin front [3|5, 9, 24], the gun deck sides and in the cabin.
 - **Below:** eight hammocks: two fore and aft in the fore berth (x 2 and 6, z 9..10, between the hull and a post),
   four across the gun deck between the guns (z 22 and 24, hull and post), two across the cabin; the galley at the fore
   end of the gun deck's waist (pantry [1, 5, 12], water barrel [7, 5, 12]); cargo crates and barrels in all three

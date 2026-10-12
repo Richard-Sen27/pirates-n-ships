@@ -142,8 +142,10 @@ for x in (2, 4, 6):
 for x in (1, 7):
     put(x, 9, 28, "pane")
 
-# stairs from the weather deck up to the quarterdeck on both sides (landing on the quarterdeck at z QD)
-for x in (1, 7):
+# stairs from the weather deck up to the quarterdeck on both sides (landing on the quarterdeck at z QD), one block in
+# from the rail so the deck beside the ratline latches (x 1 and 7, z 22..24) stays free for the climber
+STAIR_XS = (2, 6)
+for x in STAIR_XS:
     fit(x, 8, QD - 3, "stair")
     fit(x, 8, QD - 2, "top")
     fit(x, 9, QD - 2, "stair")
@@ -189,7 +191,7 @@ def railing_cells():
             kind = "rope" if zs == QD and not edge(x, DECK, zs) else "rail"
             out[(x, 11, zs)] = (kind, dirs)
     # gaps over the stair landings in the quarterdeck front
-    for x in (1, 7):
+    for x in STAIR_XS:
         out.pop((x, 11, QD))
     # rope railing round the companion opening
     for zs in (14, 15, 16):
@@ -239,8 +241,8 @@ fit(CX, QD_FLOOR + 1, 29, "pedestal")
 fit(CX, QD_FLOOR + 2, 29, "pole_bottom")
 fit(CX, QD_FLOOR + 3, 29, "pole_middle")
 fit(CX, QD_FLOOR + 4, 29, "pole_top")
-fit(3, 9, QD - 1, "bell")
-for x in (2, 6):
+fit(CX, 9, FMZ + 1, "bell_s")              # on the fore mast's after face, over the fore winch
+for x in (3, 5):
     fit(x, 9, QD - 1, "lantern_n")
 fit(1, 6, 12, "lantern_e")
 fit(7, 6, 12, "lantern_w")
@@ -409,7 +411,7 @@ palette = {
     "pole_bottom": "pirates_n_ships:flagpole[facing=north,flag=none,part=bottom]",
     "pole_middle": "pirates_n_ships:flagpole[facing=north,flag=none,part=middle]",
     "pole_top": "pirates_n_ships:flagpole[facing=north,flag=none,part=top]",
-    "bell": "pirates_n_ships:ships_bell[face=wall,facing=north]",
+    "bell_s": "pirates_n_ships:ships_bell[face=wall,facing=south]",
     "lantern_n": "pirates_n_ships:ship_lantern[face=wall,facing=north]",
     "lantern_e": "pirates_n_ships:ship_lantern[face=wall,facing=east]",
     "lantern_w": "pirates_n_ships:ship_lantern[face=wall,facing=west]",

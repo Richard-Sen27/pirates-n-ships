@@ -4,9 +4,12 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.entity.Sailor;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -16,6 +19,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -63,8 +67,31 @@ public final class MonsterTargets {
         return MonsterRules.hunts(true, true, shipOf(target), shipOf(monster));
     }
 
-    private static @Nullable UUID shipOf(Entity e) {
-        ShipBody ship = ShipEntities.standingOrRiding(e);
+    /** Blocks below the feet within which a ship block makes an entity count as aboard (deck, or a hold floor). */
+    static final int ABOARD_DEPTH = 3;
+
+    /**
+     * The ship {@code e} is aboard, decided from where it is, the same way for the monster and its prey. Sable's
+     * tracking alone is no good here: it is a contact flag set while the entity moves against the deck and dropped
+     * on any tick without contact (a hop, a wave lifting the hull away), so a person standing on a deck can read as
+     * ashore for a tick. Order: the ship whose blocks lie under its feet (its feet mapped into the ship's plot, up to
+     * {@link #ABOARD_DEPTH} blocks down: the deck, or the floor of a hold), else the ship of its vehicle (a station or
+     * hammock seat), else the ship Sable tracks it on; {@code null} when none.
+     */
+    public static @Nullable UUID shipOf(Entity e) {
+        if (e.level() instanceof ServerLevel level) {
+            Vec3 feet = e.position();
+            for (ShipBody ship : SableShips.all(level)) {
+                if (!ship.worldBounds().inflate(0.5, ABOARD_DEPTH, 0.5).contains(feet)) continue;
+                BlockPos plot = BlockPos.containing(ship.toPlot(feet.add(0, 0.01, 0)));
+                for (int dy = 0; dy <= ABOARD_DEPTH; dy++) {
+                    BlockPos p = plot.below(dy);
+                    if (ship.plotContains(p) && !level.getBlockState(p).getCollisionShape(level, p).isEmpty()) return ship.id();
+                }
+            }
+        }
+        ShipBody ship = ShipEntities.vehicleShip(e);
+        if (ship == null) ship = ShipEntities.standingOrRiding(e);
         return ship != null ? ship.id() : null;
     }
 

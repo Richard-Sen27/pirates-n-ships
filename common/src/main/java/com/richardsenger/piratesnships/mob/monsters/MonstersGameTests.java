@@ -214,8 +214,10 @@ public final class MonstersGameTests {
     // ------------------------------------------------------------------ aboard a ship
 
     /**
-     * A husk on a pier beside a ship leaves the sailor on deck alone; a husk aboard the same ship hunts it. Basin as in
-     * {@code MobGameTests#mobsOnADeckMoveWithTheShip}, with a stone pier east of the hull.
+     * A husk on a pier beside a ship leaves the sailor on deck alone, on every tick; a husk aboard the same ship hunts
+     * it. Basin as in {@code MobGameTests#mobsOnADeckMoveWithTheShip}, with a stone pier east of the hull, beyond the
+     * sailor's flee range (he must not run off the deck). Aboard is decided from the plot under the feet every tick
+     * ({@link MonsterTargets#shipOf}), never from Sable's contact tracking alone, which drops for a tick now and then.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 360, batch = BATCH + "aboard")
     public static void onlyAMonsterAboardHuntsTheDeck(GameTestHelper h) {
@@ -223,7 +225,7 @@ public final class MonstersGameTests {
             for (int z = 0; z < 24; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
                 boolean wall = x == 0 || x == 23 || z == 0 || z == 23;
-                boolean pier = x >= 15 && x <= 17 && z >= 9 && z <= 13;
+                boolean pier = x >= 19 && x <= 21 && z >= 9 && z <= 13;
                 for (int y = 2; y <= 8; y++) {
                     h.setBlock(new BlockPos(x, y, z), wall || pier ? Blocks.STONE : y <= 7 ? Blocks.WATER : Blocks.AIR);
                 }
@@ -256,14 +258,22 @@ public final class MonstersGameTests {
             s.moveTo(w.x, w.y + 0.05, w.z, 0, 0);
             h.getLevel().addFreshEntity(s);
             sailor[0] = s;
-            quay[0] = huskAt(h, h.absoluteVec(new Vec3(16.5, 9, 11.5)));
+            quay[0] = huskAt(h, h.absoluteVec(new Vec3(20.5, 9, 11.5)));
         });
         h.runAfterDelay(SETTLE_TICKS + 20, () -> {
             ShipBody on = ShipEntities.standingOrRiding(sailor[0]);
             h.assertTrue(on != null && on.id().equals(ship.id()), "the sailor is not tracked on the ship");
         });
         h.onEachTick(() -> {
-            if (quay[0] != null && sailor[0] != null && quay[0].getTarget() == sailor[0]) h.fail("the husk on the pier hunted the deck");
+            if (sailor[0] != null && !ship.id().equals(MonsterTargets.shipOf(sailor[0]))) {
+                h.fail("the sailor is no longer aboard at tick " + h.getTick() + ": plot " + ship.toPlot(sailor[0].position()));
+            }
+            if (quay[0] != null && sailor[0] != null && quay[0].getTarget() == sailor[0]) {
+                ShipBody on = ShipEntities.standingOrRiding(sailor[0]);
+                h.fail("the husk on the pier hunted the deck at tick " + h.getTick() + ": sailor tracked on " + (on == null ? null : on.id())
+                        + ", in water " + sailor[0].isInWater() + ", plot " + ship.toPlot(sailor[0].position())
+                        + ", helm plot " + helmPlot + ", ship " + ship.id());
+            }
         });
         h.runAfterDelay(SETTLE_TICKS + 120, () -> {
             quay[0].discard();

@@ -3,16 +3,16 @@ package com.richardsenger.piratesnships.worldsim.raid;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.world.port.Port;
+import com.richardsenger.piratesnships.world.port.PortArguments;
+import com.richardsenger.piratesnships.world.port.PortNameBook;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -33,8 +33,6 @@ public final class RaidCommands {
 
     static final String KEY = "commands." + Constants.MOD_ID + ".world.raid.";
 
-    private static final SuggestionProvider<CommandSourceStack> PORTS = (c, b) -> SharedSuggestionProvider.suggestResource(
-            PortRegistry.get(c.getSource().getServer()).index().all().stream().map(Port::id), b);
 
     private RaidCommands() {
     }
@@ -42,29 +40,26 @@ public final class RaidCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> raid = Commands.literal("raid")
                 .requires(s -> s.hasPermission(2))
-                .then(Commands.literal("chance").executes(RaidCommands::chance))
-                .then(Commands.argument("port", ResourceLocationArgument.id()).suggests(PORTS).executes(RaidCommands::start));
+                .then(Commands.literal("chance").executes(RaidCommands::chance));
+        // the port by id or by name (NAME3)
+        PortArguments.addTo(raid, "port", a -> a.executes(RaidCommands::start));
         dispatcher.register(Commands.literal("pirates").then(Commands.literal("world").requires(s -> s.hasPermission(2)).then(raid)));
     }
 
-    private static int start(CommandContext<CommandSourceStack> c) {
+    private static int start(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         CommandSourceStack source = c.getSource();
         MinecraftServer server = source.getServer();
-        ResourceLocation id = ResourceLocationArgument.getId(c, "port");
-        Optional<Port> port = PortRegistry.get(server).index().byId(id);
-        if (port.isEmpty()) {
-            source.sendFailure(Component.translatable(KEY + "unknown", id.toString()));
-            return 0;
-        }
-        Optional<RaidPlanner.Started> started = RaidPlanner.start(server, port.get(), true, source.getLevel().getRandom());
+        Port port = PortArguments.get(c, "port");
+        ResourceLocation id = port.id();
+        Optional<RaidPlanner.Started> started = RaidPlanner.start(server, port, true, source.getLevel().getRandom());
         if (started.isEmpty()) {
-            source.sendFailure(Component.translatable(KEY + "refused", id.toString()));
+            source.sendFailure(Component.translatable(KEY + "refused", PortNameBook.labelWithId(id)));
             return 0;
         }
         RaidPlanner.Started s = started.get();
         String ids = s.voyages().stream().map(Voyage::shortId).collect(Collectors.joining(", "));
         BlockPos t = s.target();
-        source.sendSuccess(() -> Component.translatable(KEY + "started", id.toString(), s.voyages().size(), ids, t.getX(), t.getZ(),
+        source.sendSuccess(() -> Component.translatable(KEY + "started", PortNameBook.label(id), s.voyages().size(), ids, t.getX(), t.getZ(),
                 Component.translatable(KEY + (s.viaLane() ? "via_lane" : "from_sea")), s.bells().size()), true);
         return s.voyages().size();
     }
@@ -82,7 +77,7 @@ public final class RaidCommands {
                 fmt(p.cooldownDays())), false);
         for (ResourceLocation id : ids) {
             boolean target = PortRegistry.get(server).index().byId(id).map(RaidPlanner::target).orElse(false);
-            source.sendSuccess(() -> Component.translatable(KEY + "line", id.toString(), data.minutes(id),
+            source.sendSuccess(() -> Component.translatable(KEY + "line", PortNameBook.labelWithId(id), data.minutes(id),
                     fmt(RaidTracker.chance(server, id) * 100.0), fmt(RaidTracker.cooldownLeft(server, id)),
                     Component.translatable(KEY + (target ? "target" : "not_target"))), false);
         }
@@ -90,7 +85,7 @@ public final class RaidCommands {
             String ships = r.ships().entrySet().stream()
                     .map(e -> e.getKey().toString().substring(0, 8) + " " + e.getValue().phase().getSerializedName())
                     .collect(Collectors.joining(", "));
-            source.sendSuccess(() -> Component.translatable(KEY + "active", r.port().toString(), ships), false);
+            source.sendSuccess(() -> Component.translatable(KEY + "active", PortNameBook.label(r.port()), ships), false);
         }
         if (ids.isEmpty() && data.raids().isEmpty()) source.sendSuccess(() -> Component.translatable(KEY + "none"), false);
         return ids.size();

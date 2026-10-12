@@ -18,9 +18,12 @@ import java.util.List;
  * {@code trade.TradeData}; {@code box} is the whole structure's bounding box (desks inside it belong to the port);
  * {@code treasures} are the buried chests of a pirate island (WG2), empty for other ports; {@code orders} are the
  * shipwright orders waiting for pickup (SW1, seafarer villages; optional in the codec so older saves load).
+ * {@code name} is the port's proper name (NAME3, {@link PortNames}), given by the {@link PortRegistry} when the port
+ * registers (or, for a port saved before NAME3, when the registry loads); empty until then. The id stays the key
+ * everywhere; the name is what players read (through {@link PortNameBook}).
  */
 public record Port(ResourceLocation id, PortKind kind, ResourceKey<Level> dimension, BlockPos centre, BoundingBox box,
-                   Climate climate, List<Berth> berths, List<TreasureSite> treasures, List<ShipOrder> orders) {
+                   Climate climate, List<Berth> berths, List<TreasureSite> treasures, List<ShipOrder> orders, String name) {
 
     public static final Codec<Port> CODEC = RecordCodecBuilder.create(i -> i.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(Port::id),
@@ -31,13 +34,21 @@ public record Port(ResourceLocation id, PortKind kind, ResourceKey<Level> dimens
             Climate.CODEC.fieldOf("climate").forGetter(Port::climate),
             Berth.CODEC.listOf().optionalFieldOf("berths", List.of()).forGetter(Port::berths),
             TreasureSite.CODEC.listOf().optionalFieldOf("treasures", List.of()).forGetter(Port::treasures),
-            ShipOrder.CODEC.listOf().optionalFieldOf("orders", List.of()).forGetter(Port::orders)
+            ShipOrder.CODEC.listOf().optionalFieldOf("orders", List.of()).forGetter(Port::orders),
+            Codec.STRING.optionalFieldOf("name", "").forGetter(Port::name)
     ).apply(i, Port::new));
 
     public Port {
         berths = List.copyOf(berths);
         treasures = List.copyOf(treasures);
         orders = List.copyOf(orders);
+        name = name == null ? "" : name.strip();
+    }
+
+    /** A port without a name yet (the registry gives it one). */
+    public Port(ResourceLocation id, PortKind kind, ResourceKey<Level> dimension, BlockPos centre, BoundingBox box,
+                Climate climate, List<Berth> berths, List<TreasureSite> treasures, List<ShipOrder> orders) {
+        this(id, kind, dimension, centre, box, climate, berths, treasures, orders, "");
     }
 
     /** A port without shipwright orders. */
@@ -54,7 +65,17 @@ public record Port(ResourceLocation id, PortKind kind, ResourceKey<Level> dimens
 
     /** A copy with {@code orders} instead of this port's orders. */
     public Port withOrders(List<ShipOrder> orders) {
-        return new Port(id, kind, dimension, centre, box, climate, berths, treasures, orders);
+        return new Port(id, kind, dimension, centre, box, climate, berths, treasures, orders, name);
+    }
+
+    /** A copy named {@code name}. */
+    public Port withName(String name) {
+        return new Port(id, kind, dimension, centre, box, climate, berths, treasures, orders, name);
+    }
+
+    /** Whether the port has its proper name yet. */
+    public boolean named() {
+        return !name.isEmpty();
     }
 
     public boolean contains(ResourceKey<Level> dim, BlockPos pos) {

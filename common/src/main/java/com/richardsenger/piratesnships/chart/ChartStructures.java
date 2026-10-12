@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.chart.data.StructureReveal;
 import com.richardsenger.piratesnships.chart.net.ChartStructure;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.world.port.Port;
+import com.richardsenger.piratesnships.world.port.PortNameBook;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -39,10 +40,11 @@ import java.util.function.Function;
 public final class ChartStructures {
 
     /**
-     * A port's label on the chart: its name once the port registry has one (NAME3), else empty and the chart shows
-     * the id's path. Replace the default when ports get names.
+     * A port's label on the chart: its proper name (NAME3) through {@link PortNameBook#name}, which reads the registry on
+     * the server thread, the synced names elsewhere, and is empty while {@code world.ports.names} is off or the port is
+     * unknown; then the chart shows the id's path.
      */
-    private static volatile Function<Port, Optional<String>> portName = p -> Optional.empty();
+    private static volatile Function<Port, Optional<String>> portName = p -> PortNameBook.name(p.id());
 
     private ChartStructures() {
     }

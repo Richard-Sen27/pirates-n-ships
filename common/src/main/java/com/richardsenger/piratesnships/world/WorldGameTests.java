@@ -158,6 +158,7 @@ public final class WorldGameTests {
                 .orElse(null);
         helper.assertTrue(port != null, "the port is registered");
         helper.assertValueEqual(port.kind(), PortKind.SEAFARER_VILLAGE, "port kind");
+        com.richardsenger.piratesnships.world.port.PortNameGameTests.assertNamed(helper, port); // NAME3
         helper.assertValueEqual(port.berths().size(), 2, "two berths");
         for (Berth berth : port.berths()) {
             helper.assertValueEqual(berth.bow(), sea, "bow points out to sea");

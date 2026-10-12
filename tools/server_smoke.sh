@@ -245,9 +245,10 @@ if [[ -n "$done_line" ]]; then
         # The nearest port of each kind can lie on separate seas (LANE1: on the default seed the village, the island
         # and the outpost lie on three). The lane reply then names the extent of the closed sea around the first port,
         # "(x A..B, z C..D)": look for ports of each kind from the middle of the largest such sea and of its quarters,
-        # generate them, and try each pair with a new port.
+        # generate them, and try each pair with a new port. (Since NAME3 the reply names the port, "Port Marlow", which
+        # may hold spaces but never a parenthesis.)
         if ((convoy == 0)); then
-            box="$(grep -oE 'the sea around [^ ]+ \(x -?[0-9]+\.\.-?[0-9]+, z -?[0-9]+\.\.-?[0-9]+\)' "$replies" \
+            box="$(grep -oE 'the sea around [^(]+ \(x -?[0-9]+\.\.-?[0-9]+, z -?[0-9]+\.\.-?[0-9]+\)' "$replies" \
                 | sed -E 's/.*\(x (-?[0-9]+)\.\.(-?[0-9]+), z (-?[0-9]+)\.\.(-?[0-9]+)\)/\1 \2 \3 \4/' \
                 | awk '{ print ($2 - $1) * ($4 - $3), $0 }' | sort -n -r | head -1 | cut -d' ' -f2-)"
             points=()

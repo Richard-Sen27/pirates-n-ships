@@ -95,6 +95,7 @@ class OutpostDataTest {
         Map<String, Integer> weights = new TreeMap<>();
         Map<ResourceKey<StructureTemplatePool>, Map<String, Integer>> expected = Map.ofEntries(
                 Map.entry(OutpostKeys.START, Map.of("fort_gate", 1)), Map.entry(OutpostKeys.QUAY, Map.of("quay", 1)),
+                Map.entry(OutpostKeys.QUAY_EXTENSION, Map.of("quay_extension", 1)),
                 Map.entry(OutpostKeys.WALLS_GATE, OutpostData.WALLS_GATE), Map.entry(OutpostKeys.WALLS_FLANK_HEAD, OutpostData.WALLS_FLANK_HEAD),
                 Map.entry(OutpostKeys.WALLS, OutpostData.WALLS), Map.entry(OutpostKeys.WALLS_FLANK, OutpostData.WALLS_FLANK),
 Map.entry(OutpostKeys.TERMINATORS, OutpostData.TERMINATORS),
@@ -125,7 +126,7 @@ Map.entry(OutpostKeys.TERMINATORS, OutpostData.TERMINATORS),
             assertEquals(new TreeMap<>(expected.get(key)), poolWeights, key.location().toString());
         }
         // every committed piece is in a pool, the WG3 weights of the ST3 buildings stand
-        assertEquals(55, weights.size(), "pieces in the pools");
+        assertEquals(56, weights.size(), "pieces in the pools (STR7: the quay_extension)");
         assertEquals(2, weights.get("pirates_n_ships:navy_outpost/barracks"));
         assertEquals(1, weights.get("pirates_n_ships:navy_outpost/brig"));
         assertEquals(1, weights.get("pirates_n_ships:navy_outpost/watchtower"));

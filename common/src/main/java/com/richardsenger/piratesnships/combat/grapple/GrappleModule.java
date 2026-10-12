@@ -169,6 +169,7 @@ public final class GrappleModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class, GrappleHaulGameTests.class);
+        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class, GrappleHaulGameTests.class,
+                HookPoseGameTests.class);
     }
 }

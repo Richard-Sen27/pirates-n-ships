@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
@@ -41,12 +42,17 @@ public class AnchorEntity extends Entity {
     private static final EntityDataAccessor<Float> PAID_OUT = SynchedEntityData.defineId(AnchorEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Byte> FLAGS = SynchedEntityData.defineId(AnchorEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Vector3f> HAWSE_FROM_ANCHOR = SynchedEntityData.defineId(AnchorEntity.class, EntityDataSerializers.VECTOR3);
+    /** GR4: the anchor's {@link AnchorPose.Kind} (ordinal), from the server's phase and chain. */
+    private static final EntityDataAccessor<Byte> POSE_KIND = SynchedEntityData.defineId(AnchorEntity.class, EntityDataSerializers.BYTE);
 
     /** Ticks without a sync after which the server discards the entity (its ship is gone or not ticking). */
     static final int ORPHAN_TICKS = 10;
 
     private @Nullable UUID ship;
     private long lastSync;
+    /** Client, render thread: the rotation drawn last frame (eased toward the pose, GR4) and when; null before the first. */
+    private @Nullable Quaternionf shownRotation;
+    private float shownAt;
 
     public AnchorEntity(EntityType<? extends AnchorEntity> type, Level level) {
         super(type, level);
@@ -124,8 +130,29 @@ public class AnchorEntity extends Entity {
         return new Vec3(v.x(), v.y(), v.z());
     }
 
-    /** Server: the chain state of this tick (null = stowed), with the anchor at {@code at}. */
-    void setChain(@Nullable AnchorStatus status, Vec3 at) {
+    /** GR4: the anchor's pose as the server decided it this tick ({@link AnchorPose#of}; both sides). */
+    public AnchorPose.Kind anchorPose() {
+        byte b = entityData.get(POSE_KIND);
+        return b >= 0 && b < AnchorPose.Kind.values().length ? AnchorPose.Kind.values()[b] : AnchorPose.Kind.STOWED;
+    }
+
+    /**
+     * Client: eases the drawn rotation toward {@code target} ({@link AnchorPose#turn}) at render time {@code time}
+     * (ticks with the partial tick) and returns it; the first frame takes the target as it is.
+     */
+    public Quaternionf easeRotation(Quaternionf target, float time) {
+        if (shownRotation == null || time < shownAt) {
+            shownRotation = new Quaternionf(target);
+        } else {
+            shownRotation.slerp(target, AnchorPose.turn(time - shownAt));
+        }
+        shownAt = time;
+        return new Quaternionf(shownRotation);
+    }
+
+    /** Server: the chain state of this tick (null = stowed), with the anchor at {@code at}, and its pose (GR4). */
+    void setChain(@Nullable AnchorStatus status, Vec3 at, AnchorPose.Kind pose) {
+        entityData.set(POSE_KIND, (byte) pose.ordinal());
         if (status == null) {
             entityData.set(PAID_OUT, 0f);
             entityData.set(FLAGS, (byte) 0);
@@ -200,6 +227,7 @@ public class AnchorEntity extends Entity {
         builder.define(PAID_OUT, 0f);
         builder.define(FLAGS, (byte) 0);
         builder.define(HAWSE_FROM_ANCHOR, new Vector3f());
+        builder.define(POSE_KIND, (byte) AnchorPose.Kind.STOWED.ordinal());
     }
 
     @Override

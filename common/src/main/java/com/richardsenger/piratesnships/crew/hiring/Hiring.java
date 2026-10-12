@@ -127,6 +127,18 @@ public final class Hiring {
     }
 
     /**
+     * LIFE1: a villager of {@code port} signs on for {@code player} as candidate {@code c} (talked to in its village, not
+     * from the desk's list): the toggle, the player's standing for {@code c}'s kind, then the ship, bunk, fee and
+     * deck-spot checks of every hire. The caller removes the villager and dresses the new crew member.
+     */
+    public static Result hireCandidate(ServerPlayer player, Port port, Candidate c) {
+        if (!enabled()) return Result.fail(HiringText.DISABLED, c.name());
+        HiringRules.Verdict v = HiringRules.eligible(port.kind(), c.kind(), standing(player), HiringConfig.settings());
+        if (!v.ok()) return Result.fail(key(v), c.name());
+        return place(player, port, c, true);
+    }
+
+    /**
      * Operators ({@code /pirates crew hire}): a new candidate of {@code kind} signs on for {@code player} at
      * {@code port} without a fee and without the standing check; the ship and bunk checks still apply.
      */

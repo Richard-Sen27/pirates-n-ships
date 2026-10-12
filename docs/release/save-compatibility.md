@@ -13,7 +13,7 @@ For players the summary is: **a world from any development build opens under 0.1
 Everything not listed under "converts" or "lost" below loads unchanged. In detail:
 
 - **Ships (Sable sub-levels)**, their blocks, block entities, position, orientation and velocity: Sable's own files (see [Sable](#sable)). Our per-ship data lives in Sable's user data (keys `pirates_n_ships` the identity pointer with the helm, `pirates_n_ships_sailing` the bow and the anchor, `pirates_n_ships_oars` the rowing flag (OAR1), `pirates_n_ships_voyage` the world-sim link, `pirates_n_ships_hull` breaches and flood water) and in the `pirates_n_ships_ships` saved data (the ship's identity: id, name, owner, crew, flag, `blown_cover_until`). A ship's id is its Sable sub-level UUID, so it never changes on load.
-- **Saved data** (`data/pirates_n_ships_*.dat` of the overworld): `ships`, `ship_upkeep`, `trade`, `port_visits`, `ports`, `quests`, `hiring`, `bounties`, `factions`, `raids`, `lanes`, `navy`, `captain_voyages`, `voyages`, `captains`, `harbor_masters`. Every field added after a file first existed is optional with a default, so an older file reads (e.g. a port without `orders` or `name`, a raid without `fought`, a voyage without `pursuit`, a faction without `tension`). The files carry no format version; the lane cache (`pirates_n_ships_lanes`) is the exception, see below.
+- **Saved data** (`data/pirates_n_ships_*.dat` of the overworld): `ships`, `ship_upkeep`, `trade`, `port_visits`, `ports`, `quests`, `hiring`, `bounties`, `factions`, `raids`, `lanes`, `navy`, `captain_voyages`, `voyages`, `captains`, `harbor_masters`, `villagers` (LIFE1: the village people's slots and plans; a world without the file has none). Every field added after a file first existed is optional with a default, so an older file reads (e.g. a port without `orders` or `name`, a raid without `fought`, a voyage without `pursuit`, a faction without `tension`). The files carry no format version; the lane cache (`pirates_n_ships_lanes`) is the exception, see below.
 - **Player data** (data attachments, kept on death): the chart (`chart`; CHART2 changed nothing in it; CHART4 adds an optional `colours` byte array per region, the block colour of each cell: a chart saved before CHART4 loads unchanged, its cells draw in ink until the player charts them again, and a region with colours saved by CHART4 loads in an older build, which ignores the field), the ports and structures a chart knows (`chart_sightings`, new in CHART2: a player from before starts with none and learns the wrecks again by sailing near them; ports show anyway with `chart.ports_always_known`), the Almanac's last page (`almanac_progress`, ALM2; an unknown chapter is ignored), whether the Almanac was given (`almanac_given`), career and rewards (`career`, `career_gifts`), reputation, the criminal record and prisoner releases (the law), the quest log. Every field is optional; a career counter or crime type no longer used is kept or skipped so old records load (`CareerCounter`, `CrimeType.FENCE_PLUNDER`).
 - **Other attachments:** a prisoner in the brig (`prisoner`, on any entity), garrison posts and squads (`garrison_post`, `squad`), the player-placed blocks of a chunk (`player_placed_blocks`, the law).
 - **Items** and their data components: the sea chest keeps its contents in vanilla `minecraft:container` (item) and vanilla `Items` (block and floating chest); treasure maps and drawn map tiles read older shapes (missing fields default, bad data is a codec error, not a crash); commissions, receipts, bounty proofs, loaded grapples and firearms, cargo, the whistle's remembered sail order (an unknown order name is refused, not a crash), `rope_start`/`net_start`.
@@ -74,6 +74,7 @@ Lazy, per block or entity, on load or on its first tick. No command runs a migra
 - **Quest and template lists** (`quests.types.*`, `world_simulation.voyages.*_templates`) in an old file keep their old entries, so new quest types (QST1b `hunt_captain`; QST2 `escort`, `hunt_ship`, `plunder_convoy`, `hunt_patrol`) and the armed sloops (WS4c) are not offered until the lines are deleted or edited.
 - **Old cannons** (before P2): break and re-place them.
 - **Nets and gangways need nothing:** RL2 nets keep working (re-stringing one is only needed to join it into an RL4 fan), BRD1/BRD2 gangways convert by themselves.
+- **Village people (LIFE1):** they are placed when a village's chunks generate, so seafarer villages generated before LIFE1 stay as they were: no role villagers move in, and a vanilla villager that wandered into one stays a vanilla villager. Only villages in newly generated chunks get their people. A crew member hired before LIFE1 has no `outfit` and keeps the crew's own look; a hired villager saves `pirates_n_ships:outfit` (its role id) and an older build drops it. The market square piece (`village/street_square_market`) changed its stalls; squares already generated keep the old single stall and get no vendors.
 - **Do not switch loaders on a world** (NeoForge to Fabric or back): see [Switching loaders](#switching-loaders).
 
 ## Going back: a 0.1.0 world in an older build
@@ -168,6 +169,31 @@ shape.
 - **Template pieces changed:** the pier's seaward rail and the jetty's west end post went (no jigsaw was added, so the
   jigsaw draws and the layout of a port generated after the update are the same as before for the same seed, apart
   from the extension sections). Already generated piers keep their blocks.
+
+## Ports generated before STR8 (after 0.1.0)
+
+STR8 (second structure polish: piers in the sea, level trails, doors, no pieces over water, cold shores) changes how
+new ports are planned and placed; nothing saved changes shape and old ports keep their blocks.
+
+- **Placed chunks stay as they are.** Every rule works when a port is planned (`PortStructure.plan`) or its chunks are
+  placed; chunks that exist are never placed again.
+- **A port planned before the update but not yet fully placed** (its start saved, some chunks not generated yet) keeps
+  its plan: its pieces, their heights and its streets' processor lists (`village_street`, `pirate_island_trail`, the
+  lanes' `connections`; all still shipped). So its remaining chunks place exactly as before STR8: no levelled bed, no
+  straight pools, no land or wall rules. Only the door clearing (`world.structures.clear_doors`, in `afterPlace`) runs
+  on its remaining chunks too; it only takes ground, plants, snow and wayside decorations out of a door's way.
+- **New structures and structure sets** `pirates_n_ships:{seafarer_village,pirate_island,navy_outpost}_cold` and
+  `{seafarer_villages,pirate_islands,navy_outposts}_cold` are added; the old ids are unchanged (the old structures gained
+  the optional codec fields `cold_biomes` and `cold`, which old datapacks without them read as before).
+- **Placement of new ports moves at the edge of the explored world:** the new exclusion zones against vanilla's
+  `minecraft:villages` (6 chunks) and `minecraft:woodland_mansions` (10) and the cold-shore rule change which grid
+  chunks start a port; the salts and grids are unchanged, so ports already placed stay where they are and new chunks
+  next to them may start a port where none would have been (or none where one would).
+- **New config keys** `world.structures.level_trails` (true), `clear_doors` (true), `piers_end_in_water` (true) and
+  `world.structures.<kind>.cold_frequency` (0.1) are added to an existing server file with their defaults.
+- **Template pieces changed:** the bends, forks, junctions and the crossroads point their ways on at the new straights
+  pools (`village/streets_straight`, `pirate_island/paths_straight`, `navy_outpost/lanes_straight`); the jigsaw count
+  is the same, but the draws differ, so the same seed lays out a different port than before the update.
 
 ## Known risks found while writing this
 

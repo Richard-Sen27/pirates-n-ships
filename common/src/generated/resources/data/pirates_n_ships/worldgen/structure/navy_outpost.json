@@ -1,6 +1,7 @@
 {
   "type": "pirates_n_ships:port_village",
   "biomes": "#pirates_n_ships:has_structure/navy_outpost",
+  "cold_biomes": "#pirates_n_ships:cold_shores",
   "extension_pool": "pirates_n_ships:navy_outpost/quay_extension",
   "land_pieces_on_land": true,
   "max_distance_from_center": 96,

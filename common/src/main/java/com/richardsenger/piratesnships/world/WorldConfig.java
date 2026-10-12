@@ -36,7 +36,15 @@ public final class WorldConfig {
      */
     public record PortPlacement(ConfigValue<Boolean> enabled, ConfigValue<Double> frequency, ConfigValue<Integer> spacing,
                                 ConfigValue<Integer> separation, ConfigValue<Integer> shoreProbeBlocks,
-                                ConfigValue<Integer> maxDistanceFromWater, ConfigValue<Integer> maxShoreHeight) {
+                                ConfigValue<Integer> maxDistanceFromWater, ConfigValue<Integer> maxShoreHeight,
+                                ConfigValue<Double> coldFrequency) {
+    }
+
+    /** Tooltip of every {@code cold_frequency} (STR8): the cold shores' own structure set. */
+    private static String coldNote(String what) {
+        return "Chance that " + what + " generate at a possible location on a snowy or frozen shore (snowy beaches, frozen "
+                + "seas; biome tag pirates_n_ships:cold_shores), where they are rare; the other shores use frequency. "
+                + "0 = never on cold shores; read at placement";
     }
 
     /**
@@ -62,6 +70,23 @@ public final class WorldConfig {
     public static final ConfigValue<Double> STRUCTURE_LOOT_ROLLS = STRUCTURES.doubleRange("loot_rolls", 1.0, 0.0, 4.0,
             "Scales how many items those chests roll (1 = as the loot tables say, 0.5 = half, 2 = twice; a fraction rounds "
                     + "up or down at random); read when a chest is first opened");
+
+    /**
+     * STR8: new ports lay their streets, trails and lanes level ({@code world.structure.TrailLevels} at planning,
+     * {@code world.structure.TrailBedProcessor} at placement).
+     */
+    public static final ConfigValue<Boolean> STRUCTURE_LEVEL_TRAILS = STRUCTURES.bool("level_trails", true,
+            "New seafarer villages, pirate islands and navy outposts lay each street, trail and lane piece level, at most one "
+                    + "block above or below the piece before it, on a bed cut into or filled up from the ground beside it (off = "
+                    + "they follow the ground block by block)");
+    /** STR8: read by {@code world.structure.DoorClearing} in {@code PortStructure.afterPlace}. */
+    public static final ConfigValue<Boolean> STRUCTURE_CLEAR_DOORS = STRUCTURES.bool("clear_doors", true,
+            "When a port structure generates, the ground, plants, snow and decorations standing in the two cells in front of "
+                    + "each door (on both sides) are cleared away (off = only what the pieces clear themselves)");
+    /** STR8: read by {@code world.structure.PortStructure.plan}. */
+    public static final ConfigValue<Boolean> STRUCTURE_PIERS_END_IN_WATER = STRUCTURES.bool("piers_end_in_water", true,
+            "A port only generates where its pier, jetty or quay and four blocks beyond its end lie over the sea (another side "
+                    + "of the site is tried first); off = the side with the most sea is taken whatever lies under the pier");
 
     private static final ConfigSection ISLAND = STRUCTURES.section("pirate_island", "Placement of pirate islands");
 
@@ -91,9 +116,12 @@ public final class WorldConfig {
     public static final ConfigValue<Integer> PIRATE_ISLAND_MAX_PIRATES = ISLAND.intRange("max_pirates", 8, 0, 64,
             "Pirates stop spawning naturally in a camp once this many pirates are within 32 blocks of the spawn spot");
 
+    public static final ConfigValue<Double> PIRATE_ISLAND_COLD_FREQUENCY = ISLAND.doubleRange("cold_frequency", 0.1, 0.0, 1.0,
+            coldNote("pirate islands"));
+
     public static final PortPlacement PIRATE_ISLAND_PLACEMENT = new PortPlacement(PIRATE_ISLAND_ENABLED, PIRATE_ISLAND.frequency(),
             PIRATE_ISLAND.spacing(), PIRATE_ISLAND_SEPARATION, PIRATE_ISLAND_SHORE_PROBE, PIRATE_ISLAND_MAX_DISTANCE_FROM_WATER,
-            PIRATE_ISLAND_MAX_SHORE_HEIGHT);
+            PIRATE_ISLAND_MAX_SHORE_HEIGHT, PIRATE_ISLAND_COLD_FREQUENCY);
 
     private static final ConfigSection VILLAGE = STRUCTURES.section("seafarer_village", "Placement of seafarer villages");
 
@@ -117,9 +145,11 @@ public final class WorldConfig {
     public static final ConfigValue<Integer> SEAFARER_VILLAGE_MAX_SHORE_HEIGHT = VILLAGE.intRange("max_shore_height", 4, 0, 32,
             "A village site whose ground at the dock head is more than this many blocks above sea level is skipped "
                     + "(the quay is built one block above the sea)");
+    public static final ConfigValue<Double> SEAFARER_VILLAGE_COLD_FREQUENCY = VILLAGE.doubleRange("cold_frequency", 0.1, 0.0, 1.0,
+            coldNote("seafarer villages"));
     public static final PortPlacement SEAFARER_VILLAGE_PLACEMENT = new PortPlacement(SEAFARER_VILLAGE_ENABLED,
             SEAFARER_VILLAGE.frequency(), SEAFARER_VILLAGE.spacing(), SEAFARER_VILLAGE_SEPARATION, SEAFARER_VILLAGE_SHORE_PROBE,
-            SEAFARER_VILLAGE_MAX_DISTANCE_FROM_WATER, SEAFARER_VILLAGE_MAX_SHORE_HEIGHT);
+            SEAFARER_VILLAGE_MAX_DISTANCE_FROM_WATER, SEAFARER_VILLAGE_MAX_SHORE_HEIGHT, SEAFARER_VILLAGE_COLD_FREQUENCY);
 
     private static final ConfigSection OUTPOST = STRUCTURES.section("navy_outpost", "Placement and garrison of navy outposts");
 
@@ -150,9 +180,12 @@ public final class WorldConfig {
             "Navy officers placed in the fort's court beside the harbor master's office when a new outpost generates "
                     + "(they take turn-ins, fines and ransoms); never despawn or respawn. 0 = none");
 
+    public static final ConfigValue<Double> NAVY_OUTPOST_COLD_FREQUENCY = OUTPOST.doubleRange("cold_frequency", 0.1, 0.0, 1.0,
+            coldNote("navy outposts"));
+
     public static final PortPlacement NAVY_OUTPOST_PLACEMENT = new PortPlacement(NAVY_OUTPOST_ENABLED, NAVY_OUTPOST.frequency(),
             NAVY_OUTPOST.spacing(), NAVY_OUTPOST_SEPARATION, NAVY_OUTPOST_SHORE_PROBE, NAVY_OUTPOST_MAX_DISTANCE_FROM_WATER,
-            NAVY_OUTPOST_MAX_SHORE_HEIGHT);
+            NAVY_OUTPOST_MAX_SHORE_HEIGHT, NAVY_OUTPOST_COLD_FREQUENCY);
 
     private static final ConfigSection WRECKS = STRUCTURES.section("wreck", "Placement of wrecks on the ocean floor");
 

@@ -98,6 +98,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
     static final String TAG_DESERTING_DAYS = Constants.MOD_ID + ":deserting_days";
     static final String TAG_STATIONARY = Constants.MOD_ID + ":stationary";
     static final String TAG_WALK = Constants.MOD_ID + ":walk";
+    static final String TAG_OUTFIT = Constants.MOD_ID + ":outfit";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -121,6 +122,12 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
 
     /** Its melee phase while it fights (MEL3, {@link MeleePose} packed); set by the server, read by the model's telegraph. */
     private static final EntityDataAccessor<Integer> DATA_MELEE_POSE = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.INT);
+
+    /**
+     * LIFE1: the outfit it wears, the role id of the village villager it was hired from ({@code mob.village.VillageRole};
+     * the client draws that role's texture), or empty for the crew's own look. Set by the server, saved.
+     */
+    private static final EntityDataAccessor<String> DATA_OUTFIT = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.STRING);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
@@ -242,6 +249,17 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
         builder.define(DATA_HELD_BODY_YAW, Float.NaN);
         builder.define(DATA_LEANING, false);
         MeleePoseSync.define(builder, DATA_MELEE_POSE);
+        builder.define(DATA_OUTFIT, "");
+    }
+
+    /** LIFE1: the role id of the outfit it wears (a hired villager's), or empty for the crew's own look. Synced. */
+    public String outfit() {
+        return entityData.get(DATA_OUTFIT);
+    }
+
+    /** LIFE1: dresses it in the outfit of the village role {@code roleId} (empty: the crew's own look). Server side. */
+    public void setOutfit(String roleId) {
+        entityData.set(DATA_OUTFIT, roleId == null ? "" : roleId);
     }
 
     /** Its synced melee pose (MEL3): the duelist goals' phase while it fights, {@link MeleePose#IDLE} otherwise. */
@@ -681,6 +699,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
         if (walk != null) {
             WalkTarget.CODEC.encodeStart(NbtOps.INSTANCE, walk).ifSuccess(t -> tag.put(TAG_WALK, t));
         }
+        if (!outfit().isEmpty()) {
+            tag.putString(TAG_OUTFIT, outfit());
+        }
     }
 
     @Override
@@ -700,5 +721,6 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
         setDeserting(tag.getBoolean(TAG_DESERTING), tag.getInt(TAG_DESERTING_DAYS));
         stationary = tag.getBoolean(TAG_STATIONARY);
         walk = tag.contains(TAG_WALK) ? WalkTarget.CODEC.parse(NbtOps.INSTANCE, tag.get(TAG_WALK)).result().orElse(null) : null;
+        setOutfit(tag.getString(TAG_OUTFIT));
     }
 }

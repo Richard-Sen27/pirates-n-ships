@@ -10,11 +10,11 @@ world shows: the models, the light on the four parts, the look in a real village
 cheats on, F2 screenshots of each step. The render of the three looks is `art/renders/market_notice_board.png`.
 
 1. **A village square.** `/locate structure pirates_n_ships:seafarer_village` until the village has its market square
-   (paved, the striped stall in the middle), go there.
-   - **Expected:** at the back of the square (opposite the street), behind the stall, a 2 wide × 2 high board on two
-     posts under a small pitched roof, the notices facing the stall and the street. Report a board cut in half, floating,
-     facing a wall, or a part lit much darker than the others; and whether a building's door behind it is hard to reach
-     (it stands in front of the south connector).
+   (paved, two striped stalls with their vendors), go there.
+   - **Expected:** south of the west stall (the provisions vendor's), in the square's back half, a 2 wide × 2 high
+     board on two posts under a small pitched roof, the notices facing the stalls and the aisle, a free row in front of
+     it to stand on; the vendors, stalls and benches untouched. Report a board cut in half, floating, facing a wall, a
+     part lit much darker than the others, or a vendor or path it blocks.
 2. **Its look.** Compare the board with the render.
    - **Expected:** **some** (three notices) or **busy** (papered over with a wanted poster) in a village that offers
      quests (the desk's Quests tab); with no bounties and no offers (`quests.enabled` off on a quiet world) **empty**:

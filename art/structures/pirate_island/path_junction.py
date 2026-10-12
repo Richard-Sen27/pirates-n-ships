@@ -30,8 +30,8 @@ p.put(7, 0, 1, "coarse")
 p.put(7, 1, 1, "dead_bush")
 
 p.connector(X, 0, 0, "path_in", "north", "minecraft:gravel")
-p.connector(0, 0, 4, "path_out", "west", "minecraft:gravel")
-p.connector(W - 1, 0, 4, "path_out", "east", "minecraft:gravel")
+p.connector(0, 0, 4, "path_straight_out", "west", "minecraft:gravel")
+p.connector(W - 1, 0, 4, "path_straight_out", "east", "minecraft:gravel")
 p.connector(X, 0, L - 1, "hut_out", "south", "minecraft:coarse_dirt")
 
 p.emit("a T-junction of the trail with rounded corners, a skull signpost and a building at its head",

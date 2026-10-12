@@ -25,9 +25,9 @@ p.put(0, 0, S - 1, "coarse")
 bench(p, 0, 1, S - 1, "east")
 
 p.connector(C, 0, 0, "street_in", "north", "minecraft:cobblestone")
-p.connector(0, 0, C, "street_out", "west", "minecraft:cobblestone")
-p.connector(S - 1, 0, C, "street_out", "east", "minecraft:cobblestone")
-p.connector(C, 0, S - 1, "street_out", "south", "minecraft:cobblestone")
+p.connector(0, 0, C, "street_straight_out", "west", "minecraft:cobblestone")
+p.connector(S - 1, 0, C, "street_straight_out", "east", "minecraft:cobblestone")
+p.connector(C, 0, S - 1, "street_straight_out", "south", "minecraft:cobblestone")
 
 p.emit("a cobbled crossroads with rounded kerbs, lantern posts and a bench in the corners",
        ["street_in at [5, 0, 0] (north); street_out at [0, 0, 5] (west), [10, 0, 5] (east) and [5, 0, 10] (south)."])

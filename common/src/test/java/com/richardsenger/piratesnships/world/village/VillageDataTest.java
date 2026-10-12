@@ -177,7 +177,8 @@ class VillageDataTest {
         int total = streets.values().stream().mapToInt(Integer::intValue).sum();
         int straights = streets.get("street") + streets.get("street_long");
         double share = (double) straights / total;
-        assertTrue(share >= 0.25 && share <= 0.4, "straights are about a third of the draws: " + straights + " of " + total);
+        // STR8 moved the draws toward the straights (the human: "too curly"; 8 of 17, were 5 of 16)
+        assertTrue(share >= 0.4 && share <= 0.55, "straights are about half of the draws: " + straights + " of " + total);
         Map<String, Integer> leads = Map.of("street", 1, "street_long", 1, "street_bend_left", 1, "street_bend_right", 1,
                 "street_fork_left", 2, "street_fork_right", 2, "street_crossroads", 3, "street_square_well", 1,
                 "street_square_market", 0);
@@ -199,7 +200,7 @@ class VillageDataTest {
                 JsonObject element = e.getAsJsonObject().getAsJsonObject("element");
                 boolean street = pool.startsWith("street") || pool.equals("terminators");
                 assertEquals(street ? "terrain_matching" : "rigid", element.get("projection").getAsString(), pool);
-                assertEquals(street ? VillageKeys.STREET_PROCESSORS.location().toString() : "pirates_n_ships:connections",
+                assertEquals(street ? VillageKeys.STREET_LEVEL_PROCESSORS.location().toString() : "pirates_n_ships:connections",
                         element.get("processors").getAsString(), pool);
             }
         }
@@ -232,6 +233,6 @@ class VillageDataTest {
     @Test
     void biomeTagHasTheBeaches() throws IOException {
         JsonObject json = generated("tags/worldgen/biome/has_structure/seafarer_village").getAsJsonObject();
-        assertEquals("#minecraft:is_beach", json.getAsJsonArray("values").get(0).getAsString());
+        assertEquals("#pirates_n_ships:port_shores", json.getAsJsonArray("values").get(0).getAsString(), "STR8");
     }
 }

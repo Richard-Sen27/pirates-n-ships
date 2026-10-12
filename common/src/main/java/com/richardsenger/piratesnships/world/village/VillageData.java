@@ -67,9 +67,16 @@ public final class VillageData {
      * or three times and never runs in one line; the ends are only the fallback.
      */
     public static final Map<String, Integer> STREETS = weights(
-            "street", 3, "street_long", 2, "street_bend_left", 2, "street_bend_right", 2,
+            "street", 4, "street_long", 4, "street_bend_left", 1, "street_bend_right", 1,
             "street_fork_left", 2, "street_fork_right", 2, "street_crossroads", 1,
             "street_square_well", 1, "street_square_market", 1);
+
+    /**
+     * STR8 (the human: the streets are "too curly"): what a bend's, a fork's and the crossroads' ways on draw, the
+     * straights only, so two turns never follow each other. With it the streets pool moved toward the straights (8 of
+     * 17 draws, were 5 of 16; the bends 2 of 17, were 4 of 16).
+     */
+    public static final Map<String, Integer> STREETS_STRAIGHT = weights("street", 3, "street_long", 2);
 
     /**
      * The streetheads pool (STR3): what the dock head's inland street draws, the pieces that branch at once and still
@@ -107,24 +114,32 @@ public final class VillageData {
     }
 
     public static void gather(DataContributions data) {
-        data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", VillageKeys.SEAFARER_VILLAGE.location(), VillageData::structure);
-        PortStructureData.writeStructureSet(data, VillageKeys.SEAFARER_VILLAGES, VillageKeys.SEAFARER_VILLAGE, "seafarer_village", SALT);
+        // STR8: the village and the cold shores' village share the placement; both keep away from vanilla's villages
+        // and mansions (exclusion_zone, exclusion_zones)
+        PortStructureData.writePort(data, VillageKeys.SEAFARER_VILLAGE, VillageKeys.SEAFARER_VILLAGE_COLD, VillageData::structure,
+                VillageKeys.SEAFARER_VILLAGES, VillageKeys.SEAFARER_VILLAGES_COLD, "seafarer_village", SALT,
+                PortStructureData.vanillaExclusions());
         String terminators = VillageKeys.TERMINATORS.location().toString();
         PortStructureData.pool(data, VillageKeys.START, GROUP, "minecraft:empty", "rigid", weights("dock_head", 1));
-        PortStructureData.pool(data, VillageKeys.STREETS, GROUP, terminators, "terrain_matching", VillageKeys.STREET_PROCESSORS, STREETS);
-        PortStructureData.pool(data, VillageKeys.STREETHEADS, GROUP, terminators, "terrain_matching", VillageKeys.STREET_PROCESSORS,
+        PortStructureData.pool(data, VillageKeys.STREETS, GROUP, terminators, "terrain_matching", VillageKeys.STREET_LEVEL_PROCESSORS,
+                STREETS);
+        PortStructureData.pool(data, VillageKeys.STREETS_STRAIGHT, GROUP, terminators, "terrain_matching",
+                VillageKeys.STREET_LEVEL_PROCESSORS, STREETS_STRAIGHT);
+        PortStructureData.pool(data, VillageKeys.STREETHEADS, GROUP, terminators, "terrain_matching", VillageKeys.STREET_LEVEL_PROCESSORS,
                 STREETHEADS);
         PortStructureData.pool(data, VillageKeys.BUILDINGS, GROUP, "minecraft:empty", "rigid", BUILDINGS);
         PortStructureData.pool(data, VillageKeys.PIER, GROUP, "minecraft:empty", "rigid", weights("pier", 1));
         PortStructureData.pool(data, VillageKeys.PIER_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("pier_extension", 1));
         // The streets' fallback once the depth runs out. It must not be empty: vanilla skips a connector whose fallback
         // pool is empty (and not minecraft:empty), so an empty terminators pool would stop every street.
-        PortStructureData.pool(data, VillageKeys.TERMINATORS, GROUP, "minecraft:empty", "terrain_matching", VillageKeys.STREET_PROCESSORS,
-                TERMINATORS);
+        PortStructureData.pool(data, VillageKeys.TERMINATORS, GROUP, "minecraft:empty", "terrain_matching",
+                VillageKeys.STREET_LEVEL_PROCESSORS, TERMINATORS);
         PortStructureData.pool(data, VillageKeys.DECORATIONS, GROUP, "minecraft:empty", "rigid", DECORATIONS);
+        // the STR3 list stays: the streets of villages planned before STR8 name it and keep their look
         data.json(PackOutput.Target.DATA_PACK, "worldgen/processor_list", VillageKeys.STREET_PROCESSORS.location(),
                 VillageData::streetProcessors);
-        PortStructureData.biomeTag(data, VillageKeys.HAS_SEAFARER_VILLAGE, "#minecraft:is_beach");
+        PortStructureData.processorList(data, VillageKeys.STREET_LEVEL_PROCESSORS, "connections", "trail_bed", "boardwalk");
+        PortStructureData.biomeTag(data, VillageKeys.HAS_SEAFARER_VILLAGE, "#" + PortStructureData.PORT_SHORES.location());
     }
 
     /**

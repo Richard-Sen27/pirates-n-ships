@@ -34,6 +34,15 @@ public final class OutpostKeys {
     public static final ResourceKey<StructureTemplatePool> LANES = pool("lanes");
     public static final ResourceKey<StructureTemplatePool> LANE_ENDS = pool("lane_ends");
     public static final ResourceKey<StructureTemplatePool> DECORATIONS = pool("decorations");
+    /** STR8: what a bend's, a fork's and the junction's ways on draw (straights only). */
+    public static final ResourceKey<StructureTemplatePool> LANES_STRAIGHT = pool("lanes_straight");
+    /** STR8: the lanes' processors (the connections, the loot chests, {@code TrailBedProcessor}: level on a cut and filled bed). */
+    public static final ResourceKey<net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList> LANE_PROCESSORS =
+            ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("navy_outpost_lane"));
+    /** STR8: the outpost on a snowy or frozen shore (its own structure set, {@code cold_frequency}). */
+    public static final ResourceKey<Structure> NAVY_OUTPOST_COLD = ResourceKey.create(Registries.STRUCTURE, Constants.id("navy_outpost_cold"));
+    public static final ResourceKey<StructureSet> NAVY_OUTPOSTS_COLD = ResourceKey.create(Registries.STRUCTURE_SET,
+            Constants.id("navy_outposts_cold"));
 
     private OutpostKeys() {
     }

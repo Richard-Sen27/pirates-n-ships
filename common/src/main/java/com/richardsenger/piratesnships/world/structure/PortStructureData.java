@@ -34,7 +34,100 @@ public final class PortStructureData {
     /** The structure sets' placement type's id ({@link PortStructures#CONFIGURED_SPREAD}, WG5). */
     public static final ResourceLocation PLACEMENT_TYPE = Constants.id("configured_spread");
 
+    /**
+     * STR8: the shores a port may start on, warm and cold alike ({@code #minecraft:is_beach}); every kind's
+     * {@code has_structure} tag names it. Which of a kind's two structures takes a site is decided by
+     * {@link #COLD_SHORES} (a tag cannot subtract the snowy beach from {@code is_beach}).
+     */
+    public static final TagKey<Biome> PORT_SHORES = TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+            Constants.id("port_shores"));
+    /**
+     * STR8 (the human: "don't create the structures right in ice biomes, that doesn't fit ... though a rare chance for
+     * that would still be good"): the snowy and frozen biomes. A site whose start or whose sea in front of it lies in one
+     * is cold: the kind's cold structure ({@code <kind>_cold}, its own structure set, {@code cold_frequency}) takes it,
+     * the kind's other structure never does ({@code PortStructure}'s {@code cold_biomes} and {@code cold}).
+     */
+    public static final TagKey<Biome> COLD_SHORES = TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+            Constants.id("cold_shores"));
+    /** The cold shores' vanilla biomes; the convention tags {@code c:is_snowy} and {@code c:is_icy} join as optional entries. */
+    public static final List<String> COLD_BIOMES = List.of("minecraft:snowy_beach", "minecraft:frozen_ocean",
+            "minecraft:deep_frozen_ocean", "minecraft:frozen_river", "minecraft:snowy_plains", "minecraft:ice_spikes",
+            "minecraft:snowy_taiga", "minecraft:snowy_slopes", "minecraft:grove", "minecraft:frozen_peaks", "minecraft:jagged_peaks");
+
+    /** STR8: vanilla's village structure set, which every port keeps away from. */
+    public static final ResourceKey<StructureSet> VANILLA_VILLAGES = ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE_SET,
+            net.minecraft.resources.ResourceLocation.withDefaultNamespace("villages"));
+    /** STR8: vanilla's woodland mansion structure set (the human: "navy_post directly next to mansion"). */
+    public static final ResourceKey<StructureSet> WOODLAND_MANSIONS = ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE_SET,
+            net.minecraft.resources.ResourceLocation.withDefaultNamespace("woodland_mansions"));
+    /** STR8: no port starts within this many chunks of a vanilla village's placement chunk. */
+    public static final int VANILLA_VILLAGE_EXCLUSION_CHUNKS = 6;
+    /** STR8: no port starts within this many chunks of a woodland mansion's placement chunk. */
+    public static final int MANSION_EXCLUSION_CHUNKS = 10;
+
+    /** STR8: the exclusion zones every port's structure sets carry against vanilla's villages and mansions. */
+    public static List<Exclusion> vanillaExclusions() {
+        return List.of(new Exclusion(VANILLA_VILLAGES, VANILLA_VILLAGE_EXCLUSION_CHUNKS), new Exclusion(WOODLAND_MANSIONS, MANSION_EXCLUSION_CHUNKS));
+    }
+
     private PortStructureData() {
+    }
+
+    /** STR8: the shore tags ({@link #PORT_SHORES}, {@link #COLD_SHORES}). */
+    public static void gatherShores(DataContributions data) {
+        biomeTag(data, PORT_SHORES, "#minecraft:is_beach");
+        data.json(PackOutput.Target.DATA_PACK, "tags/worldgen/biome", COLD_SHORES.location(), () -> {
+            JsonArray array = new JsonArray();
+            COLD_BIOMES.forEach(array::add);
+            for (String tag : new String[] {"#c:is_snowy", "#c:is_icy"}) {
+                JsonObject optional = new JsonObject();
+                optional.addProperty("id", tag);
+                optional.addProperty("required", false);
+                array.add(optional);
+            }
+            JsonObject json = new JsonObject();
+            json.add("values", array);
+            return (JsonElement) json;
+        });
+    }
+
+    /**
+     * STR8: a kind's structure JSON with the cold rule: {@code cold_biomes} {@link #COLD_SHORES} and, for the cold
+     * structure, {@code cold: true}.
+     */
+    public static JsonObject withCold(JsonObject structure, boolean cold) {
+        structure.addProperty("cold_biomes", "#" + COLD_SHORES.location());
+        if (cold) structure.addProperty("cold", true);
+        return structure;
+    }
+
+    /**
+     * STR8: writes a kind's two structures (the JSON from {@code structure}, the cold one at {@code coldKey} with
+     * {@code cold: true}) and their two structure sets: the same placement (salt, spacing, exclusion zones), so they share
+     * the grid and the zones, and at most one of them takes a site (the biome decides).
+     */
+    public static void writePort(DataContributions data, ResourceKey<Structure> key, ResourceKey<Structure> coldKey,
+                                 java.util.function.Supplier<JsonObject> structure, ResourceKey<StructureSet> set,
+                                 ResourceKey<StructureSet> coldSet, String config, int salt, List<Exclusion> exclusions) {
+        data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", key.location(), () -> withCold(structure.get(), false));
+        data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", coldKey.location(), () -> withCold(structure.get(), true));
+        writeStructureSet(data, set, key, config, salt, exclusions);
+        writeStructureSet(data, coldSet, coldKey, config, salt, exclusions);
+    }
+
+    /** A processor list of our processor types, in order ({@code connections}, {@code trail_bed}, ...). */
+    public static void processorList(DataContributions data, ResourceKey<StructureProcessorList> key, String... types) {
+        data.json(PackOutput.Target.DATA_PACK, "worldgen/processor_list", key.location(), () -> {
+            JsonArray processors = new JsonArray();
+            for (String type : types) {
+                JsonObject processor = new JsonObject();
+                processor.addProperty("processor_type", Constants.id(type).toString());
+                processors.add(processor);
+            }
+            JsonObject json = new JsonObject();
+            json.add("processors", processors);
+            return json;
+        });
     }
 
     /**

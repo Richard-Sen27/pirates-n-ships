@@ -2495,6 +2495,52 @@ either).
   `renders/officers_set_worn.png` (bicorne, coat with tails, breeches, boots; standing from five sides and walking),
   `renders/officers_clothing.png` (coat, breeches and boots items: front, three-quarter, side, back).
 
+### Village people's outfits (LIFE1)
+
+The villagers of the seafarer villages (`mob/village`) are texture variants on the sailor's model, one sheet per
+role, like the harbor master (PRT1a): `textures/entity/villager.png` (the plain villager) and
+`textures/entity/villager_<role>.png` for `fishwife`, `net_mender`, `dockhand`, `shipwright`, `innkeeper`,
+`lamplighter` and `vendor`, all new. They are painted by `art/models/entity/seafarer_skins.js` (`SF.villagerSheet(role)`,
+registered in `SF.VARIANTS`) and written with `node tools/paint_seafarer_skins.js villager villager_fishwife ...`; the
+sailor's and the harbor master's sheets stay byte-identical (`--check sailor harbor_master`).
+
+Each sheet is built as an outfit of three layers, the names of `mob.village.VillagerOutfit`: a **hat** on the cap's
+cubes (`SF.villagerHat`: `felt_cap`, `head_scarf` checked blue and white, `knitted_cap` green and ribbed,
+`grey_bandana`, `leather_cap` with a brass rivet, `peaked_cap` with a brass badge, `straw_hat` with a green band;
+`none` leaves the cap regions transparent so the innkeeper is bare-headed and balding), a **coat** (the brown or red
+waistcoat on the base layer, the fishwife's knitted shawl on the jacket layer and sleeve tops, the shipwright's and
+the women's aprons on the body and legs fronts via `SF.apron`, the lamplighter's long grey coat on the jacket, sleeve
+and trousers layers like the harbor master's frock coat) and the **clothing** under it (`SF.villagerBase`: face and
+hair, shirt or bodice, sleeves rolled to a given row, breeches with stockings, trousers, or a skirt flared on the
+trousers layer for the fishwife and the vendor). The sailor's detail cubes (neckerchief, rope belt, buckles, cuffs, the
+slop hems) are recoloured through the patch list; a `null` patch hides its cubes (the shipwright and the innkeeper have
+no neckerchief).
+
+| role | hat | coat | clothing | face |
+|---|---|---|---|---|
+| villager | brown felt cap | brown waistcoat, brass buttons | linen shirt, brown breeches, grey stockings | brown hair, beard |
+| fishwife | blue-and-white checked scarf | rust knitted shawl, white apron | linen sleeves rolled to the elbow, blue skirt | auburn hair, long |
+| net mender | green knitted cap | none | oatmeal smock, rope belt, canvas trousers | grey hair and beard, tanned |
+| dockhand | grey bandana | none | white shirt rolled to the shoulder, red neckerchief, canvas slops, red sash | black hair, tanned |
+| shipwright | leather cap | leather bib apron dusted with sawdust | blue-grey work shirt, breeches, stockings | ginger hair and beard |
+| innkeeper | none (balding) | red waistcoat, long white bar apron | white shirt, brown breeches, white stockings | black moustache |
+| lamplighter | grey peaked cap, brass badge | long grey coat with brass buttons and skirts | dark breeches | black hair |
+| vendor | straw hat, green band | green-and-white striped apron | green dress, elbow sleeves | dark hair, long |
+
+A hired villager keeps its sheet: `CrewMemberModel` draws the crew member with the sailor's geometry and the role's
+texture while its synced `outfit` names a role. No code turns a bone for the villagers: the sleep pose on a bed is the
+rig's `sleep` clip with the body held along the bed (`ResidentRoutineGoal.lyingSpot`, on the mattress where the two
+halves meet, facing the foot as in a hammock), the dusk `sit` the rig's clip on an invisible `BenchSeat` whose rider's
+feet hang 12 px under the stair's top.
+
+**The market square's stalls (LIFE1).** `art/structures/village/street_square_market.py` now holds two stalls under
+striped awnings (posts at x 2/5 and 9/12, z 6/9): the provisions stall on the west side (counter at x 5, the vendor at
+(4, 1, 7) facing east) and the chandler on the east (counter at x 9, the vendor at (10, 1, 8) facing west), an aisle
+x 6..8 from the street to the south building, two benches at (10..11, 1, 12) facing north and a free paved 2×2 spot at
+x 3..4, z 11..12 (open to y 3) for the market notice board (NB2). Rebuilt through the lab (`--port 8778`), 275 blocks;
+render `art/renders/structures/village/street_square_market.png`. The other pieces kept their blocks: the villagers'
+stations, beds and seats are read off their sources (`mob/village/ResidentPosts`).
+
 ### Shark rig (M4)
 
 The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 shipped a script placeholder
@@ -3930,6 +3976,71 @@ The wreck chests and the buried treasure are unchanged.
 `pirates_n_ships:seafarer_villages`; the pirate islands' set 6 chunks against the villages (`exclusion_zone`) and the
 outposts (`exclusion_zones`, a list `ConfiguredSpreadPlacement` adds). Why 8 and 6: `OutpostData.VILLAGE_EXCLUSION_CHUNKS`,
 `IslandData.PORT_EXCLUSION_CHUNKS`.
+
+### Structure polish, round two (STR8)
+The human, 2026-10-12, after a first look at generated ports: piers ending on land, streets "too curly" (his
+screenshots: the cobbled streets ride every bump, the kerb stepping up and down), doors still blocked (snow-topped
+ground before hut doors), "a structure completely on water", ports in ice biomes, an outpost's wall run out over the
+sea, a navy post beside a woodland mansion. All rules live in `world/structure`; playtest steps in
+`docs/playtests/structure-polish.md` section STR8.
+
+**Straights after turns.** A bend's, a fork's, a junction's and the crossroads' ways on are the new connectors
+`street_straight_out` (village), `path_straight_out` (island) and `lane_straight_out` (outpost): same target
+(`street_in`, `path_in`, `lane_in`) and selection priority as the plain way on, but they draw from a straights-only pool,
+so two turns never follow each other; the straights lead on into the full pool again. The jigsaw count of every piece is
+unchanged (`_trails.py`, `path_junction.py`, `_streets.py`, `street_crossroads.py`, `_court.py`).
+
+| pool | pieces (weight) |
+|---|---|
+| `village/streets` | `street` 4, `street_long` 4, `street_bend_left` 1, `street_bend_right` 1, `street_fork_left` 2, `street_fork_right` 2, `street_crossroads` 1, `street_square_well` 1, `street_square_market` 1 (were 3, 2, 2, 2, 2, 2, 1, 1, 1) |
+| `village/streets_straight` (new, fallback `terminators`) | `street` 3, `street_long` 2 |
+| `pirate_island/paths` | `path` 4, `path_long` 4, `path_bend_left` 1, `path_bend_right` 1, `path_fork_left` 2, `path_fork_right` 2, `path_junction` 1, `path_clearing` 2 (were 3, 2, 2, 2, 2, 2, 1, 2) |
+| `pirate_island/paths_straight` (new, fallback `terminators`) | `path` 3, `path_long` 2 |
+| `navy_outpost/lanes` | `lane` 5, `lane_long` 4, `lane_bend_left` 1, `lane_bend_right` 1, `lane_fork_left` 1, `lane_fork_right` 1, `lane_junction` 1, `parade_ground` 1 (were 4, 3, 2, 2, 1, 1, 1, 1) |
+| `navy_outpost/lanes_straight` (new, fallback `lane_ends`) | `lane` 3, `lane_long` 2 |
+
+**Level trails.** The curl the human saw was vertical: vanilla lays a terrain-matching piece column by column on the
+surface (its gravity processor), so on uneven ground every kerb steps. Since STR8 `PortStructure.plan` gives each
+street, trail and lane piece one bed row (`TrailLevels`): the surface under the piece's centre, clamped to its parent's
+row ± 1 (the start's or the trail's it hangs from); a piece more than four rows off its ground is dropped with what
+hangs from it; a building or decoration on a trail moves so its connector row lies on the trail's row. The trails' new
+processor lists (`village_street_level`: connections, trail bed, boardwalk; `pirate_island_trail_level` the same;
+`navy_outpost_lane`: connections, loot chests, trail bed) run `pirates_n_ships:trail_bed` (`TrailBedProcessor`): it puts
+the gravity processor's blocks back on the planned row and, inside the chunk and within one block of the bed, cuts
+natural ground (soil, sand, stone, snow, leaves, plants) above the bed up to six rows and fills air under it (and the
+margin's bed row) up to six rows with the ground below (grass on soil, sand on sand); never over water, where the
+boardwalk lays boards. The old lists `village_street` and `pirate_island_trail` stay for ports planned before STR8.
+`world.structures.level_trails` switches both halves off.
+
+**Piers end in the sea.** After the jigsaw, the pier's, jetty's or quay's run (in line with its landward connector,
+from that connector to its seaward end) and four blocks beyond must be sea by the plan's terrain
+(`PierExtensions.endsInWater`); otherwise the next side of `ShoreFacing.ranked` (WG1's order) is planned, and with none
+left the site is rejected (logged once per site: `STR8: <kind> site at x z rejected`). `world.structures.piers_end_in_water`.
+
+**Land rule.** `LandFilter`: a land piece needs its footprint's centre and at least four of its five samples (centre,
+corners one block in) on land, a building (a rigid land piece) also its four outer corners (STR2 dropped only at three
+of five wet). A dropped piece drops its children. **Wall runs** (`WallRuns`): a wall of the rigid chain whose far end
+(the last cell of its box in line with the connector it hangs from) is over open water is dropped with its children,
+and a tower of the pool's fallback (`terminators`) is hung on the same connector, if one fits, so the run still ends in
+a tower on land. The pier, jetty and quay and the towers themselves are exempt.
+
+**Door clearing.** `PortStructure.afterPlace` runs `DoorClearing` per chunk, after every piece and the beard: for every
+door (read from the pieces' templates), on both sides, the two cells in front on the door's two rows and the row above,
+and the cells diagonally beside the first one. Natural ground and plants go anywhere except the template's own cells;
+in a trail or a decoration piece whatever blocks a walker goes too; another building's or wall's blocks stay (a door
+opening onto another piece's wall is the generator's to fix, STR6's tavern rule). `world.structures.clear_doors`.
+
+**Cold shores.** Biome tags `pirates_n_ships:port_shores` (`#minecraft:is_beach`, named by every `has_structure` tag)
+and `pirates_n_ships:cold_shores` (snowy beach, frozen and deep frozen ocean, frozen river, snowy plains and taiga, ice
+spikes, the snowy mountains; `#c:is_snowy` and `#c:is_icy` as optional entries). A site is cold when the biome at the
+start or 16 blocks out to sea is in `cold_shores`. Each kind has a second structure (`<kind>_cold`, codec fields
+`cold_biomes` and `cold: true`) in its own structure set (`<kinds>_cold`) with the same placement as the kind's set
+(salt, config name, exclusion zones), so the two share one grid and at most one takes a site; the cold one rolls
+`world.structures.<kind>.cold_frequency` (0.1) instead of `frequency`. Stony shores are not added (they stay as before).
+
+**Vanilla neighbours.** Every port set (and its cold twin) keeps 6 chunks from `minecraft:villages` and 10 from
+`minecraft:woodland_mansions` (`PortStructureData.vanillaExclusions`): in `exclusion_zone` for the villages, after the
+STR6 zones in `exclusion_zones` for the outposts and islands.
 
 Grapple and anchor poses (GR4):
 - **Why:** the human (2026-10-12): "Not just vertical grappling hook, adjusts to the orientation it flies and anchors,

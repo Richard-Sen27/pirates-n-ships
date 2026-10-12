@@ -6,6 +6,16 @@
       "chunk_count": 8,
       "other_set": "pirates_n_ships:seafarer_villages"
     },
+    "exclusion_zones": [
+      {
+        "chunk_count": 6,
+        "other_set": "minecraft:villages"
+      },
+      {
+        "chunk_count": 10,
+        "other_set": "minecraft:woodland_mansions"
+      }
+    ],
     "frequency": 1.0,
     "salt": 902417385,
     "separation": 10,

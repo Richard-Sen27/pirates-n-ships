@@ -752,7 +752,7 @@ Seafarer villages generate on beaches. A stone quay with the harbor master's hut
 straight out over the water with two ship berths, one on each side halfway out; where the water at its end is
 shallow, it runs on by one or two sections with two more berths each (STR7). Streets lead inland with cottages, a
 tavern and a shipwright's shed, and end in a small cobbled place. A village's market square has the big market
-notice board at its back (see [Law](#law), Notice board). The harbor master's desk belongs to the village's
+notice board beside its west stall (see [Law](#law), Notice board). The harbor master's desk belongs to the village's
 port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
@@ -763,7 +763,21 @@ start per cell, at least `separation` chunks from the next. Defaults (WG6, dense
 applies to chunks generated afterwards; structures already in the world stay where they are. `/locate` follows the
 configured grid. An existing config file keeps the values it has: delete the `spacing` and `separation` lines (or the
 file) to take new defaults. A navy outpost never starts within 8 chunks of a village's start, and a pirate camp never
-within 6 chunks of a village's or an outpost's, so two ports never stand wall to wall (STR6).
+within 6 chunks of a village's or an outpost's, so two ports never stand wall to wall (STR6). No port starts within 6
+chunks of a vanilla village's possible start or 10 of a woodland mansion's (STR8).
+
+Where a port goes (STR8): its pier, jetty or quay and four blocks beyond its end must lie over the sea; a site whose
+best side would put the pier on a sandbar or a spit tries its other sides, else no port generates there
+(`world.structures.piers_end_in_water`). Streets, trails and lanes are laid level, each piece at most one block above
+or below the one before it, on a bed cut into the ground or filled up beside it (`world.structures.level_trails`); a
+piece that would need more than four blocks of cutting or filling is left out with what hangs from it. Bends, forks and
+junctions always lead on straight, so two turns never follow each other. Huts, houses and decorations stand with their
+four corners on land, trails with their centre and four of five sample points. The fort's wall runs end with a tower
+on land where the coast turns away. The two cells in front of every door, on both sides, are cleared of ground, plants,
+snow and decorations when the port generates (`world.structures.clear_doors`). Ports keep off snowy and frozen shores
+(the biome tag `pirates_n_ships:cold_shores`: snowy beaches, frozen seas): each kind has a second structure for those
+shores (`seafarer_village_cold`, `pirate_island_cold`, `navy_outpost_cold`) on the same grid, which generates at only
+`cold_frequency` (0.1) of its sites.
 
 Chests in the ports' buildings hold loot (STR6), rolled when you first open them: household goods, food and a few
 doubloons in village houses, the warehouse and the chapel; rum, food and coins in taverns and inns; nails, rope, cloth
@@ -772,6 +786,36 @@ barracks, brig and officers' quarters, more arms in its armoury, stores in its s
 plunder in a pirate camp's tents, huts and taverns, and in a captain's hut a blank treasure map, a purse of doubloons
 and a blade or pistol. Server config `world.structures.loot` (off: new chests generate empty) and
 `world.structures.loot_rolls` (scales how much they hold).
+
+### Village people
+Every seafarer village generated since LIFE1 has its people, one per building, on the sailor's build with an outfit
+of their own trade (hat, coat and clothing): a villager in a felt cap and waistcoat in each of the four houses, a
+fishwife in a checked head scarf and white apron at the fisher's cottage, an old net mender in a green knitted cap at
+the net loft, a dockhand in a grey bandana at the warehouse, a shipwright in a leather apron at the shipwright's shed
+or the slipway, an innkeeper in a red waistcoat behind the bar of the tavern or the inn, a lamplighter in a peaked cap
+and long grey coat at the beacon tower, and vendors in straw hats at the fish market and at the two stalls of the
+market square (provisions on the west side, the chandler on the east; the free paved corner south of the west stall
+is kept for the market notice board). The dock head keeps its harbor master, who works as before.
+
+They keep a day. In the morning each walks to its station and works there (the fishwife at the drying rack in her
+yard, then at the fish market's counter from noon; the net mender under the loft; the dockhand among the warehouse's
+crates, then at the cargo on the pier; the shipwright at his bench, then the hull); at dusk they sit at a tavern or
+inn table, on a bench of a square or on their own chair; at night they sleep in a bed of the village (their own
+house's first, else the nearest free one; without a free bed they stay at home). The innkeeper keeps the bar until
+midnight. Vanilla lanterns cannot be lit or put out, so the lamplighter walks the village's lamp posts with a lantern
+in hand at dusk and again at dawn, stopping at each. Like sailors they never fight: they run from monsters (which hunt
+them as they hunt villagers) and from pirates, and get up from bench or bed to do so. Someone who cannot reach a
+station, seat or bed (a bed up a ladder, a crowd in the way) steps onto it after a while.
+
+Talk to a vendor or a shipwright (use him) to open his **stall**: the market screen with his wares only (see
+[Markets](#markets)); at night his stall is shut. Everyone else has a word for you. Sneak and use any of them to
+**hire** them: the first time they name the fee, the second time (within ten seconds) they sign on, through the same
+rules as the harbor desk's Crew tab, and go aboard your ship moored at the port in their own outfit. A villager who
+died or was hired away is replaced by a newcomer after three days. Villages generated before this update keep
+whoever lived there (vanilla villagers stay vanilla villagers); new chunks of the world get the new people. Operators:
+`/pirates village spawn <role>` puts one down where you stand, `/pirates village respawn` fills free places now.
+Server config `mobs.villagers` (`enabled`, `roles`, `routines`, `vendor_price_scale`, `vendor_buyback`,
+`respawn_days`, `max_lamps`, `stuck_ticks`, `hire_confirm_ticks`).
 
 ### Navy outposts
 Navy outposts are stone forts on beaches, rarer than villages. A sea gate leads to a quay with two berths. The
@@ -1132,6 +1176,9 @@ go, sneak and use your captain's whistle on them: they leave your service as an 
 hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
 and `/pirates crew dismiss`. Server config `crew.hiring`.
 
+The people of a seafarer village can be hired too: sneak and use one twice (the first names the fee, the sailor's),
+and they go aboard in their own outfit, a fishwife or an innkeeper among your hands ([Village people](#village-people)).
+
 ### Crow's nest
 A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with
 a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half
@@ -1375,6 +1422,14 @@ and [pirate island](#pirate-islands) registers one when it generates, run from i
 - Buying and selling in the same port always loses money. Carrying goods from a port that produces them to one that
   demands them pays, but less with every stack.
 - You can trade from your inventory or from a cargo container next to you.
+- **Village stalls** (LIFE1). In a seafarer village the vendors and the shipwright keep stalls: the fish market
+  (cod, salted fish), the market square's provisions stall (salt pork, hardtack, rum) and chandler (rope, cloth,
+  nails), and the shipwright (hull patches; his toolkit is sold, never bought back). Talking to the vendor opens the
+  market screen with his wares only. A ware that is one of the port's trade goods (fish, rum, cloth) goes through the
+  port's market with its live price; every other ware has a fixed price (salt pork 4, hardtack 3, salted fish 3, rope 3,
+  nails 2, hull patch 12, toolkit 40 doubloons, times `mobs.villagers.vendor_price_scale`), and the vendor buys it
+  back for half (`vendor_buyback`). The villagers' reputation swings both, as at the desk, and a stall trade counts
+  as village trade.
 
 ### Harbor master's desk
 Every port's market is run from a **harbor master's desk** (a book and a gold nugget over three planks, planks below
@@ -1492,8 +1547,8 @@ go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.pris
   wanted, for how much, who placed it and when, and whether there is a bounty on you. To place one, type a name (an
   online player or anyone already on the board, or click a suggested name), enter at least 10 doubloons and press
   Place; the doubloons come out of your inventory. The list updates while it is open.
-- **Market notice board (NB2):** the big 2 wide × 2 high board on two posts that stands at the back of a village's
-  market square. Craft it from two notice boards of one wood with a paper between them, over two of that wood's logs
+- **Market notice board (NB2):** the big 2 wide × 2 high board on two posts that stands on a village's market square,
+  beside the west stall facing the stalls. Craft it from two notice boards of one wood with a paper between them, over two of that wood's logs
   (board, paper, board; log, empty, log); every wood has one. To place it you need the 2×2 in front of you free: the
   block you click becomes its bottom left and it runs to your right and up. Breaking any part takes the whole board and
   drops it once. Use any part to open the same screen as the small board. Its look shows how much is posted: **empty**
@@ -1852,7 +1907,8 @@ other level in use.
 | `/pirates world voyages advance <id> <blocks>`, `… lane <from> <to>`, `… materialize <id>`, `… dematerialize <id>` | Moves a voyage on; prints a sea lane; turns a voyage into real ships and back. |
 | `/pirates world patrols` | The navy patrols. |
 | `/pirates hazard spawn <waterspout\|whirlpool> [pos]`, `/pirates hazard clear [radius]` | Spawns or removes sea hazards. |
-| `/pirates mob spawn <pirate\|sailor\|navy_soldier\|navy_officer\|pirate_captain\|harbor_master\|shark\|kraken> [count]` | Spawns the mod's mobs. |
+| `/pirates mob spawn <pirate\|sailor\|navy_soldier\|navy_officer\|pirate_captain\|harbor_master\|villager\|shark\|kraken> [count]` | Spawns the mod's mobs. |
+| `/pirates village spawn <role>`, `/pirates village respawn` | Puts a villager of a role (`villager`, `fishwife`, `net_mender`, `dockhand`, `shipwright`, `innkeeper`, `lamplighter`, `vendor`) where you stand; fills the free places of the villages now. |
 | `/pirates mob debug on\|off` | Traces what nearby duelists decide. |
 | `/pirates mob captain spawn\|list`, `/pirates mob captain voyage <island>` | Pirate captains; sends an island's captain to sea now. |
 | `/pirates mob squad info\|patrol\|return` | The navy outpost's watch. |
@@ -1906,9 +1962,9 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (`names`: ports show their proper names, off shows the readable ids; STR7: where a delivered or arriving ship appears, `ship_clearance`, `berth_depth`, `ship_spot_search`; new ports' `pier_extension` and `carve_berths`). |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings; STR8: `level_trails`, `clear_doors`, `piers_end_in_water`, and each port kind's `cold_frequency` for snowy and frozen shores), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (`names`: ports show their proper names, off shows the readable ids; STR7: where a delivered or arriving ship appears, `ship_clearance`, `berth_depth`, `ship_spot_search`; new ports' `pier_extension` and `carve_berths`). |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
-| `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master` (also whether the island's fence fears pirates), `squad` (the outpost's watch), `kraken`, `shark`; monsters and the mod's people (`monsters_attack_npcs`, `crew_fight_monsters`, `crew_defence_range`, `sharks_attack_npcs`, `kraken_takes_crew`). |
+| `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master` (also whether the island's fence fears pirates), `villagers` (the village people: `roles`, `routines`, `vendor_price_scale`, `vendor_buyback`, `respawn_days`, `max_lamps`, `stuck_ticks`, `hire_confirm_ticks`), `squad` (the outpost's watch), `kraken`, `shark`; monsters and the mod's people (`monsters_attack_npcs`, `crew_fight_monsters`, `crew_defence_range`, `sharks_attack_npcs`, `kraken_takes_crew`). |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |

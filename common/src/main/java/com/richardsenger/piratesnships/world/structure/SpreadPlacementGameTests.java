@@ -59,7 +59,14 @@ public final class SpreadPlacementGameTests {
                     WorldConfig.PIRATE_ISLAND.spacing(), WorldConfig.PIRATE_ISLAND_SEPARATION),
             new Expected(OutpostKeys.NAVY_OUTPOSTS, "navy_outpost", OutpostData.SALT,
                     WorldConfig.NAVY_OUTPOST.spacing(), WorldConfig.NAVY_OUTPOST_SEPARATION),
-            new Expected(WreckKeys.WRECKS, "wreck", WreckData.SALT, WorldConfig.WRECK.spacing(), WorldConfig.WRECK_SEPARATION));
+            new Expected(WreckKeys.WRECKS, "wreck", WreckData.SALT, WorldConfig.WRECK.spacing(), WorldConfig.WRECK_SEPARATION),
+            // STR8: the cold shores' sets read their kind's spacing and share its salt (one grid)
+            new Expected(VillageKeys.SEAFARER_VILLAGES_COLD, "seafarer_village", VillageData.SALT,
+                    WorldConfig.SEAFARER_VILLAGE.spacing(), WorldConfig.SEAFARER_VILLAGE_SEPARATION),
+            new Expected(IslandKeys.PIRATE_ISLANDS_COLD, "pirate_island", IslandData.SALT,
+                    WorldConfig.PIRATE_ISLAND.spacing(), WorldConfig.PIRATE_ISLAND_SEPARATION),
+            new Expected(OutpostKeys.NAVY_OUTPOSTS_COLD, "navy_outpost", OutpostData.SALT,
+                    WorldConfig.NAVY_OUTPOST.spacing(), WorldConfig.NAVY_OUTPOST_SEPARATION));
 
     /** How many rings of grid cells the search walks (vanilla's {@code /locate} walks 100). */
     private static final int RINGS = 100;
@@ -151,12 +158,14 @@ public final class SpreadPlacementGameTests {
         ConfiguredSpreadPlacement villages = placementOf(helper, state, VillageKeys.SEAFARER_VILLAGE);
         ConfiguredSpreadPlacement outposts = placementOf(helper, state, OutpostKeys.NAVY_OUTPOST);
         ConfiguredSpreadPlacement islands = placementOf(helper, state, IslandKeys.PIRATE_ISLAND);
-        helper.assertTrue(villages.exclusionZone().isEmpty() && villages.exclusionZones().isEmpty(), "villages exclude nothing");
+        // STR8: the villages keep away from vanilla's villages and mansions (exclusionsKeepPortsFromVanillaVillagesAndMansions)
+        helper.assertTrue(villages.exclusionZone().map(z -> z.otherSet().is(PortStructureData.VANILLA_VILLAGES)).orElse(false),
+                "villages exclude vanilla's villages: " + villages.exclusionZone());
         helper.assertTrue(outposts.exclusionZone().map(z -> z.otherSet().is(VillageKeys.SEAFARER_VILLAGES)
                 && z.chunkCount() == OutpostData.VILLAGE_EXCLUSION_CHUNKS).orElse(false), "outposts: " + outposts.exclusionZone());
         helper.assertTrue(islands.exclusionZone().map(z -> z.otherSet().is(VillageKeys.SEAFARER_VILLAGES)
                 && z.chunkCount() == IslandData.PORT_EXCLUSION_CHUNKS).orElse(false), "islands vs villages: " + islands.exclusionZone());
-        helper.assertTrue(islands.exclusionZones().size() == 1 && islands.exclusionZones().get(0).otherSet().is(OutpostKeys.NAVY_OUTPOSTS)
+        helper.assertTrue(!islands.exclusionZones().isEmpty() && islands.exclusionZones().get(0).otherSet().is(OutpostKeys.NAVY_OUTPOSTS)
                 && islands.exclusionZones().get(0).chunkCount() == IslandData.PORT_EXCLUSION_CHUNKS, "islands vs outposts: " + islands.exclusionZones());
 
         long seed = state.getLevelSeed();
@@ -179,6 +188,73 @@ public final class SpreadPlacementGameTests {
         }
         helper.assertTrue(dropped > 0, "the exclusion zone drops some outpost grid chunks");
         helper.succeed();
+    }
+
+    /**
+     * STR8: each kind's cold shores' set starts on exactly the chunks its other set starts on (one grid, the same zones),
+     * so the two never stand side by side and every zone against the kind holds for both; which of them takes a start
+     * the biome decides ({@code PortSiteGameTests.coldShoresTakeTheColdStructure}).
+     */
+    @ModGameTest(timeoutTicks = 200)
+    public static void coldSetsShareTheirKindsGrid(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ChunkGeneratorStructureState state = beachState(level);
+        List<List<ResourceKey<Structure>>> pairs = List.of(
+                List.of(VillageKeys.SEAFARER_VILLAGE, VillageKeys.SEAFARER_VILLAGE_COLD),
+                List.of(IslandKeys.PIRATE_ISLAND, IslandKeys.PIRATE_ISLAND_COLD),
+                List.of(OutpostKeys.NAVY_OUTPOST, OutpostKeys.NAVY_OUTPOST_COLD));
+        for (List<ResourceKey<Structure>> pair : pairs) {
+            ConfiguredSpreadPlacement warm = placementOf(helper, state, pair.get(0));
+            ConfiguredSpreadPlacement cold = placementOf(helper, state, pair.get(1));
+            helper.assertValueEqual(cold.salt(), warm.salt(), pair.get(1).location() + " salt");
+            helper.assertValueEqual(cold.config(), warm.config(), pair.get(1).location() + " config");
+            helper.assertValueEqual(cold.exclusionZone().map(z -> z.otherSet().unwrapKey()), warm.exclusionZone().map(z -> z.otherSet().unwrapKey()),
+                    pair.get(1).location() + " exclusion zone");
+            helper.assertValueEqual(cold.exclusionZones().size(), warm.exclusionZones().size(), pair.get(1).location() + " exclusion zones");
+            List<ChunkPos> a = starts(state, warm, 300);
+            List<ChunkPos> b = starts(state, cold, 300);
+            helper.assertTrue(!a.isEmpty() && a.equals(b), pair.get(1).location() + ": the same starts (" + a.size() + " / " + b.size() + ")");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * STR8 (the human: "navy_post directly next to mansion"): no port of any kind starts within
+     * {@link PortStructureData#VANILLA_VILLAGE_EXCLUSION_CHUNKS} chunks of a vanilla village's placement chunk or
+     * {@link PortStructureData#MANSION_EXCLUSION_CHUNKS} of a woodland mansion's.
+     */
+    @ModGameTest(timeoutTicks = 300)
+    public static void portsKeepAwayFromVanillaVillagesAndMansions(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ChunkGeneratorStructureState state = beachState(level);
+        Registry<StructureSet> sets = level.registryAccess().registryOrThrow(Registries.STRUCTURE_SET);
+        StructureSet villages = sets.get(PortStructureData.VANILLA_VILLAGES);
+        StructureSet mansions = sets.get(PortStructureData.WOODLAND_MANSIONS);
+        helper.assertTrue(villages != null && mansions != null, "vanilla's villages and mansions are loaded");
+        RandomSpreadStructurePlacement v = (RandomSpreadStructurePlacement) villages.placement();
+        RandomSpreadStructurePlacement m = (RandomSpreadStructurePlacement) mansions.placement();
+        int reach = 400;
+        List<ChunkPos> villageStarts = vanillaStarts(state, v, reach);
+        List<ChunkPos> mansionStarts = vanillaStarts(state, m, reach + 200);
+        for (ResourceKey<Structure> key : List.of(VillageKeys.SEAFARER_VILLAGE, IslandKeys.PIRATE_ISLAND, OutpostKeys.NAVY_OUTPOST)) {
+            List<ChunkPos> ours = starts(state, placementOf(helper, state, key), reach);
+            helper.assertTrue(ours.size() > 10, key.location() + " starts: " + ours.size());
+            assertApart(helper, key.location().getPath(), ours, "vanilla village", villageStarts, PortStructureData.VANILLA_VILLAGE_EXCLUSION_CHUNKS);
+            assertApart(helper, key.location().getPath(), ours, "woodland mansion", mansionStarts, PortStructureData.MANSION_EXCLUSION_CHUNKS);
+        }
+        helper.succeed();
+    }
+
+    private static List<ChunkPos> vanillaStarts(ChunkGeneratorStructureState state, RandomSpreadStructurePlacement placement, int reach) {
+        List<ChunkPos> out = new java.util.ArrayList<>();
+        int spacing = placement.spacing();
+        for (int x = Math.floorDiv(-reach, spacing) * spacing; x <= reach; x += spacing) {
+            for (int z = Math.floorDiv(-reach, spacing) * spacing; z <= reach; z += spacing) {
+                ChunkPos p = placement.getPotentialStructureChunk(state.getLevelSeed(), x, z);
+                if (placement.isStructureChunk(state, p.x, p.z)) out.add(p);
+            }
+        }
+        return out;
     }
 
     /** Every chunk in the square of {@code reach} chunks round the origin where {@code placement} starts its structure. */

@@ -23,6 +23,8 @@ The **Crew** tab of a harbour master's desk lists who seeks a berth. Each asks a
 
 Bring your ship within about 32 blocks of the port first: the new hand walks straight aboard.
 
+A village's folk sign on too: sneak and use one twice. See [[pirates_n_ships:trade|Trade]].
+
 {spotlight3d:entity:crew_member|A hand of your crew}
 
 >! Every hand needs a free {item:pirates_n_ships:hammock}**hammock**. The desk refuses a hand you cannot bunk.

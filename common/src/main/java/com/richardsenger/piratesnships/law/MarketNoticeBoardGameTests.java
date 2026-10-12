@@ -349,7 +349,7 @@ public final class MarketNoticeBoardGameTests {
 
     // --- in the village -----------------------------------------------------------------------------------------
 
-    /** The market square piece stands the board at its centre-back, whole, on its posts, the notices to the square. */
+    /** The market square piece stands the board whole in LIFE1's free spot by the west stall, the notices to the stalls. */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 60)
     public static void theMarketSquareCarriesTheBoard(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -367,11 +367,11 @@ public final class MarketNoticeBoardGameTests {
         h.assertValueEqual(anchors.size(), 1, "market boards in the square");
         BlockPos anchor = anchors.get(0);
         BlockState s = level.getBlockState(anchor);
-        h.assertValueEqual(s.getValue(MarketNoticeBoardBlock.FACING), Direction.NORTH, "the notices face the street and the stall");
+        h.assertValueEqual(s.getValue(MarketNoticeBoardBlock.FACING), Direction.NORTH, "the notices face the stalls and the aisle");
         assertWhole(h, anchor, Direction.NORTH, s.getBlock());
-        // centre-back: the square's middle columns, in the back rows (the street comes in from the north at z 0)
-        int x = anchor.getX() - origin.getX(), z = anchor.getZ() - origin.getZ();
-        h.assertTrue(x >= 6 && x <= 8 && z >= 11, "the board stands at the centre-back, found at " + x + ", " + z);
+        // LIFE1's free spot south of the west stall (x 3..4, z 11..12): the board on its back row, anchor at x 4
+        int x = anchor.getX() - origin.getX(), z = anchor.getZ() - origin.getZ(), y = anchor.getY() - origin.getY();
+        h.assertTrue(x == 4 && y == 1 && z == 12, "the board stands in the stalls' free spot, found at " + x + ", " + y + ", " + z);
         // standing on the paving, the top part under the open sky
         h.assertFalse(level.getBlockState(anchor.below()).isAir(), "the board's posts stand on the ground");
         h.succeed();

@@ -66,6 +66,26 @@ Every port has a harbour master's desk and a name of its own, such as Port Marlo
 - **Navy outposts:** rarer stone forts with cannon and a garrison: a sea gate and quay, walls that bend inland round bastions and towers, and inside them lanes, barracks, a brig and a parade ground under the navy ensign.
 - **Pirate islands:** rarer still, camps under the Jolly Roger: a rough jetty, then tents, huts and a tavern along winding trails up from the beach. Strangers are not welcome.
 
+## Village folk
+A seafarer village has one soul per building, each dressed for the trade: villagers in the cottages, a **fishwife** at the fisher's cottage, a **net mender** at the net loft, a **dockhand** at the warehouse, a **shipwright** at the shed or the slipway, an **innkeeper** behind the bar, a **lamplighter** at the beacon tower and **vendors** at the fish market and the market square.
+
+- By day they work at their stations; the fishwife moves from her drying rack to the fish market at noon.
+- At dusk they sit in the tavern or on a bench; at night they sleep in the village's beds.
+- The lamplighter walks the lamp posts with a lantern at dusk and at dawn.
+- Monsters hunt them, and they run.
+
+>! Sneak and use a villager twice to hire them as crew: the fee of a sailor, and they keep their clothes aboard.
+
+## Village stalls
+Talk to a vendor or a shipwright to see his wares, bought and sold with doubloons:
+
+- **Fish market:** cod, salted fish.
+- **Provisions:** salt pork, hardtack, rum.
+- **Chandler:** rope, cloth, nails.
+- **Shipwright:** hull patches and his toolkit.
+
+The port's own goods keep the market's price; the rest have a fixed one, bought back for half. The stalls shut at night.
+
 ## The harbour master
 illustration: harbor_desk
 Right-click the harbour master or his {item:pirates_n_ships:harbor_desk}**harbour master's desk** to open the market. A desk you place inside a port joins that port.

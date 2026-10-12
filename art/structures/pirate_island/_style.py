@@ -24,6 +24,9 @@ POOL = f"{MOD}:pirate_island"
 buildspec.CONNECTORS.update({
     "path_out": ("path_in", f"{POOL}/paths", "aligned"),
     "path_in": ("path_out", buildspec.EMPTY_POOL, "aligned"),
+    # STR8: a bend's, a fork's and the junction's way on draws from the straights only, so two turns never follow
+    # each other and a trail does not curl
+    "path_straight_out": ("path_in", f"{POOL}/paths_straight", "aligned"),
     # STR2: the camp's inland trailhead draws from a pool without ends, bends and junctions, so every camp grows a
     # trail inland
     "trailhead_out": ("path_in", f"{POOL}/trailheads", "aligned"),

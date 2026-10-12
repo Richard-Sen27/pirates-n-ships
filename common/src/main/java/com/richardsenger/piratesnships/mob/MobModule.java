@@ -6,12 +6,16 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.law.world.LawTags;
 import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
 import com.richardsenger.piratesnships.mob.kraken.KrakenGameTests;
+import com.richardsenger.piratesnships.mob.monsters.MonsterTargets;
+import com.richardsenger.piratesnships.mob.monsters.MonstersGameTests;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.models.model.ModelTemplate;
 import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 import java.util.List;
@@ -48,6 +52,7 @@ public final class MobModule implements ModModule {
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> MobCommands.register(dispatcher));
         KrakenContent.registerEvents();
+        CommonEvents.ENTITY_JOIN_LEVEL.register(MonsterTargets::onJoin); // MOB3: monsters hunt crew and sailors
     }
 
     @Override
@@ -59,6 +64,10 @@ public final class MobModule implements ModModule {
     public void gatherData(DataContributions data) {
         // the law keys its navy crimes (attack_navy, kill_navy) and navy hostility on this tag
         data.entityTypeTags(tags -> tags.tag(LawTags.NAVY).add(MobContent.NAVY_SOLDIER.get(), MobContent.NAVY_OFFICER.get()));
+        // MOB3: the vanilla monsters that hunt villagers hunt crew members, sailors and harbor masters too
+        data.entityTypeTags(tags -> tags.tag(MonsterTargets.HUNTS_NPCS)
+                .add(EntityType.ZOMBIE, EntityType.HUSK, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER, EntityType.RAVAGER)
+                .addTag(EntityTypeTags.ILLAGER));
         data.models(m -> MobContent.eggs().values().forEach(egg ->
                 SPAWN_EGG.create(ModelLocationUtils.getModelLocation(egg.get()), new TextureMapping(), m.models())));
         data.models(m -> SPAWN_EGG.create(ModelLocationUtils.getModelLocation(MobContent.SHARK_SPAWN_EGG.get()), new TextureMapping(), m.models()));
@@ -92,6 +101,6 @@ public final class MobModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MobGameTests.class, SharkGameTests.class, KrakenGameTests.class);
+        return List.of(MobGameTests.class, SharkGameTests.class, KrakenGameTests.class, MonstersGameTests.class);
     }
 }

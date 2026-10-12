@@ -184,6 +184,10 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p7.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p7.text3"
         }
       ]
     },

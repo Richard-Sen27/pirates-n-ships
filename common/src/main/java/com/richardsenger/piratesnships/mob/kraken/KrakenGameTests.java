@@ -6,13 +6,18 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.hazards.HazardsConfig;
+import com.richardsenger.piratesnships.mob.MobConfig;
+import com.richardsenger.piratesnships.mob.MobContent;
+import com.richardsenger.piratesnships.mob.entity.Sailor;
 import com.richardsenger.piratesnships.mob.kraken.KrakenTentacles.Job;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
-import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
+import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.StationContent;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -392,6 +397,50 @@ public final class KrakenGameTests {
                 h.assertTrue(player.getHealth() < health, "the hold did no damage");
                 h.succeed();
             }
+        });
+    }
+
+    /** MOB3: a sailor swimming near the kraken is grabbed and dragged under like a player. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 260, batch = BATCH + "swimming_sailor")
+    public static void aSwimmingSailorIsDraggedUnder(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Vec3 swim = new Vec3(20.5, 6.2, 20.5);
+        Vec3 at = h.absoluteVec(swim);
+        Sailor sailor = h.spawn(MobContent.SAILOR.get(), swim);
+        float health = sailor.getHealth();
+        Kraken k = KrakenTestSupport.kraken(h, new Vec3(28.5, 2.1, 20.5));
+        long[] grabbedAt = {-1};
+        h.onEachTick(() -> {
+            if (grabbedAt[0] < 0) {
+                if (k.holding(sailor)) {
+                    grabbedAt[0] = h.getTick();
+                } else {
+                    sailor.setPos(at.x, at.y, at.z); // treads water until grabbed
+                    sailor.setDeltaMovement(Vec3.ZERO);
+                }
+                return;
+            }
+            if (h.getTick() >= grabbedAt[0] + 45) {
+                h.assertTrue(sailor.getHealth() < health || !sailor.isAlive(), "the hold did no damage");
+                h.succeed();
+            }
+        });
+    }
+
+    /** MOB3: {@code mobs.kraken_takes_crew} off, the kraken grabs players but no crew, sailors or pirates. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 40, batch = CONFIG_BATCH + "takes_crew")
+    public static void withTheToggleOffTheKrakenSparesPeople(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Kraken k = KrakenTestSupport.kraken(h, new Vec3(28.5, 2.1, 20.5));
+        Sailor sailor = h.spawnWithNoFreeWill(MobContent.SAILOR.get(), new Vec3(20.5, 6.2, 20.5));
+        CrewMember crew = h.spawnWithNoFreeWill(StationContent.CREW_MEMBER.get(), new Vec3(22.5, 6.2, 20.5));
+        h.runAfterDelay(2, () -> {
+            h.assertTrue(sailor.isInWater() && crew.isInWater(), "not swimming");
+            h.assertTrue(k.grabbable(sailor) && k.grabbable(crew), "the kraken does not take people with the toggle on");
+            ConfigOverrides.during(h, MobConfig.KRAKEN_TAKES_CREW, false);
+            h.assertFalse(k.grabbable(sailor) || k.grabbable(crew), "the kraken takes people with the toggle off");
+            k.discard();
+            h.succeed();
         });
     }
 

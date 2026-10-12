@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.mob.entity.Sailor;
 import com.richardsenger.piratesnships.mob.entity.Shark;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -157,6 +158,46 @@ public final class SharkGameTests {
             h.assertTrue(shark.getTarget() == player, "the shark did not target the swimmer");
             h.assertTrue(shark.bites() > 0, "no bite yet");
             h.assertTrue(player.getHealth() < player.getMaxHealth(), "the swimmer took no damage");
+        });
+    }
+
+    /** A sailor held in the water at {@link #SWIMMER} every tick (MOB3). */
+    private static Sailor swimmingSailor(GameTestHelper h) {
+        Vec3 at = h.absoluteVec(SWIMMER);
+        Sailor sailor = h.spawn(MobContent.SAILOR.get(), SWIMMER);
+        h.onEachTick(() -> {
+            sailor.setPos(at.x, at.y, at.z);
+            sailor.setDeltaMovement(Vec3.ZERO);
+        });
+        return sailor;
+    }
+
+    /** MOB3: a shark hunts and bites a sailor swimming in its water, as it does a player. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400, batch = "pirates_n_ships_shark_bite_sailor")
+    public static void sharkBitesASwimmingSailor(GameTestHelper h) {
+        basin(h);
+        Sailor sailor = swimmingSailor(h);
+        Shark shark = shark(h, 4, 3, 4);
+        h.succeedWhen(() -> {
+            h.assertTrue(shark.getTarget() == sailor, "the shark did not target the sailor");
+            h.assertTrue(shark.bites() > 0, "no bite yet");
+            h.assertTrue(sailor.getHealth() < sailor.getMaxHealth() || !sailor.isAlive(), "the sailor took no damage");
+        });
+    }
+
+    /** MOB3: {@code mobs.sharks_attack_npcs} off, the shark leaves a swimming sailor alone. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = "pirates_n_ships_config_shark_npcs")
+    public static void withTheToggleOffASharkIgnoresASailor(GameTestHelper h) {
+        ConfigOverrides.during(h, MobConfig.SHARKS_ATTACK_NPCS, false);
+        basin(h);
+        Sailor sailor = swimmingSailor(h);
+        Shark shark = shark(h, 8, 3, 8);
+        h.onEachTick(() -> {
+            if (shark.getTarget() == sailor) h.fail("the shark targeted the sailor");
+        });
+        h.runAfterDelay(150, () -> {
+            h.assertTrue(sailor.getHealth() >= sailor.getMaxHealth(), "the sailor was hurt");
+            h.succeed();
         });
     }
 

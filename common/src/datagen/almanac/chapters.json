@@ -1544,6 +1544,10 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.crew.p7.text2"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.crew.p7.text3"
        }
       ]
      },
@@ -4155,6 +4159,7 @@
   "pirates_n_ships.almanac.crew.p7.show_me1": "Show me: slinging hammocks",
   "pirates_n_ships.almanac.crew.p7.text1": "Hang a hammock between two supports at the same height, such as posts, walls or the hull side: click the block next to one while looking toward the other.",
   "pirates_n_ships.almanac.crew.p7.text2": "At nightfall every hand off station turns in to the nearest free hammock. A night in one cheers him; a night aboard without one does not.",
+  "pirates_n_ships.almanac.crew.p7.text3": "Monsters hunt your hands as they hunt villagers, but on deck only one that came aboard: a hand with a blade fights it, one without runs.",
   "pirates_n_ships.almanac.crew.p8.heading": "Your own bunk",
   "pirates_n_ships.almanac.crew.p8.text1": "Right-click a free hammock at night to sleep in it as in a bed, even under way. Your respawn point sails with the ship.",
   "pirates_n_ships.almanac.crew.p8.text2": "A {item:pirates_n_ships:sea_cot}**sea cot** is the captain's bed for the great cabin, and works the same way.",

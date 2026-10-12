@@ -47,14 +47,15 @@ import java.util.UUID;
 /**
  * STR7's deep berths (design.md §10.1) on a sloped beach, in the pattern of STR3's placed villages: the sea floor
  * falls one block every {@link #SLOPE} blocks from the shore, so the pier's berths (11 out) stand in three blocks of
- * water and the pier's end (20 out) in five, one short of the rule (draught 2 + berth depth 3 under the surface). The
+ * water and the pier's end (20 out) in five, short of the rule (the brig's draught 4 + berth depth 3 under the surface,
+ * SHIP1; the sloops' 2 + 3 before). The
  * village is planned on that terrain through the real jigsaw ({@link PortStructure#plan}) and placed chunk by chunk.
  *
  * <ul>
- *     <li>{@link #shallowBeachGetsADeepBerth}: one {@code pier_extension} hangs from the pier (the water beyond it is
- *     deep enough, so no second one), the port registers four berths, every berth's own mooring meets the depth rule
+ *     <li>{@link #shallowBeachGetsADeepBerth}: two {@code pier_extension} sections hang from the pier (the water at the
+ *     first one's end is still too shallow for the brig, beyond the second it is deep enough), the port registers six berths, every berth's own mooring meets the depth rule
  *     for the largest shipped template (the floor was carved), no sand within the clearance, the piles reach the carved
- *     floor, and a ship of the largest template ordered or granted at the port lies at berth 1, assembled.</li>
+ *     floor, and a brig (the largest template, SHIP1) ordered at the port lies at berth 1, assembled.</li>
  * </ul>
  */
 public final class BerthDepthGameTests {
@@ -96,10 +97,12 @@ public final class BerthDepthGameTests {
         BlockPos origin = helper.absolutePos(BlockPos.ZERO);
         int seaY = origin.getY() + SEA_Y;
         int depth = BerthBasins.depth();
-        helper.assertValueEqual(depth, 5, "draught 2 + berth depth 3");
-        // the pier's end (20 out) is shallow, the first extension's end (32 out) is not
+        helper.assertValueEqual(depth, 7, "the brig's draught 4 + berth depth 3");
+        // SHIP1: for the brig's draught the pier's end (20 out) and the first extension's end (32 out) are shallow, the
+        // second extension's end (44 out) is not
         helper.assertTrue(PierExtensions.shallow(seaY - water(20) + 1, seaY, depth), "the pier's end is shallow");
-        helper.assertFalse(PierExtensions.shallow(seaY - water(32) + 1, seaY, depth), "the first section's end is deep enough");
+        helper.assertTrue(PierExtensions.shallow(seaY - water(32) + 1, seaY, depth), "the first section's end is shallow");
+        helper.assertFalse(PierExtensions.shallow(seaY - water(44) + 1, seaY, depth), "the second section's end is deep enough");
 
         List<StructurePiece> pieces = plan(helper, level, seaY);
         BlockPos site = new BlockPos(origin.getX() + SITE_X, seaY, origin.getZ() + SITE_Z);
@@ -108,10 +111,13 @@ public final class BerthDepthGameTests {
         pieces.forEach(piece -> piece.move(dx, 0, dz));
         StructureLayout layout = StructureLayout.of(pieces);
         helper.assertValueEqual(layout.named("pier").size(), 1, "one pier");
-        helper.assertValueEqual(layout.named("pier_extension").size(), 1, "one extension section");
+        helper.assertValueEqual(layout.named("pier_extension").size(), 2, "two extension sections");
         BoundingBox pier = layout.named("pier").get(0).box();
-        BoundingBox section = layout.named("pier_extension").get(0).box();
+        List<BoundingBox> sections = layout.named("pier_extension").stream().map(p -> p.box())
+                .sorted(java.util.Comparator.comparingInt(BoundingBox::maxZ).reversed()).toList();
+        BoundingBox section = sections.get(0);
         helper.assertValueEqual(section.maxZ(), pier.minZ() - 1, "the section hangs from the pier's seaward end");
+        helper.assertValueEqual(sections.get(1).maxZ(), section.minZ() - 1, "the second section hangs from the first");
         helper.assertValueEqual(section.maxY(), pier.maxY(), "deck rows level (the section reaches two rows deeper)");
         StructureStart start = new StructureStart(village, new ChunkPos(site), 0, new PiecesContainer(pieces));
         place(level, start);
@@ -119,21 +125,36 @@ public final class BerthDepthGameTests {
         Port port = PortRegistry.get(level.getServer()).index()
                 .byId(PortService.portId(PortKind.SEAFARER_VILLAGE, PortService.centreOf(new PiecesContainer(pieces)))).orElse(null);
         helper.assertTrue(port != null, "the port is registered");
-        helper.assertValueEqual(port.berths().size(), 4, "berths of the pier and the section");
+        helper.assertValueEqual(port.berths().size(), 6, "berths of the pier and the two sections");
 
         // every berth's own mooring meets the depth rule for the largest shipped template, with the ground cleared
-        ShipSpots.Shape largest = ShipSpots.shape(level, ShipTemplates.NAVY_SLOOP_ARMED_ID).orElseThrow();
-        helper.assertValueEqual(largest.hull(), ShipSpots.LARGEST_SHIPPED, "the armed sloop is the largest shipped hull");
+        ShipSpots.Shape largest = ShipSpots.shape(level, ShipTemplates.NAVY_BRIG_ARMED_ID).orElseThrow();
+        helper.assertValueEqual(largest.hull(), ShipSpots.LARGEST_SHIPPED, "the armed brig is the largest shipped hull");
         List<ShipSpot.Anchor> anchors = ShipSpots.anchors(level, port);
         int clearance = WorldConfig.PORTS_SHIP_CLEARANCE.get();
+        int checked = 0;
         for (int i = 0; i < anchors.size(); i++) {
             ShipSpot.Anchor a = anchors.get(i);
             helper.assertTrue(a.pierSide() != null, "berth " + (i + 1) + " knows its pier side");
+            // SHIP1: a 32-block brig moored centred on a berth of the second section reaches past the arena's stone rim at
+            // z 0 (open sea in a world); those berths are left out here, the pier's and the first section's are checked
+            if (a.z() - (largest.hull().length() + 1) / 2 - clearance <= origin.getZ()) {
+                continue;
+            }
+            checked++;
             ShipSpot.Search s = ShipSpot.find((x, z) -> ShipSpots.flags(level, x, z, seaY, largest.draught(), WorldConfig.PORTS_BERTH_DEPTH.get(),
                     largest.above()), List.of(a), largest.hull(), new ShipSpot.Rules(clearance, 0), r -> false);
             helper.assertTrue(s.spot().isPresent(), "berth " + (i + 1) + " at " + a.x() + " " + a.z() + ": a deep mooring (" + s.failure() + ")");
             helper.assertValueEqual(s.spot().get().distance(), 0, "berth " + (i + 1) + ": at the berth itself");
         }
+        helper.assertTrue(checked >= 4, "only " + checked + " berths within the arena");
+        // SHIP1: the basin carved round one berth for the brig: 32 long slid up to 16 seaward plus the clearance each way
+        // (54 blocks along the pier) by her beam plus the clearance (15 across), 7 blocks under the surface
+        ShipSpot.Rect basin = com.richardsenger.piratesnships.world.structure.BerthBasins.basin(anchors.get(0), ShipSpots.LARGEST_SHIPPED, clearance);
+        int along = basin.maxZ() - basin.minZ() + 1, across = basin.maxX() - basin.minX() + 1;
+        com.richardsenger.piratesnships.Constants.LOG.info("[SHIP1] berth basin {} x {} columns, {} deep", across, along, depth);
+        helper.assertValueEqual(along, 32 + 16 + 2 * clearance, "the basin's length along the pier");
+        helper.assertValueEqual(across, 9 + 2 * clearance, "the basin's width");
         // the pier's berths stood in three blocks of water before the carve
         BlockPos first = port.berths().get(0).pos();
         int out = SHORE_Z - (first.getZ() - origin.getZ());
@@ -144,9 +165,9 @@ public final class BerthDepthGameTests {
         BlockState under = level.getBlockState(new BlockPos(pileX, seaY - depth, pileZ));
         helper.assertFalse(under.is(Blocks.WATER), "the pile at " + pileX + " " + pileZ + " reaches the carved floor: " + under);
 
-        // a ship of the largest template ordered or granted here lies at berth 1, assembled
+        // SHIP1: a brig ordered here (the largest template) lies at berth 1 after the carve, assembled
         ServerPlayer player = serverPlayer(helper, port.centre());
-        ShipOrders.Delivery delivery = ShipOrders.deliver(level, port, ShipTemplates.NAVY_SLOOP_ARMED_ID, player, "STR7 test");
+        ShipOrders.Delivery delivery = ShipOrders.deliver(level, port, ShipTemplates.BRIG_ID, player, "STR7 test");
         delivery.berthed().map(b -> b.placed().assembly()).filter(a -> a != null && a.shipId() != null)
                 .ifPresent(a -> ShipTestCleanup.track(helper, a.shipId()));
         helper.assertTrue(delivery.berthed().isPresent(), "delivered: " + delivery.failure());

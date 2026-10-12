@@ -38,12 +38,14 @@ import java.util.function.Predicate;
 public final class ShipSpots {
 
     /**
-     * The largest shipped template's footprint and draught (the four sloops: 9 wide, 29 long, two rows under the
-     * waterline row), what a new port's berths are made deep and long enough for. {@code ShipSpotGameTests} checks
-     * every loaded template against it.
+     * The largest shipped template's footprint and draught, what a new port's berths are made deep and long enough for:
+     * the brigs (SHIP1, {@code brig}, {@code navy_brig_armed}, {@code pirate_brig_armed}: 9 wide, 32 long, waterline row
+     * 4, so four rows under it; the sloops are 9 × 29 with draught 2). Numbers, not read from the templates: worldgen
+     * carves the basins from these constants without a server's datapacks at hand. {@code ShipSpotGameTests} checks every
+     * loaded template against them.
      */
-    public static final ShipSpot.Hull LARGEST_SHIPPED = new ShipSpot.Hull(9, 29);
-    public static final int LARGEST_DRAUGHT = 2;
+    public static final ShipSpot.Hull LARGEST_SHIPPED = new ShipSpot.Hull(9, 32);
+    public static final int LARGEST_DRAUGHT = 4;
 
     private ShipSpots() {
     }

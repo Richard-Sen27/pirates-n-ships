@@ -2916,6 +2916,13 @@ up by one row; see the comment there).
   aft (z 22..24, the rings 16 to 17 blocks from the hoop) that the sheet stays clear of the main course and topsail at
   full belly. A climber at the foot holds forward toward the mast, the net carries him to the hoop and he steps over
   the hoop into the nest (RL3's top exit).
+- **Ports (STR7):** the brig is the largest shipped hull (`ShipSpots.LARGEST_SHIPPED` 9 × 32, `LARGEST_DRAUGHT` 4,
+  set by hand from the templates: worldgen carves from these constants without the datapacks; `ShipSpotGameTests`
+  checks every loaded template against them). A new port's berth basin is now 54 × 15 columns (32 long, slid up to 16
+  seaward, the 3-block clearance round it; the sloops' was 51 × 15) carved 7 blocks under the surface (draught 4 +
+  `berth_depth` 3; 5 before), and only where the sea surface row is not ground, so the beach stays untouched; on the
+  test beach the pier now gets two extension sections instead of one. A brig ordered where the water is under 7 deep
+  is refused with the deep-water message (`ShipSpotGameTests.aBrigNeedsDeeperWaterThanASloop`).
 - **Price:** 725 doubloons, the starter sloop's 400 in proportion to her blocks (1235 against 685); the armed brigs
   have 1266 blocks plus the net cells strung on placement.
 - **Tests:** `BrigLayoutTest` (JUnit, the committed structures: only the guns, ports, lockers, nest, fittings and

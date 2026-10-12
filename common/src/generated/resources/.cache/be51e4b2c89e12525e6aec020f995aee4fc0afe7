@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-12T05:14:18.431083	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-12T06:19:15.694207	Raw JSON (data): pirates_n_ships
 3ce816fd7340451afb94430040a861701c12caab data/pirates_n_ships/advancement/recipes/combat/aether_skyroot_cannon.json
 7f55ec7c85545983a22fefa4404ea406dcc1dfbe data/pirates_n_ships/advancement/recipes/combat/ars_nouveau_archwood_cannon.json
 b3ff43654026f2d72822850c74e5b6f7fed13162 data/pirates_n_ships/advancement/recipes/combat/biomesoplenty_dead_cannon.json
@@ -8220,9 +8220,9 @@ f97f6a9bd448a3eea8cc352004cdf3efc0cb08aa data/pirates_n_ships/worldgen/processor
 76a676de89172f6d6f5210b2a76cbdc03482b268 data/pirates_n_ships/worldgen/structure/pirate_island.json
 89bacf275a0ffe8001d98efbbca0e76e3c9b6645 data/pirates_n_ships/worldgen/structure/seafarer_village.json
 251023302fd8f076f6c85e28f31b2d1f97286ca3 data/pirates_n_ships/worldgen/structure/wreck.json
-12b3a217d7471b4b47ad77c2032b11f17c781ec2 data/pirates_n_ships/worldgen/structure_set/navy_outposts.json
-dc498e8b146356d33377a3aade78eb77f4a29eb6 data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
-50fff6fca6a453a658b906ea9dcec339c2aecbeb data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
+5230f5a294d7366d6c1547c4a8b04e151438d2e4 data/pirates_n_ships/worldgen/structure_set/navy_outposts.json
+9797baec316fad07be4ec1c07a159baa4542bf32 data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
+d727ee6aae2d5c0ebaae7955e4e14b98ae39744f data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
 172405f39257f92b1e7066294050e2fe16e0c43d data/pirates_n_ships/worldgen/structure_set/wrecks.json
 23566e34b56b08d198077657f3fdeed075fc63a9 data/pirates_n_ships/worldgen/template_pool/navy_outpost/buildings.json
 7ab35099513e55dc84cdcede18bb83310f613d8f data/pirates_n_ships/worldgen/template_pool/navy_outpost/decorations.json

@@ -2962,7 +2962,8 @@
          "pirates_n_ships.almanac.combat.p16.list1_2",
          "pirates_n_ships.almanac.combat.p16.list1_3",
          "pirates_n_ships.almanac.combat.p16.list1_4",
-         "pirates_n_ships.almanac.combat.p16.list1_5"
+         "pirates_n_ships.almanac.combat.p16.list1_5",
+         "pirates_n_ships.almanac.combat.p16.list1_6"
         ]
        },
        {
@@ -4367,13 +4368,14 @@
   "pirates_n_ships.almanac.combat.p14.text1": "Post a hand at a gun with the whistle and stock powder and shot in a chest, barrel or crate within 4 blocks on the same ship. Blow **Load!**, then **Fire!**: every manned, loaded gun fires, and the crew reloads it.",
   "pirates_n_ships.almanac.combat.p14.text2": "**Fire at will** lets the crews pick targets; see [[pirates_n_ships:crew|Crew]].",
   "pirates_n_ships.almanac.combat.p15.heading": "The grappling hook",
-  "pirates_n_ships.almanac.combat.p15.text1": "The {item:pirates_n_ships:grappling_hook}**grappling hook** bites into ships and land. Right click to throw it, with 32 blocks of rope. Or hold it in your off hand, load it into a musket and fire it, with 64 blocks.",
+  "pirates_n_ships.almanac.combat.p15.text1": "The {item:pirates_n_ships:grappling_hook}**grappling hook** bites into ships and land. Right click to throw it, about nine blocks, or lob it up to twenty. For range, hold it in your off hand, load it into a musket and fire it, with 64 blocks of rope.",
   "pirates_n_ships.almanac.combat.p16.heading": "On the rope",
   "pirates_n_ships.almanac.combat.p16.list1_1": "**Two ships:** hooked from your own ship, the rope hauls them side by side.",
   "pirates_n_ships.almanac.combat.p16.list1_2": "**Haul:** hold sneak with the rope in hand and walk back.",
-  "pirates_n_ships.almanac.combat.p16.list1_3": "**Climb:** right-click your own rope when the hook is two blocks or more above you.",
-  "pirates_n_ships.almanac.combat.p16.list1_4": "**Make fast:** use a cleat or mooring ring of yours while the hook is out.",
-  "pirates_n_ships.almanac.combat.p16.list1_5": "**Let go:** sneak and use with an empty hand.",
+  "pirates_n_ships.almanac.combat.p16.list1_3": "**Climb:** right-click your own rope when the hook is two blocks or more above you. Each click pulls you up a step; hold it to keep climbing.",
+  "pirates_n_ships.almanac.combat.p16.list1_4": "**Swing:** off the ground the rope holds you under the hook. Walk to swing, take another item in hand to drop.",
+  "pirates_n_ships.almanac.combat.p16.list1_5": "**Make fast:** use a cleat or mooring ring of yours while the hook is out.",
+  "pirates_n_ships.almanac.combat.p16.list1_6": "**Let go:** sneak and use with an empty hand.",
   "pirates_n_ships.almanac.combat.p16.text1": "It slips off water, leaves, glass panes and creatures.",
   "pirates_n_ships.almanac.combat.p17.heading": "Boarding",
   "pirates_n_ships.almanac.combat.p17.show_me1": "Show me: boarding an enemy",

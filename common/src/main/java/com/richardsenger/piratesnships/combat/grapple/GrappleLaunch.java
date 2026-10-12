@@ -112,15 +112,19 @@ public final class GrappleLaunch {
 
     // ------------------------------------------------------------------ flight
 
-    /** Start speed [blocks per tick]: {@code throwVelocity}, times {@code musketFactor} for a musket shot. */
-    public static double speed(Mode mode, double throwVelocity, double musketFactor) {
-        return mode == Mode.MUSKET ? throwVelocity * musketFactor : throwVelocity;
+    /**
+     * Start speed [blocks per tick]: a throw by hand flies at {@code handVelocity} ({@code hand_throw_velocity}, GR7), a
+     * musket shot at {@code throwVelocity} times {@code musketFactor}.
+     */
+    public static double speed(Mode mode, double handVelocity, double throwVelocity, double musketFactor) {
+        return mode == Mode.MUSKET ? throwVelocity * musketFactor : handVelocity;
     }
 
     /**
      * Rope length [blocks] for a launch: the thrown rope is {@code throwRope} ({@code max_rope_length}); the musket
-     * gets its own length, but never less than the thrown one. The default speeds carry a level launch farther than
-     * its rope (measured in {@code GrappleLaunchGameTests}, GR4), so the rope length is the effective range.
+     * gets its own length, but never less than the thrown one. A level musket shot flies farther than its rope
+     * (measured in {@code GrappleLaunchGameTests}, GR4), so its rope is its range; since GR7 a throw by hand falls well
+     * short of its rope (about 9 blocks level, 20 at most, {@link HookFlight}).
      */
     public static double ropeLength(Mode mode, double throwRope, double musketRope) {
         return mode == Mode.MUSKET ? Math.max(throwRope, musketRope) : throwRope;

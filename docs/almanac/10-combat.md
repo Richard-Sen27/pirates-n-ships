@@ -101,13 +101,14 @@ Post a hand at a gun with the whistle and stock powder and shot in a chest, barr
 
 ## The grappling hook
 illustration: grappling_hook
-The {item:pirates_n_ships:grappling_hook}**grappling hook** bites into ships and land. Right click to throw it, with 32 blocks of rope. Or hold it in your off hand, load it into a musket and fire it, with 64 blocks.
+The {item:pirates_n_ships:grappling_hook}**grappling hook** bites into ships and land. Right click to throw it, about nine blocks, or lob it up to twenty. For range, hold it in your off hand, load it into a musket and fire it, with 64 blocks of rope.
 {recipe:grappling_hook}
 
 ## On the rope
 - **Two ships:** hooked from your own ship, the rope hauls them side by side.
 - **Haul:** hold sneak with the rope in hand and walk back.
-- **Climb:** right-click your own rope when the hook is two blocks or more above you.
+- **Climb:** right-click your own rope when the hook is two blocks or more above you. Each click pulls you up a step; hold it to keep climbing.
+- **Swing:** off the ground the rope holds you under the hook. Walk to swing, take another item in hand to drop.
 - **Make fast:** use a cleat or mooring ring of yours while the hook is out.
 - **Let go:** sneak and use with an empty hand.
 

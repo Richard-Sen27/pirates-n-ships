@@ -65,13 +65,13 @@ public final class VoyageConfig {
     public static final ConfigValue<Integer> CONVOY_MAX_DISTANCE = VOYAGES.intRange("convoy_max_distance", 6000, 0, 100_000,
             "Ports farther apart than this (blocks between centres) never send convoys to each other");
     public static final ConfigValue<List<String>> MERCHANT_TEMPLATES = VOYAGES.stringList("merchant_templates",
-            List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic"),
+            List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic", "pirates_n_ships:brig"),
             "Ship templates merchant convoys sail (one is picked at random)");
     public static final ConfigValue<List<String>> NAVY_TEMPLATES = VOYAGES.stringList("navy_templates",
-            List.of("pirates_n_ships:navy_sloop_armed"),
+            List.of("pirates_n_ships:navy_sloop_armed", "pirates_n_ships:navy_brig_armed"),
             "Ship templates navy patrols sail (one is picked at random)");
     public static final ConfigValue<List<String>> PIRATE_TEMPLATES = VOYAGES.stringList("pirate_templates",
-            List.of("pirates_n_ships:pirate_sloop_armed"),
+            List.of("pirates_n_ships:pirate_sloop_armed", "pirates_n_ships:pirate_brig_armed"),
             "Ship templates pirate raiders sail (one is picked at random)");
 
     private VoyageConfig() {

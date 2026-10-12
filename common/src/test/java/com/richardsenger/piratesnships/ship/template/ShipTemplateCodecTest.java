@@ -67,4 +67,19 @@ class ShipTemplateCodecTest {
         assertEquals(t, ShipTemplate.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
         assertEquals("ship_template.pirates_n_ships.ships.x", ShipTemplates.nameKey(Constants.id("ships/x")));
     }
+
+    /** SHIP1: the optional nets read and write back; a template without nets writes no "nets" key. */
+    @Test
+    void netsRoundTrip() {
+        ShipTemplate t = new ShipTemplate(Constants.id("ships/x"), "k", Optional.empty(), Optional.of(3), Direction.NORTH, 0, false,
+                java.util.List.of(new ShipTemplate.Net(new BlockPos(0, 9, 22), new BlockPos(3, 24, 19))));
+        JsonElement json = ShipTemplate.CODEC.encodeStart(JsonOps.INSTANCE, t).getOrThrow();
+        assertEquals(t, ShipTemplate.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+        ShipTemplate parsed = ShipTemplate.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
+                "{\"structure\": \"a:b\", \"name\": \"n\", \"nets\": [{\"a\": [0, 9, 22], \"b\": [3, 24, 19]}]}")).getOrThrow();
+        assertEquals(java.util.List.of(new ShipTemplate.Net(new BlockPos(0, 9, 22), new BlockPos(3, 24, 19))), parsed.nets());
+        JsonElement plain = ShipTemplate.CODEC.encodeStart(JsonOps.INSTANCE, ShipTemplates.STARTER_SLOOP).getOrThrow();
+        assertTrue(!plain.getAsJsonObject().has("nets"), plain.toString());
+        assertEquals(6, ShipTemplates.NAVY_BRIG_ARMED.nets().size());
+    }
 }

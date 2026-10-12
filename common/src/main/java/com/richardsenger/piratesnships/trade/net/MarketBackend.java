@@ -22,6 +22,9 @@ import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.trade.market.SpecialOffer;
 import com.richardsenger.piratesnships.trade.market.SpecialOffers;
 import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
+import com.richardsenger.piratesnships.trade.stall.StallKind;
+import com.richardsenger.piratesnships.trade.stall.StallTrades;
+import com.richardsenger.piratesnships.trade.stall.StallWares;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
@@ -64,12 +67,13 @@ public final class MarketBackend {
     /**
      * {@code desk} = opened at a harbor master's desk (reach and binding checked against it on every request);
      * {@code quantity} = the quote quantity last sent, kept for answers to requests without one (contracts) and for
-     * refreshes; {@code lastSent} = the view last sent, so a refresh is sent only when it changed.
+     * refreshes; {@code lastSent} = the view last sent, so a refresh is sent only when it changed; {@code stall} = a
+     * village stall's session (LIFE1, {@link StallTrades}): only its wares are listed and traded.
      */
     record Session(ServerPlayer player, ResourceLocation port, ResourceKey<Level> dimension, Vec3 origin, Optional<BlockPos> desk,
-                   int quantity, Optional<MarketView> lastSent) {
+                   int quantity, Optional<MarketView> lastSent, Optional<StallKind> stall) {
         Session withSent(int q, Optional<MarketView> view) {
-            return new Session(player, port, dimension, origin, desk, q, view.isPresent() ? view : lastSent);
+            return new Session(player, port, dimension, origin, desk, q, view.isPresent() ? view : lastSent, stall);
         }
     }
 
@@ -128,9 +132,28 @@ public final class MarketBackend {
     public static boolean open(ServerPlayer player, ResourceLocation port, int quantity) {
         if (TradeService.market(player.server, port).isEmpty()) return false;
         SESSIONS.put(player.getUUID(), new Session(player, port, player.level().dimension(), player.position(), Optional.empty(),
-                quantity, Optional.empty()));
+                quantity, Optional.empty(), Optional.empty()));
         send(player, port, quantity, Optional.empty());
         return true;
+    }
+
+    /**
+     * Opens a village stall (LIFE1): the market screen with only {@code stall}'s wares ({@link StallTrades#lines}), for
+     * as long as the player stays within {@code market_reach} of the stall's post {@code at}. No other tab.
+     */
+    public static boolean openStall(ServerPlayer player, ResourceLocation port, BlockPos at, StallKind stall) {
+        if (TradeService.market(player.server, port).isEmpty()) return false;
+        SESSIONS.put(player.getUUID(), new Session(player, port, player.level().dimension(), Vec3.atCenterOf(at), Optional.empty(),
+                1, Optional.empty(), Optional.of(stall)));
+        deliver(player, new MarketPayloads.OpenMarket(port, at.immutable(), TradeConfig.MARKET_REACH.get()));
+        send(player, port, 1, Optional.empty());
+        return true;
+    }
+
+    /** The stall of {@code player}'s open session at {@code port}, if it is a stall's (LIFE1). */
+    public static Optional<StallKind> stallOf(ServerPlayer player, ResourceLocation port) {
+        Session s = SESSIONS.get(player.getUUID());
+        return s != null && s.port().equals(port) ? s.stall() : Optional.empty();
     }
 
     /**
@@ -140,7 +163,7 @@ public final class MarketBackend {
     public static boolean openDesk(ServerPlayer player, ResourceLocation port, BlockPos desk) {
         if (TradeService.market(player.server, port).isEmpty()) return false;
         SESSIONS.put(player.getUUID(), new Session(player, port, player.level().dimension(), Vec3.atCenterOf(desk),
-                Optional.of(desk.immutable()), 1, Optional.empty()));
+                Optional.of(desk.immutable()), 1, Optional.empty(), Optional.empty()));
         deliver(player, new MarketPayloads.OpenMarket(port, desk, TradeConfig.DESK_REACH.get()));
         send(player, port, 1, Optional.empty());
         // A seafarer village's desk also has the shipwright's Orders tab (SW1), a navy outpost's for navy captains (CAR2)
@@ -258,6 +281,15 @@ public final class MarketBackend {
     public static TransactionResult trade(ServerPlayer player, MarketPayloads.Trade p) {
         if (!validQuantity(p.quantity())) return TransactionResult.failed(TransactionResult.Status.INVALID_QUANTITY, p.good());
         if (MarketReputation.refuses(player, p.port())) return MarketReputation.refusal(p.good()); // REP1: disliked at a village
+        // LIFE1: a stall trades only its own wares; its fixed-price ones here, the port's goods through the market below
+        Optional<StallKind> stall = stallOf(player, p.port());
+        if (stall.isPresent()) {
+            Optional<StallWares.Ware> ware = StallWares.byLine(stall.get(), p.good());
+            if (ware.isEmpty()) return TransactionResult.failed(TransactionResult.Status.NOT_TRADED, p.good());
+            if (!StallTrades.viaMarket(player.server, p.port(), ware.get())) {
+                return StallTrades.trade(player, p.port(), stall.get(), p.good(), p.buy(), p.quantity());
+            }
+        }
         Optional<SpecialOffer> special = SpecialOffers.byId(p.good());
         if (special.isPresent()) return buySpecial(player, p.port(), p.buy(), p.quantity(), special.get());
         Optional<MarketTransactions.Holder> holder = holder(player, p.container());
@@ -432,6 +464,12 @@ public final class MarketBackend {
         MinecraftServer server = player.server;
         Optional<Market> market = TradeService.market(server, port);
         if (market.isEmpty()) return Optional.empty();
+        Optional<StallKind> stall = stallOf(player, port);
+        if (stall.isPresent()) {
+            // LIFE1: a village stall lists its own wares only, and no contracts
+            return Optional.of(new MarketView(port, market.get().profile().kind(), quantity, Wallet.count(player),
+                    StallTrades.lines(player, port, stall.get(), quantity), List.of(), List.of()));
+        }
         List<MarketView.GoodLine> lines = new ArrayList<>();
         var tradeable = TradeService.goods(false).tradeable();
         List<ResourceLocation> ids = new ArrayList<>(market.get().profile().roles().keySet());

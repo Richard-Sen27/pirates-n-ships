@@ -469,9 +469,241 @@ SF.harbor_master = function () {
   return s;
 };
 
+// --- villagers (LIFE1) ------------------------------------------------------------------------------------------
+// The people of the seafarer villages: texture variants on the sailor's model (SF.VARIANTS), one per role, each an
+// outfit of three layers like the apparel items' wearer: a hat (the cap's cubes; 'none' leaves them transparent), a
+// coat (the jacket and sleeve layers or the base over the shirt), the clothing under it (shirt, breeches or skirt,
+// shoes). The names are mob.village.VillagerOutfit's. The detail cubes of the sailor's model take their colours from
+// the patch list: neckerchief (0, 1), the rope belt (3, 5, 6), shoes (7, 8), buckles (9, 10), the cap fold (11, 12),
+// skin (13, 14), the shirt cuffs (15, 16); a null patch hides its cubes.
+Object.assign(SF.C, {
+  felt_d: [70, 52, 38], felt: [96, 72, 52], felt_l: [120, 92, 66],
+  linen_d: [196, 186, 160], linen: [222, 214, 190],
+  wc_brown_d: [82, 54, 34], wc_brown: [112, 76, 46], wc_brown_l: [138, 98, 62],
+  stocking_d: [150, 150, 146], stocking: [184, 184, 178],
+  scarf_d: [52, 74, 128], scarf: [78, 104, 160], scarf_l: [210, 214, 222],
+  shawl_d: [128, 70, 40], shawl: [164, 96, 52], shawl_l: [190, 126, 74],
+  skirt_d: [40, 58, 96], skirt: [58, 80, 126],
+  apron_d: [200, 196, 184], apron: [234, 230, 218],
+  auburn_d: [96, 42, 24], auburn: [134, 64, 34],
+  knit_d: [62, 84, 64], knit: [86, 112, 86], knit_l: [110, 138, 108],
+  smock_d: [168, 156, 124], smock: [198, 186, 152],
+  bandana_g_d: [92, 94, 98], bandana_g: [128, 130, 134],
+  leather_d: [74, 46, 28], leather: [108, 70, 42], leather_l: [140, 96, 60],
+  workshirt_d: [80, 98, 118], workshirt: [104, 124, 146],
+  saw: [214, 190, 140], ginger_d: [124, 58, 24], ginger: [168, 86, 36],
+  vest_red_d: [112, 26, 30], vest_red: [148, 40, 42], vest_red_l: [178, 66, 62],
+  lamp_d: [56, 58, 64], lamp: [80, 84, 92], lamp_l: [106, 110, 118],
+  straw_d: [178, 146, 72], straw: [216, 186, 104], straw_l: [236, 212, 140],
+  green_d: [44, 86, 54], green: [62, 112, 70], green_l: [92, 140, 96]
+});
+
+// the shared body of a villager: face, shirt or dress, legs; roles paint their layers over it
+SF.villagerBase = function (s, o) {
+  const f = SF.head(s, {skin: o.skin, skin_d: o.skin_d, skin_l: o.skin_l || o.skin, hair: o.hair, hair_d: o.hair_d,
+    hairRows: o.hairRows || 2, backRows: o.backRows || 5, brow: o.brow, eye: o.eye});
+  const [fx, fy] = f.front;
+  if (o.woman) {
+    // long hair down the back and over the ears, a softer mouth
+    const bk = f.back; s.rect(bk[0], bk[1], bk[2], 8, o.hair); s.speckle(bk[0], bk[1], bk[2], 8, o.hair_d, 0.3);
+    for (const side of ['right', 'left']) { const r = f[side], back = side === 'right' ? 0 : 4; s.rect(r[0] + back, r[1] + 2, 4, 6, o.hair); s.speckle(r[0] + back, r[1] + 2, 4, 6, o.hair_d, 0.3); }
+    s.px(fx, fy + 2, o.hair); s.px(fx + 7, fy + 2, o.hair); s.px(fx, fy + 3, o.hair_d); s.px(fx + 7, fy + 3, o.hair_d);
+    s.rect(fx + 3, fy + 6, 2, 1, 'mouth'); s.px(fx + 1, fy + 5, o.skin_l || o.skin); s.px(fx + 6, fy + 5, o.skin_l || o.skin);
+  } else if (o.beard) {
+    s.rect(fx + 1, fy + 6, 6, 2, o.beard); s.speckle(fx + 1, fy + 6, 6, 2, o.hair_d, 0.35); s.px(fx, fy + 6, o.beard); s.px(fx + 7, fy + 6, o.beard);
+    s.rect(fx + 3, fy + 6, 2, 1, 'mouth'); s.px(fx + 2, fy + 5, o.beard); s.px(fx + 5, fy + 5, o.beard);
+    for (const side of ['right', 'left']) { const [cx, cy] = SF.cheek(s, f, side); s.rect(cx, cy + 5, 4, 3, o.beard); s.speckle(cx, cy + 4, 4, 4, o.hair_d, 0.3); }
+  } else if (o.moustache) {
+    s.rect(fx + 2, fy + 6, 4, 1, o.moustache); s.rect(fx + 3, fy + 7, 2, 1, 'mouth');
+  } else {
+    s.speckle(fx + 1, fy + 6, 6, 2, o.skin_d, 0.3); s.rect(fx + 3, fy + 6, 2, 1, 'mouth');
+  }
+  // the shirt (or the dress's bodice)
+  s.fill(SF.BODY, o.shirt, o.shirt_d, 0.1);
+  const [bx, by] = s.faces(SF.BODY).front;
+  if (!o.highNeck) { s.rect(bx + 3, by, 2, 2, o.skin); s.px(bx + 3, by + 2, o.skin_d); }
+  for (const a of SF.ARMS) {
+    s.fill(a, o.shirt, o.shirt_d, 0.1);
+    if (o.rolled) { s.band(a, o.rolled, 12 - o.rolled, o.skin, o.skin_d, 0.06); s.band(a, o.rolled - 1, 1, o.shirt_d); }
+  }
+  SF.hands(s, o.skin, o.skin_d);
+  // legs: breeches with stockings, trousers, or a skirt to the ankle
+  for (const l of SF.LEGS) {
+    s.fill(l, o.legs, o.legs_d, 0.12);
+    if (o.stockings) s.band(l, 7, 4, o.stockings, o.stockings_d, 0.1);
+    s.band(l, 11, 1, 'shoe'); s.rect(...s.faces(l).bottom, 'shoe_d');
+    if (!o.skirt) s.column(s.faces(l).front, 2, 1, 6, o.legs_d);
+  }
+  if (o.skirt) {
+    // the skirt flares on the trousers layer, its hem a darker band; the body's lower rows are the waist
+    for (const p of SF.PANTS) { s.band(p, 0, 11, o.legs, o.legs_d, 0.12); s.band(p, 10, 1, o.legs_d); s.rect(...s.faces(p).bottom, null); s.rect(...s.faces(p).top, null); }
+    s.band(SF.BODY, 10, 2, o.legs, o.legs_d, 0.12);
+  }
+  return f;
+};
+
+// hats: the cap's cubes (brim, crown, top, fold); null leaves them transparent
+SF.villagerHat = function (s, hat) {
+  const R = SF.REGIONS.sailor;
+  const paint = (c, cd, cl, top) => {
+    s.region(R.cap_brim, cd, c, 0.25); s.rect(R.cap_brim[0], R.cap_brim[1], 8, 1, cl);
+    s.region(R.cap_crown, c, cd, 0.15); s.region(R.cap_top, top || c, cd, 0.12); s.region(R.cap_peak, cd, c, 0.3);
+  };
+  switch (hat) {
+    case 'none':
+      for (const r of [R.cap_brim, R.cap_crown, R.cap_top, R.cap_peak]) s.rect(...r, null);
+      return [null, null];
+    case 'felt_cap':
+      paint('felt', 'felt_d', 'felt_l'); s.rect(R.cap_brim[0], R.cap_brim[1] + 1, 8, 1, 'felt_d'); return ['felt', 'felt_d'];
+    case 'head_scarf':
+      paint('scarf', 'scarf_d', 'scarf_l');
+      for (const r of [R.cap_brim, R.cap_crown, R.cap_top]) for (let y = r[1]; y < r[1] + r[3]; y++) for (let x = r[0]; x < r[0] + r[2]; x++) if ((x + y) % 3 === 0) s.px(x, y, 'scarf_l');
+      return ['scarf', 'scarf_d'];
+    case 'knitted_cap': {
+      paint('knit', 'knit_d', 'knit_l');
+      for (const r of [R.cap_brim, R.cap_crown]) for (let x = r[0]; x < r[0] + r[2]; x += 2) s.rect(x, r[1], 1, r[3], 'knit_d');
+      return ['knit', 'knit_d'];
+    }
+    case 'grey_bandana':
+      paint('bandana_g', 'bandana_g_d', 'bandana_g'); s.rect(R.cap_brim[0], R.cap_brim[1] + 2, 8, 1, 'bandana_g_d'); return ['bandana_g', 'bandana_g_d'];
+    case 'leather_cap':
+      paint('leather', 'leather_d', 'leather_l'); s.px(R.cap_crown[0] + 3, R.cap_crown[1] + 1, 'brass'); return ['leather', 'leather_d'];
+    case 'peaked_cap':
+      paint('lamp', 'lamp_d', 'lamp_l'); s.rect(R.cap_brim[0], R.cap_brim[1] + 1, 8, 1, 'black');
+      s.rect(R.cap_crown[0] + 3, R.cap_crown[1] + 1, 2, 1, 'brass'); return ['lamp', 'lamp_d'];
+    case 'straw_hat':
+      paint('straw', 'straw_d', 'straw_l');
+      for (const r of [R.cap_brim, R.cap_crown, R.cap_top]) s.speckle(...r, 'straw_d', 0.2);
+      s.rect(R.cap_crown[0], R.cap_crown[1] + 2, 8, 1, 'green'); return ['straw', 'straw_d'];
+    default: throw new Error('hat ' + hat);
+  }
+};
+
+// an apron over the front of the body and legs (base layer), with a string at the waist
+SF.apron = function (s, c, cd, rows) {
+  const [bx, by] = s.faces(SF.BODY).front;
+  s.rect(bx + 1, by + (rows.bodyFrom || 4), 6, 12 - (rows.bodyFrom || 4), c); s.speckle(bx + 1, by + (rows.bodyFrom || 4), 6, 12 - (rows.bodyFrom || 4), cd, 0.1);
+  if (rows.bib) { s.rect(bx + 2, by + 1, 4, 3, c); s.px(bx + 1, by, cd); s.px(bx + 6, by, cd); }
+  for (const l of SF.LEGS) { const fr = s.faces(l).front; s.rect(fr[0], fr[1], fr[2], rows.legRows || 8, c); s.speckle(fr[0], fr[1], fr[2], rows.legRows || 8, cd, 0.1); }
+};
+
+SF.villagerSheet = function (role) {
+  const s = new SF.Sheet('villager_' + role), R = SF.REGIONS.sailor;
+  let patches;
+  if (role === 'villager') {
+    // felt cap, brown waistcoat over a linen shirt, brown breeches, grey stockings
+    SF.villagerBase(s, {skin: 'skin', skin_d: 'skin_d', skin_l: 'skin_l', hair: 'hair', hair_d: 'hair_d', beard: 'hair',
+      shirt: 'linen', shirt_d: 'linen_d', rolled: 0, legs: 'wc_brown', legs_d: 'wc_brown_d', stockings: 'stocking', stockings_d: 'stocking_d'});
+    const [hat, hat_d] = SF.villagerHat(s, 'felt_cap');
+    const b = s.faces(SF.BODY), [bx, by] = b.front;
+    for (const k of ['front', 'right', 'left', 'back']) { const r = b[k]; s.rect(r[0], r[1] + 2, r[2], 8, 'wc_brown'); s.speckle(r[0], r[1] + 2, r[2], 8, 'wc_brown_d', 0.15); }
+    s.rect(bx + 3, by + 2, 2, 8, 'linen'); for (const r of [3, 5, 7, 9]) s.px(bx + 2, by + r, 'brass');
+    s.region(R.slops, 'stocking', 'stocking_d', 0.1); s.rect(R.slops[0], R.slops[1], 8, 1, 'wc_brown_d');
+    patches = ['wc_brown_l', 'wc_brown', null, 'belt_d', null, 'belt', 'brass', 'shoe', 'shoe_d', 'brass', 'brass_d', hat, hat_d,
+      'skin', 'skin_d', 'linen', 'linen_d'];
+  } else if (role === 'fishwife') {
+    // a checked head scarf, a knitted shawl round the shoulders, sleeves rolled, a blue skirt and a white apron
+    SF.villagerBase(s, {woman: true, skin: 'pale', skin_d: 'pale_d', skin_l: 'skin_l', hair: 'auburn', hair_d: 'auburn_d', eye: 'eye_brown',
+      shirt: 'linen', shirt_d: 'linen_d', rolled: 5, legs: 'skirt', legs_d: 'skirt_d', skirt: true, highNeck: true});
+    const [hat, hat_d] = SF.villagerHat(s, 'head_scarf');
+    // the shawl on the jacket layer: the shoulders and upper chest, knotted at the front
+    const j = s.faces(SF.JACKET);
+    for (const k of ['front', 'right', 'left', 'back']) { const r = j[k]; s.rect(r[0], r[1], r[2], 4, 'shawl'); s.speckle(r[0], r[1], r[2], 4, 'shawl_d', 0.25); s.rect(r[0], r[1] + 4, r[2], 1, 'shawl_d'); }
+    s.rect(...j.top, 'shawl'); s.rect(j.back[0] + 2, j.back[1] + 5, 4, 2, 'shawl_d'); s.px(j.back[0] + 3, j.back[1] + 7, 'shawl_d');
+    for (const sl of SF.SLEEVES) { s.band(sl, 0, 2, 'shawl', 'shawl_d', 0.2); s.rect(...s.faces(sl).top, 'shawl'); }
+    SF.apron(s, 'apron', 'apron_d', {bodyFrom: 7, legRows: 10});
+    s.region(R.slops, 'skirt', 'skirt_d', 0.15); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'skirt_d');
+    patches = ['shawl', 'shawl_d', null, 'apron_d', null, 'apron', 'apron', 'shoe', 'shoe_d', 'shoe_d', 'shoe', hat, hat_d,
+      'pale', 'pale_d', 'linen', 'linen_d'];
+  } else if (role === 'net_mender') {
+    // an old hand: grey beard, a green knitted cap, an oatmeal smock with a rope belt, canvas trousers
+    SF.villagerBase(s, {skin: 'tan', skin_d: 'tan_d', skin_l: 'tan_l', hair: 'grey', hair_d: 'grey_d', beard: 'grey', brow: 'grey_d',
+      shirt: 'smock', shirt_d: 'smock_d', rolled: 7, legs: 'canvas', legs_d: 'canvas_d'});
+    const [hat, hat_d] = SF.villagerHat(s, 'knitted_cap');
+    const [bx, by] = s.faces(SF.BODY).front; s.rect(bx + 3, by, 2, 3, 'smock_d'); s.px(bx + 4, by + 1, 'tan');
+    for (const r of [2, 6]) s.speckle(bx, by + r, 8, 1, 'smock_d', 0.5);
+    s.region(R.slops, 'canvas_l', 'canvas', 0.2); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'canvas_d');
+    patches = ['smock_d', 'smock_d', null, 'canvas_d', null, 'tan', 'bone', 'shoe', 'shoe_d', 'steel', 'steel_d', hat, hat_d,
+      'tan', 'tan_d', 'smock', 'smock_d'];
+  } else if (role === 'dockhand') {
+    // a grey bandana, shirt sleeves rolled to the shoulder, a red neckerchief, canvas slops, a sash belt
+    SF.villagerBase(s, {skin: 'tan', skin_d: 'tan_d', skin_l: 'tan_l', hair: 'hair_black', hair_d: 'black', eye: 'eye_brown', brow: 'black',
+      shirt: 'white', shirt_d: 'shirt_d', rolled: 3, legs: 'canvas', legs_d: 'canvas_d'});
+    const [hat, hat_d] = SF.villagerHat(s, 'grey_bandana');
+    const [bx, by] = s.faces(SF.BODY).front; s.speckle(bx, by + 2, 8, 9, 'canvas_d', 0.06);
+    for (const p of SF.PANTS) { s.band(p, 4, 4, 'canvas', 'canvas_d', 0.07); s.band(p, 7, 1, 'canvas_d'); }
+    s.region(R.slops, 'canvas_l', 'canvas', 0.2); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'canvas_d');
+    patches = ['bandana', 'bandana_d', null, 'canvas_d', null, 'sash', 'sash_d', 'shoe', 'shoe_d', 'steel', 'steel_d', hat, hat_d,
+      'tan', 'tan_d', 'white', 'shirt_d'];
+  } else if (role === 'shipwright') {
+    // a ginger beard, a leather cap, a blue-grey work shirt under a long leather apron dusted with sawdust
+    SF.villagerBase(s, {skin: 'skin', skin_d: 'skin_d', skin_l: 'skin_l', hair: 'ginger', hair_d: 'ginger_d', beard: 'ginger',
+      shirt: 'workshirt', shirt_d: 'workshirt_d', rolled: 8, legs: 'breeches', legs_d: 'breeches_d', stockings: 'stocking', stockings_d: 'stocking_d'});
+    const [hat, hat_d] = SF.villagerHat(s, 'leather_cap');
+    SF.apron(s, 'leather', 'leather_d', {bodyFrom: 1, bib: true, legRows: 9});
+    const [bx, by] = s.faces(SF.BODY).front; s.speckle(bx + 1, by + 2, 6, 10, 'saw', 0.12); s.rect(bx + 1, by + 7, 6, 1, 'leather_l');
+    s.region(R.slops, 'stocking', 'stocking_d', 0.1); s.rect(R.slops[0], R.slops[1], 8, 1, 'breeches_d');
+    patches = [null, null, null, 'leather_d', null, 'leather', 'brass', 'shoe', 'shoe_d', 'brass', 'brass_d', hat, hat_d,
+      'skin', 'skin_d', 'workshirt', 'workshirt_d'];
+  } else if (role === 'innkeeper') {
+    // bareheaded and balding, a black moustache, a red waistcoat over a white shirt, a long white bar apron
+    SF.villagerBase(s, {skin: 'pale', skin_d: 'pale_d', skin_l: 'skin_l', hair: 'hair_d', hair_d: 'hair_black', moustache: 'hair_black',
+      hairRows: 1, shirt: 'white', shirt_d: 'shirt_d', rolled: 0, legs: 'wc_brown', legs_d: 'wc_brown_d', stockings: 'white', stockings_d: 'shirt_d'});
+    SF.villagerHat(s, 'none');
+    const h = s.faces(SF.HEAD); s.rect(...h.top, 'pale'); s.speckle(...h.top, 'pale_d', 0.15); // bald on top
+    const b = s.faces(SF.BODY), [bx, by] = b.front;
+    for (const k of ['front', 'right', 'left', 'back']) { const r = b[k]; s.rect(r[0], r[1] + 1, r[2], 8, 'vest_red'); s.speckle(r[0], r[1] + 1, r[2], 8, 'vest_red_d', 0.15); }
+    s.rect(bx + 3, by + 1, 2, 7, 'white'); for (const r of [2, 4, 6]) s.px(bx + 2, by + r, 'brass');
+    SF.apron(s, 'apron', 'apron_d', {bodyFrom: 9, legRows: 10});
+    s.region(R.slops, 'white', 'shirt_d', 0.1); s.rect(R.slops[0], R.slops[1], 8, 1, 'wc_brown_d');
+    patches = ['white', 'shirt_d', null, 'apron_d', null, 'apron', 'apron', 'shoe', 'shoe_d', 'brass', 'brass_d', null, null,
+      'pale', 'pale_d', 'white', 'vest_red_d'];
+  } else if (role === 'lamplighter') {
+    // a peaked cap with a brass badge, a long grey coat (jacket and sleeves, the skirts on the trousers layer), dark breeches
+    SF.villagerBase(s, {skin: 'pale', skin_d: 'pale_d', skin_l: 'skin_l', hair: 'hair_black', hair_d: 'black', brow: 'black',
+      shirt: 'white', shirt_d: 'shirt_d', rolled: 0, legs: 'hm_trouser', legs_d: 'hm_trouser_d'});
+    const [hat, hat_d] = SF.villagerHat(s, 'peaked_cap');
+    s.fill(SF.JACKET, 'lamp', 'lamp_d', 0.12);
+    const j = s.faces(SF.JACKET), [jx, jy] = j.front;
+    s.rect(...j.bottom, null); s.rect(...j.top, null);
+    s.rect(jx + 3, jy, 2, 3, null);
+    for (let r = 3; r < 12; r += 2) s.px(jx + 4, jy + r, 'brass');
+    s.rect(jx, jy + 7, 8, 1, 'lamp_d');
+    for (const a of SF.ARMS) s.fill(a, 'lamp', 'lamp_d', 0.12);
+    SF.hands(s, 'pale', 'pale_d');
+    for (const sl of SF.SLEEVES) { s.fill(sl, 'lamp', 'lamp_d', 0.12); s.band(sl, 8, 2, 'lamp_l'); s.band(sl, 10, 2, null); s.rect(...s.faces(sl).bottom, null); }
+    for (const p of SF.PANTS) { s.band(p, 0, 6, 'lamp', 'lamp_d', 0.12); s.band(p, 5, 1, 'lamp_d'); }
+    s.rect(...s.faces(SF.RPANTS).left, null); s.rect(...s.faces(SF.LPANTS).right, null);
+    s.region(R.slops, 'hm_trouser', 'hm_trouser_d', 0.2); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'hm_trouser_d');
+    patches = ['black', 'kerchief', null, 'lamp_d', null, 'lamp_d', 'brass', 'shoe', 'shoe_d', 'brass', 'brass_d', hat, hat_d,
+      'pale', 'pale_d', 'lamp_l', 'lamp_d'];
+  } else if (role === 'vendor') {
+    // a straw hat with a green band, a green dress with elbow sleeves, a green and white striped apron
+    SF.villagerBase(s, {woman: true, skin: 'skin', skin_d: 'skin_d', skin_l: 'skin_l', hair: 'hair_d', hair_d: 'hair_black', eye: 'eye_brown',
+      shirt: 'green', shirt_d: 'green_d', rolled: 6, legs: 'green', legs_d: 'green_d', skirt: true, highNeck: false});
+    const [hat, hat_d] = SF.villagerHat(s, 'straw_hat');
+    SF.apron(s, 'apron', 'apron_d', {bodyFrom: 6, legRows: 10});
+    const [bx, by] = s.faces(SF.BODY).front;
+    for (let x = bx + 1; x < bx + 7; x += 2) s.rect(x, by + 6, 1, 6, 'green_l');
+    for (const l of SF.LEGS) { const fr = s.faces(l).front; for (let x = fr[0]; x < fr[0] + fr[2]; x += 2) s.rect(x, fr[1], 1, 10, 'green_l'); }
+    s.region(R.slops, 'green', 'green_d', 0.15); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'green_d');
+    patches = ['green_l', 'green_d', null, 'apron_d', null, 'apron', 'apron', 'shoe', 'shoe_d', 'shoe_d', 'shoe', hat, hat_d,
+      'skin', 'skin_d', 'green', 'green_d'];
+  } else {
+    throw new Error('role ' + role);
+  }
+  s.patches(patches);
+  return s;
+};
+SF.VILLAGER_ROLES = ['villager', 'fishwife', 'net_mender', 'dockhand', 'shipwright', 'innkeeper', 'lamplighter', 'vendor'];
+SF.villager = () => SF.villagerSheet('villager');
+for (const r of SF.VILLAGER_ROLES.slice(1)) SF['villager_' + r] = () => SF.villagerSheet(r);
+
 SF.TYPES = ['pirate', 'sailor', 'navy_soldier', 'navy_officer', 'pirate_captain'];
 SF.PATCHES = {pirate: SF.PIRATE_PATCHES, sailor: SF.SAILOR_PATCHES, navy_soldier: SF.NAVY_SOLDIER_PATCHES, navy_officer: SF.NAVY_OFFICER_PATCHES,
   pirate_captain: SF.PIRATE_CAPTAIN_PATCHES};
 SF.paint = type => SF[type]();
 // Texture variants drawn on another type's model (MobKind.geoId in the mod): painted by SF.paint, never built.
 SF.VARIANTS = {harbor_master: 'sailor'};
+// LIFE1: the villagers' outfits, one sheet per role on the sailor's model
+for (const r of SF.VILLAGER_ROLES) SF.VARIANTS[r === 'villager' ? 'villager' : 'villager_' + r] = 'sailor';

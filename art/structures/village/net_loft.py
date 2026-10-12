@@ -61,7 +61,7 @@ p.put(2, 1, 6, "pirates_n_ships:rope_coil[facing=north,layers=2]")
 # inside the loft
 for x, z in ((1, 2), (1, 3), (5, 5)):
     p.put(x, FLOOR + 1, z, "net")
-p.put(5, FLOOR + 1, 2, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+p.loot_chest(5, FLOOR + 1, 2, "west", "village/shipwright")
 p.put(1, FLOOR + 1, 5, "minecraft:barrel[facing=up,open=false]")
 p.put(3, TOP, 4, "lantern_hanging")
 lantern_post(p, 6, 1, 0)

@@ -93,7 +93,7 @@ def furnish(p, x0, z0, x1, z1, y=1, door_x=None, bed_colour="red", hearth_side="
         p.put(near, y + 1, z1 - 1, "lantern")
     mid = (x0 + x1) // 2
     if free(mid, z1 - 1):
-        p.put(mid, y, z1 - 1, "minecraft:chest[facing=north,type=single,waterlogged=false]")
+        p.loot_chest(mid, y, z1 - 1, "north", "village/house")
     if free(far, z0 + 1):
         p.put(far, y, z0 + 1, "minecraft:crafting_table")
         p.put(far, y + 1, z0 + 1, "minecraft:flower_pot")

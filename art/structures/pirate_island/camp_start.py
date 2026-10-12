@@ -57,7 +57,7 @@ for x, y, z in ((0, 1, 1), (0, 2, 1), (1, 1, 1), (0, 1, 2)):
 p.put(0, 1, 3, "pirates_n_ships:cargo_crate")
 p.put(1, 1, 3, "pirates_n_ships:cargo_crate")
 p.put(0, 2, 3, "pirates_n_ships:cargo_barrel")
-p.put(1, 1, 2, "minecraft:chest[facing=east,type=single]")
+p.loot_chest(1, 1, 2, "east", "pirate_island/hut")
 p.put(1, 2, 3, "minecraft:barrel[facing=north,open=false]")
 awning(p, 0, 0, 1, 4, 4, stripes_along="z", posts=((0, 0), (0, 4)), salt=92)
 awning(p, 2, 0, 2, 4, 3, stripes_along="z", posts=((2, 0), (2, 4)), salt=93)

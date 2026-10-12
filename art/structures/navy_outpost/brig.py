@@ -90,7 +90,7 @@ for x0 in (1, 5):
 # the guard room: table and stool, chest, barrel with the keys' lantern, key hooks of chain, a lantern from the ceiling
 table(p, 2, 1, 2)
 stool(p, 1, 1, 2, "west")
-p.put(7, 1, 2, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+p.loot_chest(7, 1, 2, "west", "navy_outpost/barracks")
 p.put(6, 1, 2, "minecraft:barrel[facing=up,open=false]")
 p.put(6, 2, 2, "lantern")
 p.put(7, 1, 3, "pirates_n_ships:cargo_crate")

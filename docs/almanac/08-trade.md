@@ -55,7 +55,7 @@ Use a {item:pirates_n_ships:paddle}**paddle** on a floating sea chest to sit on 
 
 ## Doubloons
 illustration: doubloon
-The gold {item:pirates_n_ships:doubloon}**doubloon** is the coin of the sea. You earn it by trading, from pirates' purses, wrecks and buried treasure, and from bounties, contracts and quests.
+The gold {item:pirates_n_ships:doubloon}**doubloon** is the coin of the sea. You earn it by trading, from pirates' purses, wrecks and buried treasure, from the chests in the houses, taverns and barracks of the ports, and from bounties, contracts and quests.
 
 Keep them in your inventory; markets take them from there.
 

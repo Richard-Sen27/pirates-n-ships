@@ -63,7 +63,7 @@ p.put(6, 1, 0, "pirates_n_ships:cargo_crate")
 
 # inside: the bed roll along the east slope, a chest at the back, a barrel with a lantern, a rug
 bed(p, 4, 1, 3, "south")
-p.put(2, 1, 5, "minecraft:chest[facing=east,type=single]")
+p.loot_chest(2, 1, 5, "east", "pirate_island/hut")
 p.put(2, 1, 3, "barrel")
 p.put(2, 2, 3, "lantern")
 p.put(3, 1, 5, "lantern")

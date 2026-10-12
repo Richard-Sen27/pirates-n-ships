@@ -330,20 +330,22 @@ def end_store():
 
 def end_privy():
     """The lane ends at the garrison's privy: a narrow plank booth with a door and a slab roof, a hay bale and a
-    bucket rack beside it, a lantern on a post."""
-    size = (7, 5, 5)
+    bucket rack beside it, a lantern on a post. STR6: the booth is two deep, so the door opens onto its floor (before,
+    the back wall stood right behind the door)."""
+    size = (7, 5, 6)
     p = _piece("lane_end_privy", "Navy Outpost Lane End (privy)", size)
     cells = band(line(3, 0, 3, 2), size)
     bed(p, cells, salt=101)
     kerb(p, cells, size, salt=102)
-    p.fill(2, 0, 3, 4, 0, 4, "cobble")
-    for x, z in ((2, 3), (4, 3), (2, 4), (4, 4)):
+    p.fill(2, 0, 3, 4, 0, 5, "cobble")
+    for x, z in ((2, 3), (4, 3), (2, 5), (4, 5)):
         p.fill(x, 1, z, x, 2, z, "post")
-    p.fill(3, 1, 4, 3, 2, 4, "spruce")
+    for x, z in ((2, 4), (4, 4), (3, 5)):
+        p.fill(x, 1, z, x, 2, z, "spruce")
     p.put(3, 1, 3, "minecraft:spruce_door[facing=north,half=lower,hinge=left,open=false,powered=false]")
     p.put(3, 2, 3, "minecraft:spruce_door[facing=north,half=upper,hinge=left,open=false,powered=false]")
     p.put(3, 0, 4, "minecraft:composter[level=0]")
-    p.fill(2, 3, 3, 4, 3, 4, "spruce_slab")
+    p.fill(2, 3, 3, 4, 3, 5, "spruce_slab")
     p.put(5, 1, 4, "minecraft:hay_block[axis=x]")
     p.put(1, 1, 4, "minecraft:barrel[facing=up,open=false]")
     lamp(p, 5, 2, height=1)

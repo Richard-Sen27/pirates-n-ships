@@ -1059,6 +1059,16 @@ sails change when the work is done. A player can still use the winch directly.
 
 A crew member is released when its station is broken, its ship is disassembled or removed, or it dies.
 
+**Crew and monsters.** Zombies, husks, drowned, zombie villagers, illagers and ravagers hunt crew members, sailors and
+harbor masters just as they hunt villagers. Aboard a ship only a monster that is on the same ship does: a drowned in
+the sea or a zombie on the quay leaves the people on deck alone, so a crew asleep in its hammocks at sea or alongside a
+quay is safe as long as nothing climbs aboard. A crew member with a weapon in hand (a cutlass, a sword, an axe or a
+trident) fights a monster that hunts or hits him; one without runs from it. Hands at a station stay at their post, and
+a monster's blow gets a sleeper out of his hammock (the night still counts as one in the hammock). A crew member killed
+by a monster is gone like any other: his station is freed and you hire a new hand. Skeletons, spiders and creepers go
+for players only, as with villagers. Server config `mobs`: `monsters_attack_npcs`, `crew_fight_monsters`,
+`crew_defence_range`.
+
 ---
 
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
@@ -1112,7 +1122,9 @@ before the blow lands to stagger them and riposte. Beware: a pirate sometimes fe
 early parry and striking while your guard is spent. Navy soldiers (blue coat, white cross belts, tricorn) carry muskets:
 they leave you alone unless you are wanted, then keep their distance, aim for a second and fire, and shove you back if
 you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates and navy fight each other on sight.
-Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
+Sailors never fight and run from danger: from monsters, which hunt them as they hunt villagers, and from pirates.
+Pirates and navy are no prey to monsters, but fight back when one hits them. Hitting or killing navy is a crime;
+killing pirates is not. Pirates drop
 doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
 [count]` or with spawn eggs, and `/pirates mob debug on` traces what nearby duelists decide (it also shows the
 difficulty: on peaceful they ignore players, and vanilla zeroes all mob damage to players there, so set
@@ -1122,14 +1134,15 @@ config.
 ### The kraken
 The kraken lurks in the deep ocean and rises beside ships within 32 blocks, more often at night and in storms. Its
 tentacles grip the hull near the waterline and drag the ship down, beat masts to splinters and sweep the deck;
-swimmers are pulled under. Its eyes are its weak spots (triple damage); 40 damage on a tentacle cuts it and it lets go
+swimmers are pulled under. Crew on deck are swept overboard and grabbed like you are (`mobs.kraken_takes_crew`). Its eyes are its weak spots (triple damage); 40 damage on a tentacle cuts it and it lets go
 until it grows back. Below 30 % health it sinks away. Drops a Kraken Beak and Kraken Ink. Switch it off with
 `hazards.kraken.enabled`; tune it under `mobs.kraken`. Operators: `/pirates mob spawn kraken`.
 
 ### Sharks
 Sharks roam every ocean, cruising a few blocks under the surface. A shark that spots you swimming circles you
 before it charges and bites. Wounded swimmers drive it into a blood frenzy, and then it charges straight in. Stay
-on deck or in a boat and it leaves you alone; climb out of the water and it loses you at once. If it can't land a
+on deck or in a boat and it leaves you alone; climb out of the water and it loses you at once. A crew member, sailor,
+pirate or soldier who goes overboard is prey as well (`mobs.sharks_attack_npcs`). If it can't land a
 bite for a while, it gives up. Sharks fight back when hurt. Drops: sometimes a cod, rarely a prismarine shard. Server
 config `mobs.shark.*`, including `enabled`, `peaceful` and the spawn weight, which takes effect at the next server
 start. Operators: `/pirates mob spawn shark` or the spawn egg.
@@ -1334,7 +1347,10 @@ are suspected of piracy once per ship and day. Fence your plunder before you go 
 Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
 the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
 open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
-from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
+from danger, he waves you off ("not now") for a while. In a village or a navy outpost he runs from pirates as sailors
+do; on a pirate island he is the pirates' fence and stays calm among them (he runs only from one that attacks him),
+unless `mobs.harbor_master.fears_pirates_at_islands` is on. Monsters hunt him as they hunt villagers; he runs and comes
+back to his post. He keeps to his post and walks back if pushed away. If he
 dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
 `cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
 through him. Server config `mobs.harbor_master`.
@@ -1825,7 +1841,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
 | `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
-| `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
+| `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master` (also whether the island's fence fears pirates), `squad` (the outpost's watch), `kraken`, `shark`; monsters and the mod's people (`monsters_attack_npcs`, `crew_fight_monsters`, `crew_defence_range`, `sharks_attack_npcs`, `kraken_takes_crew`). |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |

@@ -22,6 +22,10 @@ public final class HarborMasterConfig {
     public static final ConfigValue<Double> RETURN_DISTANCE = S.doubleRange("return_distance", 2.0, 0.5, 32.0,
             "Blocks from his post beyond which an idle harbor master walks back to it; read when he is loaded");
 
+    public static final ConfigValue<Boolean> FEARS_PIRATES_AT_ISLANDS = S.bool("fears_pirates_at_islands", false,
+            "The harbor master of a pirate island (the pirates' fence) runs from pirates as sailors do (off = he deals with "
+                    + "them calmly; he still runs from one that attacks him)");
+
     private HarborMasterConfig() {
     }
 

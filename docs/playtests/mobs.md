@@ -86,3 +86,29 @@ Note (third playtest, "no damage from any mob attacks"): on peaceful difficulty 
 
 
 Addendum (M6b, `/difficulty normal`, wanted): **aim** 8–15 blocks from a soldier: the musket rises to the shoulder, barrel level and pointing at you, following you higher and lower (this pose changes with the fix: it is the most important check). **Reload from the side:** the butt rests on the ground just in front of the feet, the muzzle stands up at chest height (within about 10° of vertical) through both pours and rams, then the musket rises at about 30° across the body for cocking. **From the front:** the musket stands before the right half of the body, the left hand near the muzzle. **Shove:** butt first, the muzzle back past the right shoulder at the hit. **Other mobs:** cutlass and saber look as before.
+
+
+## MOB3: monsters and the mod's people, the pirate island's fence
+Survival, `/difficulty normal`, at night (`/time set midnight`). Defaults: `mobs.monsters_attack_npcs`,
+`crew_fight_monsters`, `sharks_attack_npcs`, `kraken_takes_crew` on, `mobs.harbor_master.fears_pirates_at_islands` off.
+1. **Zombie and sailor ashore.** `/pirates mob spawn sailor`, then a zombie 6 blocks away: the zombie walks at the
+   sailor and hits him; the sailor runs from it. With `mobs.monsters_attack_npcs` off (in the server config toml, then
+   restart) the zombie walks past him to you.
+2. **Armed and unarmed crew.** Spawn two crew members on land (`/pirates crew spawn`), give one an iron sword in the
+   main hand (e.g. `/item replace entity <crew> weapon.mainhand with iron_sword`), spawn a zombie between them: the
+   armed one turns on the zombie and fights it (sword swings), the unarmed one runs; both stay calm again once the
+   zombie is dead.
+3. **The deck at night.** Moor your ship at a quay with crew asleep in hammocks; spawn zombies on the quay a few blocks
+   from the hull: they never go for the sleepers (nothing in the hammocks stirs). Spawn one zombie on your deck: it
+   goes for the nearest hand, its first blow wakes a sleeper, who runs (or fights, armed).
+4. **At sea.** Anchored in deep water at night with crew on deck: drowned circling the ship leave the crew alone
+   (no tridents at the deck), they still go for you in the water.
+5. **Shark.** Push a crew member or a sailor overboard near a shark (`/pirates mob spawn shark`): it circles and bites
+   him as it would you.
+6. **Kraken.** With crew standing on deck (not at a station), `/pirates mob spawn kraken` beside the ship: a deck
+   swipe knocks them overboard, a tentacle grabs a swimmer and drags him under.
+7. **The fence.** At a pirate island, stand by the harbor master with pirates around him: he keeps his post, talks to
+   you (the market opens) and never says "not now" because of them. At a seafarer village or navy outpost,
+   `/pirates mob spawn pirate` beside the harbor master: he runs, and "not now" until the pirate is gone or far.
+8. **Villages at night** (watch over a night or two): say whether harbor masters or sailors die to zombies too often;
+   a dead harbor master is replaced after `mobs.harbor_master.respawn_days`.

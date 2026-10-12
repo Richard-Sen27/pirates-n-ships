@@ -139,8 +139,9 @@ public class Shark extends WaterAnimal implements GeoEntity {
     /** What {@link SharkRules} need to know about {@code e}. Asks Sable only for prey that is in the water. */
     public SharkRules.Prey describe(LivingEntity e) {
         boolean exempt = e.isInvulnerable() || e instanceof Player p && (p.isCreative() || p.isSpectator());
-        boolean prey = e instanceof Player || e instanceof Npc || e instanceof SeafarerMob || e instanceof CrewMember
-                || e instanceof Animal;
+        // MOB3: people that are not players (crew, sailors, pirates, navy, villagers) only with mobs.sharks_attack_npcs
+        boolean person = e instanceof Npc || e instanceof SeafarerMob || e instanceof CrewMember;
+        boolean prey = e instanceof Player || e instanceof Animal || person && MobConfig.SHARKS_ATTACK_NPCS.get();
         boolean inWater = e.isInWater() || e.isUnderWater();
         boolean onShip = inWater && (e.isPassenger() || ShipEntities.standingOrRiding(e) != null);
         return new SharkRules.Prey(e instanceof Shark, exempt, prey, inWater, onShip, distanceTo(e));

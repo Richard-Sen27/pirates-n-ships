@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.mob.kraken;
 
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.mob.MobConfig;
+import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -7,6 +10,7 @@ import com.richardsenger.piratesnships.ship.sable.ShipEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -112,13 +116,22 @@ final class KrakenShips {
         List<LivingEntity> out = new ArrayList<>();
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, bounds.inflate(0.5, 2.5, 0.5),
                 e -> e.isAlive() && !(e instanceof Kraken) && !e.isPassenger())) {
-            if (exempt(e)) continue;
+            if (exempt(e) || !takes(e)) continue;
             ShipBody standing = ShipEntities.standingOrRiding(e);
             boolean tracked = standing != null && standing.id().equals(ship.id());
             boolean inside = !e.isInWater() && bounds.inflate(0, 0.5, 0).contains(e.position());
             if (tracked || inside) out.add(e);
         }
         return out;
+    }
+
+    /**
+     * MOB3: whether the kraken takes {@code e} at all: players and animals always, people that are not players (crew,
+     * sailors, pirates, navy, villagers) only with {@code mobs.kraken_takes_crew}.
+     */
+    static boolean takes(LivingEntity e) {
+        boolean person = e instanceof Npc || e instanceof SeafarerMob || e instanceof CrewMember;
+        return !person || MobConfig.KRAKEN_TAKES_CREW.get();
     }
 
     static boolean exempt(LivingEntity e) {

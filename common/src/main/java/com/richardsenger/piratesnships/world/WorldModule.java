@@ -8,6 +8,9 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.world.island.IslandData;
 import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
 import com.richardsenger.piratesnships.world.outpost.OutpostData;
+import com.richardsenger.piratesnships.platform.event.ClientEvents;
+import com.richardsenger.piratesnships.world.port.PortArguments;
+import com.richardsenger.piratesnships.world.port.PortNameBook;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.ConnectionsGameTests;
 import com.richardsenger.piratesnships.world.structure.StructureBlockEntityGameTests;
@@ -32,7 +35,7 @@ import java.util.List;
  * buried treasure and pirate spawns, and the navy outpost with its garrison), the port registry with berths and
  * treasure sites, the binding of harbor desks to the port they stand in, and the wrecks on the ocean floor (custom
  * structure type {@code pirates_n_ships:wreck}). Port pieces and wrecks share the connections processor (WG4).
- * Also the treasure maps (TM1, {@link TreasureMaps}).
+ * Also the treasure maps (TM1, {@link TreasureMaps}) and the ports' proper names (NAME3, {@link PortNameBook}).
  */
 public final class WorldModule implements ModModule {
 
@@ -57,18 +60,29 @@ public final class WorldModule implements ModModule {
     }
 
     @Override
+    public void registerPayloads() {
+        Services.NETWORK.registerToClient(PortNameBook.Sync.TYPE, PortNameBook.Sync.CODEC, (p, player) -> PortNameBook.accept(p));
+    }
+
+    @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> WorldCommands.register(dispatcher));
         CommonEvents.SERVER_STARTED.register(server -> {
             PortService.installDeskLocator();
+            PortNameBook.installServer(server);
             PortService.openAllMarkets(server);
         });
-        CommonEvents.SERVER_STOPPED.register(server -> PortService.removeDeskLocator());
+        CommonEvents.SERVER_STOPPED.register(server -> {
+            PortService.removeDeskLocator();
+            PortNameBook.removeServer();
+        });
+        CommonEvents.PLAYER_LOGIN.register(PortNameBook::sendTo);
         TreasureMaps.registerEvents();
     }
 
     @Override
     public void initClient() {
+        ClientEvents.CLIENT_DISCONNECT.register(mc -> PortNameBook.clearClient());
         TreasureMaps.initClient();
     }
 
@@ -77,10 +91,12 @@ public final class WorldModule implements ModModule {
         ConnectionsProcessor.gather(data);
         VillageData.gather(data);
         WreckLoot.gather(data);
+        com.richardsenger.piratesnships.world.structure.StructureLoot.gather(data);
         IslandData.gather(data);
         WreckData.gather(data);
         OutpostData.gather(data);
         data.lang(WorldCommands::lang);
+        data.lang(PortArguments::lang);
         TreasureMaps.gatherData(data);
     }
 
@@ -93,6 +109,10 @@ public final class WorldModule implements ModModule {
                 com.richardsenger.piratesnships.world.village.VillageLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class,
                 com.richardsenger.piratesnships.world.village.BerthDepthGameTests.class,
-                com.richardsenger.piratesnships.world.port.ShipSpotGameTests.class);
+                com.richardsenger.piratesnships.world.port.ShipSpotGameTests.class,
+
+                com.richardsenger.piratesnships.world.structure.StructureLootGameTests.class,
+                com.richardsenger.piratesnships.world.structure.DoorAccessGameTests.class,
+                com.richardsenger.piratesnships.world.port.PortNameGameTests.class);
     }
 }

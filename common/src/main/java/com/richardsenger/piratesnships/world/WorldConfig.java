@@ -50,6 +50,19 @@ public final class WorldConfig {
     private static final String SPREAD_NOTE = ". In chunks (16 blocks); a change applies to chunks generated afterwards, "
             + "structures already generated stay where they are";
 
+    /**
+     * STR6: the loot chests of the port structures' houses, taverns, workshops, barracks and huts (tables
+     * {@code pirates_n_ships:chests/<structure>/<kind>}, {@code world.structure.StructureLoot}). Read by
+     * {@code world.structure.LootChestProcessor} when a piece is placed (off: the chest generates without its table)
+     * and by {@code world.structure.ConfiguredRolls} when a chest is first opened (the rolls scale).
+     */
+    public static final ConfigValue<Boolean> STRUCTURE_LOOT = STRUCTURES.bool("loot", true,
+            "Chests in the houses, taverns, workshops, barracks and huts of new seafarer villages, navy outposts and pirate "
+                    + "islands hold loot; off = they generate empty (wrecks and buried treasure keep theirs)");
+    public static final ConfigValue<Double> STRUCTURE_LOOT_ROLLS = STRUCTURES.doubleRange("loot_rolls", 1.0, 0.0, 4.0,
+            "Scales how many items those chests roll (1 = as the loot tables say, 0.5 = half, 2 = twice; a fraction rounds "
+                    + "up or down at random); read when a chest is first opened");
+
     private static final ConfigSection ISLAND = STRUCTURES.section("pirate_island", "Placement of pirate islands");
 
     /**
@@ -158,7 +171,7 @@ public final class WorldConfig {
             "Minimum distance between two wrecks; kept below spacing (a larger value counts as spacing - 1)" + SPREAD_NOTE);
 
     private static final ConfigSection PORTS = S.section("ports",
-            "Room for ships at ports (STR7): where a delivered or arriving ship appears and how deep the berths are");
+            "Ports in general: their names (NAME3), where a delivered or arriving ship appears and how deep the berths are (STR7)");
 
     public static final ConfigValue<Integer> PORTS_SHIP_CLEARANCE = PORTS.intRange("ship_clearance", 3, 0, 16,
             "Blocks round a ship's footprint that must hold no sand, soil, stone or ice when a ship is delivered or "
@@ -184,6 +197,11 @@ public final class WorldConfig {
                     + "stop selling them; bound maps keep their picture)");
     public static final ConfigValue<Integer> TREASURE_MAP_SEARCH_RADIUS = TREASURE_MAPS.intRange("search_radius", 2000, 64, 30_000_000,
             "How far (blocks, to the island's centre) a blank map looks for a pirate island with an unfound treasure");
+
+    public static final ConfigValue<Boolean> PORT_NAMES = PORTS.bool("names", true,
+            "Ports show their proper names (\"Port Marlow\", \"Fort St. Anne\", \"Bone Cay\") wherever a port is named "
+                    + "(off = the readable port id as before, \"Village 1192 1530\"; the names stay stored and commands accept both). "
+                    + "Chat and commands follow a change at once, screens after the next join");
 
     private static final ConfigSection SPAWNS = S.section("spawn_weights",
             "Natural spawn weight of each mob (higher = more common, 0 = never spawns naturally)");

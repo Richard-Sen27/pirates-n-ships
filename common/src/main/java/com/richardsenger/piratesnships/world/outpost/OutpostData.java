@@ -34,6 +34,14 @@ public final class OutpostData {
 
     /** Fixed salt of the structure set's random spread (never change it: it moves every outpost of existing worlds). */
     public static final int SALT = 902_417_385;
+    /**
+     * STR6 (the human, 2026-10-12: "navy_post directly next to mansion, should not happen"): no outpost starts within
+     * this many chunks of a seafarer village's placement chunk (vanilla's {@code exclusion_zone}). Both reach about 64
+     * blocks (4 chunks) from their start chunk in the layout dumps, so 8 chunks keeps the starts at least 9 chunks
+     * (144 blocks) apart, more than the two can reach toward each other; it costs the outposts about a third of their
+     * possible sites (17 by 17 chunks of every 30 by 30 village grid cell).
+     */
+    public static final int VILLAGE_EXCLUSION_CHUNKS = 8;
     /** STR4: seven deep, so a run has room along the shore, round its angles and down the flank. */
     public static final int SIZE = 7;
     /**
@@ -114,7 +122,9 @@ public final class OutpostData {
 
     public static void gather(DataContributions data) {
         PortStructureData.writeStructure(data, OutpostKeys.NAVY_OUTPOST, spec(), OutpostKeys.QUAY_EXTENSION);
-        PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, "navy_outpost", SALT);
+        PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, "navy_outpost", SALT,
+                java.util.List.of(new PortStructureData.Exclusion(
+                        com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES, VILLAGE_EXCLUSION_CHUNKS)));
         String terminators = OutpostKeys.TERMINATORS.location().toString();
         String laneEnds = OutpostKeys.LANE_ENDS.location().toString();
         PortStructureData.pool(data, OutpostKeys.START, GROUP, "minecraft:empty", "rigid", weights("fort_gate", 1));

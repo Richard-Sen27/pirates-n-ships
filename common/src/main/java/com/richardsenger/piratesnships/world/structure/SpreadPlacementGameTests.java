@@ -138,6 +138,73 @@ public final class SpreadPlacementGameTests {
         helper.succeed();
     }
 
+    /**
+     * STR6: the outposts keep {@link OutpostData#VILLAGE_EXCLUSION_CHUNKS} chunks away from the seafarer villages, the
+     * pirate islands {@link IslandData#PORT_EXCLUSION_CHUNKS} from both. Over a stretch of the beach world every chunk
+     * where the outpost (island) placement would start lies outside the zone round every village (and outpost) start, and
+     * the zones do exclude some of the outposts' (islands') own grid chunks, which they would take without them.
+     */
+    @ModGameTest(timeoutTicks = 200)
+    public static void outpostsAndIslandsKeepAwayFromVillages(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ChunkGeneratorStructureState state = beachState(level);
+        ConfiguredSpreadPlacement villages = placementOf(helper, state, VillageKeys.SEAFARER_VILLAGE);
+        ConfiguredSpreadPlacement outposts = placementOf(helper, state, OutpostKeys.NAVY_OUTPOST);
+        ConfiguredSpreadPlacement islands = placementOf(helper, state, IslandKeys.PIRATE_ISLAND);
+        helper.assertTrue(villages.exclusionZone().isEmpty() && villages.exclusionZones().isEmpty(), "villages exclude nothing");
+        helper.assertTrue(outposts.exclusionZone().map(z -> z.otherSet().is(VillageKeys.SEAFARER_VILLAGES)
+                && z.chunkCount() == OutpostData.VILLAGE_EXCLUSION_CHUNKS).orElse(false), "outposts: " + outposts.exclusionZone());
+        helper.assertTrue(islands.exclusionZone().map(z -> z.otherSet().is(VillageKeys.SEAFARER_VILLAGES)
+                && z.chunkCount() == IslandData.PORT_EXCLUSION_CHUNKS).orElse(false), "islands vs villages: " + islands.exclusionZone());
+        helper.assertTrue(islands.exclusionZones().size() == 1 && islands.exclusionZones().get(0).otherSet().is(OutpostKeys.NAVY_OUTPOSTS)
+                && islands.exclusionZones().get(0).chunkCount() == IslandData.PORT_EXCLUSION_CHUNKS, "islands vs outposts: " + islands.exclusionZones());
+
+        long seed = state.getLevelSeed();
+        int reach = 400;                       // chunks either side of the origin
+        java.util.List<ChunkPos> villageStarts = starts(state, villages, reach);
+        java.util.List<ChunkPos> outpostStarts = starts(state, outposts, reach);
+        java.util.List<ChunkPos> islandStarts = starts(state, islands, reach);
+        helper.assertTrue(villageStarts.size() > 100 && outpostStarts.size() > 30 && islandStarts.size() > 15,
+                "starts: " + villageStarts.size() + " villages, " + outpostStarts.size() + " outposts, " + islandStarts.size() + " islands");
+        assertApart(helper, "outpost", outpostStarts, "village", villageStarts, OutpostData.VILLAGE_EXCLUSION_CHUNKS);
+        assertApart(helper, "island", islandStarts, "village", villageStarts, IslandData.PORT_EXCLUSION_CHUNKS);
+        assertApart(helper, "island", islandStarts, "outpost", outpostStarts, IslandData.PORT_EXCLUSION_CHUNKS);
+        // the zones act: some of the outposts' grid chunks (frequency 1 in the set) are dropped next to a village
+        int dropped = 0;
+        for (int x = -reach; x <= reach; x += outposts.spacing()) {
+            for (int z = -reach; z <= reach; z += outposts.spacing()) {
+                ChunkPos p = outposts.getPotentialStructureChunk(seed, x, z);
+                if (!outposts.isStructureChunk(state, p.x, p.z)) dropped++;
+            }
+        }
+        helper.assertTrue(dropped > 0, "the exclusion zone drops some outpost grid chunks");
+        helper.succeed();
+    }
+
+    /** Every chunk in the square of {@code reach} chunks round the origin where {@code placement} starts its structure. */
+    private static java.util.List<ChunkPos> starts(ChunkGeneratorStructureState state, ConfiguredSpreadPlacement placement, int reach) {
+        java.util.List<ChunkPos> out = new java.util.ArrayList<>();
+        int spacing = placement.spacing();
+        for (int x = Math.floorDiv(-reach, spacing) * spacing; x <= reach; x += spacing) {
+            for (int z = Math.floorDiv(-reach, spacing) * spacing; z <= reach; z += spacing) {
+                ChunkPos p = placement.getPotentialStructureChunk(state.getLevelSeed(), x, z);
+                if (placement.isStructureChunk(state, p.x, p.z)) out.add(p);
+            }
+        }
+        return out;
+    }
+
+    /** No start of {@code these} within {@code chunks} chunks (a square) of a start of {@code others}. */
+    private static void assertApart(GameTestHelper helper, String these, java.util.List<ChunkPos> starts, String others,
+                                    java.util.List<ChunkPos> otherStarts, int chunks) {
+        for (ChunkPos a : starts) {
+            for (ChunkPos b : otherStarts) {
+                helper.assertTrue(Math.abs(a.x - b.x) > chunks || Math.abs(a.z - b.z) > chunks,
+                        these + " at chunk " + a + " lies within " + chunks + " chunks of the " + others + " at " + b);
+            }
+        }
+    }
+
     /** The structure state of a world whose every biome is a beach (villages and outposts may start anywhere). */
     private static ChunkGeneratorStructureState beachState(ServerLevel level) {
         Holder<Biome> beach = level.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.BEACH);

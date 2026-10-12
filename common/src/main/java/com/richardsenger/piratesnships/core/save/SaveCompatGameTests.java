@@ -273,6 +273,55 @@ public final class SaveCompatGameTests {
         });
     }
 
+    /**
+     * NAME3: a port registry saved before NAME3 (port records without {@code name}, as the WG1/WG2/SW1 codec wrote
+     * them) loads, and every port gets its proper name from the world seed in the saved order, the same on every load,
+     * unique, of its kind; the registry is dirty so the names are saved from then on. The id stays the key.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 20)
+    public static void aPreName3PortRecordLoadsAndGetsAName(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        long seed = server.overworld().getSeed();
+        net.minecraft.nbt.ListTag ports = new net.minecraft.nbt.ListTag();
+        ports.add(oldPort("village_1192_1530", "seafarer_village", 1192, 1530));
+        ports.add(oldPort("navy_outpost_-5240_2455", "navy_outpost", -5240, 2455));
+        ports.add(oldPort("pirate_island_-3931_-9000", "pirate_island", -3931, -9000));
+        CompoundTag saved = new CompoundTag();
+        saved.put("ports", ports);
+
+        var a = com.richardsenger.piratesnships.world.port.PortRegistry.load(saved.copy(), server.registryAccess());
+        h.assertValueEqual(a.index().size(), 3, "all three old records load");
+        h.assertTrue(a.index().all().stream().noneMatch(com.richardsenger.piratesnships.world.port.Port::named), "no names in the old save");
+        a.seed(seed);
+        var b = com.richardsenger.piratesnships.world.port.PortRegistry.load(saved.copy(), server.registryAccess());
+        b.seed(seed);
+        List<String> names = a.index().all().stream().map(com.richardsenger.piratesnships.world.port.Port::name).toList();
+        h.assertValueEqual(b.index().all().stream().map(com.richardsenger.piratesnships.world.port.Port::name).toList(), names, "the same names on every load");
+        h.assertTrue(names.stream().noneMatch(String::isEmpty), "every port named: " + names);
+        h.assertValueEqual(new java.util.HashSet<>(names).size(), 3, "three names: " + names);
+        h.assertTrue(names.get(1).startsWith("Fort ") || names.get(1).endsWith(" Battery"), "the outpost: " + names.get(1));
+        h.assertValueEqual(names.get(0), com.richardsenger.piratesnships.world.port.PortNames.name(seed,
+                com.richardsenger.piratesnships.trade.market.PortKind.SEAFARER_VILLAGE, 1192, 1530, k -> false), "the first by the rule");
+        h.assertTrue(a.isDirty(), "the names are saved from now on");
+        h.assertTrue(a.index().byId(Constants.id("navy_outpost_-5240_2455")).isPresent(), "the id stays the key");
+        CompoundTag again = a.save(new CompoundTag(), server.registryAccess());
+        h.assertValueEqual(again.getList("ports", net.minecraft.nbt.Tag.TAG_COMPOUND).getCompound(2).getString("name"), names.get(2),
+                "the name is written");
+        h.succeed();
+    }
+
+    /** A port record as WG1 saved it: no {@code name} (and no treasures or orders). */
+    private static CompoundTag oldPort(String path, String kind, int x, int z) {
+        CompoundTag t = new CompoundTag();
+        t.putString("id", Constants.MOD_ID + ":" + path);
+        t.putString("kind", kind);
+        t.putString("dimension", "minecraft:overworld");
+        t.put("centre", new IntArrayTag(new int[]{x, 64, z}));
+        t.put("box", new IntArrayTag(new int[]{x - 30, 40, z - 30, x + 30, 90, z + 30}));
+        t.putString("climate", "temperate");
+        return t;
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static int items(GameTestHelper h, ItemStack like) {

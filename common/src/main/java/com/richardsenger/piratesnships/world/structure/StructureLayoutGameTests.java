@@ -251,6 +251,9 @@ public final class StructureLayoutGameTests {
         } catch (IOException e) {
             throw new IllegalStateException("could not write the region of seed " + seed, e);
         }
+        // STR6: every door can be walked through from both sides (after the dump, so a failure leaves the region to look at)
+        List<String> blockedDoors = DoorAccess.blockedDoors(level, start.getBoundingBox());
+        helper.assertTrue(blockedDoors.isEmpty(), "seed " + seed + ": " + blockedDoors.size() + " blocked doors: " + blockedDoors);
         helper.succeed();
     }
 

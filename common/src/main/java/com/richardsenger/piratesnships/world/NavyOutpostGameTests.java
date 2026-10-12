@@ -238,6 +238,7 @@ public final class NavyOutpostGameTests {
         helper.assertTrue(port != null, "the port is registered");
         helper.assertTrue(port.id().getPath().startsWith("navy_outpost_"), "port id " + port.id());
         helper.assertValueEqual(port.kind(), PortKind.NAVY_OUTPOST, "port kind");
+        com.richardsenger.piratesnships.world.port.PortNameGameTests.assertNamed(helper, port); // NAME3
         // STR7: two berths on the quay, two more on each extension section where its end stands in shallow water
         List<StructurePiece> sections = pieces.stream().filter(com.richardsenger.piratesnships.world.structure.PierExtensions::isExtension).toList();
         helper.assertValueEqual(port.berths().size(), 2 + 2 * sections.size(), "two berths and two per section");

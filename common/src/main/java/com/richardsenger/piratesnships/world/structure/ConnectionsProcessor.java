@@ -184,13 +184,18 @@ public final class ConnectionsProcessor extends StructureProcessor {
         return PortStructures.CONNECTIONS.get();
     }
 
-    /** Datagen: the processor list {@link #LIST} holding only this processor. */
+    /**
+     * Datagen: the processor list {@link #LIST}: this processor, then {@link LootChestProcessor} (STR6: every port pool
+     * element names this list, so the port pieces' loot chests follow {@code world.structures.loot}).
+     */
     public static void gather(DataContributions data) {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/processor_list", LIST.location(), () -> {
-            JsonObject processor = new JsonObject();
-            processor.addProperty("processor_type", Constants.id("connections").toString());
             JsonArray processors = new JsonArray();
-            processors.add(processor);
+            for (String type : new String[] {"connections", "loot_chests"}) {
+                JsonObject processor = new JsonObject();
+                processor.addProperty("processor_type", Constants.id(type).toString());
+                processors.add(processor);
+            }
             JsonObject json = new JsonObject();
             json.add("processors", processors);
             return json;

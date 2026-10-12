@@ -97,6 +97,8 @@ lantern_post(p, 1, 1, 0)
 p.put(7, 1, 0, "barrel")
 p.put(7, 2, 0, "minecraft:barrel[facing=west,open=false]")
 
+# STR6: the tavern's loot chest by the west wall
+p.loot_chest(1, 1, 5, "east", "pirate_island/tavern")
 p.connector(MID, 0, 0, "hut_in", "north", "minecraft:sand")
 
 p.emit("open-sided beach tavern: bar of barrels, tables, lanterns, dark oak thatch roof, boarded gables, chimney",

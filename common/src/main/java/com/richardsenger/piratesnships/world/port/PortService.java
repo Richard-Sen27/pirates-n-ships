@@ -119,11 +119,18 @@ public final class PortService {
         }
     }
 
-    /** Registers {@code port} and opens its market. Returns whether the port is new. Server thread. */
+    /**
+     * Registers {@code port} (the registry gives it its proper name, NAME3), opens its market and sends the new name
+     * to the players. Returns whether the port is new. Server thread.
+     */
     public static boolean register(MinecraftServer server, Port port) {
-        boolean added = PortRegistry.get(server).add(port);
+        PortRegistry registry = PortRegistry.get(server);
+        boolean added = registry.add(port);
         openMarket(server, port);
-        if (added) Constants.LOG.debug("Registered port {} at {}", port.id(), port.centre());
+        if (added) {
+            Constants.LOG.debug("Registered port {} ({}) at {}", port.id(), registry.index().byId(port.id()).map(Port::name).orElse(""), port.centre());
+            PortNameBook.sendToAll(server);
+        }
         return added;
     }
 

@@ -244,6 +244,35 @@ public final class LaneVoyageGameTests {
         });
     }
 
+    /**
+     * NAME3: the lane replies name ports by their proper names: "the sea around Port Marlow (...) is closed and never
+     * reaches Fort St. Anne", and a voyage's line in {@code /pirates world voyages} reads "Port Marlow -> Fort St. Anne".
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_3, batch = "pirates_n_ships_worldsim_lane_names")
+    public static void laneRepliesNamePortsByName(GameTestHelper h) {
+        MinecraftServer server = h.getLevel().getServer();
+        Port village = port(h, "names_village", PortKind.SEAFARER_VILLAGE, 0, 0);
+        Port outpost = port(h, "names_outpost", PortKind.NAVY_OUTPOST, 2, 2);
+        PortRegistry.get(server).add(village);
+        PortRegistry.get(server).add(outpost);
+        String from = PortRegistry.get(server).index().byId(village.id()).orElseThrow().name();
+        String to = PortRegistry.get(server).index().byId(outpost.id()).orElseThrow().name();
+        Runnable clean = () -> cleanUp(server, village, outpost);
+        guard(clean, () -> {
+            var closed = new Lanes.Computed(java.util.Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.NO_PATH, List.of(),
+                    40, 0.0, 1000, null, null, new LanePathfinder.Bounds(0, 0, 4, 4)), 1_000_000L, 0L, 300.0);
+            String reply = com.richardsenger.piratesnships.worldsim.voyage.VoyageCommands.noLane(village.id(), outpost.id(), closed, 1).getString();
+            h.assertTrue(reply.contains("the sea around " + from) && reply.contains("never reaches " + to), "the reply: " + reply);
+            h.assertFalse(reply.contains(village.id().toString()) || reply.contains(outpost.id().getPath()), "no ids: " + reply);
+            var budget = new Lanes.Computed(java.util.Optional.empty(), new LanePathfinder.Result(LanePathfinder.Status.BUDGET, List.of(),
+                    1000, 0.0, 1000, null, null, null), 0L, 0L, 300.0);
+            String ran = com.richardsenger.piratesnships.worldsim.voyage.VoyageCommands.noLane(village.id(), outpost.id(), budget, 1).getString();
+            h.assertTrue(ran.startsWith("No lane from " + from + " to " + to), "the budget reply: " + ran);
+        });
+        clean.run();
+        h.succeed();
+    }
+
     /** Searches the lane on the basin's blocks and checks its start, its course around the island and its end. */
     private static List<Lane.Point> checkLane(GameTestHelper h, MinecraftServer server, Port village, Port island) {
         SeaGrid sea = grid(h);

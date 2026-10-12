@@ -36,11 +36,11 @@ public final class HarborMasterModule implements ModModule {
                 .add(HarborMasterInteractions.NOT_NOW, "The harbor master waves you off")
                 .add(HarborMasterInteractions.NO_DESK, "\"I've no desk to serve you at here.\"")
                 .add(HarborMasterInteractions.GREETING + PortKind.SEAFARER_VILLAGE.getSerializedName(),
-                        "%s: \"Welcome ashore, captain. Goods, contracts or a new ship?\"")
+                        "%s: \"Welcome to %s, captain. Goods, contracts or a new ship?\"")
                 .add(HarborMasterInteractions.GREETING + PortKind.NAVY_OUTPOST.getSerializedName(),
-                        "%s: \"State your business, captain. The Crown's ledger is open.\"")
+                        "%s: \"You stand in %s, captain. State your business; the Crown's ledger is open.\"")
                 .add(HarborMasterInteractions.GREETING + PortKind.PIRATE_ISLAND.getSerializedName(),
-                        "%s: \"Coin first, questions never. What've you got?\"")
+                        "%s: \"This is %s. Coin first, questions never. What've you got?\"")
                 .add(HarborDeskService.Use.TALK_TO_MASTER.message(), "Talk to the harbor master"));
     }
 

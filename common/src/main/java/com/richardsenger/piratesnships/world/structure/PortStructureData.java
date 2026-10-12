@@ -18,6 +18,7 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,6 +80,32 @@ public final class PortStructureData {
      * {@code separation} here are the fallback while the config is not loaded (datagen passes the config defaults).
      */
     public static JsonObject structureSet(ResourceKey<Structure> structure, String config, int salt, int spacing, int separation) {
+        return structureSet(structure, config, salt, spacing, separation, List.of());
+    }
+
+    /**
+     * An exclusion zone of a structure set (STR6): no start within {@code chunkCount} chunks (1..16, a square as vanilla's)
+     * of a placement chunk of {@code otherSet}.
+     */
+    public record Exclusion(ResourceKey<StructureSet> otherSet, int chunkCount) {
+        public Exclusion {
+            if (chunkCount < 1 || chunkCount > 16) throw new IllegalArgumentException("chunk_count 1..16: " + chunkCount);
+        }
+
+        JsonObject json() {
+            JsonObject zone = new JsonObject();
+            zone.addProperty("other_set", otherSet.location().toString());
+            zone.addProperty("chunk_count", chunkCount);
+            return zone;
+        }
+    }
+
+    /**
+     * As {@link #structureSet(ResourceKey, String, int, int, int)} with exclusion zones (STR6): the first goes into
+     * vanilla's {@code exclusion_zone}, any further ones into {@link ConfiguredSpreadPlacement}'s {@code exclusion_zones}.
+     */
+    public static JsonObject structureSet(ResourceKey<Structure> structure, String config, int salt, int spacing, int separation,
+                                          List<Exclusion> exclusions) {
         JsonObject entry = new JsonObject();
         entry.addProperty("structure", structure.location().toString());
         entry.addProperty("weight", 1);
@@ -92,6 +119,12 @@ public final class PortStructureData {
         placement.addProperty("separation", separation);
         placement.addProperty("spread_type", "linear");
         placement.addProperty("frequency", 1.0);
+        if (!exclusions.isEmpty()) placement.add("exclusion_zone", exclusions.get(0).json());
+        if (exclusions.size() > 1) {
+            JsonArray more = new JsonArray();
+            for (Exclusion e : exclusions.subList(1, exclusions.size())) more.add(e.json());
+            placement.add("exclusion_zones", more);
+        }
         JsonObject json = new JsonObject();
         json.add("structures", structures);
         json.add("placement", placement);
@@ -117,9 +150,16 @@ public final class PortStructureData {
     /** Writes {@link #structureSet} with the spacing and separation defaults of {@code WorldConfig.spread(config)}. */
     public static void writeStructureSet(DataContributions data, ResourceKey<StructureSet> key, ResourceKey<Structure> structure,
                                          String config, int salt) {
+        writeStructureSet(data, key, structure, config, salt, List.of());
+    }
+
+    /** As {@link #writeStructureSet(DataContributions, ResourceKey, ResourceKey, String, int)} with exclusion zones (STR6). */
+    public static void writeStructureSet(DataContributions data, ResourceKey<StructureSet> key, ResourceKey<Structure> structure,
+                                         String config, int salt, List<Exclusion> exclusions) {
         WorldConfig.Spread spread = WorldConfig.spread(config).orElseThrow(() -> new IllegalArgumentException("no spread " + config));
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure_set", key.location(),
-                () -> structureSet(structure, config, salt, spread.spacing().defaultValue(), spread.separation().defaultValue()));
+                () -> structureSet(structure, config, salt, spread.spacing().defaultValue(), spread.separation().defaultValue(),
+                        exclusions));
     }
 
     /**

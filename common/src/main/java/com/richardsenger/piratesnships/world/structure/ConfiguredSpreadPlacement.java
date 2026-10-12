@@ -9,12 +9,14 @@ import com.richardsenger.piratesnships.world.WorldConfig;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,7 +24,12 @@ import java.util.Optional;
  * come from the server config section {@code world.structures.<config>} ({@link WorldConfig#spread}) while that
  * config is loaded, and from the structure set's own {@code spacing} and {@code separation} otherwise (before the
  * server config loads, in JUnit). Everything else is vanilla's: salt, spread type, frequency, frequency reduction
- * method, locate offset and exclusion zone are read from the JSON as for {@code minecraft:random_spread}.
+ * method, locate offset and exclusion zone are read from the JSON as for {@code minecraft:random_spread}. STR6 adds an
+ * optional list {@code exclusion_zones} of further zones of the same form as vanilla's single {@code exclusion_zone}
+ * ({@code other_set}, {@code chunk_count} 1..16): a chunk within {@code chunk_count} chunks of a placement chunk of any
+ * of them is no placement chunk ({@link #applyInteractionsWithOtherStructures}). The navy outposts keep away from the
+ * seafarer villages through {@code exclusion_zone}, the pirate islands from both through both fields
+ * ({@code OutpostData}, {@code IslandData}).
  *
  * <pre>{@code
  * "placement": {
@@ -67,7 +74,9 @@ public final class ConfiguredSpreadPlacement extends RandomSpreadStructurePlacem
                                     Codec.intRange(0, 4096).fieldOf("separation").forGetter(ConfiguredSpreadPlacement::jsonSeparation),
                                     RandomSpreadType.CODEC.optionalFieldOf("spread_type", RandomSpreadType.LINEAR)
                                             .forGetter(ConfiguredSpreadPlacement::spreadType),
-                                    CONFIG_NAME.fieldOf("config").forGetter(ConfiguredSpreadPlacement::config))
+                                    CONFIG_NAME.fieldOf("config").forGetter(ConfiguredSpreadPlacement::config),
+                                    StructurePlacement.ExclusionZone.CODEC.listOf().optionalFieldOf("exclusion_zones", List.of())
+                                            .forGetter(ConfiguredSpreadPlacement::exclusionZones))
                             .apply(i, ConfiguredSpreadPlacement::new))
             .validate(p -> p.jsonSpacing() <= p.jsonSeparation()
                     ? DataResult.error(() -> "Spacing has to be larger than separation")
@@ -76,22 +85,56 @@ public final class ConfiguredSpreadPlacement extends RandomSpreadStructurePlacem
     private final int jsonSpacing;
     private final int jsonSeparation;
     private final String config;
+    private final List<StructurePlacement.ExclusionZone> exclusionZones;
     private final @Nullable WorldConfig.Spread spread;
 
     public ConfiguredSpreadPlacement(Vec3i locateOffset, StructurePlacement.FrequencyReductionMethod frequencyReductionMethod,
                                      float frequency, int salt, Optional<StructurePlacement.ExclusionZone> exclusionZone,
-                                     int spacing, int separation, RandomSpreadType spreadType, String config) {
+                                     int spacing, int separation, RandomSpreadType spreadType, String config,
+                                     List<StructurePlacement.ExclusionZone> exclusionZones) {
         super(locateOffset, frequencyReductionMethod, frequency, salt, exclusionZone, spacing, separation, spreadType);
         this.jsonSpacing = spacing;
         this.jsonSeparation = separation;
         this.config = config;
+        this.exclusionZones = List.copyOf(exclusionZones);
         this.spread = WorldConfig.spread(config).orElse(null);
+    }
+
+    /** As the full constructor without further exclusion zones (WG5's fields). */
+    public ConfiguredSpreadPlacement(Vec3i locateOffset, StructurePlacement.FrequencyReductionMethod frequencyReductionMethod,
+                                     float frequency, int salt, Optional<StructurePlacement.ExclusionZone> exclusionZone,
+                                     int spacing, int separation, RandomSpreadType spreadType, String config) {
+        this(locateOffset, frequencyReductionMethod, frequency, salt, exclusionZone, spacing, separation, spreadType, config, List.of());
     }
 
     /** A plain placement (no offset, default frequency reduction, frequency 1, no exclusion zone), for tests. */
     public ConfiguredSpreadPlacement(int spacing, int separation, RandomSpreadType spreadType, int salt, String config) {
         this(Vec3i.ZERO, StructurePlacement.FrequencyReductionMethod.DEFAULT, 1.0F, salt, Optional.empty(), spacing, separation,
                 spreadType, config);
+    }
+
+    /** The exclusion zones after vanilla's single {@code exclusion_zone} (STR6; empty when the JSON names none). */
+    public List<StructurePlacement.ExclusionZone> exclusionZones() {
+        return exclusionZones;
+    }
+
+    /** Vanilla's {@code exclusion_zone} (public for the tests; vanilla's accessor is protected). */
+    @Override
+    public Optional<StructurePlacement.ExclusionZone> exclusionZone() {
+        return super.exclusionZone();
+    }
+
+    /**
+     * Vanilla's exclusion zone, then each of {@link #exclusionZones}: no placement within {@code chunk_count} chunks
+     * (a square, as vanilla) of a placement chunk of the other set.
+     */
+    @Override
+    public boolean applyInteractionsWithOtherStructures(ChunkGeneratorStructureState state, int x, int z) {
+        if (!super.applyInteractionsWithOtherStructures(state, x, z)) return false;
+        for (StructurePlacement.ExclusionZone zone : exclusionZones) {
+            if (state.hasStructureChunkInRange(zone.otherSet(), x, z, zone.chunkCount())) return false;
+        }
+        return true;
     }
 
     /** The structure set's own spacing, the fallback while the config is not loaded. */

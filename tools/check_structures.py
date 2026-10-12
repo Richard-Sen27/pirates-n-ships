@@ -13,7 +13,14 @@ A structure template's ``blocks`` entry may carry an ``nbt`` compound, the block
   another);
 - **worldgen**: an entity block whose state creates no block entity, in a template the world generates (anything but
   ``assets/.../ponder``): worldgen leaves a ``DUMMY`` block entity tag at every entity block, and the level chunk then
-  logs "Tried to load a block entity for block ... but failed" for it.
+  logs "Tried to load a block entity for block ... but failed" for it;
+- **door** (STR6, only in the world's structure pieces, ``data/.../structure/<group>`` but not ``ships``): a door whose
+  approach is blocked. On both sides of every door (the cell one step along its ``facing`` and the cell one step
+  against it) the door's two rows must be passable: no block there in the template (the generator writes no air, so
+  the cell stays as the terrain leaves it), or a block without a collision box (:func:`passable`); a jigsaw there counts
+  as its ``final_state``. A bottom slab on the door's lower row is a step up: then the two rows above it
+  must be passable. A side outside the template's box is not judged here (the neighbouring piece's business:
+  ``DoorAccess`` checks the placed structures in the layout GameTests).
 
 The rules: :data:`MOD_RULES` for our blocks (keep in step with each block's ``newBlockEntity``; the registry-backed
 ``StructureBlockEntityGameTests`` is the authority and checks the same templates in a game) and :data:`VANILLA` for
@@ -124,6 +131,80 @@ def entity_of(name: str, props: dict) -> tuple[bool, str | None]:
     return False, None
 
 
+# STR6: blocks without a collision box that may stand on a door's approach (carpets, plates, torches, plants, signs,
+# banners, rails, buttons, snow of one layer); cobwebs have none but hold a walker fast, so they count as blocking.
+PASSABLE_PARTS = ("carpet", "pressure_plate", "torch", "rail", "button", "_sign", "banner", "lever", "tripwire",
+                  "redstone_wire", "short_grass", "fern", "dead_bush", "sapling", "dandelion", "poppy", "orchid",
+                  "allium", "azure_bluet", "tulip", "oxeye_daisy", "cornflower", "lily_of_the_valley", "vine",
+                  "seagrass")
+PASSABLE_BLOCKS = {"minecraft:air", "minecraft:cave_air", "minecraft:water", "minecraft:light", "minecraft:structure_void"}
+STEP_BLOCKS = ("_slab",)
+DOOR_SIDES = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
+
+
+def passable(name: str | None, props: dict) -> bool:
+    """Whether a walker passes through this block: nothing (None), air or water, or a block without a collision box."""
+    if name is None or name in PASSABLE_BLOCKS:
+        return True
+    if name == "minecraft:snow":
+        return props.get("layers", "1") == "1"
+    path = name.partition(":")[2]
+    return name.startswith("minecraft:") and any(part in path for part in PASSABLE_PARTS) and "hanging" not in path
+
+
+def is_step(name: str | None, props: dict) -> bool:
+    """A bottom slab: a half-block step a walker climbs (a stair's collision box reaches the full block)."""
+    return name is not None and name.endswith(STEP_BLOCKS) and props.get("type", props.get("half")) == "bottom"
+
+
+def checks_doors(path: Path) -> bool:
+    """The world's structure pieces (``data/<ns>/structure/<group>/``), not the ship templates nor Ponder scenes."""
+    parts = path.parts
+    return ("data" in parts and "structure" in parts and "ships" not in parts and "ponder" not in parts)
+
+
+def door_problems(tags: dict) -> list[str]:
+    """STR6: every door's approach on both sides is passable (see the module comment, **door**)."""
+    size = [v.value for v in tags["size"].value]
+    palette = tags["palettes"].value[0].value if "palettes" in tags else tags["palette"].value
+    states = []
+    for entry in palette:
+        e = entry.value
+        props = {k: v.value for k, v in e["Properties"].value.items()} if "Properties" in e else {}
+        states.append((e["Name"].value, props))
+    cells = {}
+    for block in tags.get("blocks", nbt.Tag(nbt.LIST, [])).value:
+        b = block.value
+        pos = tuple(p.value for p in b["pos"].value)
+        name, props = states[b["state"].value]
+        if name == "minecraft:jigsaw" and "nbt" in b and "final_state" in b["nbt"].value:
+            final = b["nbt"].value["final_state"].value
+            fname, _, rest = final.partition("[")
+            fprops = dict(kv.split("=", 1) for kv in rest.rstrip("]").split(",") if "=" in kv)
+            name, props = (fname if ":" in fname else "minecraft:" + fname), fprops
+        cells[pos] = (name, props)
+    problems = []
+    for (x, y, z), (name, props) in sorted(cells.items(), key=lambda c: (c[0][1], c[0][2], c[0][0])):
+        if not name.endswith("_door") or props.get("half") != "lower" or "facing" not in props:
+            continue
+        dx, dz = DOOR_SIDES[props["facing"]]
+        for sign in (1, -1):
+            cx, cz = x + dx * sign, z + dz * sign
+            if not (0 <= cx < size[0] and 0 <= cz < size[2]):
+                continue
+            low = cells.get((cx, y, cz), (None, {}))
+            rows = (y, y + 1)
+            if is_step(*low):
+                rows = (y + 1, y + 2)
+            blocked = [(r, cells[(cx, r, cz)][0]) for r in rows if not passable(*cells.get((cx, r, cz), (None, {})))]
+            if blocked:
+                side = "facing" if sign == 1 else "behind"
+                what = ", ".join(f"{n} at y {r}" for r, n in blocked)
+                problems.append(f"[{x}, {y}, {z}] {name}[facing={props['facing']}]: the cell {side} it [{cx}, {cz}] is "
+                                f"blocked ({what})")
+    return problems
+
+
 def generated_by_worldgen(path: Path) -> bool:
     """Ponder scene templates (assets/.../ponder) are only ever loaded by Ponder, never placed by worldgen."""
     return "ponder" not in path.parts or "assets" not in path.parts
@@ -163,7 +244,11 @@ def check_root(root: nbt.Tag, worldgen: bool = True) -> list[str]:
 
 
 def check_file(path: Path) -> list[str]:
-    return check_root(nbt.read_nbt(path.read_bytes()), generated_by_worldgen(path))
+    root = nbt.read_nbt(path.read_bytes())
+    problems = check_root(root, generated_by_worldgen(path))
+    if checks_doors(path.resolve()):
+        problems += door_problems(root.value)
+    return problems
 
 
 def all_files() -> list[Path]:

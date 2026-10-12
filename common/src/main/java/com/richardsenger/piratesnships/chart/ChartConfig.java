@@ -38,6 +38,8 @@ public final class ChartConfig {
             "Every registered port (village, navy outpost, pirate island) is on every chart; false: a port appears only after you came within structure_reveal_distance of it");
     public static final ConfigValue<Integer> STRUCTURE_REVEAL_DISTANCE = S.intRange("structure_reveal_distance", 96, 8, 512,
             "Wrecks and the mod's other structures (and ports, without ports_always_known) go on your chart for good once you came this many blocks near them (horizontal distance to their bounds)");
+    public static final ConfigValue<Boolean> HELD_OPEN = S.bool("held_open", true,
+            "CHART3: a player reading their chart holds it unrolled in both hands, and everyone around sees it unroll; false: the chart stays rolled up in the hand");
 
     private static final ConfigSection TILES = S.section("tiles", "Map tiles (work package MAP2): a part of a player's chart drawn onto a block for everyone to see");
 

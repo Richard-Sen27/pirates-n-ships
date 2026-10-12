@@ -820,7 +820,7 @@ Item models (ART1a, ART1b):
   `stripped_dark_oak_log`): the board panel on each side stands about 1.5 px **proud** of the block on purpose, so it
   reads as nailed on over the hole from outside and inside the hull; collision stays a full block. The item is the
   panel alone, with a `gui` entry `[20, -30, 0]` / 0.85.
-- **Rope** (28 elements, `palette_2` rope colours and `palette_4` twine whipping) and **chart** (14 elements,
+- **Rope** (28 elements, `palette_2` rope colours and `palette_4` twine whipping) and **chart** (14 elements; replaced in CHART3, below,
   `palette`, `palette_3` paper and biscuit, `palette_4` cord; particle `palette_3`): no new colours.
 - **Flag bundles** (`navy_flag` 28 elements, `merchant_flag` 26, `jolly_roger_flag` 32 since ART18; one project each, one shared
   part list): the cloth rolled on a halyard toggle, built upright along y around x = z = 8 and turned `z -45` about
@@ -1592,6 +1592,61 @@ Ship commission (ART11):
   saved with `Codecs.project.compile({raw: true})` (texture `path` emptied, `relative_path` to the sheets). The script
   is not committed. Lint: no fights; same-look warnings only (the crossed boxes' shared end planes).
 - Render: `renders/ship_commission.png`: front (the GUI view), three-quarter, back, third person in the right hand.
+
+The chart held open (CHART3, the human, 2026-10-12: "Chart is held and open in 3d and animated when opening to other
+players"):
+- **Approach: item model frames plus a PAL arm pose, not a GeckoLib item.** The unroll is one parameter (how far the
+  rollers are apart), so five baked frames picked by a vanilla item property do it on both loaders without a
+  per-loader item renderer, keep vanilla's display-transform pipeline (and ART17's left-hand rule) and let every frame
+  carry its own display entries, which the pose needs (below). The arms are a PAL layer like the guns' and the rope's.
+- **Models** (all from `tools/gen_chart_held_models.py`, deterministic; projects `chart.bbmodel`,
+  `chart_unroll_0..3.bbmodel`, `chart_open.bbmodel` opened from the JSON with `Codecs.java_block.parse(json, path)` and
+  saved with `Codecs.project.compile({raw: true})`, texture `path` emptied, `relative_path` to the sheets): a parchment
+  on two wooden rollers, built upright along y facing south (the map face +z). Each roller: the wound parchment
+  (`biscuit_light` of `palette_3`, y -2..18), the rod (`wood`, r 0.55, y -3.6..19.6) and two knobs (`wood_dark`,
+  r 1.0) as plus-section pairs of boxes (the second 0.05 px shorter at both ends; no element rotation, so the closed
+  model can turn every element `z -45`). `chart` (closed, 19 elements): both rolls side by side (r 1.3), a `cord`
+  (`palette_4`) tie, knot and loose end, every element `z -45` about `[8, 8, 8]` like the old rolled chart (which it
+  replaces; the old 14-element roll is gone); its hand slots are the old ones at 0.34 (it is 25 px long),
+  `gui`/`fixed`/`head` 0.62. Frames `chart_unroll_0` (still rolled), `_1`, `_2`, `_3` and `chart_open`: the rollers at
+  x = 8 ± 1.3, 6.79, 9.49, 12.8, 15 (open: 30 px of chart between the axes, 20 px high), the wound parchment
+  shrinking from r 1.3 to 0.9, the sheet (`paper`, 0.2 px thick, y -1.9..17.9) between them, and the map as inlays
+  0.05 px per layer above the face (`palette_5`: `map_land` islands with `map_ink` coasts, `map_sea` shallows, a
+  dotted `map_ink` course, a `flag_red` X of two ±45 bars, an ink frame and a compass rose with `map_sea_dark`
+  diagonals and a red north tip); a frame shows only the inlays that lie wholly between its rolls. Lint 0 fights.
+- **Overrides** on `chart.json`: `pirates_n_ships:chart_open` 0.01, 0.3, 0.5, 0.7, 1.0 to the five frames
+  (`ChartHeldMotion.FRAMES`). The property is the unroll progress of the chart in a hand of the entity drawn
+  (`ChartHeldClient`), interpolated over the partial tick; 0 everywhere else (GUI of other slots, frames, ground).
+- **Arm animations** (`chart_animations/chart_read.json`, `chart_stow.json`, written by the same script; not
+  `player_animations/`, which `PalAnimationFilesTest` pins): 0.5 s, only `right_arm` and `left_arm`, linear keys.
+  `chart_read`: from rest (right `[-18, 0, 0]`, left `[0, 0, 0]`) both arms to `[-78, ∓25, 0]` by 0.15 s (forward, the
+  fists turned in until the 4 px arms touch round the rolled chart), then the yaw back to 0 by 0.5 s (fists at the
+  shoulders' width, 12 px apart); `hold_on_last_frame`. `chart_stow`: the same keys backwards, played once. PAL time
+  = progress × 0.5 s, so the started tick of either animation (`ChartHeldMotion.readStartTick` / `stowStartTick`)
+  meets the frame on show, also when the screen closes half way.
+- **Display entries solved, not tuned.** The item rides on the holding arm, which turns while the fists spread, so
+  each frame's third-person entry is solved for the arm pose at the middle of its time (0.15, 0.2, 0.3, 0.42, 0.5 s)
+  through vanilla 1.21.1's chain (`ModelPart.translateAndRotate` with `rotationZYX`, `ItemInHandLayer`'s
+  `Rx(-90) Ry(180) T(±1/16, 2/16, -10/16)`, `ItemTransform.apply`, `ItemRenderer`'s `T(-0.5)`): the model centre at
+  the fists' midpoint, model +x to the player's right (the reader's right: the map is not mirrored), the face towards
+  the reader tilted 30° up (`FACE_ELEVATION`: readable from the eyes above it and upright enough that others see the
+  chart and its unroll), the scale fixed at 0.4 so the open rollers sit in the fists (the fist = the arm box's centre
+  column 9 px down). Open: `[-18, 0, 0]` / `[-6, -2, 1]` / 0.4. The left-hand chain
+  solves to the same numbers: ART17's "R unchanged" rule for paper items (the game mirrors the pose, the drawing stays
+  readable). First person, every frame: `[-45, 0, 0]` / `[-8.96, 3.2, -0.48]` / 0.46: `applyItemArmTransform`'s
+  `(±0.56, -0.52, -0.72)` moved to the middle and a little up, the chart tilted away like vanilla's map at the bottom
+  of the view (no arms: the PAL layer keeps first person vanilla).
+- **Proof:** `ChartHeldModelTest` composes the real `ModelPart`, `PoseStack` and the frames' parsed `ItemTransform`s
+  with the arm angles read from `chart_read.json`, for both hands: the centre within 0.3 px of the fists' midpoint,
+  each roller within 0.6 px of its fist, the face within 25° of the eyes and 30° ± 1° up, the map reading left to
+  right, chest height and in front; first person centred and low; frames, thresholds and PAL files.
+- Render: `renders/chart_held.png` (the closed and the open item, the rolled chart with the fists together, unrolling
+  and open as others see them, over the shoulder in the right and the left hand, first person at 16:9). Drawn in
+  Blockbench's `risky_eval` in a scratch `THREE.Scene`: boxes from the model JSON in their palette colours, a box
+  player (head, body, legs, arms as `ModelPart` matrices from the PAL keys) under `scale(-1, -1, 1)`, the item placed by
+  the same chain as above in JS; the script is not committed.
+- Not drawn: the player's own chart terrain on the face (a baked item model cannot carry a per-player texture; it
+  would need a custom item renderer per loader); the face is a fixed painted chart.
 
 Mooring ring and sail foot (ART5):
 - **Mooring ring** (`mooring_ring.bbmodel`, `block/mooring_ring.json`, 21 elements, textures vanilla `anvil` and

@@ -15,7 +15,10 @@ import com.richardsenger.piratesnships.chart.net.ChartRegionPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.ChartSettingsPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSimplePayloads;
+import com.richardsenger.piratesnships.chart.net.ChartShip;
 import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
+import com.richardsenger.piratesnships.chart.net.ChartStructure;
+import com.richardsenger.piratesnships.chart.data.StructureKind;
 import com.richardsenger.piratesnships.chart.net.ChartViewPayload;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -126,15 +129,20 @@ class ChartCodecsTest {
     @Test
     void payloadsRoundTrip() {
         ChartData d = sample();
-        ChartSettings s = new ChartSettings(true, true, false, 4, 64);
+        ChartSettings s = new ChartSettings(true, true, 4, 64, 3);
         assertEquals(new ChartSettingsPayload(s), roundTrip(ChartSettingsPayload.CODEC, new ChartSettingsPayload(s)));
         ChartOpenPayload open = new ChartOpenPayload(s, d.markers());
         assertEquals(open, roundTrip(ChartOpenPayload.CODEC, open));
-        ChartStatePayload state = new ChartStatePayload(d.markers(),
-                List.of(new ChartStatePayload.OtherPlayer("Anne", -100, 2000, -91.5f)), Optional.of("message.x"));
+        // CHART2: markers and structures only when changed, the viewer's ships, never other players
+        ChartStatePayload state = new ChartStatePayload(Optional.of(d.markers()),
+                List.of(new ChartShip("Black Pearl", -100, 2000, 271.5f, true), new ChartShip("", 5, -5, 0f, false)),
+                Optional.of(List.of(new ChartStructure(StructureKind.VILLAGE, 10, -20, "village_10_-20"),
+                        new ChartStructure(StructureKind.WRECK, -300, 40, ""))), Optional.of("message.x"));
         assertEquals(state, roundTrip(ChartStatePayload.CODEC, state));
-        ChartStatePayload quiet = new ChartStatePayload(List.of(), List.of(), Optional.empty());
+        ChartStatePayload quiet = new ChartStatePayload(Optional.empty(), List.of(), Optional.empty(), Optional.empty());
         assertEquals(quiet, roundTrip(ChartStatePayload.CODEC, quiet));
+        ChartStatePayload cleared = new ChartStatePayload(Optional.of(List.of()), List.of(), Optional.of(List.of()), Optional.empty());
+        assertEquals(cleared, roundTrip(ChartStatePayload.CODEC, cleared), "an empty list is not the same as unchanged");
         for (ChartRegion r : d.regions().values()) {
             ChartRegionPayload p = ChartRegionPayload.of(r);
             ChartRegionPayload back = roundTrip(ChartRegionPayload.CODEC, p);
@@ -152,6 +160,19 @@ class ChartCodecsTest {
         assertEquals(ChartSimplePayloads.Close.INSTANCE, roundTrip(ChartSimplePayloads.Close.CODEC, ChartSimplePayloads.Close.INSTANCE));
         ChartMarker m = new ChartMarker(3, 1, 2, MarkerIcon.X, "Ünïcødé ⚓");
         assertEquals(m, roundTrip(ChartMarker.STREAM_CODEC, m));
+    }
+
+    /** CHART2: with no marker limit, a chart full to the hard limit with the longest names still fits one payload. */
+    @Test
+    void aFullMarkerListFitsOnePayload() {
+        List<ChartMarker> many = new java.util.ArrayList<>();
+        String longest = "\u2693".repeat(MarkerRules.MAX_NAME_LENGTH);
+        for (int i = 0; i < MarkerRules.HARD_LIMIT; i++) many.add(new ChartMarker(i + 1, -29_999_999, 29_999_999, MarkerIcon.DANGER, longest));
+        ChartStatePayload state = new ChartStatePayload(Optional.of(many), List.of(), Optional.empty(), Optional.empty());
+        ByteBuf buf = Unpooled.buffer();
+        ChartStatePayload.CODEC.encode(buf, state);
+        assertTrue(buf.readableBytes() < 1_048_576, "under a custom payload's 1 MiB: " + buf.readableBytes());
+        assertEquals(state, ChartStatePayload.CODEC.decode(buf));
     }
 
     @Test

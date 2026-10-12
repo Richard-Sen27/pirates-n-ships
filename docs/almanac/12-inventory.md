@@ -66,6 +66,7 @@ Every block and item a hand may need, a line on each, and the chapter that tells
 - {item:pirates_n_ships:captains_whistle}**Captain's whistle:** orders the crew.
 - {item:pirates_n_ships:harbor_desk}**Harbour master's desk:** a port's market.
 - {item:pirates_n_ships:notice_board}**Notice board:** every bounty at sea. [[pirates_n_ships:law|Law]]
+- {item:pirates_n_ships:market_notice_board}**Market board:** the village square's big notice board. [[pirates_n_ships:law|Law]]
 - {item:pirates_n_ships:bounty_proof}**Bounty proof:** proof of a kill; hand it to a navy officer.
 - {item:pirates_n_ships:shackles}**Shackles:** take a beaten foe prisoner.
 - {item:pirates_n_ships:brig_bars}**Brig bars,** {item:pirates_n_ships:brig_door}**brig door,** {item:pirates_n_ships:brig_key}**brig key:** the brig.

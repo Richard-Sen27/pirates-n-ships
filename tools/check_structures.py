@@ -73,6 +73,8 @@ MOD_RULES: dict[str, Rule] = {
     "harbor_desk": always(f"{MOD}:harbor_desk"),
     "helm": always(f"{MOD}:helm"),
     "map_tile": always(f"{MOD}:map_tile"),
+    # NB2: the anchor counts the postings, the other three parts carry an empty PartBlockEntity (FIX3)
+    "market_notice_board": by_property("part", "bottom_left", f"{MOD}:market_notice_board", f"{MOD}:market_notice_board_part"),
     "mast_hoop": always(f"{MOD}:net_fitting"),
     "mooring_ring": always(f"{MOD}:mooring_ring"),
     "nameplate": always(f"{MOD}:nameplate"),

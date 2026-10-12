@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_bottom_right",
+  "textures": {
+    "log": "natures_spirit:block/stripped_willow_log",
+    "log_top": "natures_spirit:block/stripped_willow_log_top",
+    "particle": "natures_spirit:block/willow_planks",
+    "planks": "natures_spirit:block/willow_planks"
+  }
+}

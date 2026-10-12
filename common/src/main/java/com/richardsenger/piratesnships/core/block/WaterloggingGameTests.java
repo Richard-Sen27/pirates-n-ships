@@ -121,7 +121,7 @@ public final class WaterloggingGameTests {
     /**
      * The families on a 24×24 stone floor (y=1), placed at y=2 by a player looking down and north. Two-block ones
      * (cannon: rear to the south; hammock and sea cot: head to the north) list both cells; the hammock hangs between
-     * two stone posts.
+     * two stone posts; the market notice board lists its bottom row.
      */
     private static List<Family> families() {
         Supplier<Item> cleat = () -> TriangularSailContent.CLEAT.get().asItem();
@@ -144,6 +144,11 @@ public final class WaterloggingGameTests {
         // places the block like these; the registry walk covers the block
         f.add(one("notice board", () -> LawContent.NOTICE_BOARD.get().asItem(), new BlockPos(3, 2, 17)));
         f.add(one("chart table", () -> ShipDecor.CHART_TABLE.get().asItem(), new BlockPos(6, 2, 17)));
+        // NB2: the 2x2 market board, notices to the south (the placer looks north), so it runs east and up; only its
+        // bottom row stands in the pool's one layer of water
+        BlockPos market = new BlockPos(12, 2, 17);
+        f.add(new Family("market notice board", () -> LawContent.MARKET_NOTICE_BOARD.get().asItem(), market,
+                List.of(market, market.relative(Direction.EAST))));
         return f;
     }
 

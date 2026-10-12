@@ -1,0 +1,35 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"particle": "#parchment"
+	},
+	"elements": [
+		{
+			"name": "notice0",
+			"from": [
+				2,
+				15,
+				6.8
+			],
+			"to": [
+				8,
+				16,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2,
+						0,
+						8,
+						1
+					],
+					"texture": "#parchment"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

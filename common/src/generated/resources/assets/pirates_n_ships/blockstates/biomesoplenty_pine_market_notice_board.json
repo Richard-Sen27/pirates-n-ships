@@ -1,0 +1,692 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_left",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_empty",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "empty",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_some",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "some",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_busy",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "busy",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_right",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_empty",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "empty",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_some",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "some",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_busy",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "busy",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_left",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_empty",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "empty",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_some",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "some",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_busy",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "busy",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_right",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_empty",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "empty",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_some",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "some",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_busy",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "load": "busy",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_left",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_empty",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "empty",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_some",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "some",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_busy",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "busy",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_empty",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "empty",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_some",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "some",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_busy",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "busy",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_left",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_empty",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "empty",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_some",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "some",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_busy",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "busy",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_empty",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "empty",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_some",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "some",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_busy",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "load": "busy",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_left",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_empty",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "empty",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_some",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "some",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_busy",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "busy",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_empty",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "empty",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_some",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "some",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_busy",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "busy",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_left",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_empty",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "empty",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_some",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "some",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_busy",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "busy",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_empty",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "empty",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_some",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "some",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_busy",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "load": "busy",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_left",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_empty",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "empty",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_some",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "some",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_left_busy",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "busy",
+        "part": "bottom_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_bottom_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_empty",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "empty",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_some",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "some",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_bottom_right_busy",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "busy",
+        "part": "bottom_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_left",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_empty",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "empty",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_some",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "some",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_left_busy",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "busy",
+        "part": "top_left"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_pine_market_notice_board_top_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_empty",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "empty",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_some",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "some",
+        "part": "top_right"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/market_notice_board_top_right_busy",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "load": "busy",
+        "part": "top_right"
+      }
+    }
+  ]
+}

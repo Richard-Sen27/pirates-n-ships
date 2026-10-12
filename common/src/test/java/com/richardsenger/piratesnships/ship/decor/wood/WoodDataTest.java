@@ -33,7 +33,7 @@ class WoodDataTest {
     /** The families WOOD1 converts; WOOD2-WOOD4 add theirs (WOOD2: the storage blocks, WOOD3: the fittings, WOOD4: the machines; legacy ids in {@link #LEGACY}). */
     private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "rope_railing", "oar_bench",
             "cargo_crate", "cargo_barrel", "pantry", "water_barrel", "harbor_desk", "sea_chest",
-            "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat",
+            "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "market_notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat",
             "boom", "helm", "capstan", "sail_winch", "bilge_pump", "cannon");
     /** The families with a legacy member: the wood whose member keeps the id {@code <suffix>} (docs/woods.md "Legacy ids"). */
     private static final Map<String, ShipWood> LEGACY = Map.ofEntries(
@@ -41,7 +41,7 @@ class WoodDataTest {
             Map.entry("water_barrel", ShipWood.SPRUCE), Map.entry("harbor_desk", ShipWood.DARK_OAK), Map.entry("sea_chest", ShipWood.DARK_OAK),
             Map.entry("nameplate", ShipWood.OAK),
             Map.entry("chart_table", ShipWood.DARK_OAK), Map.entry("sea_cot", ShipWood.DARK_OAK), Map.entry("stern_window", ShipWood.DARK_OAK),
-            Map.entry("notice_board", ShipWood.DARK_OAK), Map.entry("flagpole", ShipWood.SPRUCE), Map.entry("flag_pedestal", ShipWood.SPRUCE),
+            Map.entry("notice_board", ShipWood.DARK_OAK), Map.entry("market_notice_board", ShipWood.DARK_OAK), Map.entry("flagpole", ShipWood.SPRUCE), Map.entry("flag_pedestal", ShipWood.SPRUCE),
             Map.entry("crows_nest", ShipWood.SPRUCE), Map.entry("yard", ShipWood.SPRUCE), Map.entry("cleat", ShipWood.DARK_OAK), Map.entry("boom", ShipWood.SPRUCE),
             Map.entry("helm", ShipWood.DARK_OAK), Map.entry("capstan", ShipWood.DARK_OAK), Map.entry("sail_winch", ShipWood.SPRUCE),
             Map.entry("bilge_pump", ShipWood.DARK_OAK), Map.entry("cannon", ShipWood.DARK_OAK));

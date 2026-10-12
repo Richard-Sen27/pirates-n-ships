@@ -792,7 +792,8 @@ the main mast with ratline nets up to it from the rails, and swivel guns on the 
 Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
 straight out over the water with two ship berths, one on each side halfway out; where the water at its end is
 shallow, it runs on by one or two sections with two more berths each (STR7). Streets lead inland with cottages, a
-tavern and a shipwright's shed, and end in a small cobbled place. The harbor master's desk belongs to the village's
+tavern and a shipwright's shed, and end in a small cobbled place. A village's market square has the big market
+notice board beside its west stall (see [Law](#law), Notice board). The harbor master's desk belongs to the village's
 port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
@@ -1587,6 +1588,15 @@ go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.pris
   wanted, for how much, who placed it and when, and whether there is a bounty on you. To place one, type a name (an
   online player or anyone already on the board, or click a suggested name), enter at least 10 doubloons and press
   Place; the doubloons come out of your inventory. The list updates while it is open.
+- **Market notice board (NB2):** the big 2 wide × 2 high board on two posts that stands on a village's market square,
+  beside the west stall facing the stalls. Craft it from two notice boards of one wood with a paper between them, over two of that wood's logs
+  (board, paper, board; log, empty, log); every wood has one. To place it you need the 2×2 in front of you free: the
+  block you click becomes its bottom left and it runs to your right and up. Breaking any part takes the whole board and
+  drops it once. Use any part to open the same screen as the small board. Its look shows how much is posted: **empty**
+  (only pins and torn scraps), **some** (a few notices, one or more postings) or **busy** (papered over with a wanted
+  poster, from 5 postings). Postings are every bounty on the board plus the open quest offers of the port it stands
+  in (a board outside a port only counts bounties). It recounts every 10 seconds, at once when a bounty is placed at a
+  board, and when it is loaded. Server options `law.notice_board.busy_threshold` (5) and `refresh_ticks` (200).
 
 ### Shackles and prisoners
 - **Use shackles on a mob** that is at 25% health or less: it becomes your prisoner. It stops fighting and can't
@@ -1790,6 +1800,7 @@ on by default; vanilla weapons are untouched):
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
+| Market Notice Board | 2 notice boards, 1 paper, 2 logs (one wood) | The 2×2 board of a village's market square; the same screen as the notice board, and it looks empty, some or busy by how much is posted. Needs a free 2×2. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Name Board (was Nameplate) | any sign, 1 gold nugget (gives 3) | A framed oak plate fixed flat on the hull's side (no chains). Boards side by side on one face join into one board, and the ship's name is drawn once across the whole row, as large as the board's height allows: one board shows it small, three or more read from 30 to 60 blocks. Shows the name once the ship is assembled and named (name tag on the helm); renaming updates it within a second, disassembly clears it. Old nameplates load as boards. Server options `ship_identity.nameplate_shows_name`, `name_board_distance` (64, how far the name is drawn). |
 | Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
@@ -1987,7 +1998,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |
 | `flags` | Hoisting delay, flags following the wind (land and ship update intervals), banners as flags, stacked poles and the pole height limit. |
 | `cargo_trade` | Cargo weight on ships, weight factor and interval, the treasure map price; `containers`, `load_levels`, `market`, `market_backend`, `contracts`, `plunder`, `harbor_desks`, `port_fees`. |
-| `law` | Criminal score on/off, thresholds, decay, fines (`officer_fines`, cost per point), bounties (navy and player), plunder notices, ransom at a port; `severity` and `repeat_cooldown_seconds` per crime, `world` (crime detection, theft witnesses, navy hostility), `flags` (seeing flags, blown cover), `bounty` (officer turn-ins, notice boards), `pirate_turn_in` (rewards per kind). |
+| `law` | Criminal score on/off, thresholds, decay, fines (`officer_fines`, cost per point), bounties (navy and player), plunder notices, ransom at a port; `severity` and `repeat_cooldown_seconds` per crime, `world` (crime detection, theft witnesses, navy hostility), `flags` (seeing flags, blown cover), `bounty` (officer turn-ins, notice boards), `notice_board` (the market board's look: `busy_threshold`, `refresh_ticks`), `pirate_turn_in` (rewards per kind). |
 | `flags_brig` | False-colours detection (ranges, rates, crow's nest observers), the navy flag's minimum standing, NPC surrender, capturing players, prisoner escapes and interactions. |
 | `brig` | Capture threshold, leading distances and speed, cell size, escape chances (alone and in a cell under low crew morale), ransoms, player capture time. |
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |

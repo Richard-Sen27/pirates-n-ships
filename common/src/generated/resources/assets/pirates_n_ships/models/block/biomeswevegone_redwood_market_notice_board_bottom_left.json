@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_bottom_left",
+  "textures": {
+    "log": "biomeswevegone:block/redwood/stripped_log",
+    "log_top": "biomeswevegone:block/redwood/stripped_log_top",
+    "particle": "biomeswevegone:block/redwood/planks",
+    "planks": "biomeswevegone:block/redwood/planks"
+  }
+}

@@ -32,6 +32,15 @@ The {item:pirates_n_ships:notice_board}**notice board** lists every bounty, and 
 
 {recipe:notice_board}
 
+## The market board
+The {item:pirates_n_ships:market_notice_board}**market board** is the big notice board of a village square, two blocks wide and two tall. It shows the same notices as the small one.
+
+Read it from afar: bare pins mean a quiet port, a few papers mean work, and a board papered over with a wanted poster means trouble at sea. Bounties and the port's own offers count.
+
+> It needs a free square of two by two. Click where its bottom left should stand.
+
+{recipe:market_notice_board}
+
 ## Shackles
 illustration: shackles
 {item:pirates_n_ships:shackles}**Shackles** take a beaten foe alive: use them on a creature at a quarter of its health or less. Bosses cannot be taken.

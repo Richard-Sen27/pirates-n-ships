@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_top_right",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_wisteria_log",
+    "log_top": "regions_unexplored:block/stripped_wisteria_log_top",
+    "particle": "regions_unexplored:block/wisteria_planks",
+    "planks": "regions_unexplored:block/wisteria_planks"
+  }
+}

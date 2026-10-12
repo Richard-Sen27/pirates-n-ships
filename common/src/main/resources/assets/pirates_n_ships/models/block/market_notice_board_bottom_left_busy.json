@@ -1,0 +1,535 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"paper": "minecraft:block/white_terracotta",
+		"ink": "minecraft:block/black_terracotta",
+		"pin": "minecraft:block/red_concrete",
+		"seal": "minecraft:block/nether_wart_block",
+		"portrait": "minecraft:block/brown_terracotta",
+		"particle": "#parchment"
+	},
+	"elements": [
+		{
+			"name": "n3",
+			"from": [
+				5,
+				8,
+				6.8
+			],
+			"to": [
+				11,
+				14.5,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5,
+						1.5,
+						11,
+						8
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "n3_ink0",
+			"from": [
+				6,
+				12.5,
+				6.72
+			],
+			"to": [
+				10,
+				12.9,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						3.1,
+						10,
+						3.5
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n3_ink1",
+			"from": [
+				6,
+				11.3,
+				6.72
+			],
+			"to": [
+				9,
+				11.7,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						4.3,
+						9,
+						4.7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n3_ink2",
+			"from": [
+				6,
+				10.1,
+				6.72
+			],
+			"to": [
+				10,
+				10.5,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						5.5,
+						10,
+						5.9
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n3_pin",
+			"from": [
+				7.5,
+				13.3,
+				6.2
+			],
+			"to": [
+				8.5,
+				14.3,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						1.7,
+						8.5,
+						2.7
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						1.7,
+						6.8,
+						2.7
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						1.7,
+						6.8,
+						2.7
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						7.5,
+						6.2,
+						8.5,
+						6.8
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						7.5,
+						6.2,
+						8.5,
+						6.8
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "n3_seal",
+			"from": [
+				8.8,
+				8.6,
+				6.5
+			],
+			"to": [
+				10.2,
+				10,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						8.8,
+						6,
+						10.2,
+						7.4
+					],
+					"texture": "#seal"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						6,
+						6.8,
+						7.4
+					],
+					"texture": "#seal"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						6,
+						6.8,
+						7.4
+					],
+					"texture": "#seal"
+				},
+				"up": {
+					"uv": [
+						8.8,
+						6.5,
+						10.2,
+						6.8
+					],
+					"texture": "#seal"
+				},
+				"down": {
+					"uv": [
+						8.8,
+						6.5,
+						10.2,
+						6.8
+					],
+					"texture": "#seal"
+				}
+			}
+		},
+		{
+			"name": "n4",
+			"from": [
+				0,
+				7.5,
+				6.8
+			],
+			"to": [
+				2.5,
+				11,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						5,
+						2.5,
+						8.5
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "n4_ink0",
+			"from": [
+				0,
+				9,
+				6.72
+			],
+			"to": [
+				1.5,
+				9.4,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						6.6,
+						1.5,
+						7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n6",
+			"from": [
+				3.5,
+				12.5,
+				6.6
+			],
+			"to": [
+				8.5,
+				18,
+				6.8
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					6,
+					15.25,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						3.5,
+						10.5,
+						8.5,
+						16
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "n6_ink1",
+			"from": [
+				4.5,
+				14.8,
+				6.52
+			],
+			"to": [
+				6.5,
+				15.2,
+				6.52
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					6,
+					15.25,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						4.5,
+						0.8,
+						6.5,
+						1.2
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n6_ink2",
+			"from": [
+				4.5,
+				13.6,
+				6.52
+			],
+			"to": [
+				7.5,
+				14,
+				6.52
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					6,
+					15.25,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						4.5,
+						2,
+						7.5,
+						2.4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "wanted",
+			"from": [
+				0,
+				9.5,
+				6.4
+			],
+			"to": [
+				4,
+				16,
+				6.6
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						4,
+						6.5
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "wanted_portrait",
+			"from": [
+				0,
+				13.1,
+				6.32
+			],
+			"to": [
+				2,
+				16,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						2,
+						2.9
+					],
+					"texture": "#portrait"
+				}
+			}
+		},
+		{
+			"name": "wanted_ink0",
+			"from": [
+				0,
+				12,
+				6.32
+			],
+			"to": [
+				3,
+				12.4,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						3.6,
+						3,
+						4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "wanted_ink1",
+			"from": [
+				0,
+				10.9,
+				6.32
+			],
+			"to": [
+				2.2,
+				11.3,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						4.7,
+						2.2,
+						5.1
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "wanted_seal",
+			"from": [
+				1.6,
+				10,
+				6.1
+			],
+			"to": [
+				3.2,
+				11.6,
+				6.4
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						1.6,
+						4.4,
+						3.2,
+						6
+					],
+					"texture": "#seal"
+				},
+				"east": {
+					"uv": [
+						6.1,
+						4.4,
+						6.4,
+						6
+					],
+					"texture": "#seal"
+				},
+				"west": {
+					"uv": [
+						6.1,
+						4.4,
+						6.4,
+						6
+					],
+					"texture": "#seal"
+				},
+				"up": {
+					"uv": [
+						1.6,
+						6.1,
+						3.2,
+						6.4
+					],
+					"texture": "#seal"
+				},
+				"down": {
+					"uv": [
+						1.6,
+						6.1,
+						3.2,
+						6.4
+					],
+					"texture": "#seal"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

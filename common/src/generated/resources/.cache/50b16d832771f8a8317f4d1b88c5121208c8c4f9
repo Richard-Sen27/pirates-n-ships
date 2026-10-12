@@ -1,12 +1,11 @@
-// 1.21.1	2026-10-12T10:20:19.024278	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-12T17:58:58.330914	Tags for minecraft:block mod id vanilla
 2c8eb52bdd56b61e29cd0f2efc460d97112cd559 data/c/tags/block/chests.json
 6855f60c6e803939aafda3340d36fb30b062d510 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-0d95e5053da6f599309f5b4c29e111252d890146 data/minecraft/tags/block/mineable/axe.json
+207838e342d544c044fd2f2a738c28b1a9b2cfed data/minecraft/tags/block/mineable/axe.json
 4550189aa49462b1d44ac5536c5a3e5de79af3de data/minecraft/tags/block/mineable/pickaxe.json
 d203a86a191efea5b043ecfbd6050cc6e1731b62 data/pirates_n_ships/tags/block/barrel_blocking.json
 289c6bbb0194237bae7e5c6db340244091bcf83b data/pirates_n_ships/tags/block/bilge_pumps.json
-09612c9b483419b65039c633b7220a9d540d7a67 data/pirates_n_ships/tags/block/booms.json
 7c8f3b73e381bcb389abd6d86897bdccd2c083a1 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
 f0c0fd5b294bae55c56fb302527fa2460ce9caab data/pirates_n_ships/tags/block/cannons.json

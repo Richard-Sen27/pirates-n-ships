@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_bottom_right",
+  "textures": {
+    "log": "biomeswevegone:block/skyris/stripped_log",
+    "log_top": "biomeswevegone:block/skyris/stripped_log_top",
+    "particle": "biomeswevegone:block/skyris/planks",
+    "planks": "biomeswevegone:block/skyris/planks"
+  }
+}

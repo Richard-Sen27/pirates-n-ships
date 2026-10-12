@@ -6,7 +6,8 @@ awning of red and white wool, a counter of barrels and crates with produce (melo
 apples, a cask of fish on ice). Lantern posts at the corners, benches.
 
 LIFE1: two stalls (provisions west, the chandler east) with an aisle between them, two benches south-east and a
-free 2x2 spot at x 3..4, z 11..12 for the market notice board (NB2)."""
+free 2x2 spot at x 3..4, z 11..12 for the market notice board (NB2), which stands on its back row (z 12, anchor at
+x 4), the notices facing the stalls."""
 from _streets import corner_lanterns, lay, line, square_paving, square_verge
 from _style import PALETTE, bench
 from buildspec import Piece
@@ -50,6 +51,14 @@ p.put(9, 2, 7, "pirates_n_ships:rope_coil[facing=north,layers=2]")
 p.put(12, 1, 7, "barrel_up")
 p.put(12, 1, 8, "minecraft:white_wool")
 p.put(11, 3, 8, "lantern_hanging")
+
+# NB2: the market notice board in LIFE1's free spot, on z 12 with z 11 free in front of it, notices north towards the
+# stalls and the aisle; the viewer's left is east, so the anchor (bottom left) is at x 4 and the board runs west to x 3
+BOARD = "pirates_n_ships:market_notice_board[facing=north,part=%s]"
+p.put(4, 1, 12, BOARD % "bottom_left")
+p.put(3, 1, 12, BOARD % "bottom_right")
+p.put(4, 2, 12, BOARD % "top_left")
+p.put(3, 2, 12, BOARD % "top_right")
 
 corner_lanterns(p, 2, 4, S - 3, S - 3)
 bench(p, 10, 1, 12, "north")

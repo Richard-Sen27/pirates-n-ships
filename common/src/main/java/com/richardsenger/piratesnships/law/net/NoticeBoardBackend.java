@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.law.bounty.BountyBoard;
 import com.richardsenger.piratesnships.law.bounty.BountyTarget;
 import com.richardsenger.piratesnships.law.bounty.NoticeBoardListing;
 import com.richardsenger.piratesnships.law.client.ClientNoticeBoard;
+import com.richardsenger.piratesnships.law.content.MarketNoticeBoardBlock;
 import com.richardsenger.piratesnships.law.content.NoticeBoardBlock;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.trade.coin.Wallet;
@@ -18,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -141,6 +143,7 @@ public final class NoticeBoardBackend {
         BountyBoard.PlaceResult result = LawService.placeBounty(server, payer.getUUID(), payer.getName().getString(), target.get(), amount);
         if (!result.placed()) return fail(result.outcome().name().toLowerCase(Locale.ROOT));
         Wallet.take(payer, amount);
+        NoticeBoardPostings.changed(); // market boards show the new notice at once (NB2)
         payer.level().playSound(null, payer.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0f, 1.0f);
         long total = LawService.bountyTotal(server, target.get().id());
         return new NoticeBoardPayloads.Result(true, MSG + "placed",
@@ -173,9 +176,15 @@ public final class NoticeBoardBackend {
     private static boolean valid(ServerPlayer player, Session s, BlockPos board) {
         if (!LawConfig.NOTICE_BOARDS.get() || !s.board().equals(board)) return false;
         if (!player.isAlive() || player.level().dimension() != s.dimension()) return false;
-        if (!(player.level().getBlockState(board).getBlock() instanceof NoticeBoardBlock)) return false; // any wood (WOOD3)
+        if (!isBoard(player.level().getBlockState(board))) return false; // any wood (WOOD3)
         double reach = LawConfig.NOTICE_BOARD_REACH.get();
         return player.position().distanceToSqr(Vec3.atCenterOf(board)) <= reach * reach;
+    }
+
+    /** A notice board of any wood, small or the market board's anchor (NB2: the market board opens at its anchor). */
+    public static boolean isBoard(BlockState state) {
+        return state.getBlock() instanceof NoticeBoardBlock
+                || state.getBlock() instanceof MarketNoticeBoardBlock && state.getValue(MarketNoticeBoardBlock.PART).isAnchor();
     }
 
     private static void sendState(ServerPlayer player, Optional<NoticeBoardPayloads.Result> result) {

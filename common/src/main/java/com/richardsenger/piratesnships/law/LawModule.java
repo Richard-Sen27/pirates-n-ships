@@ -215,6 +215,6 @@ public final class LawModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class, PlunderNoticeGameTests.class,
-                BountyTurnInGameTests.class, NoticeBoardGameTests.class, FlagWorldGameTests.class);
+                BountyTurnInGameTests.class, NoticeBoardGameTests.class, MarketNoticeBoardGameTests.class, FlagWorldGameTests.class);
     }
 }

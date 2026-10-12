@@ -2498,6 +2498,31 @@
         "key": "pirates_n_ships.almanac.law.p5.heading"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p5.text1"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p5.text2"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p5.text3",
+        "color": "#2e6a24"
+       },
+       {
+        "type": "recipe",
+        "recipe": "pirates_n_ships:market_notice_board"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.law.p6.heading"
+       },
+       {
         "type": "illustration",
         "texture": "pirates_n_ships:textures/almanac/shackles.png",
         "x": 0.05,
@@ -2507,7 +2532,7 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.law.p5.text1"
+        "key": "pirates_n_ships.almanac.law.p6.text1"
        },
        {
         "type": "recipe",
@@ -2519,35 +2544,19 @@
       "elements": [
        {
         "type": "heading",
-        "key": "pirates_n_ships.almanac.law.p6.heading"
+        "key": "pirates_n_ships.almanac.law.p7.heading"
        },
        {
         "type": "list",
         "items": [
-         "pirates_n_ships.almanac.law.p6.list1_1",
-         "pirates_n_ships.almanac.law.p6.list1_2",
-         "pirates_n_ships.almanac.law.p6.list1_3"
+         "pirates_n_ships.almanac.law.p7.list1_1",
+         "pirates_n_ships.almanac.law.p7.list1_2",
+         "pirates_n_ships.almanac.law.p7.list1_3"
         ]
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.law.p6.text1"
-       }
-      ]
-     },
-     {
-      "elements": [
-       {
-        "type": "heading",
-        "key": "pirates_n_ships.almanac.law.p7.heading"
-       },
-       {
-        "type": "text",
         "key": "pirates_n_ships.almanac.law.p7.text1"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.law.p7.text2"
        }
       ]
      },
@@ -2556,6 +2565,22 @@
        {
         "type": "heading",
         "key": "pirates_n_ships.almanac.law.p8.heading"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p8.text1"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p8.text2"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.law.p9.heading"
        },
        {
         "type": "illustration",
@@ -2567,42 +2592,17 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.law.p8.text1"
+        "key": "pirates_n_ships.almanac.law.p9.text1"
        },
        {
         "type": "spotlight3d",
         "subject": "block",
         "id": "pirates_n_ships:brig_door",
-        "caption": "pirates_n_ships.almanac.law.p8.spotlight3d1"
+        "caption": "pirates_n_ships.almanac.law.p9.spotlight3d1"
        },
        {
         "type": "recipe",
         "recipe": "pirates_n_ships:brig_door"
-       }
-      ]
-     },
-     {
-      "elements": [
-       {
-        "type": "heading",
-        "key": "pirates_n_ships.almanac.law.p9.heading"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.law.p9.text1"
-       },
-       {
-        "type": "recipe",
-        "recipe": "pirates_n_ships:brig_bars"
-       },
-       {
-        "type": "recipe",
-        "recipe": "pirates_n_ships:brig_key"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.law.p9.text2",
-        "color": "#9a1c14"
        }
       ]
      },
@@ -2617,12 +2617,17 @@
         "key": "pirates_n_ships.almanac.law.p10.text1"
        },
        {
-        "type": "list",
-        "items": [
-         "pirates_n_ships.almanac.law.p10.list1_1",
-         "pirates_n_ships.almanac.law.p10.list1_2",
-         "pirates_n_ships.almanac.law.p10.list1_3"
-        ]
+        "type": "recipe",
+        "recipe": "pirates_n_ships:brig_bars"
+       },
+       {
+        "type": "recipe",
+        "recipe": "pirates_n_ships:brig_key"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p10.text2",
+        "color": "#9a1c14"
        }
       ]
      },
@@ -2637,8 +2642,12 @@
         "key": "pirates_n_ships.almanac.law.p11.text1"
        },
        {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.law.p11.text2"
+        "type": "list",
+        "items": [
+         "pirates_n_ships.almanac.law.p11.list1_1",
+         "pirates_n_ships.almanac.law.p11.list1_2",
+         "pirates_n_ships.almanac.law.p11.list1_3"
+        ]
        }
       ]
      },
@@ -2653,12 +2662,8 @@
         "key": "pirates_n_ships.almanac.law.p12.text1"
        },
        {
-        "type": "list",
-        "items": [
-         "pirates_n_ships.almanac.law.p12.list1_1",
-         "pirates_n_ships.almanac.law.p12.list1_2",
-         "pirates_n_ships.almanac.law.p12.list1_3"
-        ]
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p12.text2"
        }
       ]
      },
@@ -2669,16 +2674,36 @@
         "key": "pirates_n_ships.almanac.law.p13.heading"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.law.p13.text1"
+       },
+       {
         "type": "list",
         "items": [
          "pirates_n_ships.almanac.law.p13.list1_1",
          "pirates_n_ships.almanac.law.p13.list1_2",
          "pirates_n_ships.almanac.law.p13.list1_3"
         ]
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.law.p14.heading"
+       },
+       {
+        "type": "list",
+        "items": [
+         "pirates_n_ships.almanac.law.p14.list1_1",
+         "pirates_n_ships.almanac.law.p14.list1_2",
+         "pirates_n_ships.almanac.law.p14.list1_3"
+        ]
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.law.p13.text1"
+        "key": "pirates_n_ships.almanac.law.p14.text1"
        }
       ]
      }
@@ -3749,7 +3774,8 @@
          "pirates_n_ships.almanac.inventory.p5.list1_6",
          "pirates_n_ships.almanac.inventory.p5.list1_7",
          "pirates_n_ships.almanac.inventory.p5.list1_8",
-         "pirates_n_ships.almanac.inventory.p5.list1_9"
+         "pirates_n_ships.almanac.inventory.p5.list1_9",
+         "pirates_n_ships.almanac.inventory.p5.list1_10"
         ]
        }
       ]
@@ -4402,40 +4428,44 @@
   "pirates_n_ships.almanac.law.p3.text2": "A wanted man carries a bounty. Kill him and bring the {item:pirates_n_ships:bounty_proof}**bounty proof** to a navy officer; alive pays more.",
   "pirates_n_ships.almanac.law.p4.heading": "The notice board",
   "pirates_n_ships.almanac.law.p4.text1": "The {item:pirates_n_ships:notice_board}**notice board** lists every bounty, and places your own.",
-  "pirates_n_ships.almanac.law.p5.heading": "Shackles",
-  "pirates_n_ships.almanac.law.p5.text1": "{item:pirates_n_ships:shackles}**Shackles** take a beaten foe alive: use them on a creature at a quarter of its health or less. Bosses cannot be taken.",
-  "pirates_n_ships.almanac.law.p6.heading": "Prisoners",
-  "pirates_n_ships.almanac.law.p6.list1_1": "A prisoner stops fighting and never wanders off.",
-  "pirates_n_ships.almanac.law.p6.list1_2": "Use the shackles on it again to lead it, or to let go.",
-  "pirates_n_ships.almanac.law.p6.list1_3": "Left alone outside a cell, it tries to slip away.",
-  "pirates_n_ships.almanac.law.p6.text1": "Right-click a navy officer with an empty hand, prisoners close by, to turn them in or ransom them. Your shackles come back.",
-  "pirates_n_ships.almanac.law.p7.heading": "Press-ganging",
-  "pirates_n_ships.almanac.law.p7.text1": "Right-click a shackled sailor on your own ship with the {item:pirates_n_ships:captains_whistle}**captain's whistle** to press-gang him into your crew. He comes aboard sullen, and it is a crime.",
-  "pirates_n_ships.almanac.law.p7.text2": "Sneak-use your own prisoner with an empty hand to set him free.",
-  "pirates_n_ships.almanac.law.p8.heading": "The brig",
-  "pirates_n_ships.almanac.law.p8.text1": "A {item:pirates_n_ships:brig_door}**brig door** locks and unlocks with a {item:pirates_n_ships:brig_key}**brig key**. Locked, it opens only for whoever placed it.",
-  "pirates_n_ships.almanac.law.p8.spotlight3d1": "The brig door, shut",
-  "pirates_n_ships.almanac.law.p9.heading": "Bars and keys",
-  "pirates_n_ships.almanac.law.p9.text1": "{item:pirates_n_ships:brig_bars}**Brig bars** connect like iron bars. A prisoner shut in a small space by blocks, bars and a locked brig door is **in a cell** and stays put.",
-  "pirates_n_ships.almanac.law.p9.text2": "Any brig key opens any brig door. Keep keys away from your prisoners.",
-  "pirates_n_ships.almanac.law.p10.heading": "The three powers",
-  "pirates_n_ships.almanac.law.p10.text1": "The navy, the pirates and the villagers each remember you, from −100 to 100.",
-  "pirates_n_ships.almanac.law.p10.list1_1": "Killing pirates pleases the navy; plunder pleases the pirates; trade pleases the villagers.",
-  "pirates_n_ships.almanac.law.p10.list1_2": "Good standing means better prices. Villagers stop trading at −60.",
-  "pirates_n_ships.almanac.law.p10.list1_3": "Liked pirates leave you be until you strike first. At −60 the navy fires on sight.",
-  "pirates_n_ships.almanac.law.p11.heading": "Navy patrols",
-  "pirates_n_ships.almanac.law.p11.text1": "Navy patrols chase the Jolly Roger, false colours they see through, and wanted men.",
-  "pirates_n_ships.almanac.law.p11.text2": "Strike your colours and their guns fall silent. Outrun them and they give up.",
-  "pirates_n_ships.almanac.law.p12.heading": "Careers",
-  "pirates_n_ships.almanac.law.p12.text1": "You may climb only one ladder.",
-  "pirates_n_ships.almanac.law.p12.list1_1": "**The navy:** enlist with an officer once the navy trusts you, and rise from Midshipman to Admiral.",
-  "pirates_n_ships.almanac.law.p12.list1_2": "**Infamy:** plunder and taken ships make you a Buccaneer, a Dread Captain and a Pirate Lord.",
-  "pirates_n_ships.almanac.law.p12.list1_3": "**Letter of marque:** bought from a navy officer; pirates you kill earn prize money.",
-  "pirates_n_ships.almanac.law.p13.heading": "Rewards of rank",
-  "pirates_n_ships.almanac.law.p13.list1_1": "**Lieutenant:** the navy flag, free docking at navy outposts, and an officer's uniform and saber.",
-  "pirates_n_ships.almanac.law.p13.list1_2": "**Navy Captain:** a {item:pirates_n_ships:ship_commission}**ship commission** for an armed sloop, and cheaper ships at navy desks.",
-  "pirates_n_ships.almanac.law.p13.list1_3": "**Dread Captain:** a pirate sloop from a pirate island's fence.",
-  "pirates_n_ships.almanac.law.p13.text1": "Your title rides before your name in chat and over your head.",
+  "pirates_n_ships.almanac.law.p5.heading": "The market board",
+  "pirates_n_ships.almanac.law.p5.text1": "The {item:pirates_n_ships:market_notice_board}**market board** is the big notice board of a village square, two blocks wide and two tall. It shows the same notices as the small one.",
+  "pirates_n_ships.almanac.law.p5.text2": "Read it from afar: bare pins mean a quiet port, a few papers mean work, and a board papered over with a wanted poster means trouble at sea. Bounties and the port's own offers count.",
+  "pirates_n_ships.almanac.law.p5.text3": "It needs a free square of two by two. Click where its bottom left should stand.",
+  "pirates_n_ships.almanac.law.p6.heading": "Shackles",
+  "pirates_n_ships.almanac.law.p6.text1": "{item:pirates_n_ships:shackles}**Shackles** take a beaten foe alive: use them on a creature at a quarter of its health or less. Bosses cannot be taken.",
+  "pirates_n_ships.almanac.law.p7.heading": "Prisoners",
+  "pirates_n_ships.almanac.law.p7.list1_1": "A prisoner stops fighting and never wanders off.",
+  "pirates_n_ships.almanac.law.p7.list1_2": "Use the shackles on it again to lead it, or to let go.",
+  "pirates_n_ships.almanac.law.p7.list1_3": "Left alone outside a cell, it tries to slip away.",
+  "pirates_n_ships.almanac.law.p7.text1": "Right-click a navy officer with an empty hand, prisoners close by, to turn them in or ransom them. Your shackles come back.",
+  "pirates_n_ships.almanac.law.p8.heading": "Press-ganging",
+  "pirates_n_ships.almanac.law.p8.text1": "Right-click a shackled sailor on your own ship with the {item:pirates_n_ships:captains_whistle}**captain's whistle** to press-gang him into your crew. He comes aboard sullen, and it is a crime.",
+  "pirates_n_ships.almanac.law.p8.text2": "Sneak-use your own prisoner with an empty hand to set him free.",
+  "pirates_n_ships.almanac.law.p9.heading": "The brig",
+  "pirates_n_ships.almanac.law.p9.text1": "A {item:pirates_n_ships:brig_door}**brig door** locks and unlocks with a {item:pirates_n_ships:brig_key}**brig key**. Locked, it opens only for whoever placed it.",
+  "pirates_n_ships.almanac.law.p9.spotlight3d1": "The brig door, shut",
+  "pirates_n_ships.almanac.law.p10.heading": "Bars and keys",
+  "pirates_n_ships.almanac.law.p10.text1": "{item:pirates_n_ships:brig_bars}**Brig bars** connect like iron bars. A prisoner shut in a small space by blocks, bars and a locked brig door is **in a cell** and stays put.",
+  "pirates_n_ships.almanac.law.p10.text2": "Any brig key opens any brig door. Keep keys away from your prisoners.",
+  "pirates_n_ships.almanac.law.p11.heading": "The three powers",
+  "pirates_n_ships.almanac.law.p11.text1": "The navy, the pirates and the villagers each remember you, from −100 to 100.",
+  "pirates_n_ships.almanac.law.p11.list1_1": "Killing pirates pleases the navy; plunder pleases the pirates; trade pleases the villagers.",
+  "pirates_n_ships.almanac.law.p11.list1_2": "Good standing means better prices. Villagers stop trading at −60.",
+  "pirates_n_ships.almanac.law.p11.list1_3": "Liked pirates leave you be until you strike first. At −60 the navy fires on sight.",
+  "pirates_n_ships.almanac.law.p12.heading": "Navy patrols",
+  "pirates_n_ships.almanac.law.p12.text1": "Navy patrols chase the Jolly Roger, false colours they see through, and wanted men.",
+  "pirates_n_ships.almanac.law.p12.text2": "Strike your colours and their guns fall silent. Outrun them and they give up.",
+  "pirates_n_ships.almanac.law.p13.heading": "Careers",
+  "pirates_n_ships.almanac.law.p13.text1": "You may climb only one ladder.",
+  "pirates_n_ships.almanac.law.p13.list1_1": "**The navy:** enlist with an officer once the navy trusts you, and rise from Midshipman to Admiral.",
+  "pirates_n_ships.almanac.law.p13.list1_2": "**Infamy:** plunder and taken ships make you a Buccaneer, a Dread Captain and a Pirate Lord.",
+  "pirates_n_ships.almanac.law.p13.list1_3": "**Letter of marque:** bought from a navy officer; pirates you kill earn prize money.",
+  "pirates_n_ships.almanac.law.p14.heading": "Rewards of rank",
+  "pirates_n_ships.almanac.law.p14.list1_1": "**Lieutenant:** the navy flag, free docking at navy outposts, and an officer's uniform and saber.",
+  "pirates_n_ships.almanac.law.p14.list1_2": "**Navy Captain:** a {item:pirates_n_ships:ship_commission}**ship commission** for an armed sloop, and cheaper ships at navy desks.",
+  "pirates_n_ships.almanac.law.p14.list1_3": "**Dread Captain:** a pirate sloop from a pirate island's fence.",
+  "pirates_n_ships.almanac.law.p14.text1": "Your title rides before your name in chat and over your head.",
   "pirates_n_ships.almanac.combat.title": "Weapons and combat",
   "pirates_n_ships.almanac.combat.p1.heading": "Weapons and combat",
   "pirates_n_ships.almanac.combat.p1.text1": "Sooner or later someone will want your ship, your cargo or your head. Learn the blade, the pistol and the great guns before you need them.",
@@ -4629,12 +4659,13 @@
   "pirates_n_ships.almanac.inventory.p5.list1_1": "{item:pirates_n_ships:captains_whistle}**Captain's whistle:** orders the crew.",
   "pirates_n_ships.almanac.inventory.p5.list1_2": "{item:pirates_n_ships:harbor_desk}**Harbour master's desk:** a port's market.",
   "pirates_n_ships.almanac.inventory.p5.list1_3": "{item:pirates_n_ships:notice_board}**Notice board:** every bounty at sea. [[pirates_n_ships:law|Law]]",
-  "pirates_n_ships.almanac.inventory.p5.list1_4": "{item:pirates_n_ships:bounty_proof}**Bounty proof:** proof of a kill; hand it to a navy officer.",
-  "pirates_n_ships.almanac.inventory.p5.list1_5": "{item:pirates_n_ships:shackles}**Shackles:** take a beaten foe prisoner.",
-  "pirates_n_ships.almanac.inventory.p5.list1_6": "{item:pirates_n_ships:brig_bars}**Brig bars,** {item:pirates_n_ships:brig_door}**brig door,** {item:pirates_n_ships:brig_key}**brig key:** the brig.",
-  "pirates_n_ships.almanac.inventory.p5.list1_7": "{item:pirates_n_ships:merchant_flag}**Merchant flag,** {item:pirates_n_ships:navy_flag}**navy flag,** {item:pirates_n_ships:jolly_roger_flag}**Jolly Roger:** your colours.",
-  "pirates_n_ships.almanac.inventory.p5.list1_8": "{item:pirates_n_ships:ship_receipt}**Ship receipt:** a shipwright's promise.",
-  "pirates_n_ships.almanac.inventory.p5.list1_9": "{item:pirates_n_ships:ship_commission}**Ship commission:** an armed sloop earned by rank.",
+  "pirates_n_ships.almanac.inventory.p5.list1_4": "{item:pirates_n_ships:market_notice_board}**Market board:** the village square's big notice board. [[pirates_n_ships:law|Law]]",
+  "pirates_n_ships.almanac.inventory.p5.list1_5": "{item:pirates_n_ships:bounty_proof}**Bounty proof:** proof of a kill; hand it to a navy officer.",
+  "pirates_n_ships.almanac.inventory.p5.list1_6": "{item:pirates_n_ships:shackles}**Shackles:** take a beaten foe prisoner.",
+  "pirates_n_ships.almanac.inventory.p5.list1_7": "{item:pirates_n_ships:brig_bars}**Brig bars,** {item:pirates_n_ships:brig_door}**brig door,** {item:pirates_n_ships:brig_key}**brig key:** the brig.",
+  "pirates_n_ships.almanac.inventory.p5.list1_8": "{item:pirates_n_ships:merchant_flag}**Merchant flag,** {item:pirates_n_ships:navy_flag}**navy flag,** {item:pirates_n_ships:jolly_roger_flag}**Jolly Roger:** your colours.",
+  "pirates_n_ships.almanac.inventory.p5.list1_9": "{item:pirates_n_ships:ship_receipt}**Ship receipt:** a shipwright's promise.",
+  "pirates_n_ships.almanac.inventory.p5.list1_10": "{item:pirates_n_ships:ship_commission}**Ship commission:** an armed sloop earned by rank.",
   "pirates_n_ships.almanac.inventory.p6.heading": "Charts and tools",
   "pirates_n_ships.almanac.inventory.p6.list1_1": "{item:pirates_n_ships:captains_almanac}**Captain's Almanac:** this book.",
   "pirates_n_ships.almanac.inventory.p6.list1_2": "{item:pirates_n_ships:chart}**Chart:** your own map. [[pirates_n_ships:charts|Charts and navigation]]",

@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -49,13 +50,23 @@ public final class ChartShips {
             if (!isAboard && !owned) continue;
             // one place is always left for the ship under the viewer
             if (!isAboard && out.size() >= ChartStatePayload.MAX_SHIPS - 1) continue;
-            Vec3 c = ship.worldBounds().getCenter();
+            Vec3 c = centre(ship);
             out.add(new ChartShip(data.map(ShipData::name).orElse(""), (int) Math.floor(c.x), (int) Math.floor(c.z),
                     (float) heading(level, ship), isAboard));
         }
         // the ship under the viewer last, so it is drawn on top
         out.sort((a, b) -> Boolean.compare(a.aboard(), b.aboard()));
         return out;
+    }
+
+    /**
+     * The middle of the ship's blocks in the world: the centre of its plot bounds through the ship's pose (the world
+     * bounds lag a tick behind a fresh assembly).
+     */
+    public static Vec3 centre(ShipBody ship) {
+        BlockPos[] b = ship.plotBounds();
+        Vec3 plot = new Vec3((b[0].getX() + b[1].getX() + 1) / 2.0, (b[0].getY() + b[1].getY() + 1) / 2.0, (b[0].getZ() + b[1].getZ() + 1) / 2.0);
+        return ship.toWorld(plot);
     }
 
     /** Compass bearing of the bow in degrees (0 north, 90 east): the sailing runtime's bow, else the default frame. */

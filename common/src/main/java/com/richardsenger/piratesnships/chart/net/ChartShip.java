@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 /**
  * A ship drawn on the viewer's chart (work package CHART2): only the ship the viewer stands on ({@code aboard}) and
  * the viewer's own loaded ships, never another player's. {@code heading} is the bow's compass bearing in degrees
- * (0 north, 90 east); {@code (x, z)} the centre of the ship's bounds in blocks.
+ * (0 north, 90 east); {@code (x, z)} the middle of the ship's blocks.
  */
 public record ChartShip(String name, int x, int z, float heading, boolean aboard) {
 

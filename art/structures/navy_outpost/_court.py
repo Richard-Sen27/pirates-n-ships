@@ -168,7 +168,7 @@ def bend(left: bool):
     p.put(cx + (-1 if left else 1), 1, cz, stair_shape("spruce", "east" if left else "west"))
     p.put(cx + (-1 if left else 1), 0, cz, "cobble")
     connector(p, x_in, 0, 0, "lane_in", "north", "minecraft:gravel")
-    connector(p, out[0], 0, out[1], "lane_out", out_face, "minecraft:gravel")
+    connector(p, out[0], 0, out[1], "lane_straight_out", out_face, "minecraft:gravel")
     connector(p, b1[0], 0, b1[1], "building_out", b1[2], "minecraft:cobblestone")
     connector(p, b2[0], 0, b2[1], "building_out", b2[2], "minecraft:cobblestone")
     finish(p, f"a quarter bend of the lane ({side}), a lantern and a bench in the inside corner",
@@ -201,8 +201,8 @@ def fork(left: bool):
             p.put(c[0], 0, c[1], "cobble")
             p.put(c[0], 1, c[1], "pirates_n_ships:cargo_crate")
     connector(p, x, 0, 0, "lane_in", "north", "minecraft:gravel")
-    connector(p, x, 0, 10, "lane_out", "south", "minecraft:gravel")
-    connector(p, out[0], 0, out[1], "lane_out", out_face, "minecraft:gravel")
+    connector(p, x, 0, 10, "lane_straight_out", "south", "minecraft:gravel")
+    connector(p, out[0], 0, out[1], "lane_straight_out", out_face, "minecraft:gravel")
     connector(p, deco[0], 0, deco[1], "deco_out", deco[2], "minecraft:gravel")
     connector(p, bld[0], 0, bld[1], "building_out", bld[2], "minecraft:cobblestone")
     finish(p, f"a fork of the lane ({side}): on south, and a branch to the {out_face}",
@@ -227,8 +227,8 @@ def junction():
     p.fill(7, 1, 1, 7, 2, 1, "post")
     p.put(7, 3, 1, "lantern")
     connector(p, 5, 0, 0, "lane_in", "north", "minecraft:gravel")
-    connector(p, 0, 0, 4, "lane_out", "west", "minecraft:gravel")
-    connector(p, 10, 0, 4, "lane_out", "east", "minecraft:gravel")
+    connector(p, 0, 0, 4, "lane_straight_out", "west", "minecraft:gravel")
+    connector(p, 10, 0, 4, "lane_straight_out", "east", "minecraft:gravel")
     connector(p, 5, 0, 6, "building_out", "south", "minecraft:cobblestone")
     finish(p, "a T-junction of the lane with a lantern post and barrels",
            ["lane_in [5, 0, 0], lane_out [0, 0, 4] (west) and [10, 0, 4] (east), building_out [5, 0, 6]."])

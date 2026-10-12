@@ -10,6 +10,14 @@
       {
         "chunk_count": 6,
         "other_set": "pirates_n_ships:navy_outposts"
+      },
+      {
+        "chunk_count": 6,
+        "other_set": "minecraft:villages"
+      },
+      {
+        "chunk_count": 10,
+        "other_set": "minecraft:woodland_mansions"
       }
     ],
     "frequency": 1.0,

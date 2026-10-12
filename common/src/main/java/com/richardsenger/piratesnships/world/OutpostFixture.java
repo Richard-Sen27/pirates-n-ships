@@ -76,7 +76,9 @@ public final class OutpostFixture {
         BlockPos site = WorldGameTests.site(helper, sea).offset(-dx, 0, -dz);
         PortStructure.Terrain arena = WorldGameTests.terrain(helper);
         PortStructure.Terrain terrain = (x, z) -> arena.firstFree(x + dx, z + dz);
-        var generator = level.getChunkSource().getGenerator();
+        // STR8: the lanes' levels are read from the generator, so it stands at the shore's sand
+        var generator = com.richardsenger.piratesnships.world.structure.StructureLayoutGameTests.beachGenerator(level,
+                WorldGameTests.seaSurface(helper) + 1);
         Structure.GenerationContext context = new Structure.GenerationContext(level.registryAccess(), generator,
                 generator.getBiomeSource(), level.getChunkSource().randomState(), level.getStructureManager(), FIXTURE_SEED,
                 new ChunkPos(site), level, biome -> true);

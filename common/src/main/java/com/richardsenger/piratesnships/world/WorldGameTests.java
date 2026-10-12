@@ -97,7 +97,7 @@ public final class WorldGameTests {
         var pools = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
         int elements = 0;
         for (ResourceKey<StructureTemplatePool> key : List.of(VillageKeys.START, VillageKeys.STREETS,
-                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS, VillageKeys.STREETHEADS, VillageKeys.DECORATIONS)) {
+                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS, VillageKeys.STREETHEADS, VillageKeys.DECORATIONS, VillageKeys.STREETS_STRAIGHT)) {
             StructureTemplatePool pool = pools.get(key);
             helper.assertTrue(pool != null, "pool " + key.location() + " is loaded");
             for (StructurePoolElement element : pool.getShuffledTemplates(RandomSource.create(0L))) {
@@ -108,7 +108,7 @@ public final class WorldGameTests {
         }
         // the dock head, the pier and every weighted entry of the STR3 pools (weights expand)
         int expected = 1 + 1 + sum(VillageData.STREETS) + sum(VillageData.BUILDINGS) + sum(VillageData.TERMINATORS)
-                + sum(VillageData.STREETHEADS) + sum(VillageData.DECORATIONS);
+                + sum(VillageData.STREETHEADS) + sum(VillageData.DECORATIONS) + sum(VillageData.STREETS_STRAIGHT);
         helper.assertValueEqual(elements, expected, "pool elements");
         helper.assertValueEqual(pools.get(VillageKeys.STREETS).getFallback().unwrapKey(), Optional.of(VillageKeys.TERMINATORS),
                 "streets fall back to the terminators");
@@ -261,7 +261,10 @@ public final class WorldGameTests {
         return helper.absolutePos(new BlockPos(0, SEA_Y, 0)).getY();
     }
 
-    /** First free height (fluids ignored) of the test area's columns; columns outside count as high land. */
+    /**
+     * First free height (fluids ignored) of the test area's columns; a column outside reads as the nearest column on the
+     * area's edge (STR8: the sea runs on beyond the area, so a pier and the four blocks beyond its end lie over the sea).
+     */
     static PortStructure.Terrain terrain(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos a = helper.absolutePos(BlockPos.ZERO);
@@ -270,8 +273,9 @@ public final class WorldGameTests {
         int minZ = Math.min(a.getZ(), b.getZ()), maxZ = Math.max(a.getZ(), b.getZ());
         int top = b.getY();
         int bottom = a.getY();
-        return (x, z) -> {
-            if (x < minX || x > maxX || z < minZ || z > maxZ) return top + 100;
+        return (x0, z0) -> {
+            int x = Math.max(minX, Math.min(maxX, x0));
+            int z = Math.max(minZ, Math.min(maxZ, z0));
             for (int y = top; y >= bottom; y--) {
                 BlockState s = level.getBlockState(new BlockPos(x, y, z));
                 if (!s.isAir() && s.getFluidState().isEmpty()) return y + 1;
@@ -288,8 +292,13 @@ public final class WorldGameTests {
         return village;
     }
 
+    /**
+     * The generation context of a shore test: a flat generator whose surface is the shore's sand ({@code site} lies on
+     * the sea surface row, the sand's top row), so the jigsaw puts the streets on the sand and STR8's levelling
+     * ({@code TrailLevels}) reads the shore's height, not the GameTest world's.
+     */
     static Structure.GenerationContext context(ServerLevel level, BlockPos site) {
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        ChunkGenerator generator = com.richardsenger.piratesnships.world.structure.StructureLayoutGameTests.beachGenerator(level, site.getY() + 1);
         return new Structure.GenerationContext(level.registryAccess(), generator, generator.getBiomeSource(),
                 level.getChunkSource().randomState(), level.getStructureManager(), level.getSeed(), new ChunkPos(site), level, b -> true);
     }

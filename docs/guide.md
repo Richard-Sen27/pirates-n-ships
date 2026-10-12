@@ -739,7 +739,21 @@ start per cell, at least `separation` chunks from the next. Defaults (WG6, dense
 applies to chunks generated afterwards; structures already in the world stay where they are. `/locate` follows the
 configured grid. An existing config file keeps the values it has: delete the `spacing` and `separation` lines (or the
 file) to take new defaults. A navy outpost never starts within 8 chunks of a village's start, and a pirate camp never
-within 6 chunks of a village's or an outpost's, so two ports never stand wall to wall (STR6).
+within 6 chunks of a village's or an outpost's, so two ports never stand wall to wall (STR6). No port starts within 6
+chunks of a vanilla village's possible start or 10 of a woodland mansion's (STR8).
+
+Where a port goes (STR8): its pier, jetty or quay and four blocks beyond its end must lie over the sea; a site whose
+best side would put the pier on a sandbar or a spit tries its other sides, else no port generates there
+(`world.structures.piers_end_in_water`). Streets, trails and lanes are laid level, each piece at most one block above
+or below the one before it, on a bed cut into the ground or filled up beside it (`world.structures.level_trails`); a
+piece that would need more than four blocks of cutting or filling is left out with what hangs from it. Bends, forks and
+junctions always lead on straight, so two turns never follow each other. Huts, houses and decorations stand with their
+four corners on land, trails with their centre and four of five sample points. The fort's wall runs end with a tower
+on land where the coast turns away. The two cells in front of every door, on both sides, are cleared of ground, plants,
+snow and decorations when the port generates (`world.structures.clear_doors`). Ports keep off snowy and frozen shores
+(the biome tag `pirates_n_ships:cold_shores`: snowy beaches, frozen seas): each kind has a second structure for those
+shores (`seafarer_village_cold`, `pirate_island_cold`, `navy_outpost_cold`) on the same grid, which generates at only
+`cold_frequency` (0.1) of its sites.
 
 Chests in the ports' buildings hold loot (STR6), rolled when you first open them: household goods, food and a few
 doubloons in village houses, the warehouse and the chapel; rum, food and coins in taverns and inns; nails, rope, cloth
@@ -1860,7 +1874,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (`names`: ports show their proper names, off shows the readable ids; STR7: where a delivered or arriving ship appears, `ship_clearance`, `berth_depth`, `ship_spot_search`; new ports' `pier_extension` and `carve_berths`). |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings; STR8: `level_trails`, `clear_doors`, `piers_end_in_water`, and each port kind's `cold_frequency` for snowy and frozen shores), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (`names`: ports show their proper names, off shows the readable ids; STR7: where a delivered or arriving ship appears, `ship_clearance`, `berth_depth`, `ship_spot_search`; new ports' `pier_extension` and `carve_berths`). |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master` (also whether the island's fence fears pirates), `squad` (the outpost's watch), `kraken`, `shark`; monsters and the mod's people (`monsters_attack_npcs`, `crew_fight_monsters`, `crew_defence_range`, `sharks_attack_npcs`, `kraken_takes_crew`). |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |

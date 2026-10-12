@@ -66,4 +66,20 @@ class ShoreFacingTest {
         }
         assertEquals(Rotation.NONE, ShoreFacing.rotationFacing(Direction.NORTH));
     }
+
+    /** STR8: the ranked sides start with {@link ShoreFacing#choose}'s pick and hold every side with sea in reach. */
+    @Test
+    void rankedListsEverySideBestFirst() {
+        // a spit: sea to the south from 10 out (15 columns), to the north from 3 out (22), to the east from 6 out (19)
+        ShoreFacing.Probe spit = (dx, dz) -> dz <= -3 || dx >= 6 || dz >= 10;
+        java.util.List<ShoreFacing.Shore> ranked = ShoreFacing.ranked(spit, PROBE, MAX);
+        assertEquals(java.util.List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH),
+                ranked.stream().map(ShoreFacing.Shore::sea).toList());
+        assertEquals(ShoreFacing.choose(spit, PROBE, MAX).orElseThrow(), ranked.get(0));
+        // equal sides keep the order north, east, south, west
+        ShoreFacing.Probe island = (dx, dz) -> Math.abs(dx) >= 5 || Math.abs(dz) >= 5;
+        assertEquals(java.util.List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST),
+                ShoreFacing.ranked(island, PROBE, MAX).stream().map(ShoreFacing.Shore::sea).toList());
+        assertTrue(ShoreFacing.ranked((dx, dz) -> true, PROBE, MAX).isEmpty(), "a candidate in the water");
+    }
 }

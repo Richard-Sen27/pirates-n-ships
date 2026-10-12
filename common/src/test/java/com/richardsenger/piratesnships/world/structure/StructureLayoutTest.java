@@ -100,20 +100,39 @@ class StructureLayoutTest {
                 new LandFilter.Node(new BoundingBox(13, 0, -9, 21, 3, -1), 2, true),      // 3 a bend out to sea
                 new LandFilter.Node(new BoundingBox(22, 0, -2, 28, 6, 4), 3, true),       // 4 a hut on it, on land
                 new LandFilter.Node(new BoundingBox(13, 0, -3, 19, 3, 3), 2, true),       // 5 a trail across the waterline
-                new LandFilter.Node(new BoundingBox(20, 0, 7, 26, 6, 13), 2, true));      // 6 a hut inland
+                new LandFilter.Node(new BoundingBox(20, 0, 7, 26, 6, 13), 2, true, true), // 6 a hut inland
+                new LandFilter.Node(new BoundingBox(30, 0, -1, 36, 6, 5), 2, true, true), // 7 a hut with its seaward edge on the sea
+                new LandFilter.Node(new BoundingBox(40, 0, -1, 46, 3, 5), 2, true));      // 8 a trail with its seaward edge on the sea
         boolean[] keep = LandFilter.keep(nodes, sea);
-        assertArrayEquals(new boolean[] {true, true, true, false, false, true, true}, keep);
+        // STR8: the trail across the waterline has two of five samples wet (STR2 kept it); a building needs all four
+        // corners on land, a trail only four of its five samples
+        assertArrayEquals(new boolean[] {true, true, true, false, false, false, true, false, true}, keep);
     }
 
     @Test
-    void overWaterNeedsMostOfTheFootprint() {
+    void overWaterNeedsTheCentreAndFourOfFiveSamples() {
         LandFilter.Water sea = (x, z) -> z < 0;
         assertTrue(LandFilter.overWater(new BoundingBox(0, 0, -10, 6, 3, -4), sea));
         assertTrue(!LandFilter.overWater(new BoundingBox(0, 0, 0, 6, 3, 6), sea));
         // half in, half out: the centre and the two seaward corners are wet (3 of 5)
         assertTrue(LandFilter.overWater(new BoundingBox(0, 0, -4, 6, 3, 2), sea));
-        // mostly on land: only the two seaward corners are wet
-        assertTrue(!LandFilter.overWater(new BoundingBox(0, 0, -2, 6, 3, 8), sea));
+        // STR8: the two seaward samples wet (3 of 5 on land) is no longer enough
+        assertTrue(LandFilter.overWater(new BoundingBox(0, 0, -2, 6, 3, 8), sea));
+        assertEquals(2, LandFilter.wetSamples(new BoundingBox(0, 0, -2, 6, 3, 8), sea));
+        // only the outer edge row over the water: every sample is land
+        assertTrue(!LandFilter.overWater(new BoundingBox(0, 0, -1, 6, 3, 8), sea));
+        // a wet centre drops a piece whatever its corners say
+        LandFilter.Water pond = (x, z) -> x == 3 && z == 3;
+        assertTrue(LandFilter.overWater(new BoundingBox(0, 0, 0, 6, 3, 6), pond));
+    }
+
+    @Test
+    void aBuildingNeedsItsFourCornersOnLand() {
+        LandFilter.Water sea = (x, z) -> z < 0;
+        BoundingBox hut = new BoundingBox(0, 0, -1, 6, 5, 6);
+        assertTrue(LandFilter.onLand(new LandFilter.Node(hut, 0, true), sea), "as a trail: four samples and the centre on land");
+        assertTrue(!LandFilter.onLand(new LandFilter.Node(hut, 0, true, true), sea), "as a building: two corners over the sea");
+        assertTrue(LandFilter.onLand(new LandFilter.Node(new BoundingBox(0, 0, 0, 6, 5, 6), 0, true, true), sea));
     }
 
     @Test

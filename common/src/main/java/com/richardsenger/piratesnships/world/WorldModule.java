@@ -89,6 +89,7 @@ public final class WorldModule implements ModModule {
     @Override
     public void gatherData(DataContributions data) {
         ConnectionsProcessor.gather(data);
+        com.richardsenger.piratesnships.world.structure.PortStructureData.gatherShores(data);
         VillageData.gather(data);
         WreckLoot.gather(data);
         com.richardsenger.piratesnships.world.structure.StructureLoot.gather(data);

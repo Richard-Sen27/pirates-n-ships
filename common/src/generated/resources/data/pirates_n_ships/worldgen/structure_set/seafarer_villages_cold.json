@@ -1,0 +1,27 @@
+{
+  "placement": {
+    "type": "pirates_n_ships:configured_spread",
+    "config": "seafarer_village",
+    "exclusion_zone": {
+      "chunk_count": 6,
+      "other_set": "minecraft:villages"
+    },
+    "exclusion_zones": [
+      {
+        "chunk_count": 10,
+        "other_set": "minecraft:woodland_mansions"
+      }
+    ],
+    "frequency": 1.0,
+    "salt": 584103926,
+    "separation": 7,
+    "spacing": 20,
+    "spread_type": "linear"
+  },
+  "structures": [
+    {
+      "structure": "pirates_n_ships:seafarer_village_cold",
+      "weight": 1
+    }
+  ]
+}

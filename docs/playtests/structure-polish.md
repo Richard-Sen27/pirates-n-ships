@@ -1,4 +1,4 @@
-# Playtest: structure polish (work package STR6)
+# Playtest: structure polish (work packages STR6, STR8)
 
 The human, 2026-10-12: "Remove blocks in front of doors at generated structures (EVERY single structure has that
 problem). Replace half slabs at Leuchtturm with full blocks. Add loot. navy_post directly next to mansion, should not
@@ -56,6 +56,52 @@ Setup: `./gradlew :neoforge:runClient` (and once on Fabric, `./gradlew :fabric:r
    - **Expected:** no navy outpost starts within 8 chunks (128 blocks) of a village's start, so the fort's walls never
      stand against the village's houses; no pirate camp within 6 chunks of either. Report the coordinates of any pair
      that still touches.
+
+## STR8
+
+The human, 2026-10-12, after the first look at generated ports: "piers need to end in water, not on land. the paths
+are often very curly because of the original terrain, though a little bit is not bad, but now it is too much.
+entrances of sub structures are still blocked with one or multiple blocks. something like this should not happen
+either: a structure completely on water, without proper land below it. also, don't create the structures right in ice
+biomes, that doesn't fit and doesn't use anything, though a rare chance for that would still be good." His screenshots
+added: the village streets ride every bump (the kerb steps up and down), snow-topped ground stands before hut doors,
+an outpost wall run goes out over the sea with its end tower in the water, a navy post beside a woodland mansion.
+
+Headless coverage: `PortSiteGameTests` (a sandbar under the pier, an inlet beside a camp, a headland beside a fort, a
+bumpy rising shore, a snowy beach), `PortTerrainGameTests` (every port piece with a door on raised snowy ground; a
+village, an island and an outpost placed on a bumpy snowy shore: every trail level, every door walkable),
+`SpreadPlacementGameTests` (the cold sets share their kind's grid; no port near a vanilla village or mansion),
+`PortShoresDataTest` (JUnit over the generated tags, sets, processor lists and the straights pools). Use a **new**
+world.
+
+1. **Piers in the sea.** Find three or four villages, islands and outposts (`/locate structure
+   pirates_n_ships:seafarer_village`, `pirate_island`, `navy_outpost`; or fly a coast).
+   - **Expected:** every pier, jetty and quay runs out over open water and its end (and the extension sections, if
+     any) stands in water with at least four blocks of sea beyond it; none ends on a sandbar, a spit or the far shore
+     of a bay. Sites that do not allow it are skipped (the server log counts them: `STR8: ... site ... rejected`).
+2. **Level streets.** Walk the village's streets, the island's trails and the outpost's lanes on rising or uneven
+   ground.
+   - **Expected:** each street piece lies flat; from one piece to the next the street steps at most one block; the
+     ground beside a street is cut down or filled up to it (a road on a levelled bed), no kerbs stepping every few
+     blocks. Bends and forks always lead into a straight piece, so streets do not wriggle. Where the ground climbs
+     steeply, the street stops instead of cutting a deep trench (more than four blocks).
+3. **Doors, round two.** Walk through every door from both sides, especially huts and houses on slopes and in snow.
+   - **Expected:** the two cells in front of each door (and the one beside it where a path comes in at an angle) hold
+     no grass, dirt, sand, snow, leaves, barrel, lantern post or kerb; a thin snow layer on the ground is fine. Report
+     any blocked door with its F3 coordinates.
+4. **No piece over water.** Look at buildings near the shore.
+   - **Expected:** no hut, house, tent or decoration stands with a corner over the sea or on stilts of nothing; trails
+     that reached the waterline end there (a trail across a narrow inlet off its centre may still be boarded).
+5. **Wall runs on land.** Find an outpost on a point or headland.
+   - **Expected:** where the coast turns away, the wall run ends with a tower on land; no wall or tower stands in the
+     sea (the shore bastions may still reach into the water, as designed).
+6. **Not in ice biomes.** Fly a snowy coast (snowy beach, frozen ocean) and a warm coast.
+   - **Expected:** ports are rare on snowy and frozen shores (about one in ten sites there, `cold_frequency` 0.1) and
+     common on warm beaches. Set `world.structures.seafarer_village.cold_frequency = 0.0`, restart, fly to new snowy
+     coast: no village there.
+7. **No port beside vanilla villages and mansions.**
+   - **Expected:** no port starts within about 6 chunks (96 blocks) of a vanilla village or 10 chunks of a woodland
+     mansion.
 
 ## Open problems to watch
 

@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-12T10:20:19.029786	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-12T17:54:24.303249	Raw JSON (data): pirates_n_ships
 3ce816fd7340451afb94430040a861701c12caab data/pirates_n_ships/advancement/recipes/combat/aether_skyroot_cannon.json
 7f55ec7c85545983a22fefa4404ea406dcc1dfbe data/pirates_n_ships/advancement/recipes/combat/ars_nouveau_archwood_cannon.json
 b3ff43654026f2d72822850c74e5b6f7fed13162 data/pirates_n_ships/advancement/recipes/combat/biomesoplenty_dead_cannon.json
@@ -2822,7 +2822,7 @@ c78df41711ac0fa05feae1c869b3a93e5e1e1e85 data/pirates_n_ships/almanac/chapters/i
 74c402753cf9a118add456cd259e8e7d7dd0c696 data/pirates_n_ships/almanac/chapters/ledger.json
 4177e70dbd491b9aec384ee27f5751e59b80c113 data/pirates_n_ships/almanac/chapters/not_yet.json
 0f67372046bdf64db07a6593ac34d994b02f100b data/pirates_n_ships/almanac/chapters/provisions.json
-4f507b7403cdb7dc1ccf859a8c08a39da0867839 data/pirates_n_ships/almanac/chapters/sailing.json
+faeb344cafe7473cf97cfc7896ae71803660b90d data/pirates_n_ships/almanac/chapters/sailing.json
 cefcfc57bb9715a121da933b1a3b9a4a9f285d12 data/pirates_n_ships/almanac/chapters/ships.json
 e05406b093b3ac5b1e51c76b3da9015455212896 data/pirates_n_ships/almanac/chapters/trade.json
 c0a6111bebe674c9f043afd182b116d226e9ca4f data/pirates_n_ships/almanac/chapters/welcome.json

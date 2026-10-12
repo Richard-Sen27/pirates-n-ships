@@ -236,3 +236,26 @@ capstan), standing on the deck, the ship HUD on (`ships.ship_status_hud = true`)
 
 Tell us: does the label ever lag behind the anchor long enough to mislead you (it can trail by up to a second, and
 during the drop's 2 s of work it still reads "Drop anchor" because the anchor has not gone yet)?
+
+# Playtest: the anchor's pose (work package GR4)
+
+The anchor no longer hangs upright in every phase: it leans along its chain while it falls, lies on the bottom toward
+the ship with a fluke dug in while it holds, and comes upright again as it is weighed (render
+`art/renders/anchor_poses.png`). The chain is shackled to the ring in every pose.
+
+## Steps
+
+1. **Drop under way.** Sail at a fair speed over water about 6 deep and let go at the capstan; dive in and watch.
+   - **Expected:** as the ship sails on, the falling anchor leans with its shank along the chain toward the hawse
+     (never flatter than 60° off upright), the arms across the ship.
+2. **On the bottom.** Swim down to it once it lands (bring a water breathing potion or a door).
+   - **Expected:** it lies with the shank along the seabed, the ring end toward the ship, the arms upright with one
+     fluke buried and one in the water, the stock flat; it turns over into that pose within a fraction of a second,
+     no snap. When the chain comes taut the shank lifts toward it a little (at most about 30°).
+3. **Raise.** Weigh the anchor at the capstan and stay under water.
+   - **Expected:** it slides toward the ship lying down, then breaks out and turns upright as it rises along the
+     chain, hanging under the hawse as it is stowed.
+4. **Chain on the ring.** In each phase look where the chain meets the anchor.
+   - **Expected:** always at the ring, never at the crown or floating beside the anchor.
+5. **Stowed.** Watch the stowed anchor at the hull side while the ship turns and rolls.
+   - **Expected:** unchanged from before: upright, moving with the hull.

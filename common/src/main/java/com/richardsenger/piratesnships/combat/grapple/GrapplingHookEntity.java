@@ -69,6 +69,10 @@ import java.util.UUID;
  * hook on a railing or railing gate ({@code #pirates_n_ships:grapple_latches}, {@code grapple.latches_hold}), and a haul
  * pulling harder than {@code grapple.railing_break_force} tears that block out and lets the hook go.
  *
+ * <p><b>Pose</b> (GR4, {@link HookPose}): in flight the yaw and pitch follow the velocity exactly ({@link #updateRotation});
+ * latching stores the pose of the face it bit ({@link #pose()}, {@link #latchRotation()}, synched, in the frame of that
+ * block), so every client draws the same; free, it falls point down.
+ *
  * <p>The thrown item travels with the hook ({@link #getItem()}) and goes back to the thrower when the hook is released,
  * unless a snapped rope loses it ({@code rope_breaks_lose_hook}). Hooks are not saved with the chunk: a logout
  * releases them first ({@link GrappleService#onLogout}).

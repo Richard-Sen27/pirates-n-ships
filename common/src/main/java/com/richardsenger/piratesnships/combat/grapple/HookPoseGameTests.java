@@ -80,11 +80,17 @@ public final class HookPoseGameTests {
     public static void inFlightTheHookPointsAlongItsVelocity(GameTestHelper h) {
         floor(h);
         Player p = thrower(h, new Vec3(1.5, 1, 1.5));
-        GrapplingHookEntity g = launch(h, p, new Vec3(1.5, 2.5, 1.5), new Vec3(0.3, 0.9, 0.2));
+        // a steep lob that stays inside the test's barrier case (9 high): up 4 blocks, over the top and down again
+        GrapplingHookEntity g = launch(h, p, new Vec3(1.5, 1.5, 4.5), new Vec3(0.1, 0.4, 0.0));
+        Vector3f[] before = {null};
         int[] checked = {0};
         boolean[] sawDown = {false};
+        String[] end = {"still flying"};
         h.onEachTick(() -> {
             if (g.isRemoved() || g.state() != GrapplingHookEntity.State.FLYING) {
+                if (end[0].equals("still flying")) {
+                    end[0] = (g.isRemoved() ? "removed" : g.state().name()) + " at " + h.relativeVec(g.position()) + " after " + g.tickCount + " ticks";
+                }
                 return;
             }
             Vec3 vel = g.getDeltaMovement();
@@ -93,15 +99,19 @@ public final class HookPoseGameTests {
             }
             Vector3f point = HookPose.point(g.poseRotation(1.0f));
             Vector3f dir = new Vector3f((float) vel.x, (float) vel.y, (float) vel.z).normalize();
-            // the angles are set from the velocity before this tick's drag and gravity: near the top of the arc, where
-            // gravity turns the flight fastest, that is up to about 4 degrees
-            h.assertTrue(point.dot(dir) > Math.cos(Math.toRadians(8.0)), "tick " + g.tickCount + ": points " + v(point) + ", flies " + v(dir));
+            Vector3f prev = before[0];
+            before[0] = dir;
+            // the angles are set from the velocity at the start of the hook's tick, before its drag and gravity: the
+            // hook points along this tick's velocity or the last one's (the test may run before or after the hook ticks)
+            float off = Math.min(point.angle(dir), prev == null ? Float.MAX_VALUE : point.angle(prev));
+            h.assertTrue(off < Math.toRadians(2.0), "tick " + g.tickCount + ": points " + v(point) + ", flies " + v(dir)
+                    + (prev == null ? "" : ", flew " + v(prev)));
             h.assertTrue(g.pose() == HookPose.Kind.FLYING, "pose " + g.pose());
             sawDown[0] |= dir.y < -0.3f;
             checked[0]++;
         });
         h.succeedWhen(() -> {
-            h.assertTrue(checked[0] >= 15 && sawDown[0], "checked " + checked[0] + " flying ticks, coming down: " + sawDown[0]);
+            h.assertTrue(checked[0] >= 15 && sawDown[0], "checked " + checked[0] + " flying ticks, coming down: " + sawDown[0] + "; the hook: " + end[0]);
             g.release(GrappleRules.Release.NONE);
         });
     }

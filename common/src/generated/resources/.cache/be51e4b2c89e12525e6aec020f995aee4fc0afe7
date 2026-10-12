@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-12T10:05:31.834528	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-12T17:54:26.304515	Raw JSON (data): pirates_n_ships
 3ce816fd7340451afb94430040a861701c12caab data/pirates_n_ships/advancement/recipes/combat/aether_skyroot_cannon.json
 7f55ec7c85545983a22fefa4404ea406dcc1dfbe data/pirates_n_ships/advancement/recipes/combat/ars_nouveau_archwood_cannon.json
 b3ff43654026f2d72822850c74e5b6f7fed13162 data/pirates_n_ships/advancement/recipes/combat/biomesoplenty_dead_cannon.json
@@ -2717,7 +2717,7 @@ c45890db7f4b56595c98a396446ea6845216925b data/pirates_n_ships/advancement/recipe
 287172fc3427b25ab99867c00935619e1b2d44f0 data/pirates_n_ships/advancement/recipes/transportation/undergarden_wigglewood_yard.json
 8c9e7b09ab54649f0bd28cf5de40349481d7f315 data/pirates_n_ships/almanac/chapters/charts.json
 ad112bfe273bb41cbb29eaa05e28d1c596cfa823 data/pirates_n_ships/almanac/chapters/combat.json
-8200700bea4063054ba56dc404104f3a64ff5500 data/pirates_n_ships/almanac/chapters/crew.json
+eafd15de8d6b14ddedeb7790e0d8e3802d16ea19 data/pirates_n_ships/almanac/chapters/crew.json
 bc3e088fa3b0f1a8711cac2ab1dd7d596b710a42 data/pirates_n_ships/almanac/chapters/first_ship.json
 3b99003148e87b6560c67db1f52594478721d4d8 data/pirates_n_ships/almanac/chapters/flags.json
 c78df41711ac0fa05feae1c869b3a93e5e1e1e85 data/pirates_n_ships/almanac/chapters/inventory.json
@@ -2727,7 +2727,7 @@ c78df41711ac0fa05feae1c869b3a93e5e1e1e85 data/pirates_n_ships/almanac/chapters/i
 0f67372046bdf64db07a6593ac34d994b02f100b data/pirates_n_ships/almanac/chapters/provisions.json
 4f507b7403cdb7dc1ccf859a8c08a39da0867839 data/pirates_n_ships/almanac/chapters/sailing.json
 cefcfc57bb9715a121da933b1a3b9a4a9f285d12 data/pirates_n_ships/almanac/chapters/ships.json
-e05406b093b3ac5b1e51c76b3da9015455212896 data/pirates_n_ships/almanac/chapters/trade.json
+527c6155f3e51604c9b25a35ec83bd7ca312f15c data/pirates_n_ships/almanac/chapters/trade.json
 c0a6111bebe674c9f043afd182b116d226e9ca4f data/pirates_n_ships/almanac/chapters/welcome.json
 8380d08384163ceeaf6750c4d47080504be92f86 data/pirates_n_ships/loot_table/blocks/aether_skyroot_bilge_pump.json
 f94a6d7d4b9ac38d8e11f27893af1eb781197ce2 data/pirates_n_ships/loot_table/blocks/aether_skyroot_bulwark.json

@@ -5781,7 +5781,7 @@
   "pirates_n_ships.configuration.grapple.slide.slide_speed": "Slide Speed",
   "pirates_n_ships.configuration.grapple.slide.slide_speed.tooltip": "Start speed of the slide in blocks per tick, toward the rope's lower end",
   "pirates_n_ships.configuration.grapple.swing": "Swing",
-  "pirates_n_ships.configuration.grapple.swing.tooltip": "A hand-held rope holds you like a liana (GR7): off the ground with the latched hook above your hand you get no farther from the hook than the rope's length, gravity swings you below it and walking pushes the swing. Holding another item (or sneaking) lets go. Off = in the air the rope does not hold you",
+  "pirates_n_ships.configuration.grapple.swing.tooltip": "A hand-held rope holds you like a liana (GR7): off the ground with the latched hook above your hand you get no farther from the hook than the rope's length, gravity swings you below it and walking pushes the swing; each use pulls you up a step (rope_climb_step). Holding another item (or sneaking) lets go. Off = the rope never holds you, and using your own rope does not climb it",
   "pirates_n_ships.configuration.grapple.swing_damping": "Swing Damping",
   "pirates_n_ships.configuration.grapple.swing_damping.tooltip": "Share of the swing's speed lost every tick while you hang on the rope (GR7): 0.03 lets a swing die out in about 5 seconds, 0 swings on for a long time",
   "pirates_n_ships.configuration.grapple.swing_push": "Swing Push",

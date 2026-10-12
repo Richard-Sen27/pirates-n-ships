@@ -103,6 +103,13 @@ public final class MobConfig {
     public static final ConfigSection HARBOR_MASTER = S.section("harbor_master",
             "The harbor master behind every port's harbor desk: talking to him opens the desk");
 
+    /**
+     * The {@code mobs.villagers} section (LIFE1): the villager's {@code enabled} toggle is declared here with the other
+     * types', the rest by {@code mob.village.VillagerConfig}.
+     */
+    public static final ConfigSection VILLAGERS = S.section("villagers",
+            "The people of the seafarer villages: roles, outfits, daily routines, the market stalls");
+
     /** The {@code mobs.squad} section (MOB2), filled by {@code mob.squad.SquadConfig}. */
     public static final ConfigSection SQUAD = S.section("squad",
             "Navy officers leading squads of their outpost's garrison on patrol");
@@ -114,6 +121,7 @@ public final class MobConfig {
             ConfigSection t = switch (kind) {
                 case PIRATE_CAPTAIN -> CAPTAIN;
                 case HARBOR_MASTER -> HARBOR_MASTER;
+                case VILLAGER -> VILLAGERS;
                 default -> S.section(kind.id(), "The " + kind.id().replace('_', ' '));
             };
             ENABLED.put(kind, t.bool("enabled", true,

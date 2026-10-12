@@ -11,7 +11,8 @@ import java.util.Optional;
  * live in {@code MobContent}, the per-type config in {@code MobConfig}. The pirate captain (BOS1, §15) is a named pirate
  * of the island's captain's hut ({@code mob.captain}); since ART6 he has his own look on the crew rig ({@link #artId()}).
  * The harbor master (PRT1a, §10.3) stands behind the harbor desks ({@code mob.harbor}): the sailor's geometry with his
- * own coat-and-hat texture ({@link #geoId()}).
+ * own coat-and-hat texture ({@link #geoId()}). The villager (LIFE1, §10.1) is the sailor's geometry with a texture per
+ * role ({@code mob.village}).
  */
 public enum MobKind {
     PIRATE(MobFaction.PIRATE, DuelistSkill.PIRATE),
@@ -20,7 +21,12 @@ public enum MobKind {
     NAVY_OFFICER(MobFaction.NAVY, DuelistSkill.NAVY_OFFICER),
     PIRATE_CAPTAIN(MobFaction.PIRATE, DuelistSkill.PIRATE_CAPTAIN),
     /** PRT1a: the harbor master behind every port's desk ({@code mob.harbor}); a sailor in a coat and hat. */
-    HARBOR_MASTER(MobFaction.CIVILIAN, null);
+    HARBOR_MASTER(MobFaction.CIVILIAN, null),
+    /**
+     * LIFE1: the people of the seafarer villages ({@code mob.village}): a sailor with a role and its outfit, drawn on the
+     * sailor's geometry with the role's texture ({@code VillageRole#textureName}; {@code villager} for the plain one).
+     */
+    VILLAGER(MobFaction.CIVILIAN, null);
 
     private final MobFaction faction;
     private final @Nullable DuelistSkill defaultSkill;
@@ -49,7 +55,7 @@ public enum MobKind {
      * harbor master, who is a texture variant on the sailor's geometry.
      */
     public String geoId() {
-        return this == HARBOR_MASTER ? SAILOR.id() : artId();
+        return this == HARBOR_MASTER || this == VILLAGER ? SAILOR.id() : artId();
     }
 
     public MobFaction faction() {

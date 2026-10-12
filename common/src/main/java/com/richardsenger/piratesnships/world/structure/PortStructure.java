@@ -569,6 +569,8 @@ public final class PortStructure extends Structure {
         if (portKind == PortKind.NAVY_OUTPOST) Garrison.place(level, chunkBox, pieces);
         if (portKind == PortKind.PIRATE_ISLAND) IslandCaptains.place(level, chunkBox, pieces, port);
         com.richardsenger.piratesnships.mob.harbor.HarborMasters.place(level, chunkBox, pieces, port);
+        // LIFE1: the village's people, each in its building
+        com.richardsenger.piratesnships.mob.village.Residents.place(level, chunkBox, pieces, port);
         // STR8: last, so the beard's fill, the surface and every piece of this chunk are in place
         if (WorldConfig.STRUCTURE_CLEAR_DOORS.get()) DoorClearing.clear(level, chunkBox, pieces.pieces(), server.getStructureManager());
     }

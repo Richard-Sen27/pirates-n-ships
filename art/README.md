@@ -2468,6 +2468,52 @@ either).
   `renders/officers_set_worn.png` (bicorne, coat with tails, breeches, boots; standing from five sides and walking),
   `renders/officers_clothing.png` (coat, breeches and boots items: front, three-quarter, side, back).
 
+### Village people's outfits (LIFE1)
+
+The villagers of the seafarer villages (`mob/village`) are texture variants on the sailor's model, one sheet per
+role, like the harbor master (PRT1a): `textures/entity/villager.png` (the plain villager) and
+`textures/entity/villager_<role>.png` for `fishwife`, `net_mender`, `dockhand`, `shipwright`, `innkeeper`,
+`lamplighter` and `vendor`, all new. They are painted by `art/models/entity/seafarer_skins.js` (`SF.villagerSheet(role)`,
+registered in `SF.VARIANTS`) and written with `node tools/paint_seafarer_skins.js villager villager_fishwife ...`; the
+sailor's and the harbor master's sheets stay byte-identical (`--check sailor harbor_master`).
+
+Each sheet is built as an outfit of three layers, the names of `mob.village.VillagerOutfit`: a **hat** on the cap's
+cubes (`SF.villagerHat`: `felt_cap`, `head_scarf` checked blue and white, `knitted_cap` green and ribbed,
+`grey_bandana`, `leather_cap` with a brass rivet, `peaked_cap` with a brass badge, `straw_hat` with a green band;
+`none` leaves the cap regions transparent so the innkeeper is bare-headed and balding), a **coat** (the brown or red
+waistcoat on the base layer, the fishwife's knitted shawl on the jacket layer and sleeve tops, the shipwright's and
+the women's aprons on the body and legs fronts via `SF.apron`, the lamplighter's long grey coat on the jacket, sleeve
+and trousers layers like the harbor master's frock coat) and the **clothing** under it (`SF.villagerBase`: face and
+hair, shirt or bodice, sleeves rolled to a given row, breeches with stockings, trousers, or a skirt flared on the
+trousers layer for the fishwife and the vendor). The sailor's detail cubes (neckerchief, rope belt, buckles, cuffs, the
+slop hems) are recoloured through the patch list; a `null` patch hides its cubes (the shipwright and the innkeeper have
+no neckerchief).
+
+| role | hat | coat | clothing | face |
+|---|---|---|---|---|
+| villager | brown felt cap | brown waistcoat, brass buttons | linen shirt, brown breeches, grey stockings | brown hair, beard |
+| fishwife | blue-and-white checked scarf | rust knitted shawl, white apron | linen sleeves rolled to the elbow, blue skirt | auburn hair, long |
+| net mender | green knitted cap | none | oatmeal smock, rope belt, canvas trousers | grey hair and beard, tanned |
+| dockhand | grey bandana | none | white shirt rolled to the shoulder, red neckerchief, canvas slops, red sash | black hair, tanned |
+| shipwright | leather cap | leather bib apron dusted with sawdust | blue-grey work shirt, breeches, stockings | ginger hair and beard |
+| innkeeper | none (balding) | red waistcoat, long white bar apron | white shirt, brown breeches, white stockings | black moustache |
+| lamplighter | grey peaked cap, brass badge | long grey coat with brass buttons and skirts | dark breeches | black hair |
+| vendor | straw hat, green band | green-and-white striped apron | green dress, elbow sleeves | dark hair, long |
+
+A hired villager keeps its sheet: `CrewMemberModel` draws the crew member with the sailor's geometry and the role's
+texture while its synced `outfit` names a role. No code turns a bone for the villagers: the sleep pose on a bed is the
+rig's `sleep` clip with the body held along the bed (`ResidentRoutineGoal.lyingSpot`, on the mattress where the two
+halves meet, facing the foot as in a hammock), the dusk `sit` the rig's clip on an invisible `BenchSeat` whose rider's
+feet hang 12 px under the stair's top.
+
+**The market square's stalls (LIFE1).** `art/structures/village/street_square_market.py` now holds two stalls under
+striped awnings (posts at x 2/5 and 9/12, z 6/9): the provisions stall on the west side (counter at x 5, the vendor at
+(4, 1, 7) facing east) and the chandler on the east (counter at x 9, the vendor at (10, 1, 8) facing west), an aisle
+x 6..8 from the street to the south building, two benches at (10..11, 1, 12) facing north and a free paved 2×2 spot at
+x 3..4, z 11..12 (open to y 3) for the market notice board (NB2). Rebuilt through the lab (`--port 8778`), 275 blocks;
+render `art/renders/structures/village/street_square_market.png`. The other pieces kept their blocks: the villagers'
+stations, beds and seats are read off their sources (`mob/village/ResidentPosts`).
+
 ### Shark rig (M4)
 
 The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 shipped a script placeholder

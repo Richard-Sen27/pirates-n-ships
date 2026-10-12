@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.crew.npc.client;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.mob.village.VillageRole;
+import com.richardsenger.piratesnships.mob.village.VillagerOutfit;
 import com.richardsenger.piratesnships.mob.client.HumanoidGeoModel;
 import com.richardsenger.piratesnships.mob.client.MeleeTelegraph;
 import net.minecraft.resources.ResourceLocation;
@@ -30,8 +33,27 @@ public class CrewMemberModel extends HumanoidGeoModel<CrewMember> {
     /** Degrees the sleeper's head is tilted towards the chest (raised off the canvas). */
     public static final float SLEEP_HEAD_RAISE = 15f;
 
+    /** LIFE1: a hired villager keeps its outfit: the role's texture on the sailor's geometry ({@code VillagerOutfit}). */
+    public static final ResourceLocation OUTFIT_GEO = Constants.id("geo/" + VillagerOutfit.geometry() + ".geo.json");
+
     public CrewMemberModel() {
         super(GEO, TEXTURE, ANIMATIONS);
+    }
+
+    /** The texture of the outfit {@code roleId} ({@link CrewMember#outfit()}), or null for the crew's own look. */
+    public static ResourceLocation outfitTexture(String roleId) {
+        return VillageRole.byId(roleId).map(r -> entityTexture(VillagerOutfit.of(r).texture())).orElse(null);
+    }
+
+    @Override
+    public ResourceLocation getModelResource(CrewMember animatable) {
+        return outfitTexture(animatable.outfit()) != null ? OUTFIT_GEO : super.getModelResource(animatable);
+    }
+
+    @Override
+    public ResourceLocation getTextureResource(CrewMember animatable) {
+        ResourceLocation outfit = outfitTexture(animatable.outfit());
+        return outfit != null ? outfit : super.getTextureResource(animatable);
     }
 
     @Override

@@ -17,7 +17,8 @@ import java.util.List;
  * STR6 (the human, 2026-10-12: "remove blocks in front of doors at generated structures, EVERY single structure has
  * that problem"): every door of a placed structure can be walked through. On both sides of a door (one step along its
  * {@code facing} and one step against it) the door's two rows must be free of collision boxes; a step (a block whose
- * collision box reaches at most half a block, a bottom slab or stair) on the lower row moves the two rows one up. A
+ * collision box reaches at most half a block, a bottom slab) on the lower row moves the two rows one up; a flat box (a
+ * carpet) counts as free. A
  * cobweb has no collision box but holds a walker fast, so it counts as blocking. The same rule as
  * {@code tools/check_structures.py}'s door check on the templates, here on the placed blocks, so a neighbour piece, a
  * decoration or a processor in front of a door is caught as well. Used by the layout GameTests' placed tests
@@ -67,14 +68,19 @@ public final class DoorAccess {
         return null;
     }
 
-    /** Whether a walker passes through {@code state}: no collision box, and not a cobweb. */
+    /** A collision box at most this high (a carpet, 1/16) is walked over as if it were not there. */
+    static final double FLAT = 0.125;
+
+    /** Whether a walker passes through {@code state}: no collision box (or a flat one, a carpet), and not a cobweb. */
     public static boolean passable(BlockGetter level, BlockPos pos, BlockState state) {
-        return !state.is(Blocks.COBWEB) && state.getCollisionShape(level, pos).isEmpty();
+        if (state.is(Blocks.COBWEB)) return false;
+        VoxelShape shape = state.getCollisionShape(level, pos);
+        return shape.isEmpty() || shape.max(Direction.Axis.Y) <= FLAT;
     }
 
-    /** A half-block step (a bottom slab or stair): a collision box whose top is at most half a block high. */
+    /** A half-block step (a bottom slab): a collision box whose top is above {@link #FLAT} and at most half a block high. */
     static boolean isStep(BlockGetter level, BlockPos pos) {
         VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
-        return !shape.isEmpty() && shape.max(Direction.Axis.Y) <= 0.5;
+        return !shape.isEmpty() && shape.max(Direction.Axis.Y) > FLAT && shape.max(Direction.Axis.Y) <= 0.5;
     }
 }

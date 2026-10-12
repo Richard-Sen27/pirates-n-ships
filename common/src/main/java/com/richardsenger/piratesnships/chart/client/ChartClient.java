@@ -32,6 +32,8 @@ public final class ChartClient {
     public static void init() {
         ClientEvents.registerKeyMapping(OPEN_KEY);
         ClientChart.setOpener(ChartScreen::open);
+        // the chart held open in 3D (CHART3)
+        com.richardsenger.piratesnships.chart.held.client.ChartHeldClient.init();
         ClientChart.setRegionListener(ChartTextures::onRegion);
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientChart.reset());
         ClientEvents.CLIENT_TICK_END.register(ChartClient::tick);

@@ -101,6 +101,7 @@ public final class ChartModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ChartGameTests.class, MapTileGameTests.class, MapBoardGameTests.class);
+        return List.of(ChartGameTests.class, MapTileGameTests.class, MapBoardGameTests.class,
+                com.richardsenger.piratesnships.chart.held.ChartHeldGameTests.class);
     }
 }

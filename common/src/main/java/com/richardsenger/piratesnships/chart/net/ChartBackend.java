@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.chart.client.ClientChart;
 import com.richardsenger.piratesnships.chart.data.ChartData;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
 import com.richardsenger.piratesnships.chart.data.MarkerRules;
+import com.richardsenger.piratesnships.chart.held.ChartHeld;
 import com.richardsenger.piratesnships.chart.tile.MapTileService;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.network.chat.Component;
@@ -40,6 +41,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>CHART2: once a second the open chart gets the viewer's ships ({@link ChartShips}) and, when they changed, the
  * structures it shows ({@link ChartStructures}); a state payload goes out only when one of them changed. Other players
  * are never sent (the human, 2026-10-12: the chart shows only its owner).
+ *
+ * <p>CHART3: an open session sets {@link ChartHeld#READING} on the player (everyone around sees the chart unrolled in
+ * their hands); closing the screen or losing the session clears it.
  */
 public final class ChartBackend {
 
@@ -133,6 +137,7 @@ public final class ChartBackend {
         s.lastStructures = ChartStructures.shown(player);
         deliver(player, new ChartStatePayload(Optional.of(data.markers()), s.lastShips, Optional.of(s.lastStructures), Optional.empty()));
         player.level().playSound(null, player.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.8f, 0.9f);
+        ChartHeld.setReading(player, true);
         return true;
     }
 
@@ -152,6 +157,7 @@ public final class ChartBackend {
 
     public static void close(ServerPlayer player) {
         SESSIONS.remove(player.getUUID());
+        ChartHeld.setReading(player, false);
     }
 
     public static boolean isOpen(UUID player) {
@@ -175,6 +181,7 @@ public final class ChartBackend {
             if (s == null) continue;
             if (s.player.isRemoved() || s.player.hasDisconnected() || !ChartConfig.ENABLED.get()) {
                 SESSIONS.remove(id);
+                ChartHeld.setReading(s.player, false);
                 continue;
             }
             sendPending(s, REGIONS_PER_TICK);

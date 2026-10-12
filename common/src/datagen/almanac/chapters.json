@@ -4435,7 +4435,7 @@
   "pirates_n_ships.almanac.charts.p1.heading": "Charts and navigation",
   "pirates_n_ships.almanac.charts.p1.text1": "A captain who does not know where he is soon knows where the rocks are. Keep your chart and mark it well.",
   "pirates_n_ships.almanac.charts.p2.heading": "Your chart",
-  "pirates_n_ships.almanac.charts.p2.text1": "Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in the coasts, shallows and open sea of the overworld around you.",
+  "pirates_n_ships.almanac.charts.p2.text1": "Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in the coasts, shallows and open sea of the overworld around you. The land takes the colours of what stands on it, so a village's roofs and paths show up from afar.",
   "pirates_n_ships.almanac.charts.p2.list1_1": "Use it, or press **M** with it in hand, to open the map.",
   "pirates_n_ships.almanac.charts.p2.list1_2": "Drag to pan; scroll to zoom, far enough out to see a whole sea.",
   "pirates_n_ships.almanac.charts.p2.list1_3": "Right-click to place a named marker; click one to change it.",

@@ -26,6 +26,8 @@ import java.util.Set;
  * pixel ({@link ChartZoomOut}, 64 pixels square), keyed with the level {@code -c}; a region that arrives marks the far
  * tiles holding it or a neighbour stale too. So a screen needs about as many textures at the widest zoom as at the
  * old widest one.
+ *
+ * <p>CHART4: textures are drawn in the server's {@code chart.style}; a new style drops them all ({@link ClientChart}).
  */
 public final class ChartTextures {
 
@@ -97,7 +99,7 @@ public final class ChartTextures {
         if (e != null && !e.stale) return e.id;
         if (rebuiltThisFrame >= REBUILDS_PER_FRAME) return e == null ? null : e.id;
         rebuiltThisFrame++;
-        int[] argb = ChartRaster.renderRegion(ClientChart.lookup(), rx, rz, px);
+        int[] argb = ChartRaster.renderRegion(ClientChart.lookup(), rx, rz, px, ClientChart.settings().style());
         int size = ChartRegion.SIZE * px;
         if (e == null) {
             NativeImage image = new NativeImage(NativeImage.Format.RGBA, size, size, true);
@@ -142,7 +144,7 @@ public final class ChartTextures {
         if (e != null && !e.stale) return e.id;
         if (rebuiltThisFrame >= REBUILDS_PER_FRAME) return e == null ? null : e.id;
         rebuiltThisFrame += 2;
-        int[] argb = ChartZoomOut.render(k -> ClientChart.regions().get(k), tx, tz, c);
+        int[] argb = ChartZoomOut.render(k -> ClientChart.regions().get(k), tx, tz, c, ClientChart.settings().style());
         return upload(key, e, argb, ChartZoomOut.TILE, "chart/far_" + c + "_" + tx + "_" + tz);
     }
 

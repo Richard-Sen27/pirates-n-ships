@@ -55,12 +55,19 @@ public final class ClientChart {
     }
 
     public static void acceptSettings(ChartSettings s) {
-        settings = s;
+        setSettings(s);
         version++;
     }
 
+    /** CHART4: a new style redraws every texture (the listener's "drop all"). */
+    private static void setSettings(ChartSettings s) {
+        boolean restyled = settings.style() != s.style();
+        settings = s;
+        if (restyled) regionListener.accept(Long.MIN_VALUE);
+    }
+
     public static void open(ChartOpenPayload p) {
-        settings = p.settings();
+        setSettings(p.settings());
         markers = p.markers();
         drawTarget = p.tile();
         refusal = Optional.empty();
@@ -125,9 +132,10 @@ public final class ClientChart {
         return REGIONS;
     }
 
+    /** The wide cell (CHART4: the cell byte and its map colour, {@code ChartCells.wide}) at {@code (cx, cz)}, 0 when unknown. */
     public static int cell(int cx, int cz) {
         ChartRegion r = REGIONS.get(ChartRegion.keyOfCell(cx, cz));
-        return r == null ? 0 : r.get(cx & ChartRegion.MASK, cz & ChartRegion.MASK);
+        return r == null ? 0 : r.wide(cx & ChartRegion.MASK, cz & ChartRegion.MASK);
     }
 
     public static CellLookup lookup() {

@@ -145,7 +145,8 @@ public class HarborDeskBlock extends BaseEntityBlock implements SimpleWaterlogge
             }).orElse(ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION);
         }
         return ShipOrders.pickup(sp, pos, stack).map(r -> {
-            sp.displayClientMessage(r.message(), false);
+            // STR7: no deep water for her goes on the action bar, the rest into the chat
+            sp.displayClientMessage(r.message(), com.richardsenger.piratesnships.ship.template.ShipOrders.isNoDeepWater(r.message()));
             return ItemInteractionResult.CONSUME;
         }).orElse(ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION);
     }

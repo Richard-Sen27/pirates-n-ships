@@ -13,7 +13,7 @@ For players the summary is: **a world from any development build opens under 0.1
 Everything not listed under "converts" or "lost" below loads unchanged. In detail:
 
 - **Ships (Sable sub-levels)**, their blocks, block entities, position, orientation and velocity: Sable's own files (see [Sable](#sable)). Our per-ship data lives in Sable's user data (keys `pirates_n_ships` the identity pointer with the helm, `pirates_n_ships_sailing` the bow and the anchor, `pirates_n_ships_oars` the rowing flag (OAR1), `pirates_n_ships_voyage` the world-sim link, `pirates_n_ships_hull` breaches and flood water) and in the `pirates_n_ships_ships` saved data (the ship's identity: id, name, owner, crew, flag, `blown_cover_until`). A ship's id is its Sable sub-level UUID, so it never changes on load.
-- **Saved data** (`data/pirates_n_ships_*.dat` of the overworld): `ships`, `ship_upkeep`, `trade`, `port_visits`, `ports`, `quests`, `hiring`, `bounties`, `factions`, `raids`, `lanes`, `navy`, `captain_voyages`, `voyages`, `captains`, `harbor_masters`. Every field added after a file first existed is optional with a default, so an older file reads (e.g. a port without `orders`, a raid without `fought`, a voyage without `pursuit`, a faction without `tension`). The files carry no format version; the lane cache (`pirates_n_ships_lanes`) is the exception, see below.
+- **Saved data** (`data/pirates_n_ships_*.dat` of the overworld): `ships`, `ship_upkeep`, `trade`, `port_visits`, `ports`, `quests`, `hiring`, `bounties`, `factions`, `raids`, `lanes`, `navy`, `captain_voyages`, `voyages`, `captains`, `harbor_masters`. Every field added after a file first existed is optional with a default, so an older file reads (e.g. a port without `orders` or `name`, a raid without `fought`, a voyage without `pursuit`, a faction without `tension`). The files carry no format version; the lane cache (`pirates_n_ships_lanes`) is the exception, see below.
 - **Player data** (data attachments, kept on death): the chart (`chart`; CHART2 changed nothing in it), the ports and structures a chart knows (`chart_sightings`, new in CHART2: a player from before starts with none and learns the wrecks again by sailing near them; ports show anyway with `chart.ports_always_known`), the Almanac's last page (`almanac_progress`, ALM2; an unknown chapter is ignored), whether the Almanac was given (`almanac_given`), career and rewards (`career`, `career_gifts`), reputation, the criminal record and prisoner releases (the law), the quest log. Every field is optional; a career counter or crime type no longer used is kept or skipped so old records load (`CareerCounter`, `CrimeType.FENCE_PLUNDER`).
 - **Other attachments:** a prisoner in the brig (`prisoner`, on any entity), garrison posts and squads (`garrison_post`, `squad`), the player-placed blocks of a chunk (`player_placed_blocks`, the law).
 - **Items** and their data components: the sea chest keeps its contents in vanilla `minecraft:container` (item) and vanilla `Items` (block and floating chest); treasure maps and drawn map tiles read older shapes (missing fields default, bad data is a codec error, not a crash); commissions, receipts, bounty proofs, loaded grapples and firearms, cargo, the whistle's remembered sail order (an unknown order name is refused, not a crash), `rope_start`/`net_start`.
@@ -36,6 +36,7 @@ Lazy, per block or entity, on load or on its first tick. No command runs a migra
 | Rope anchors (cleats, mooring rings) | before RP1 (`stay`) | RP1 | `RopeAnchorBlockEntity` reads `stay` when `ropes` is missing; duplicates and ropes beyond 4 dropped. | |
 | Flagpoles | before FL1 / VIS1a / FL2 | FL1, VIS1a, FL2 | Yaw from `FACING` when unsaved; an action without `start_tick` draws no animation; pre-FL2 placeholder flag strings read as no flag (also in the ship registry). | |
 | Yards and cleats | any | F5a/F5b, CAN3 | Cloth geometry is recomputed on the first tick and replaces the saved cloth; missing tears read as none. | |
+| Port names | before NAME3 (port records without `name`) | NAME3 | `Port.CODEC` reads a missing `name` as empty; the first `PortRegistry.get` after the load names every unnamed port from the world seed in the saved order (`PortNames`, unique within the world; a later port repeating an earlier name is renamed) and marks the registry dirty, so the names are written on the next save and never change afterwards. Ids are unchanged and stay the key everywhere (markets, quests, contracts, voyages, lanes, desks, harbour masters). | `SaveCompatGameTests.aPreName3PortRecordLoadsAndGetsAName`, `PortRegistryNamesTest` |
 | Crew members | before CR1 | CR1 | An assigned crew member without `pinned` counts as pinned (always assigned by hand then); missing morale reads as the configured start. | |
 | Crew of materialised voyages | before WS3c | WS3c | Made `stationary` when the voyage re-adopts its ship (`VoyageCrew.settle`). | |
 | Navy officers | before MOB2 | MOB2 | No saved squad: the squad is rebuilt from his outpost on his first tick. | |
@@ -145,6 +146,27 @@ Every block, item and entity id of 0.1.0. From 0.1.0 on these must never be rena
 Two block-entity types were added after this table was written (FIX3): `cannon_rear` and `brig_door_upper`. They are additive: a rear cannon half or an upper brig door half from an older world gets its empty block entity on first access, and nothing is lost.
 
 Not in the lang file and so not guarded here: block entity type ids (e.g. `boarding_plank`, `net_fitting`, `ratline_net_cell`, `nameplate`), data component, attachment and saved-data ids. They are equally part of the save format; renaming one loses its data the same way.
+
+## Ports generated before STR7 (after 0.1.0)
+
+STR7 (room for ships at ports) changes only how new ports generate and where a ship appears; nothing saved changes
+shape.
+
+- **Old ports keep their shallow berths.** A village, island or outpost generated before STR7 has no extension
+  sections and no carved basin (both happen once, when the structure's chunks generate; `world.ports.pier_extension`
+  and `carve_berths` do nothing to chunks that exist). Its `ports` record and berths load unchanged.
+- **Ships still find room there.** A shipwright's pickup, a granted ship and an NPC ship leaving or reaching the port
+  now go through the spot search (`world.port.ShipSpots`): the berth's own mooring when it is deep, otherwise the
+  nearest deep, open water reached from the berths within `world.ports.ship_spot_search` (64 blocks), so at an old,
+  shallow port the ship is placed farther out instead of on the sand. Where there is none, the pickup refuses with
+  "No deep water near the pier for her" and the receipt or commission stays.
+- **Chunks generated after the update** at the edge of an old port are not carved either: the carve belongs to the
+  structure's own placement. An old port's start is not re-placed.
+- **New config keys** `world.ports.ship_clearance` (3), `berth_depth` (3), `ship_spot_search` (64), `pier_extension`
+  (true), `carve_berths` (true) are added to an existing server file with their defaults.
+- **Template pieces changed:** the pier's seaward rail and the jetty's west end post went (no jigsaw was added, so the
+  jigsaw draws and the layout of a port generated after the update are the same as before for the same seed, apart
+  from the extension sections). Already generated piers keep their blocks.
 
 ## Known risks found while writing this
 

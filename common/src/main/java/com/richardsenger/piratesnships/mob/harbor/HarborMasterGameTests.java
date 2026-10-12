@@ -182,6 +182,34 @@ public final class HarborMasterGameTests {
         h.succeed();
     }
 
+    /** NAME3: his greeting names the port of the desk he opens, by its proper name, for each kind of port. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "greeting")
+    public static void theGreetingNamesThePort(GameTestHelper h) {
+        floor(h, 9);
+        MinecraftServer server = h.getLevel().getServer();
+        for (PortKind kind : PortKind.values()) {
+            ResourceLocation port = portWithDesk(h, kind);
+            com.richardsenger.piratesnships.world.port.PortRegistry ports = com.richardsenger.piratesnships.world.port.PortRegistry.get(server);
+            ports.add(new com.richardsenger.piratesnships.world.port.Port(port, kind, h.getLevel().dimension(), h.absolutePos(DESK),
+                    new net.minecraft.world.level.levelgen.structure.BoundingBox(h.absolutePos(DESK)), Climate.TROPICAL, List.of()));
+            String name = ports.index().byId(port).orElseThrow().name();
+            h.assertTrue(!name.isEmpty(), "the port has a name");
+            HarborMaster m = spawnMaster(h, port);
+            ServerPlayer p = player(h, "harbor_greeted");
+            net.minecraft.network.chat.MutableComponent greeting = HarborMasterInteractions.greeting(p, m, h.absolutePos(DESK));
+            var contents = (net.minecraft.network.chat.contents.TranslatableContents) greeting.getContents();
+            h.assertValueEqual(contents.getKey(), HarborMasterInteractions.GREETING + kind.getSerializedName(), "the greeting of a " + kind);
+            h.assertTrue(java.util.Arrays.asList(contents.getArgs()).contains(name), "the greeting names " + name + ": "
+                    + java.util.Arrays.toString(contents.getArgs()));
+            h.assertTrue(greeting.getString().contains(name), "and reads it: " + greeting.getString());
+            close(p);
+            m.discard();
+            cleanUp(h, port);
+            ports.remove(port);
+        }
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ the post
 
     /** Pushed 12 blocks from his post he walks back within 300 ticks. */

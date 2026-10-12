@@ -45,7 +45,7 @@ import java.util.UUID;
  * out a {@link ShipCommissionItem} once per player and ladder, through the rank rewards' path
  * ({@link CareerRewards#afterStore}; a full pack drops it). Redeemed at a navy outpost's officer or harbor master's
  * desk (navy) or a pirate island's desk, the fence (pirates), the ship is delivered like a shipwright pickup
- * ({@link ShipOrders#placeAtFreeBerth}): at the port's first free berth, assembled, owned by the player, named by the
+ * ({@link ShipOrders#deliver}, STR7: a free berth with deep water, else deep water near it), assembled, owned by the player, named by the
  * player's title rule ({@link CareerShipTitles}), flying the navy flag or the Jolly Roger, its shot lockers empty. A
  * redeemed commission is consumed and noted in the ledger, so the ladder's ship is delivered once. The rules are pure
  * ({@link ShipGrantRules}). Server thread only.
@@ -161,7 +161,7 @@ public final class ShipGrants {
 
     /**
      * Redeems the commission {@code stack} at {@code port} (null: the desk or officer belongs to no port): checks the
-     * rule ({@link ShipGrantRules#redeem}), then delivers the ship at the port's first free berth. Delivered, the
+     * rule ({@link ShipGrantRules#redeem}), then delivers the ship at a free berth or in deep water near it (STR7). Delivered, the
      * commission is consumed and noted as redeemed; otherwise it stays and the result says why.
      */
     public static Redeem redeem(ServerPlayer player, @Nullable Port port, ItemStack stack) {
@@ -178,9 +178,14 @@ public final class ShipGrants {
                     player.getGameProfile().getName(), c.template());
             return result(Outcome.LOST, verdict, Component.translatable(KEY_LOST));
         }
-        Optional<ShipOrders.Berthed> berthed = ShipOrders.placeAtFreeBerth(level, port, c.template(), player,
+        ShipOrders.Delivery delivery = ShipOrders.deliver(level, port, c.template(), player,
                 "Ship grant " + c.ladder().id() + " for " + player.getGameProfile().getName());
-        if (berthed.isEmpty()) return result(Outcome.NO_BERTH, verdict, Component.translatable(KEY_NO_BERTH));
+        Optional<ShipOrders.Berthed> berthed = delivery.berthed();
+        if (berthed.isEmpty()) {
+            // STR7: no deep water near the pier (the shipwright's words, on the action bar), else no berth free
+            return result(Outcome.NO_BERTH, verdict, delivery.failure() == com.richardsenger.piratesnships.world.port.ShipSpot.Failure.NO_WATER
+                    ? delivery.refusal() : Component.translatable(KEY_NO_BERTH));
+        }
 
         stack.shrink(1);
         player.containerMenu.broadcastChanges();
@@ -260,7 +265,8 @@ public final class ShipGrants {
 
     /** Sends the result's message to {@code player}. */
     public static void tell(ServerPlayer player, Redeem r) {
-        player.displayClientMessage(r.message().copy().withStyle(r.outcome() == Outcome.DELIVERED ? ChatFormatting.GOLD : ChatFormatting.YELLOW), false);
+        player.displayClientMessage(r.message().copy().withStyle(r.outcome() == Outcome.DELIVERED ? ChatFormatting.GOLD : ChatFormatting.YELLOW),
+                ShipOrders.isNoDeepWater(r.message()));
     }
 
     // ------------------------------------------------------------------ text

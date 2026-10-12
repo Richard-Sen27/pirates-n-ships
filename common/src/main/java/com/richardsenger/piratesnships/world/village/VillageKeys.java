@@ -24,6 +24,8 @@ public final class VillageKeys {
     public static final ResourceKey<StructureTemplatePool> STREETS = pool("streets");
     public static final ResourceKey<StructureTemplatePool> BUILDINGS = pool("buildings");
     public static final ResourceKey<StructureTemplatePool> PIER = pool("pier");
+    /** STR7: the pier's extension sections (hung by {@code PierExtensions}, not by the jigsaw). */
+    public static final ResourceKey<StructureTemplatePool> PIER_EXTENSION = pool("pier_extension");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
     /** STR3: what the dock head's inland street draws (straights, forks, a crossroads, the well square). */
     public static final ResourceKey<StructureTemplatePool> STREETHEADS = pool("streetheads");

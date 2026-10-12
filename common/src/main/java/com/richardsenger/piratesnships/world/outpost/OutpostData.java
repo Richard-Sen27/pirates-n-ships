@@ -121,7 +121,7 @@ public final class OutpostData {
     }
 
     public static void gather(DataContributions data) {
-        PortStructureData.writeStructure(data, OutpostKeys.NAVY_OUTPOST, spec());
+        PortStructureData.writeStructure(data, OutpostKeys.NAVY_OUTPOST, spec(), OutpostKeys.QUAY_EXTENSION);
         PortStructureData.writeStructureSet(data, OutpostKeys.NAVY_OUTPOSTS, OutpostKeys.NAVY_OUTPOST, "navy_outpost", SALT,
                 java.util.List.of(new PortStructureData.Exclusion(
                         com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES, VILLAGE_EXCLUSION_CHUNKS)));
@@ -137,6 +137,7 @@ public final class OutpostData {
         // depth limit vanilla tries only a pool's fallback, so an angle there still ends its run in a tower
         PortStructureData.pool(data, OutpostKeys.TERMINATORS, GROUP, terminators, "rigid", TERMINATORS);
         PortStructureData.pool(data, OutpostKeys.QUAY, GROUP, "minecraft:empty", "rigid", weights("quay", 1));
+        PortStructureData.pool(data, OutpostKeys.QUAY_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("quay_extension", 1));
         PortStructureData.pool(data, OutpostKeys.LANEHEADS, GROUP, laneEnds, "terrain_matching", LANEHEADS);
         PortStructureData.pool(data, OutpostKeys.LANES, GROUP, laneEnds, "terrain_matching", LANES);
         PortStructureData.pool(data, OutpostKeys.LANE_ENDS, GROUP, "minecraft:empty", "terrain_matching", LANE_ENDS);

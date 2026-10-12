@@ -26,6 +26,9 @@ CONNECTORS = {
     "building_in": ("building_out", EMPTY_POOL, "rollable"),
     "quay_out": ("quay_in", f"{MOD}:{GROUP}/quay", "aligned"),
     "quay_in": ("quay_out", EMPTY_POOL, "aligned"),
+    # STR7: the quay extension's seaward and landward ends (empty pools: PortStructure hangs the sections)
+    "pier_end": ("pier_extension_in", EMPTY_POOL, "aligned"),
+    "pier_extension_in": ("pier_end", EMPTY_POOL, "aligned"),
     # STR4 (natural layout): the wall trace has states, each with its own pool, so a run turns inland at most twice
     # and never back toward the sea: along the shore (wall_*_out -> walls), down the flank after a salient angle
     # (flank_*_out -> walls_flank), and after a second angle the corner tower that closes it (end_*_out -> terminators).

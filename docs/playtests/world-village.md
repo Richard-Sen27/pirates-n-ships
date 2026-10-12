@@ -106,3 +106,39 @@ cheats on, a few F2 screenshots from high above (`/tp ~ ~40 ~`, look down) and f
 
 Open questions: are the villages the right size (14 to 72 pieces across 100 seeds, median 39, 70 to 130 blocks
 across)? Is a beacon tower in most villages too many?
+
+## STR7: room for ships at ports
+
+Headless, `ShipSpotTest` (JUnit) pins the spot rule, `BerthDepthGameTests` places a village on a sloped beach (the
+pier's end in five blocks of water) and finds one extension section, four berths, every berth's mooring deep for the
+largest sloop after the carve, the piles on the carved floor and an ordered ship at berth 1; `ShipSpotGameTests` sends
+a pickup from a shallow berth into the deep water and refuses one with no deep water; `MaterializeGameTests` puts an
+NPC ship leaving a shallow berth in deep water. The look of the extension pieces, the carved basin round the berths on
+real coastlines, and the ships at real berths only show in a world. Use a **new** world for steps 1 to 4 and an
+**old** one (generated before this version) for step 5; cheats on, F2 screenshots and the chat lines.
+
+1. **A shallow beach.** `/locate structure pirates_n_ships:seafarer_village` a few times until a village's pier ends in
+   shallow water (you can see the sand from the deck), `/tp` there.
+   - **Expected:** the pier runs on by one or two extension sections (the same plank deck, level with the pier, on
+     taller piles, a lantern post at each corner of the end and a ladder down; the pier's own end rail is gone so you
+     walk straight on). `/pirates world port nearest` lists two berths per section more. Report a section that floats,
+     cuts into a sand bar above the water, or stands crooked against the pier.
+2. **Deep water at the berths.** Swim along the pier on both sides and dive at each berth.
+   - **Expected:** beside every berth the floor lies six blocks below the surface over a long basin (about 13 blocks
+     out from the deck and 50 along it), the piles reach down to it, no kelp in it; the beach, the quay and the
+     buildings are untouched. Report a hole in the beach or a cut into land above the sea.
+3. **Ordering a ship.** Order the starter sloop at the harbor master's desk, finish it with
+   `/pirates ship orders finish <id>`, use the desk with the receipt.
+   - **Expected:** she appears alongside berth 1 on the side away from the pier with one water column between, afloat,
+     not touching sand, the pier not gathered into her. Order and pick up two more: the second goes to the next berth,
+     the third farther along or out (the chat names the berth it started from). `/pirates port spot
+     pirates_n_ships:starter_sloop` before each pickup names the place she will take.
+4. **NPC ships.** `/pirates world voyages spawn convoy <this village> <another port>` (port ids from
+   `/pirates world ports`; a lane must exist), stand on the pier.
+   - **Expected:** an NPC ship that appears at the port lies in deep water off the pier, never on the beach or the
+     sand by the berth.
+5. **An old port.** In a world from before this version, go to a village whose berths are shallow and pick up an
+   ordered ship (or redeem a commission at an outpost).
+   - **Expected:** the ship appears in the nearest deep water off the pier (maybe turned across it), not on the sand.
+     Where there is no deep water within 64 blocks, the action bar says "No deep water near the pier for her" and the
+     receipt stays in your hand.

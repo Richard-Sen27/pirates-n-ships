@@ -4,11 +4,13 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.law.brig.BrigService;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeService;
+import com.richardsenger.piratesnships.trade.client.MarketLines;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -115,11 +117,16 @@ public final class HarborMasterInteractions {
         return Optional.ofNullable(best);
     }
 
-    private static void greet(ServerPlayer player, HarborMaster master, BlockPos desk) {
-        PortKind kind = HarborDeskService.boundPort(player.level(), desk)
-                .flatMap(port -> TradeService.market(player.server, port))
+    /** His greeting names the port of the desk he opened (NAME3): "Welcome to Port Marlow, captain." */
+    static MutableComponent greeting(ServerPlayer player, HarborMaster master, BlockPos desk) {
+        Optional<ResourceLocation> port = HarborDeskService.boundPort(player.level(), desk);
+        PortKind kind = port.flatMap(p -> TradeService.market(player.server, p))
                 .map(m -> m.profile().kind()).orElse(PortKind.SEAFARER_VILLAGE);
-        player.sendSystemMessage(Component.translatable(GREETING + kind.getSerializedName(), master.getDisplayName())
-                .withStyle(ChatFormatting.GRAY));
+        String name = port.map(MarketLines::portName).orElse("");
+        return Component.translatable(GREETING + kind.getSerializedName(), master.getDisplayName(), name);
+    }
+
+    private static void greet(ServerPlayer player, HarborMaster master, BlockPos desk) {
+        player.sendSystemMessage(greeting(player, master, desk).withStyle(ChatFormatting.GRAY));
     }
 }

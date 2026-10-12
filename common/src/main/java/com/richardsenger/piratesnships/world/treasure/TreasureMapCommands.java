@@ -64,7 +64,7 @@ public final class TreasureMapCommands {
         TreasureBinding.Choice ch = choice.get();
         ItemStack map = TreasureMapService.boundMap(source.getLevel(), ch.port(), ch.site());
         if (!player.getInventory().add(map)) player.drop(map, false);
-        source.sendSuccess(() -> Component.translatable(TreasureMapText.CMD_GIVEN, player.getDisplayName(), ch.port().id().toString(),
+        source.sendSuccess(() -> Component.translatable(TreasureMapText.CMD_GIVEN, player.getDisplayName(), com.richardsenger.piratesnships.world.port.PortNameBook.label(ch.port().id()),
                 ch.site().pos().toShortString()), true);
         return 1;
     }

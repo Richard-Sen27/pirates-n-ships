@@ -70,7 +70,7 @@ public final class HarborDeskCommands {
         BlockPos pos = lookedAtDesk(player);
         ResourceLocation port = resolvePort(player.server, ResourceLocationArgument.getId(c, "port")).orElseThrow(NO_PORT::create);
         HarborDeskService.bind(player.level(), pos, Optional.of(port));
-        c.getSource().sendSuccess(() -> Component.translatable(KEY + "bound", port.toString()), true);
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + "bound", com.richardsenger.piratesnships.world.port.PortNameBook.labelWithId(port)), true);
         return 1;
     }
 
@@ -92,7 +92,7 @@ public final class HarborDeskCommands {
         Optional<Market> market = TradeService.market(player.server, port.get());
         Component kind = market.map(m -> Component.literal(m.profile().kind().getSerializedName()))
                 .orElse(Component.translatable(KEY + "info_missing"));
-        c.getSource().sendSuccess(() -> Component.translatable(KEY + "info", pos.toShortString(), port.get().toString(), kind), false);
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + "info", pos.toShortString(), com.richardsenger.piratesnships.world.port.PortNameBook.labelWithId(port.get()), kind), false);
         return 1;
     }
 

@@ -103,7 +103,7 @@ public final class VillageData {
     static JsonObject structure() {
         JsonObject json = PortStructureData.structure(spec());
         json.addProperty("unbearded_start", true);
-        return json;
+        return PortStructureData.withExtension(json, VillageKeys.PIER_EXTENSION);
     }
 
     public static void gather(DataContributions data) {
@@ -116,6 +116,7 @@ public final class VillageData {
                 STREETHEADS);
         PortStructureData.pool(data, VillageKeys.BUILDINGS, GROUP, "minecraft:empty", "rigid", BUILDINGS);
         PortStructureData.pool(data, VillageKeys.PIER, GROUP, "minecraft:empty", "rigid", weights("pier", 1));
+        PortStructureData.pool(data, VillageKeys.PIER_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("pier_extension", 1));
         // The streets' fallback once the depth runs out. It must not be empty: vanilla skips a connector whose fallback
         // pool is empty (and not minecraft:empty), so an empty terminators pool would stop every street.
         PortStructureData.pool(data, VillageKeys.TERMINATORS, GROUP, "minecraft:empty", "terrain_matching", VillageKeys.STREET_PROCESSORS,

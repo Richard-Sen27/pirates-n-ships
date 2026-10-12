@@ -170,6 +170,25 @@ public final class WorldConfig {
     public static final ConfigValue<Integer> WRECK_SEPARATION = WRECKS.intRange("separation", 8, 1, 4095,
             "Minimum distance between two wrecks; kept below spacing (a larger value counts as spacing - 1)" + SPREAD_NOTE);
 
+    private static final ConfigSection PORTS = S.section("ports",
+            "Ports in general: their names (NAME3), where a delivered or arriving ship appears and how deep the berths are (STR7)");
+
+    public static final ConfigValue<Integer> PORTS_SHIP_CLEARANCE = PORTS.intRange("ship_clearance", 3, 0, 16,
+            "Blocks round a ship's footprint that must hold no sand, soil, stone or ice when a ship is delivered or "
+                    + "appears at a port (ordered, granted, or an NPC ship leaving or reaching it)");
+    public static final ConfigValue<Integer> PORTS_BERTH_DEPTH = PORTS.intRange("berth_depth", 3, 0, 16,
+            "Blocks of water a ship needs under her keel at a port; new ports carve their berths this deep (below the "
+                    + "draught of the largest shipped ship) and grow their pier where the water is shallower");
+    public static final ConfigValue<Integer> PORTS_SHIP_SPOT_SEARCH = PORTS.intRange("ship_spot_search", 64, 0, 256,
+            "How far (blocks over the water) a port looks from its berths for deep water when a berth itself is shallow "
+                    + "or taken; 0 = the berths only");
+    public static final ConfigValue<Boolean> PORTS_PIER_EXTENSION = PORTS.bool("pier_extension", true,
+            "New ports lengthen their pier, jetty or quay by up to two sections where the water at its end is shallower "
+                    + "than berth_depth (off = the pier keeps its length; ships still find deep water farther out)");
+    public static final ConfigValue<Boolean> PORTS_CARVE_BERTHS = PORTS.bool("carve_berths", true,
+            "New ports deepen the sea floor beside their berths to berth_depth under the largest ship's keel, over her "
+                    + "footprint and clearance (only ground under the sea surface; the beach and the buildings stay)");
+
     private static final ConfigSection TREASURE_MAPS = S.section("treasure_maps",
             "Treasure maps (TM1): blank maps bind to a pirate island's buried treasure and lead the way there");
 
@@ -178,6 +197,11 @@ public final class WorldConfig {
                     + "stop selling them; bound maps keep their picture)");
     public static final ConfigValue<Integer> TREASURE_MAP_SEARCH_RADIUS = TREASURE_MAPS.intRange("search_radius", 2000, 64, 30_000_000,
             "How far (blocks, to the island's centre) a blank map looks for a pirate island with an unfound treasure");
+
+    public static final ConfigValue<Boolean> PORT_NAMES = PORTS.bool("names", true,
+            "Ports show their proper names (\"Port Marlow\", \"Fort St. Anne\", \"Bone Cay\") wherever a port is named "
+                    + "(off = the readable port id as before, \"Village 1192 1530\"; the names stay stored and commands accept both). "
+                    + "Chat and commands follow a change at once, screens after the next join");
 
     private static final ConfigSection SPAWNS = S.section("spawn_weights",
             "Natural spawn weight of each mob (higher = more common, 0 = never spawns naturally)");

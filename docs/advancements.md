@@ -145,8 +145,8 @@ A datapack may replace any of these files or add its own advancements on our tri
 
 ## Limits
 
-- **Two masts** (`shipwright/launch_brig`) waits for SHIP1's orderable `pirates_n_ships:brig` template: until it exists
-  nobody can earn it.
+- **Two Masts** (`shipwright/launch_brig`) counts the orderable `pirates_n_ships:brig` (SHIP1) picked up at a
+  harbor master's desk; the armed brigs of the navy and the pirates (`navy_brig_armed`, `pirate_brig_armed`) do not count.
 - **Show me** counts the Almanac's "Show me" buttons only; a scene opened with the Ponder key from the inventory does
   not reach the server.
 - **Following Wind** and **Weathered the Storm** are checked once a second while Sable tracks the player aboard;

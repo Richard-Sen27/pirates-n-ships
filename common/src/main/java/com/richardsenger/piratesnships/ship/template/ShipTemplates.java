@@ -68,8 +68,8 @@ public final class ShipTemplates {
     /**
      * The brig (SHIP1, art/schematics/brig.py): two masts with two square sails each and a jib, 9×26×32, bow to the
      * north; a hold three rows deep in three watertight compartments, a lower gun deck pierced for eight guns (the lids
-     * shut), the weather deck and a cabin under the raised quarterdeck. 1247 blocks; sold at the shipwright for 725
-     * doubloons, the starter sloop's 400 in proportion to her blocks (1247 against 685).
+     * shut), the weather deck and a cabin under the raised quarterdeck. 1235 blocks; sold at the shipwright for 725
+     * doubloons, the starter sloop's 400 in proportion to her blocks (1235 against 685).
      */
     public static final ShipTemplate BRIG = new ShipTemplate(Constants.id("ships/brig"), nameKey(BRIG_ID),
             Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 725);

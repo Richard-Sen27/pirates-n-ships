@@ -2749,8 +2749,8 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
 | `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
-| `brig` | `brig.py` | two-masted brig (SHIP1): hold three rows deep in three compartments, a lower gun deck pierced for eight guns (lids shut), weather deck, cabin under a raised quarterdeck, 1247 blocks | shipwright (725), merchant convoys |
-| `navy_brig_armed` | `navy_brig_armed.py` | the brig with eight carriage guns behind open ports, four shot lockers, a crow's nest, mast hoops and railing latches (six ratline nets strung on placement) and two swivel guns, 1278 blocks | navy patrols (not sold) |
+| `brig` | `brig.py` | two-masted brig (SHIP1): hold three rows deep in three compartments, a lower gun deck pierced for eight guns (lids shut), weather deck, cabin under a raised quarterdeck, 1235 blocks | shipwright (725), merchant convoys |
+| `navy_brig_armed` | `navy_brig_armed.py` | the brig with eight carriage guns behind open ports, four shot lockers, a crow's nest, mast hoops and railing latches (six ratline nets strung on placement) and two swivel guns, 1266 blocks | navy patrols (not sold) |
 | `pirate_brig_armed` | `pirate_brig_armed.py` | the same blocks and nets as `navy_brig_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
@@ -2861,8 +2861,8 @@ up by one row; see the comment there).
   aft (z 22..24, the rings 16 to 17 blocks from the hoop) that the sheet stays clear of the main course and topsail at
   full belly. A climber at the foot holds forward toward the mast, the net carries him to the hoop and he steps over
   the hoop into the nest (RL3's top exit).
-- **Price:** 725 doubloons, the starter sloop's 400 in proportion to her blocks (1247 against 685); the armed brigs
-  have 1278 blocks plus the net cells strung on placement.
+- **Price:** 725 doubloons, the starter sloop's 400 in proportion to her blocks (1235 against 685); the armed brigs
+  have 1266 blocks plus the net cells strung on placement.
 - **Tests:** `BrigLayoutTest` (JUnit, the committed structures: only the guns, ports, lockers, nest, fittings and
   swivels differ; every gun supplied and firing through a port; the nest and the flag; the nets climb to the nest and
   keep clear of the cloth; the yards and the four square sails and the jib; the hold closed in three rooms);
@@ -3380,7 +3380,7 @@ To regenerate:
 
 ```sh
 tools/server_smoke.sh neoforge
-python3 tools/world_region.py neoforge/build/server-smoke/world 1136 1472 1247 1583 --y0 45 --y1 100 \
+python3 tools/world_region.py neoforge/build/server-smoke/world 1136 1472 1235 1583 --y0 45 --y1 100 \
     --out /tmp/seafarer_village_smoke.schem
 python3 tools/render_generated_structure.py /tmp/seafarer_village_smoke.schem --out art/renders/structures
 ```

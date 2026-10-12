@@ -204,10 +204,8 @@ def railing_cells():
     # gaps over the stair landings in the quarterdeck front
     for x in STAIR_XS:
         out.pop((x, 11, QD))
-    # rope railing round both companion openings
-    for zs in (14, 15, 16, 21, 22, 23):
-        out[(CX - 1, 8, zs)] = ("rope", ["east"])
-        out[(CX + 1, 8, zs)] = ("rope", ["west"])
+    # no rope railing round the companion openings: the crew's pathfinder takes a rope railing's edge for open floor
+    # (SHIP1: a walker stuck pushing against it beside the after companion)
     # a wide port (two ports side by side) and a gate on each side of the waist
     for zs in (13, 14):
         out[(0, 8, zs)] = ("port", ["west"])

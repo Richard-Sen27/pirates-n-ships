@@ -429,6 +429,12 @@ public final class BrigGameTests {
                 for (String name : stations.keySet()) {
                     CrewMember c = crew.get(i++);
                     if (c.isAtStation()) seatedAt.putIfAbsent(name, (int) (t - SETTLE - 20));
+                    else if ((t - SETTLE - 20) % 100 == 0) {
+                        Vec3 local = ship.toPlot(c.position()).subtract(Vec3.atLowerCornerOf(ShipHelm.steering(ship).subtract(HELM)));
+                        Constants.LOG.info("[SHIP1] {} still walking after {} ticks, at template {} toward {}", name, t - SETTLE - 20,
+                                String.format(Locale.ROOT, "(%.1f, %.1f, %.1f)", local.x, local.y, local.z),
+                                c.walk() == null ? "-" : c.walk().spot().subtract(ShipHelm.steering(ship).subtract(HELM)).toShortString());
+                    }
                 }
             }
         });

@@ -2821,7 +2821,8 @@ up by one row; see the comment there).
   level (roll and pitch under 2 degrees, not capped).
 - **Getting about:** stairs from the weather deck to the quarterdeck on both sides (x 2 and 6, z 22..24, landing on
   z 25; one block in from the rail, so the deck beside the ratline latches stays free for a climber); two
-  **companions**, each a three-block opening in the weather deck (x 4, rope railing on both sides) with a stair in the
+  **companions**, each a three-block opening in the weather deck (x 4; no rope railing round it: the crew's pathfinder
+  takes a rope railing's edge for open floor, and a walker stuck pushing against one) with a stair in the
   deck and two below, descending toward the bow in half steps a crew member walks: forward (opening z 14..16, deck stair
   z 17, onto the gun deck at z 14) and aft (opening z 21..23, deck stair z 24 at the cabin door, onto the gun deck at
   z 21). The second one is there for the pathfinder: from the quarterdeck the crew's pathfinder (32 blocks, 512 nodes)

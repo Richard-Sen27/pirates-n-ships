@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.combat.grapple.client;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
 import com.richardsenger.piratesnships.combat.grapple.GrappleConfig;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
+import com.richardsenger.piratesnships.combat.grapple.HookPose;
 import com.richardsenger.piratesnships.combat.grapple.RopeRiderEntity;
 import com.richardsenger.piratesnships.combat.grapple.RopeSlide;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
@@ -13,6 +14,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -61,6 +65,30 @@ public final class ClientRopes {
         }
         return new Vec3(Mth.lerp(partialTick, hook.xOld, hook.getX()), Mth.lerp(partialTick, hook.yOld, hook.getY()),
                 Mth.lerp(partialTick, hook.zOld, hook.getZ()));
+    }
+
+    /**
+     * GR4: the hook's rotation at render time ({@link HookPose}, world): point first along its flight (the angles
+     * eased over the partial tick), latched the synched pose with the settle of its first ticks and, on a ship, the
+     * ship's render rotation in front; free, point down.
+     */
+    public static Quaternionf hookRotation(GrapplingHookEntity hook, float partialTick) {
+        Quaternionf q = hook.poseRotation(partialTick);
+        if (hook.state() != GrapplingHookEntity.State.LATCHED) {
+            return q;
+        }
+        q = HookPose.settled(q, hook.ticksSinceLatch(partialTick));
+        Quaterniond ship = ClientShipPoses.orientation(hook.level(), hook.syncedPlotPos(), partialTick);
+        if (ship != null) {
+            q = new Quaternionf((float) ship.x, (float) ship.y, (float) ship.z, (float) ship.w).mul(q);
+        }
+        return q;
+    }
+
+    /** GR4: the hook's eye at render time, where the rope is tied: {@link #hookPos} plus {@link HookPose#eye}. */
+    public static Vec3 hookEye(GrapplingHookEntity hook, float partialTick) {
+        Vector3f eye = HookPose.eye(hookRotation(hook, partialTick));
+        return hookPos(hook, partialTick).add(eye.x, eye.y, eye.z);
     }
 
     /**

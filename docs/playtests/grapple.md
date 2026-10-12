@@ -177,3 +177,26 @@ right-click pulls you to the hook only when the hook is at least `grapple.climb_
    rope freezes), right-click with an empty hand: the hook is released (sneak + use lets go, unchanged), you are never
    pulled while sneaking. Without sneak, right-click: you climb; sneak
    during the climb: you let go and, still holding sneak (press it again if needed), the rope freezes where you are.
+
+## GR4 (2026-10-12): the hook points where it flies and lies the way it bit
+
+The hook is no longer a flat picture turned to the camera: its model flies point first along its arc and keeps the
+pose of the surface it bit into (renders `art/renders/grapple_poses.png`). The rope always leaves from the eye.
+
+1. **In flight.** Throw the hook in a high arc over open water, then fire it flat from the musket. Watch from the side
+   (F5) and from behind.
+   - **Expected:** the crown and flukes lead, the eye and the rope trail; on a lob the hook points up as it climbs,
+     level at the top of the arc and down as it falls, turning smoothly (no flicker, no sideways first frame).
+2. **On a rail.** Throw at another ship's railing.
+   - **Expected:** the hook hangs from the rail, flukes up over it and the shank straight down, a short wobble as it
+     bites; the rope leaves from the eye under the rail. While you haul (sneak with the rope in hand) it keeps that pose.
+3. **On a deck.** Throw it down onto another ship's deck (or onto the ground on land).
+   - **Expected:** the hook lies flat on its side, the point toward where it flew, the eye toward you, barely dipped
+     into the planks; on a rolling ship it rolls with the deck.
+4. **On a wall or cliff.** Throw at a hull side and at a stone cliff.
+   - **Expected:** the flukes are in the face, the shank sticks straight out of it toward you, the rope from its end.
+5. **Missed.** Throw at leaves or into water.
+   - **Expected:** the hook falls point down (eye up) until it is reeled in.
+
+Tell us: is the hook big enough to read at 20 blocks (it is half a block long now), and does the hanging hook sit
+right on a rail you hit low on its side (the hook hangs from where it struck, not from the top edge)?

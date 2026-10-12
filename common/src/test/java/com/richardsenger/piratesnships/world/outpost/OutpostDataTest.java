@@ -81,8 +81,8 @@ class OutpostDataTest {
         assertEquals(Optional.of(OutpostKeys.NAVY_OUTPOST), set.structures().get(0).structure().unwrapKey());
         ConfiguredSpreadPlacement placement = set.placement();
         assertEquals("navy_outpost", placement.config());
-        assertEquals(40, placement.spacing(), "WG5: a little denser than 48");
-        assertEquals(16, placement.separation());
+        assertEquals(28, placement.spacing(), "WG6: denser than WG5's 40");
+        assertEquals(10, placement.separation());
         assertTrue(placement.spacing() > StandAloneOps.configuredSet(ops, "seafarer_villages").placement().spacing(),
                 "outposts are rarer than villages");
         assertEquals(WorldConfig.NAVY_OUTPOST.spacing().defaultValue(), placement.spacing());

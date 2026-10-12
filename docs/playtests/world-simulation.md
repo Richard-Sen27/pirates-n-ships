@@ -468,11 +468,21 @@ JSON's when no config is loaded; salt, spread type, clamping) and GameTests (`Sp
 load with the new type and read the loaded config; a `/locate`-style search over a beach biome map finds a village and
 an outpost; a changed spacing moves the grid) cover the logic. The real coastline needs a client.
 
+**Amended by WG6 (2026-10-12): the defaults are denser again**: villages 20/7, navy outposts 28/10, pirate islands
+36/14 (wrecks still 24/8); `convoy_max_distance` stays 6000. Read every number below with these: the config file
+after the start reads `spacing = 20`, `separation = 7` for villages, one village cell is 320 blocks wide, and step 2
+resets to 20/7. On the smoke seed 2718281828 (`tools/server_smoke.sh neoforge`, which now prints a "Ports on the
+seed" block) the nearest village from spawn moved from 5466 to 2446 blocks; the nearest outpost (5433 -> 5876) and
+island (9830 -> 10491) lie a little farther, because the new grid puts their candidate cells elsewhere and the nearest
+cells on this seed have no fitting coast. Ten ports were generated around spawn and the largest closed sea; ten pairs
+lie within 6000 blocks (the closest a village and an outpost 117 blocks apart, two villages 1334 apart), and a convoy
+sailed between two villages 7212 lane blocks apart. Expect villages roughly twice as often as under WG5's numbers.
+
 ### Setup
 **Delete `config/pirates_n_ships-server.toml`** (or the copy in `<world>/serverconfig/`) before starting, or at least
 its `spacing`/`separation` lines and `convoy_max_distance`: the config library never puts a new default into an
-existing file, so an old file keeps 36/12, 64/24, 48/20 and 3000. Check the file after the start: the village section
-reads `spacing = 30`, `separation = 10`.
+existing file, so an old file keeps 36/12, 64/24, 48/20 and 3000 (a WG5 or 0.1.0 file keeps 30/10, 52/20, 40/16).
+Check the file after the start: the village section reads `spacing = 20`, `separation = 7` (WG6; WG5 wrote 30/10).
 
 ### Steps
 1. **Closer villages.** Create a new world, fly along a coast and run `/locate structure pirates_n_ships:seafarer_village`
@@ -484,7 +494,7 @@ reads `spacing = 30`, `separation = 10`.
 2. **Change the spacing.** Stop the game, set `world.structures.seafarer_village.spacing = 12` and `separation = 4`,
    create **another new world**, and repeat step 1.
    - **Expected:** villages crowd the coasts (several within 400 blocks). `/locate` finds the nearest of them, never one
-     farther than the dense grid would place it. Set the values back to 30/10 afterwards.
+     farther than the dense grid would place it. Set the values back to 20/7 (WG6) afterwards.
 3. **Change after creation.** In a world explored around spawn, raise `seafarer_village.spacing` to 80 (separation
    stays 10), restart, fly into unexplored land.
    - **Expected:** the villages near spawn stay; in new land they become rare. At the edge of the old area a new

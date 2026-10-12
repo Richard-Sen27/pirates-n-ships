@@ -83,7 +83,7 @@ tools/server_smoke.sh fabric --jar      # the built jar on a real Fabric server 
   libraries) and runs it with only those mods. This catches client classes on server paths on both loaders, wrong
   `side`/`environment` metadata, a jar-in-jar that does not load, and a mod missing from the dependency list.
 
-**What it does**, on a fresh world (fixed seed `2718281828`, `SMOKE_SEED` overrides; offline mode, `max-tick-time=-1`,
+**What it does**, on a fresh world (fixed seed `2718281828`, `SMOKE_SEED` overrides; `SMOKE_RCON_TIMEOUT` is the seconds one command reply may take, default 300, since `/locate` can take minutes on a loaded machine; offline mode, `max-tick-time=-1`,
 view distance 4, free ports), talking to the server console through RCON (`tools/rcon.py`, standard library only;
 Gradle does not forward stdin):
 

@@ -97,8 +97,8 @@ class IslandDataTest {
         assertEquals(Optional.of(IslandKeys.PIRATE_ISLAND), set.structures().get(0).structure().unwrapKey());
         ConfiguredSpreadPlacement placement = set.placement();
         assertEquals("pirate_island", placement.config());
-        assertEquals(52, placement.spacing(), "WG5: a little denser than 64");
-        assertEquals(20, placement.separation());
+        assertEquals(36, placement.spacing(), "WG6: denser than WG5's 52");
+        assertEquals(14, placement.separation());
         assertEquals(WorldConfig.PIRATE_ISLAND.spacing().defaultValue(), placement.spacing());
         assertEquals(WorldConfig.PIRATE_ISLAND_SEPARATION.defaultValue(), placement.separation());
         ConfiguredSpreadPlacement village = StandAloneOps.configuredSet(ops, "seafarer_villages").placement();

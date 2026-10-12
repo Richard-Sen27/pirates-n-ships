@@ -2,9 +2,9 @@ package com.richardsenger.piratesnships.combat.grapple.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
+import com.richardsenger.piratesnships.combat.grapple.HookPose;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -22,12 +22,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.List;
 
 /**
- * Draws a grappling hook (the hook item as a billboard) and its rope to the thrower's hand (docs/design.md §8.3). A
+ * Draws a grappling hook (the hook's item model turned into its {@link HookPose}, GR4: point first in flight, hanging
+ * from a rail, flat on a deck, biting into a wall, point down when free) and its rope from the hook's eye to the
+ * thrower's hand (docs/design.md §8.3). A
  * latched hook is drawn at its plot position through the ship's render pose ({@link ClientShipPoses}), so it sits on
  * the moving hull without lag; the rope is a thin square strip with the {@code rope.png} texture, like the stays of
  * {@code sailing.client.StayClothRenderer}, straight while taut (also while a player hauls on it, GR5) and sagging otherwise. The near end is the thrower's
@@ -38,7 +41,6 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
 
     public static final ResourceLocation ROPE_TEXTURE = Constants.id("textures/block/rope.png");
 
-    private static final float HOOK_SCALE = 0.75f;
     private static final float ROPE_HALF = 0.025f;
     private static final int SEGMENTS = 16;
     /** Sag of a slack rope per block of length, and its cap [blocks]. */
@@ -71,14 +73,17 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
                 Mth.lerp(partialTick, hook.zOld, hook.getZ()));
         Vec3 at = ClientRopes.hookPos(hook, partialTick);
         Vec3 off = at.subtract(base);
+        // GR4: the model turned into its pose (HookPose), crown at the hook's position; the rope ties on at the eye
+        Quaternionf rot = ClientRopes.hookRotation(hook, partialTick);
+        Vector3f eye = HookPose.eye(rot);
 
         pose.pushPose();
-        pose.translate(off.x, off.y + 0.1, off.z);
-        pose.scale(HOOK_SCALE, HOOK_SCALE, HOOK_SCALE);
-        pose.mulPose(entityRenderDispatcher.cameraOrientation());
-        pose.mulPose(Axis.YP.rotationDegrees(180.0f));
-        items.renderStatic(hook.getItem(), ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY, pose, buffers, hook.level(), hook.getId());
+        pose.translate(off.x, off.y, off.z);
+        pose.mulPose(HookPose.modelMatrix(rot));
+        items.renderStatic(hook.getItem(), ItemDisplayContext.NONE, light, OverlayTexture.NO_OVERLAY, pose, buffers, hook.level(), hook.getId());
         pose.popPose();
+        off = off.add(eye.x, eye.y, eye.z);
+        at = at.add(eye.x, eye.y, eye.z);
 
         Vec3 ring = ClientRopes.fixedNearEnd(hook, partialTick);
         Vec3 end = ring != null ? ring : hook.getOwner() instanceof Player owner ? handPos(owner, partialTick) : null;

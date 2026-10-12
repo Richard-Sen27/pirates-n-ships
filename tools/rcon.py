@@ -4,8 +4,10 @@
     rcon.py <port> <password> <command> [<command> ...]
 
 Logs in once, sends every command in order and prints each reply as "> command" followed by the reply text.
-Exits 2 when the login fails, 3 when the connection breaks; a command's own failure is only printed.
+Exits 2 when the login fails, 3 when the connection breaks; a command's own failure is only printed. A reply may take
+RCON_TIMEOUT seconds (environment, default 120): a /locate of a sparse structure can run for minutes.
 """
+import os
 import socket
 import struct
 import sys
@@ -42,7 +44,7 @@ def main(argv: list[str]) -> int:
         return 64
     port, password, commands = int(argv[1]), argv[2], argv[3:]
     try:
-        with socket.create_connection(("127.0.0.1", port), timeout=120) as sock:
+        with socket.create_connection(("127.0.0.1", port), timeout=float(os.environ.get("RCON_TIMEOUT", "120"))) as sock:
             sock.sendall(packet(1, LOGIN, password))
             request_id, _, _ = read_packet(sock)
             if request_id == -1:

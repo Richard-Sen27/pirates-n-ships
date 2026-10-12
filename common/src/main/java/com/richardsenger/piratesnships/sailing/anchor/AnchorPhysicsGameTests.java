@@ -438,4 +438,57 @@ public final class AnchorPhysicsGameTests {
             }
         });
     }
+    /**
+     * GR4: the anchor's pose ({@link AnchorPose}) through a drop and a raise at the capstan of a hull at rest: stowed
+     * before, dropping while it falls, holding once it lies on the bottom, hanging once the capstan breaks it out and
+     * heaves it up, and stowed again (a new anchor entity in the plot) when it is home; never a pose out of that order.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 700, batch = "pirates_n_ships_config_anchor_physics_pose")
+    public static void theAnchorsPoseFollowsTheDropAndTheRaise(GameTestHelper h) {
+        pin(h, AnchorChain.Params.DEFAULTS.holding());
+        basin(h);
+        Fixture f = SailingGameTestsShips.assemble(h, hull(h, false, SailTrim.FURLED));
+        BlockPos capstan = capstan(f);
+        java.util.List<AnchorPose.Kind> seen = new java.util.ArrayList<>();
+        long[] dropped = {-1};
+        long[] resting = {-1};
+        long[] raised = {-1};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (f.ship().isRemoved()) {
+                return;
+            }
+            AnchorEntity e = AnchorEntities.of(h.getLevel(), f.ship().id());
+            if (e != null && (seen.isEmpty() || seen.get(seen.size() - 1) != e.anchorPose())) {
+                seen.add(e.anchorPose());
+            }
+            if (t == SETTLE) {
+                h.assertTrue(e != null && !e.isOut() && e.anchorPose() == AnchorPose.Kind.STOWED, "not stowed before the drop: " + seen);
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
+                dropped[0] = t;
+                return;
+            }
+            ShipAnchor a = f.runtime().anchor();
+            if (dropped[0] >= 0 && resting[0] < 0 && a != null && a.resting()) {
+                resting[0] = t;
+            }
+            if (resting[0] >= 0 && raised[0] < 0 && t == resting[0] + 40) {
+                h.assertTrue(e != null && e.isOut() && e.anchorPose() == AnchorPose.Kind.HOLDING, "not holding on the bottom: " + seen);
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.RAISING, "raise refused: " + c.result());
+                raised[0] = t;
+            }
+            if (raised[0] >= 0 && a == null && e != null && !e.isOut()) {
+                Constants.LOG.info("[anchor test] poses through a drop and a raise: {}", seen);
+                java.util.List<AnchorPose.Kind> order = java.util.List.of(AnchorPose.Kind.STOWED, AnchorPose.Kind.DROPPING,
+                        AnchorPose.Kind.HOLDING, AnchorPose.Kind.HANGING, AnchorPose.Kind.STOWED);
+                h.assertTrue(seen.equals(order), "poses " + seen + ", expected " + order);
+                h.succeed();
+            }
+            if (dropped[0] >= 0) {
+                h.assertTrue(t - dropped[0] < 600, "not stowed again within 30 s: " + seen);
+            }
+        });
+    }
 }

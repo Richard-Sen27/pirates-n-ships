@@ -3886,3 +3886,30 @@ The wreck chests and the buried treasure are unchanged.
 `pirates_n_ships:seafarer_villages`; the pirate islands' set 6 chunks against the villages (`exclusion_zone`) and the
 outposts (`exclusion_zones`, a list `ConfiguredSpreadPlacement` adds). Why 8 and 6: `OutpostData.VILLAGE_EXCLUSION_CHUNKS`,
 `IslandData.PORT_EXCLUSION_CHUNKS`.
+
+Grapple and anchor poses (GR4):
+- **Why:** the human (2026-10-12): "Not just vertical grappling hook, adjusts to the orientation it flies and anchors,
+  same for anchor." Neither model is GeckoLib (the hook is the vanilla item model `models/item/grappling_hook.json`
+  from `grappling_hook.bbmodel`, the anchor the code-built `AnchorRenderer.createLayer` from `anchor.bbmodel`), so no
+  bone is set in code and the GeckoLib sign rule does not apply; no pivot moved, neither model changed.
+- **The hook** (`combat/grapple/HookPose`): frame at the crown (model pixel y 2), `+Y` up the shank to the eye ring
+  (pixel y 14, where the rope ties on, `HookPose.EYE_FROM_CROWN` 0.375 blocks), drawn at `SCALE` 0.5 with
+  `ItemDisplayContext.NONE` through `HookPose.modelMatrix` (`R · scale · translate(0, −CROWN_Y, 0)`). Poses: FLYING
+  point first along the velocity (`Ry(yRot)·Rx(−(xRot + 90°))`, vanilla's projectile yaw and pitch), HANGING (rail,
+  ring, cleat: shank straight down, flukes up over the hold), FLAT (a face whose normal's y > 0.7: on its side along
+  the throw, dipped 10°), BITING (point into any other face), FALLING (point down). A latched hook wobbles about its
+  crown for 12 ticks (`settleDegrees`, 18° decaying).
+- **The anchor** (`sailing/anchor/AnchorPose`): frame at the crown, `+Y` up the shank to the ring (`HEIGHT` 2.0),
+  arms along `±X`, stock `+Z`; drawn through `AnchorPose.modelMatrix` (`translate(lift) · R · translate(0, 2, 0) ·
+  scale(−1, −1, 1)`, the old transform with `R` for the yaw). Poses: STOWED and HANGING upright, DROPPING the shank
+  along the chain (at most 60° off upright), HOLDING the shank along the bed toward the hawse rising 4° (up to 30°
+  toward a taut chain), the arms upright rolled 15° so one fluke digs in, lifted 0.1. The renderer eases between poses
+  (`AnchorPose.turn`, 4 ticks).
+- **Tests:** `HookPoseTest` and `AnchorPoseTest` push model points (the eye ring, the crown, the anchor's ring, bills
+  and stock) through the renderer's own `modelMatrix` and check where they land, so the rope and the chain attach at
+  the eye and the ring in every pose.
+- **Renders:** `renders/grapple_poses.png` (flying along a lob, hanging on a rail, flat on a deck, biting a wall,
+  falling) and `renders/anchor_poses.png` (upright, dropping along the chain, holding on the bed): a scratch three.js
+  scene in Blockbench's `risky_eval`, no project opened, flat-coloured boxes from the hook's model JSON and the
+  anchor's `addBox` calls (parsed from `AnchorRenderer`), posed with a JavaScript copy of the two pose classes,
+  written with `fs`.

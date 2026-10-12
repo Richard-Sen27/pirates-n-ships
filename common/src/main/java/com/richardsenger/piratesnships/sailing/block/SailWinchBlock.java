@@ -119,7 +119,7 @@ public class SailWinchBlock extends Block implements StationBlock, WoodBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level instanceof ServerLevel serverLevel) {
-            ActionBar.show(player, use(serverLevel, pos));
+            ActionBar.show(player, use(serverLevel, pos, player));
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -129,7 +129,15 @@ public class SailWinchBlock extends Block implements StationBlock, WoodBlock {
      * change (MSG1: the cloth shows it). Public for GameTests.
      */
     public static Component use(ServerLevel level, BlockPos pos) {
+        return use(level, pos, null);
+    }
+
+    /** {@link #use(ServerLevel, BlockPos)} by {@code player}, who gets the credit for sails set (ADV1). */
+    public static Component use(ServerLevel level, BlockPos pos, @org.jetbrains.annotations.Nullable Player player) {
         SailingRuntimes.CycleResult r = SailingRuntimes.cycleTrim(level, pos);
+        if (r != null && r.sails() > 0 && r.trim() != SailTrim.FURLED) {
+            com.richardsenger.piratesnships.core.advancement.ModAdvancements.sailSet(player, r.sails()); // ADV1
+        }
         if (r == null) {
             return Component.translatable(KEY_NOT_ON_SHIP);
         }

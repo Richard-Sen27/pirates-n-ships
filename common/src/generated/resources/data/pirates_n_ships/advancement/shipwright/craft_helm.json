@@ -1,0 +1,45 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "craft_helm": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "pirates_n_ships:oak_helm",
+              "pirates_n_ships:spruce_helm",
+              "pirates_n_ships:birch_helm",
+              "pirates_n_ships:jungle_helm",
+              "pirates_n_ships:acacia_helm",
+              "pirates_n_ships:helm",
+              "pirates_n_ships:mangrove_helm",
+              "pirates_n_ships:cherry_helm",
+              "pirates_n_ships:bamboo_helm",
+              "pirates_n_ships:crimson_helm",
+              "pirates_n_ships:warped_helm"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.craft_helm.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:helm"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.craft_helm.title"
+    }
+  },
+  "requirements": [
+    [
+      "craft_helm"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

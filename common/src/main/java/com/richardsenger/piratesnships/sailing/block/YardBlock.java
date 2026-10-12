@@ -177,6 +177,7 @@ public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBl
         }
         if (level instanceof ServerLevel serverLevel) {
             SailTrim next = YardSails.cycle(serverLevel, pos);
+            if (next != null && next != SailTrim.FURLED) com.richardsenger.piratesnships.core.advancement.ModAdvancements.sailSet(player, 1); // ADV1
             var rules = SailingConfig.yardRules();
             if (next == null) { // MSG1: a new trim shows in the cloth
                 player.displayClientMessage(Component.translatable(KEY_NO_SAIL, rules.minGap(), rules.maxGap()), true);

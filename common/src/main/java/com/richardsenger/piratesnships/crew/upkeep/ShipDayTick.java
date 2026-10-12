@@ -235,6 +235,7 @@ public final class ShipDayTick {
         // 3. mutiny or desertion
         List<UUID> deserters = new ArrayList<>();
         List<UUID> marked = new ArrayList<>();
+        int returned = 0; // ADV1: deserters who changed their minds
         DesertionRules.Settings ds = Desertions.settings();
         if (day.mutiny()) {
             Component name = shipName(record);
@@ -266,6 +267,7 @@ public final class ShipDayTick {
                             : Component.translatable(UpkeepText.DESERTING, name));
                 } else if (was.deserting() && !now.deserting()) {
                     chat.add(Component.translatable(UpkeepText.STAYS, name));
+                    returned++;
                 }
             }
         }
@@ -279,6 +281,10 @@ public final class ShipDayTick {
                 day.shipLowDays(), s.wagesEnabled()
                         ? new ShipUpkeep.PayRecord(true, day.paid(), day.unpaid(), payment.coinsTaken(), fromWallet)
                         : ShipUpkeep.PayRecord.NONE));
+        if (!crew.isEmpty()) { // ADV1
+            com.richardsenger.piratesnships.core.advancement.ModAdvancements.crewDay(owner != null ? owner : payer, ship.id(),
+                    s.wagesEnabled() ? day.paid() : 0, returned, day.mutiny() || !deserters.isEmpty() || !marked.isEmpty());
+        }
         List<Component> lines = new ArrayList<>(bar);
         lines.addAll(chat);
         return new DayReport(outcome, provisionsDelta, day, deserters, marked, lines);

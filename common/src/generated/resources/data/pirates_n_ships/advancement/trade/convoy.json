@@ -1,0 +1,27 @@
+{
+  "parent": "pirates_n_ships:trade/contract",
+  "criteria": {
+    "convoy_escorted": {
+      "trigger": "pirates_n_ships:convoy_escorted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.convoy.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:merchant_flag"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.convoy.title"
+    }
+  },
+  "requirements": [
+    [
+      "convoy_escorted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

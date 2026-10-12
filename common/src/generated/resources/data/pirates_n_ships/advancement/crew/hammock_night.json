@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:crew/hire_hand",
+  "criteria": {
+    "hammock_night": {
+      "trigger": "pirates_n_ships:hammock_night"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.hammock_night.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:hammock"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.hammock_night.title"
+    }
+  },
+  "requirements": [
+    [
+      "hammock_night"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

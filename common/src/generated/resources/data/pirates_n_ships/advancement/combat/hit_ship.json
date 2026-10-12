@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:combat/fire_cannon",
+  "criteria": {
+    "ship_hit": {
+      "trigger": "pirates_n_ships:ship_hit"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.hit_ship.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:cannonball"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.hit_ship.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_hit"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

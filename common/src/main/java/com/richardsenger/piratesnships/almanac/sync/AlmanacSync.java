@@ -44,7 +44,10 @@ public final class AlmanacSync {
 
     /** Server handler of {@link AlmanacPagePayload.Report}. */
     public static void onReport(AlmanacPagePayload.Report payload, Player player) {
-        store(player, payload.progress(), AlmanacBook.server());
+        AlmanacBook book = AlmanacBook.server();
+        payload.progress().chapter().ifPresent(c -> com.richardsenger.piratesnships.core.advancement.ModAdvancements.chapterRead(player, c, // ADV1
+                book.chapters().stream().map(com.richardsenger.piratesnships.almanac.data.Chapter::id).toList()));
+        store(player, payload.progress(), book);
     }
 
     /**

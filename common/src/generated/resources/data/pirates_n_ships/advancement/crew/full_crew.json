@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:crew/hire_hand",
+  "criteria": {
+    "crew_hired": {
+      "conditions": {
+        "value": {
+          "min": 8
+        }
+      },
+      "trigger": "pirates_n_ships:crew_hired"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.full_crew.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:ships_bell"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.full_crew.title"
+    }
+  },
+  "requirements": [
+    [
+      "crew_hired"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

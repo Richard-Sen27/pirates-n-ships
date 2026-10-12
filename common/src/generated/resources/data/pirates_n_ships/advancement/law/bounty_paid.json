@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "bounty_paid": {
+      "trigger": "pirates_n_ships:bounty_paid"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.law.bounty_paid.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:bounty_proof"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.law.bounty_paid.title"
+    }
+  },
+  "requirements": [
+    [
+      "bounty_paid"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

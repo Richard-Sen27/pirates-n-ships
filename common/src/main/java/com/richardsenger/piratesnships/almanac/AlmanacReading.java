@@ -42,6 +42,7 @@ public final class AlmanacReading {
         if (!(player.level().getBlockEntity(pos) instanceof AlmanacBlockEntity tome)) return false;
         tome.startReading(player, player.level().getGameTime());
         deliver(player, new AlmanacPayloads.Open(Optional.of(pos.immutable())));
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.almanacOpened(player); // ADV1
         return true;
     }
 
@@ -49,6 +50,7 @@ public final class AlmanacReading {
     public static boolean readInHand(ServerPlayer player) {
         if (!AlmanacConfig.ENABLED.get()) return false;
         deliver(player, new AlmanacPayloads.Open(Optional.empty()));
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.almanacOpened(player); // ADV1
         return true;
     }
 

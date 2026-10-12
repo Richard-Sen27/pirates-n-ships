@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:career/midshipman",
+  "criteria": {
+    "navy_lieutenant": {
+      "conditions": {
+        "kind": "navy/lieutenant"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.lieutenant.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:officer_hat"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.lieutenant.title"
+    }
+  },
+  "requirements": [
+    [
+      "navy_lieutenant"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

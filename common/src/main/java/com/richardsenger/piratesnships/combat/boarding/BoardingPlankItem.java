@@ -57,6 +57,9 @@ public class BoardingPlankItem extends BlockItem {
             stack.shrink(1);
         }
         level.gameEvent(player, GameEvent.BLOCK_PLACE, laid.base());
+        if (laid.ship() != null && laid.farShip() != null && !laid.ship().equals(laid.farShip())) {
+            com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipBoarded(player, "plank"); // ADV1: a plank from one ship to another
+        }
         return InteractionResult.CONSUME;
     }
 

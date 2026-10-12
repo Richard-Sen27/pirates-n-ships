@@ -186,6 +186,7 @@ public final class ShipScreens {
                 Optional<WhistleOrder> order = WhistleOrder.byId(action.text());
                 if (order.isEmpty()) return Answer.no(ShipScreenText.UNKNOWN_ORDER);
                 WhistleOrders.Issued issued = WhistleOrders.issue(level, ship, order.get(), WhistleOrders.heldWhistle(player));
+                if (issued.result().outcome() == WhistleOrders.Outcome.ISSUED) com.richardsenger.piratesnships.core.advancement.ModAdvancements.orderGiven(player, order.get().id()); // ADV1
                 return new Answer(issued.message(), issued.result().outcome() == WhistleOrders.Outcome.ISSUED);
             }
             case RELEASE -> {

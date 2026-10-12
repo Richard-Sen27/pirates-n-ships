@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "storm_weathered": {
+      "conditions": {
+        "value": {
+          "min": 60
+        }
+      },
+      "trigger": "pirates_n_ships:storm_weathered"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.storm.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:oar"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.storm.title"
+    }
+  },
+  "requirements": [
+    [
+      "storm_weathered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

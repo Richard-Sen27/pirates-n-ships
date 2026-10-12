@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:shipwright/order_ship",
+  "criteria": {
+    "brig": {
+      "conditions": {
+        "kind": "brig"
+      },
+      "trigger": "pirates_n_ships:ship_launched"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.launch_brig.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:shipwright_toolkit"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.launch_brig.title"
+    }
+  },
+  "requirements": [
+    [
+      "brig"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

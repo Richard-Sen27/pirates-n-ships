@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:shipwright/set_sail",
+  "criteria": {
+    "sailed_with_wind": {
+      "conditions": {
+        "value": {
+          "min": 3
+        }
+      },
+      "trigger": "pirates_n_ships:sailed_with_wind"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.sail_with_wind.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:yard"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.sail_with_wind.title"
+    }
+  },
+  "requirements": [
+    [
+      "sailed_with_wind"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

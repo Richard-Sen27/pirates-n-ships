@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:law/shackled",
+  "criteria": {
+    "jolly_roger": {
+      "conditions": {
+        "kind": "jolly_roger"
+      },
+      "trigger": "pirates_n_ships:flag_hoisted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.law.black_flag.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:jolly_roger_flag"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.law.black_flag.title"
+    }
+  },
+  "requirements": [
+    [
+      "jolly_roger"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

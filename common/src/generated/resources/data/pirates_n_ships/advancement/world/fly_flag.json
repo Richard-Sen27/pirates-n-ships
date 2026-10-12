@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "flag_hoisted": {
+      "trigger": "pirates_n_ships:flag_hoisted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.fly_flag.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:flagpole"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.fly_flag.title"
+    }
+  },
+  "requirements": [
+    [
+      "flag_hoisted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

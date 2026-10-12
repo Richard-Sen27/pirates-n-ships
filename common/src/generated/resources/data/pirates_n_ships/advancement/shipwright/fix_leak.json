@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:shipwright/launch_ship",
+  "criteria": {
+    "leak_fixed": {
+      "trigger": "pirates_n_ships:leak_fixed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.fix_leak.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:hull_patch"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.fix_leak.title"
+    }
+  },
+  "requirements": [
+    [
+      "leak_fixed"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

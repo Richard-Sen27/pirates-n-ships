@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:trade/first_doubloon",
+  "criteria": {
+    "contract_delivered": {
+      "trigger": "pirates_n_ships:contract_delivered"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.contract.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:cargo_crate"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.contract.title"
+    }
+  },
+  "requirements": [
+    [
+      "contract_delivered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

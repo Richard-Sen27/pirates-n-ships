@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:career/dread_captain",
+  "criteria": {
+    "infamy_pirate_lord": {
+      "conditions": {
+        "kind": "infamy/pirate_lord"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.pirate_lord.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:captains_hat"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.pirate_lord.title"
+    }
+  },
+  "requirements": [
+    [
+      "infamy_pirate_lord"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

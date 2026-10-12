@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:career/commodore",
+  "criteria": {
+    "navy_admiral": {
+      "conditions": {
+        "kind": "navy/admiral"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.admiral.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:ship_commission"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.admiral.title"
+    }
+  },
+  "requirements": [
+    [
+      "navy_admiral"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

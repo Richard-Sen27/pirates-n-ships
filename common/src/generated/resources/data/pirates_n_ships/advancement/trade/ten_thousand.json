@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:trade/thousand",
+  "criteria": {
+    "doubloons_earned": {
+      "conditions": {
+        "value": {
+          "min": 10000
+        }
+      },
+      "trigger": "pirates_n_ships:doubloons_earned"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.ten_thousand.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:spices"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.ten_thousand.title"
+    }
+  },
+  "requirements": [
+    [
+      "doubloons_earned"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

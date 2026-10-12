@@ -41,6 +41,12 @@ public final class AlmanacSceneOpener {
 
     /** Opens {@code sceneId} through the installed handler; whether a scene opened. */
     public static boolean open(String sceneId) {
-        return handler.openScene(sceneId);
+        boolean opened = handler.openScene(sceneId);
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(sceneId);
+        if (opened && id != null) { // ADV1: Ponder runs on the client only, so the server learns of it here
+            com.richardsenger.piratesnships.platform.Services.NETWORK.sendToServer(
+                    new com.richardsenger.piratesnships.core.advancement.SceneOpenedPayload(id));
+        }
+        return opened;
     }
 }

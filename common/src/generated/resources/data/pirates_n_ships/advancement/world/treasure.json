@@ -1,0 +1,28 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "treasure_dug": {
+      "trigger": "pirates_n_ships:treasure_dug"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.treasure.description"
+    },
+    "frame": "goal",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:treasure_map"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.treasure.title"
+    }
+  },
+  "requirements": [
+    [
+      "treasure_dug"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

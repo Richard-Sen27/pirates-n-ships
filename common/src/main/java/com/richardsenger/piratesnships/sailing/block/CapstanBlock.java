@@ -91,7 +91,9 @@ public class CapstanBlock extends Block implements StationBlock, EntityBlock, Wo
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level instanceof ServerLevel serverLevel) {
-            ActionBar.show(player, ShipControls.useCapstan(serverLevel, pos).message());
+            ShipControls.CapstanResult r = ShipControls.useCapstan(serverLevel, pos);
+            if (r.result() == ShipControls.AnchorResult.DROPPING) com.richardsenger.piratesnships.core.advancement.ModAdvancements.anchorDropped(player); // ADV1
+            ActionBar.show(player, r.message());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

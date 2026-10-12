@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:combat/fire_cannon",
+  "criteria": {
+    "grapple_latched": {
+      "trigger": "pirates_n_ships:grapple_latched"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.grapple.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:grappling_hook"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.grapple.title"
+    }
+  },
+  "requirements": [
+    [
+      "grapple_latched"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "navy_midshipman": {
+      "conditions": {
+        "kind": "navy/midshipman"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.midshipman.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:navy_hat"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.midshipman.title"
+    }
+  },
+  "requirements": [
+    [
+      "navy_midshipman"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -49,7 +49,9 @@ public class HullPatchItem extends BlockItem {
             }
             return InteractionResult.FAIL;
         }
-        return super.place(context);
+        InteractionResult placed = super.place(context);
+        if (placed.consumesAction()) com.richardsenger.piratesnships.core.advancement.ModAdvancements.leakFixed(context.getPlayer()); // ADV1
+        return placed;
     }
 
     /** Whether a patch may go into plot position {@code pos}; {@code replaceable}: the block there may be replaced. */

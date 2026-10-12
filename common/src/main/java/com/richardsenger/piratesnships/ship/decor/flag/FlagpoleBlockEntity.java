@@ -250,6 +250,9 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
             if (p != null) p.displayClientMessage(feedback(outcome.feedback(), outcome), true);
         }
         if (updateBlock && changed) updateBlockState(before.shown() != state.reading().shown());
+        if (outcome.cause().orElse(null) == FlagpoleMachine.Cause.HOISTED && outcome.feedbackTo() != null) { // ADV1
+            com.richardsenger.piratesnships.core.advancement.ModAdvancements.flagHoisted(player(server, outcome.feedbackTo()), state.reading().kind().getSerializedName());
+        }
         Optional<UUID> keep = state.pending().map(FlagpoleState.Pending::actor);
         actors.keySet().removeIf(id -> keep.isEmpty() || !keep.get().equals(id));
         outcome.cause().ifPresent(c -> FlagpoleEvents.fire(new FlagpoleEvents.FlagChange(server, worldPosition, before,

@@ -173,6 +173,7 @@ public final class LawService {
         store(entity, result.record());
         syncNavyBounty(entity);
         LawDeeds.onFinePaid(entity, result); // REP1: the pay_fine deed
+        if (result.pointsRemoved() > 0) com.richardsenger.piratesnships.core.advancement.ModAdvancements.bountyPaid(entity, result.doubloonsSpent()); // ADV1
         return result;
     }
 

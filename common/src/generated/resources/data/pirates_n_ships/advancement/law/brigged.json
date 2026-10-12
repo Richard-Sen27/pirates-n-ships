@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:law/shackled",
+  "criteria": {
+    "brigged": {
+      "conditions": {
+        "kind": "brigged"
+      },
+      "trigger": "pirates_n_ships:prisoner_taken"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.law.brigged.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:brig_key"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.law.brigged.title"
+    }
+  },
+  "requirements": [
+    [
+      "brigged"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

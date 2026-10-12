@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:trade/first_doubloon",
+  "criteria": {
+    "quest_completed": {
+      "trigger": "pirates_n_ships:quest_completed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.quest.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:notice_board"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.quest.title"
+    }
+  },
+  "requirements": [
+    [
+      "quest_completed"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

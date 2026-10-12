@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:shipwright/launch_ship",
+  "criteria": {
+    "ship_assembled": {
+      "conditions": {
+        "value": {
+          "min": 500
+        }
+      },
+      "trigger": "pirates_n_ships:ship_assembled"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.big_ship.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:figurehead_lion"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.big_ship.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_assembled"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

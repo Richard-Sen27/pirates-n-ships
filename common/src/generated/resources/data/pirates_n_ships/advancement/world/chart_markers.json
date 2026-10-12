@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "markers_placed": {
+      "conditions": {
+        "value": {
+          "min": 10
+        }
+      },
+      "trigger": "pirates_n_ships:markers_placed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.chart_markers.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:chart_table"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.chart_markers.title"
+    }
+  },
+  "requirements": [
+    [
+      "markers_placed"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

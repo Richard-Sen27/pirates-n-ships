@@ -1,0 +1,48 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "navy_outpost": {
+      "conditions": {
+        "kind": "navy_outpost"
+      },
+      "trigger": "pirates_n_ships:port_visited"
+    },
+    "pirate_island": {
+      "conditions": {
+        "kind": "pirate_island"
+      },
+      "trigger": "pirates_n_ships:port_visited"
+    },
+    "seafarer_village": {
+      "conditions": {
+        "kind": "seafarer_village"
+      },
+      "trigger": "pirates_n_ships:port_visited"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.all_ports.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:chart"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.all_ports.title"
+    }
+  },
+  "requirements": [
+    [
+      "seafarer_village"
+    ],
+    [
+      "navy_outpost"
+    ],
+    [
+      "pirate_island"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

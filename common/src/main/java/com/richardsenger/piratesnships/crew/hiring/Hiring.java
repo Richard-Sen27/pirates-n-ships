@@ -163,6 +163,7 @@ public final class Hiring {
         // morale: a new crew member's stored morale is unset and reads as crew.morale.start (CrewMorale)
         level.addFreshEntity(crew);
         if (charge && c.fee() > 0) player.containerMenu.broadcastChanges();
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.crewHired(player, ShipBunks.count(level, ship.get()).crew()); // ADV1
         return new Result(true, HiringText.HIRED, c.name(), crew);
     }
 

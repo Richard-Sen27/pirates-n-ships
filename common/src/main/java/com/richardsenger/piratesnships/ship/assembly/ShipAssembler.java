@@ -103,6 +103,7 @@ public final class ShipAssembler {
         ship.setUserData(USER_DATA_KEY, pointer);
         HullRuntimes.onAssembled(ship);
         ShipAllegiance.refresh(ship); // FL2: flags hoisted before assembly now fly from the ship
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipAssembled(player, blocks.size()); // ADV1
         return new AssemblyResult(Outcome.ASSEMBLED, blocks.size(), ship.id(), null, 0);
     }
 

@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "crew_hired": {
+      "trigger": "pirates_n_ships:crew_hired"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.hire_hand.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:bandana"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.hire_hand.title"
+    }
+  },
+  "requirements": [
+    [
+      "crew_hired"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

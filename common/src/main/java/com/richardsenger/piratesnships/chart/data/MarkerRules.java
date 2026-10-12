@@ -14,6 +14,11 @@ public final class MarkerRules {
     public static final int MAX_NAME_LENGTH = 32;
     /** Markers must lie within the vanilla world border's maximum extent. */
     public static final int MAX_COORDINATE = 30_000_000;
+    /**
+     * Most markers one chart holds even with {@code chart.max_markers} 0 ("no limit", CHART2): the whole list travels in
+     * one payload, and 4096 markers of the longest names stay well under a payload's 1 MiB.
+     */
+    public static final int HARD_LIMIT = 4096;
 
     public enum Refusal {
         TOO_MANY, NAME_TOO_LONG, BAD_NAME, OUT_OF_WORLD, UNKNOWN_MARKER, DISABLED;
@@ -51,9 +56,15 @@ public final class MarkerRules {
         return x > MAX_COORDINATE || x < -MAX_COORDINATE || z > MAX_COORDINATE || z < -MAX_COORDINATE ? Refusal.OUT_OF_WORLD : null;
     }
 
+    /** The markers a chart may hold for {@code chart.max_markers}: 0 (or less) means no limit but {@link #HARD_LIMIT}. */
+    public static int limit(int maxMarkers) {
+        return maxMarkers <= 0 ? HARD_LIMIT : Math.min(maxMarkers, HARD_LIMIT);
+    }
+
+    /** Places a new marker; {@code maxMarkers} is {@code chart.max_markers} (0 = no limit, see {@link #limit}). */
     public static Outcome add(ChartData data, int x, int z, MarkerIcon icon, String name, int maxMarkers) {
         String n = name.strip();
-        if (data.markers().size() >= maxMarkers) return Outcome.refused(data, Refusal.TOO_MANY);
+        if (data.markers().size() >= limit(maxMarkers)) return Outcome.refused(data, Refusal.TOO_MANY);
         Refusal r = checkName(n);
         if (r == null) r = checkPosition(x, z);
         if (r != null) return Outcome.refused(data, r);

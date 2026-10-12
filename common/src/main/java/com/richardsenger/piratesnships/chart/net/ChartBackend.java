@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.ChartConfig;
 import com.richardsenger.piratesnships.chart.ChartContent;
 import com.richardsenger.piratesnships.chart.ChartService;
+import com.richardsenger.piratesnships.chart.ChartShips;
+import com.richardsenger.piratesnships.chart.ChartStructures;
 import com.richardsenger.piratesnships.chart.client.ClientChart;
 import com.richardsenger.piratesnships.chart.data.ChartData;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
@@ -32,15 +34,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@code chart.open_without_item}) gets a session: the client sends its viewport, and every tick the server sends
  * up to {@link #REGIONS_PER_TICK} regions of the viewport the client has not seen in their current version (so a
  * chart that fills while it is open updates live). What was sent is remembered per player until logout, matching the
- * client's cache, which lives until it leaves the server. Once a second, with {@code chart.show_other_players}, the
- * open chart gets the other players in the overworld within the server's view distance. Marker edits are checked by
- * {@link MarkerRules} and answered with the new marker list.
+ * client's cache, which lives until it leaves the server. Marker edits are checked by {@link MarkerRules} and
+ * answered with the new marker list.
+ *
+ * <p>CHART2: once a second the open chart gets the viewer's ships ({@link ChartShips}) and, when they changed, the
+ * structures it shows ({@link ChartStructures}); a state payload goes out only when one of them changed. Other players
+ * are never sent (the human, 2026-10-12: the chart shows only its owner).
  */
 public final class ChartBackend {
 
     public static final String MSG = "message." + Constants.MOD_ID + ".chart.";
     public static final int REGIONS_PER_TICK = 4;
-    private static final int OTHERS_INTERVAL = 20;
+    /** Ticks between two updates of the ships and structures on an open chart. */
+    public static final int LIVE_INTERVAL = 20;
 
     private record View(int cx, int cz, int radius) {
     }
@@ -48,6 +54,8 @@ public final class ChartBackend {
     private static final class Session {
         final ServerPlayer player;
         volatile View view;
+        List<ChartShip> lastShips = List.of();
+        List<ChartStructure> lastStructures = null;
 
         Session(ServerPlayer player) {
             this.player = player;
@@ -76,8 +84,8 @@ public final class ChartBackend {
 
     /** The settings the client is told about. */
     public static ChartSettings settings() {
-        return new ChartSettings(ChartConfig.ENABLED.get(), ChartConfig.OPEN_WITHOUT_ITEM.get(), ChartConfig.SHOW_OTHER_PLAYERS.get(),
-                ChartConfig.CELL_BLOCKS.get(), ChartConfig.MAX_MARKERS.get());
+        return new ChartSettings(ChartConfig.ENABLED.get(), ChartConfig.OPEN_WITHOUT_ITEM.get(),
+                ChartConfig.CELL_BLOCKS.get(), ChartConfig.MAX_MARKERS.get(), ChartConfig.MAX_ZOOM_OUT.get());
     }
 
     // --- lifecycle -----------------------------------------------------------------------------------------------
@@ -120,7 +128,10 @@ public final class ChartBackend {
         if (old != null) s.view = old.view;
         ChartData data = ChartService.data(player);
         deliver(player, new ChartOpenPayload(settings(), data.markers(), tile));
-        deliver(player, new ChartStatePayload(data.markers(), others(player), Optional.empty()));
+        ChartStructures.reveal(player);
+        s.lastShips = ChartShips.of(player);
+        s.lastStructures = ChartStructures.shown(player);
+        deliver(player, new ChartStatePayload(Optional.of(data.markers()), s.lastShips, Optional.of(s.lastStructures), Optional.empty()));
         player.level().playSound(null, player.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.8f, 0.9f);
         return true;
     }
@@ -158,7 +169,7 @@ public final class ChartBackend {
 
     public static void onServerTick(MinecraftServer server) {
         if (SESSIONS.isEmpty()) return;
-        boolean others = ChartConfig.SHOW_OTHER_PLAYERS.get() && server.getTickCount() % OTHERS_INTERVAL == 0;
+        boolean live = server.getTickCount() % LIVE_INTERVAL == 0;
         for (UUID id : new ArrayList<>(SESSIONS.keySet())) {
             Session s = SESSIONS.get(id);
             if (s == null) continue;
@@ -167,9 +178,7 @@ public final class ChartBackend {
                 continue;
             }
             sendPending(s, REGIONS_PER_TICK);
-            if (others) {
-                deliver(s.player, new ChartStatePayload(ChartService.data(s.player).markers(), others(s.player), Optional.empty()));
-            }
+            if (live) sendLive(s);
         }
     }
 
@@ -192,20 +201,25 @@ public final class ChartBackend {
         return pending.size();
     }
 
-    /** Other players on the chart of {@code viewer}: in the overworld, within view distance, not spectators. */
-    public static List<ChartStatePayload.OtherPlayer> others(ServerPlayer viewer) {
-        if (!ChartConfig.SHOW_OTHER_PLAYERS.get() || !ChartService.charted(viewer.level())) return List.of();
-        double range = viewer.server.getPlayerList().getViewDistance() * 16.0;
-        List<ChartStatePayload.OtherPlayer> out = new ArrayList<>();
-        for (ServerPlayer p : viewer.server.getPlayerList().getPlayers()) {
-            if (p == viewer || p.isSpectator() || p.level() != viewer.level()) continue;
-            double dx = p.getX() - viewer.getX();
-            double dz = p.getZ() - viewer.getZ();
-            if (dx * dx + dz * dz > range * range) continue;
-            out.add(new ChartStatePayload.OtherPlayer(p.getGameProfile().getName(), p.getBlockX(), p.getBlockZ(), p.getYRot()));
-            if (out.size() >= ChartStatePayload.MAX_OTHERS) break;
-        }
-        return out;
+    /**
+     * The once-a-second update of an open chart: the ships, and the structures when they changed. Sends nothing when
+     * neither changed. Public for GameTests.
+     */
+    public static boolean sendLive(UUID player) {
+        Session s = SESSIONS.get(player);
+        return s != null && sendLive(s);
+    }
+
+    private static boolean sendLive(Session s) {
+        List<ChartShip> ships = ChartShips.of(s.player);
+        List<ChartStructure> structures = ChartStructures.shown(s.player);
+        boolean shipsChanged = !ships.equals(s.lastShips);
+        boolean structuresChanged = !structures.equals(s.lastStructures);
+        if (!shipsChanged && !structuresChanged) return false;
+        s.lastShips = ships;
+        if (structuresChanged) s.lastStructures = structures;
+        deliver(s.player, new ChartStatePayload(Optional.empty(), ships, structuresChanged ? Optional.of(structures) : Optional.empty(), Optional.empty()));
+        return true;
     }
 
     // --- markers -------------------------------------------------------------------------------------------------
@@ -225,7 +239,9 @@ public final class ChartBackend {
         }
         if (outcome.ok()) ChartService.setData(player, outcome.data());
         Optional<String> refusal = outcome.ok() ? Optional.empty() : Optional.of(MSG + "refused." + outcome.refusal().key());
-        deliver(player, new ChartStatePayload(outcome.data().markers(), others(player), refusal));
+        Session s = SESSIONS.get(player.getUUID());
+        List<ChartShip> ships = s != null ? s.lastShips : ChartShips.of(player);
+        deliver(player, new ChartStatePayload(Optional.of(outcome.data().markers()), ships, Optional.empty(), refusal));
         return outcome;
     }
 

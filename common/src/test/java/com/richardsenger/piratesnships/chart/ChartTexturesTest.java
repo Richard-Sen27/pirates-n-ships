@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.chart;
 
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
+import com.richardsenger.piratesnships.chart.data.StructureKind;
 import com.richardsenger.piratesnships.chart.render.ChartDoodles;
 import com.richardsenger.piratesnships.chart.render.ChartSheet;
 import org.junit.jupiter.api.Test;
@@ -65,8 +66,9 @@ class ChartTexturesTest {
         assertArrayEquals(new int[]{16, 16}, size(TEXTURES.resolve("block/map_tile.png")));
         assertArrayEquals(new int[]{16, 16}, size(TEXTURES.resolve("item/map_tile.png")));
         List<ChartSheet.Part> parts = new ArrayList<>(List.of(ChartSheet.COMPASS, ChartSheet.SERPENT, ChartSheet.WHALE,
-                ChartSheet.SMALL_ROSE, ChartSheet.RING, ChartSheet.OWN_SHIP, ChartSheet.OTHER_SHIP));
+                ChartSheet.SMALL_ROSE, ChartSheet.RING, ChartSheet.OWN_SHIP, ChartSheet.OTHER_SHIP, ChartSheet.PLAYER));
         for (MarkerIcon icon : MarkerIcon.values()) parts.add(ChartSheet.marker(icon));
+        for (StructureKind kind : StructureKind.values()) parts.add(ChartSheet.structure(kind));
         for (ChartSheet.Part a : parts) {
             assertTrue(a.u() >= 0 && a.v() >= 0 && a.u() + a.w() <= ChartSheet.WIDTH && a.v() + a.h() <= ChartSheet.HEIGHT, a + " inside");
             for (ChartSheet.Part b : parts) {

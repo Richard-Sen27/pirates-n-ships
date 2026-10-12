@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Marker validation (MAP1): the cap, names, positions, edits and removal of unknown markers. */
+/** Marker validation (MAP1, CHART2): the cap (0 = no limit), names, positions, edits and removal of unknown markers. */
 class MarkerRulesTest {
 
     @Test
@@ -34,7 +34,23 @@ class MarkerRulesTest {
         MarkerRules.Outcome over = MarkerRules.add(d, 9, 9, MarkerIcon.X, "m", 2);
         assertEquals(MarkerRules.Refusal.TOO_MANY, over.refusal());
         assertSame(d, over.data());
-        assertEquals(MarkerRules.Refusal.TOO_MANY, MarkerRules.add(ChartData.EMPTY, 0, 0, MarkerIcon.X, "", 0).refusal(), "0 markers allowed");
+        assertEquals(MarkerRules.Refusal.TOO_MANY, MarkerRules.add(d, 9, 9, MarkerIcon.X, "", 1).refusal(), "a lowered cap refuses too");
+    }
+
+    /** CHART2: {@code max_markers} 0 is no limit; only the payload's hard limit stays. */
+    @Test
+    void zeroMeansNoLimitUpToTheHardLimit() {
+        assertEquals(MarkerRules.HARD_LIMIT, MarkerRules.limit(0));
+        assertEquals(MarkerRules.HARD_LIMIT, MarkerRules.limit(-5));
+        assertEquals(64, MarkerRules.limit(64));
+        assertEquals(MarkerRules.HARD_LIMIT, MarkerRules.limit(1_000_000));
+        ChartData d = ChartData.EMPTY;
+        for (int i = 0; i < 600; i++) {
+            MarkerRules.Outcome o = MarkerRules.add(d, i, -i, MarkerIcon.X, "m" + i, 0);
+            assertTrue(o.ok(), "marker " + i + " beyond the old 64 and 512");
+            d = o.data();
+        }
+        assertEquals(600, d.markers().size());
     }
 
     @Test

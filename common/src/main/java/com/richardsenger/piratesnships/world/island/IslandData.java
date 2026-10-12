@@ -38,6 +38,13 @@ public final class IslandData {
 
     /** Fixed salt of the structure set's random spread (never change it: it moves every island of existing worlds). */
     public static final int SALT = 739_215_604;
+    /**
+     * STR6: no pirate island starts within this many chunks of a seafarer village's or a navy outpost's placement chunk
+     * (vanilla's {@code exclusion_zone} for the villages, {@code ConfiguredSpreadPlacement}'s {@code exclusion_zones} for
+     * the outposts). Smaller than the outposts' 8: the islands' spread is the sparsest (52), and 8 against both sets
+     * would cost them about 45 % of their sites, 6 about 28 %.
+     */
+    public static final int PORT_EXCLUSION_CHUNKS = 6;
     public static final int SIZE = 6;
     public static final int MAX_DISTANCE_FROM_CENTER = 64;
     public static final int START_HEIGHT = 1;
@@ -103,7 +110,12 @@ public final class IslandData {
 
     public static void gather(DataContributions data) {
         PortStructureData.writeStructure(data, IslandKeys.PIRATE_ISLAND, spec());
-        PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, "pirate_island", SALT);
+        PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, "pirate_island", SALT,
+                java.util.List.of(
+                        new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.village.VillageKeys.SEAFARER_VILLAGES,
+                                PORT_EXCLUSION_CHUNKS),
+                        new PortStructureData.Exclusion(com.richardsenger.piratesnships.world.outpost.OutpostKeys.NAVY_OUTPOSTS,
+                                PORT_EXCLUSION_CHUNKS)));
         PortStructureData.pool(data, IslandKeys.START, GROUP, "minecraft:empty", "rigid", weights("camp_start", 1));
         PortStructureData.pool(data, IslandKeys.PATHS, GROUP, IslandKeys.TERMINATORS.location().toString(), "terrain_matching",
                 IslandKeys.TRAIL_PROCESSORS, PATHS);

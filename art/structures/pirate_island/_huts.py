@@ -116,7 +116,7 @@ def hut(piece_id, name, stilts=False, porch=1, ridge="x", salt=0, chimney_at=Non
 
     # inside: the bed along the east wall, a chest, a table and stool, a barrel with a lantern, a rug
     bed(p, X1 - 1, floor + 1, z1 - 2, "south", colour="brown")
-    p.put(X0 + 1, floor + 1, z1 - 1, "minecraft:chest[facing=east,type=single]")
+    p.loot_chest(X0 + 1, floor + 1, z1 - 1, "east", "pirate_island/hut")
     table(p, X0 + 1, floor + 1, z0 + 2)
     stool(p, X0 + 2, floor + 1, z0 + 2, "east")
     p.put(X0 + 1, floor + 1, z0 + 1, "minecraft:barrel[facing=up,open=false]")

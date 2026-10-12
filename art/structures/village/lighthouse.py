@@ -3,9 +3,13 @@ BuildSpec as JSON. The door and the building connector are on the north (-z) sid
 
 A square tower of white render banded with red brick (the village's accent) between stone brick quoins, on a stepped
 cobblestone base going mossy at the foot; small framed windows up the stair side, a framed door under a hood. Inside a
-ladder climbs to a hatch in the gallery floor: a stone brick slab gallery on upside-down stair corbels with a fence
-rail, the lantern room of glass panes round a glowstone light and a sea lantern, a pyramid roof of brick stairs with a
-lightning rod. A barrel and a coil of rope by the door."""
+ladder climbs to a hatch in the gallery floor: a gallery of full stone bricks on upside-down stair corbels with a
+fence rail, the lantern room glazed all round (glass panes between posts) about a glowstone light and a sea lantern, a
+pyramid roof of brick stairs with a lightning rod. A barrel and a coil of rope by the door.
+
+STR6 (the human, 2026-10-12: "replace half slabs at Leuchtturm with full blocks, looks strange and detached"): the
+gallery floor was a ring of bottom slabs, which read as a thin plate floating on the corbels; it is a course of full
+stone bricks now. The lantern room's door is a pane: it opened straight onto the light, there is no room inside."""
 from _style import PALETTE, door_frame, jit, stairs_state, window
 from buildspec import Piece
 
@@ -45,8 +49,8 @@ for y in (4, 8, 12):
     window(p, X1, y, 3, "east", lintel=False, sill=False)
 # the ladder up the back wall, a hatch through the gallery floor
 p.fill(3, 1, Z1 - 1, 3, TOP, Z1 - 1, "minecraft:ladder[facing=north,waterlogged=false]")
-# the gallery: a slab floor all round on corbels, a fence rail
-p.fill(0, GALLERY, 0, S - 1, GALLERY, S - 1, "stone_slab")
+# the gallery: a floor of full stone bricks all round on corbels, a fence rail
+p.fill(0, GALLERY, 0, S - 1, GALLERY, S - 1, "bricks")
 p.put(3, GALLERY, Z1 - 1, "minecraft:spruce_trapdoor[facing=north,half=bottom,open=true,powered=false,waterlogged=false]")
 for x in range(X0, X1 + 1):
     p.put(x, TOP, 0, stairs_state("stone_brick", "south", "top"))
@@ -68,8 +72,6 @@ for x in range(2, 5):
             p.fill(x, LR, z, x, LR + 2, z, "post" if corner else "pane")
 p.put(3, LR, LZ, "minecraft:glowstone")
 p.put(3, LR + 1, LZ, "minecraft:sea_lantern")
-p.put(3, LR, LZ + 1, "minecraft:spruce_door[facing=south,half=lower,hinge=left,open=false,powered=false]")
-p.put(3, LR + 1, LZ + 1, "minecraft:spruce_door[facing=south,half=upper,hinge=left,open=false,powered=false]")
 ROOF = LR + 3
 for x in range(1, 6):
     for z in range(LZ - 2, LZ + 3):

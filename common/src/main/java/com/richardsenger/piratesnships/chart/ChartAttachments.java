@@ -23,5 +23,6 @@ public final class ChartAttachments {
     public static void register() {
         Services.ATTACHMENTS.register(CHART);
         Services.ATTACHMENTS.register(SIGHTINGS);
+        Services.ATTACHMENTS.register(com.richardsenger.piratesnships.chart.held.ChartHeld.READING);
     }
 }

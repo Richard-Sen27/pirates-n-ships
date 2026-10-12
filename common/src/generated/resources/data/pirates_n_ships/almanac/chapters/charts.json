@@ -48,6 +48,10 @@
             "pirates_n_ships.almanac.charts.p2.list1_2",
             "pirates_n_ships.almanac.charts.p2.list1_3"
           ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.charts.p2.text2"
         }
       ]
     },

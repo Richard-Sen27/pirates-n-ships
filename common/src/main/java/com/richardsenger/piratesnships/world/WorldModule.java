@@ -77,6 +77,7 @@ public final class WorldModule implements ModModule {
         ConnectionsProcessor.gather(data);
         VillageData.gather(data);
         WreckLoot.gather(data);
+        com.richardsenger.piratesnships.world.structure.StructureLoot.gather(data);
         IslandData.gather(data);
         WreckData.gather(data);
         OutpostData.gather(data);
@@ -91,6 +92,8 @@ public final class WorldModule implements ModModule {
                 StructureBlockEntityGameTests.class, StructureLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.structure.OutpostLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.village.VillageLayoutGameTests.class,
-                com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class);
+                com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class,
+                com.richardsenger.piratesnships.world.structure.StructureLootGameTests.class,
+                com.richardsenger.piratesnships.world.structure.DoorAccessGameTests.class);
     }
 }

@@ -191,3 +191,50 @@ nearby (`/locate structure pirates_n_ships:wreck`), a ship of your own, a second
 10. **Nether:** open the chart in the Nether: no needle, no ships, no structures, the "Only the overworld's seas are
     charted" line, as before.
 11. **Art:** the needle, the five structure icons and the list read at GUI scale 2 and 3; labels do not cover the icons.
+
+## CHART3: the chart held open in 3D
+
+What changed: the chart item is a parchment on two wooden rollers (closed: both rolls side by side, tied with a cord,
+held like a tool). While you read your chart (the screen is open) the server sets a synced flag on you
+(`chart.held_open`, default true), and every client that sees you unrolls the chart in your hands over half a second:
+the arms come up with the fists together round the rolled chart, then draw apart to the shoulders while the rollers
+spread; the open chart (a map with two islands, a dotted course, a red X and a compass rose) stays between both fists
+at chest height, tilted up towards your eyes. Closing the screen rolls it up the same way backwards. Item model frames
+`chart_unroll_0..3` and `chart_open` (item property `pirates_n_ships:chart_open`), arm animations `chart_read` and
+`chart_stow` through the Player Animation Library (`assets/pirates_n_ships/chart_animations/`). The face shows a fixed
+painted chart, not your own map.
+
+Covered headlessly: `ChartHeldModelTest` (vanilla's real render chain for both hands: rollers in the fists, the map
+facing the reader and reading left to right, chest height, first person low and centred; the frames, overrides and
+PAL files), `HandMadeModelsTest`, `lint_models.py` (0 visible fights), and the GameTests `ChartHeldGameTests` (the flag
+is set while the chart is open, cleared on close, never set with `held_open` off). Renders `art/renders/chart_held.png`.
+
+Preparation: two clients (a second account, or a LAN world joined by a second instance), both with a chart.
+
+1. **Closed in hand:** hold the chart (hotbar, first and third person, F5): two parchment rolls on dark wooden rollers
+   with knobs at both ends and a cord round the middle, held diagonally like a tool; in the inventory slot the whole
+   roll is visible. Left hand (off hand) the same.
+2. **First person, opening:** right-click with the chart. Behind the chart screen's blurred background the chart
+   unrolls at the bottom of the view (half a second); close the screen (Esc): the open chart is low in the middle of
+   the view, tilted away like vanilla's map, and rolls up within half a second. No flicker between the frames beyond
+   the visible steps (five frames).
+3. **Third person (F5, front and back):** press F5 first, then open the chart (the world shows blurred behind the
+   screen; closing it shows the roll-up sharply): both arms come forward and the fists meet round the
+   rolled chart, then draw apart; each fist grips one roller in its middle, the knobs stick out above and below the
+   fists, the map faces you, tilted up. The rollers do not float beside the fists and the chart is not mirrored (the
+   compass rose at the top right, from your side).
+4. **A second player watching:** player B stands in front of player A, then beside them. A opens the chart: B sees
+   A's arms rise and the chart unroll between A's hands (B sees the plain back of the parchment, the rollers and the
+   knobs); A closes it: it rolls up and the arms drop back to the normal holding pose. B walks around A while the chart
+   is open: the chart stays between A's fists from every side. B comes into view while A already reads (walk away 64+
+   blocks and back): A is shown with the chart open at once, no unroll.
+5. **Left hand:** put the chart in the off hand with an empty main hand (or switch Main Hand to Left in Skin
+   Customization) and open it with M: the same pose, the chart still between both fists and readable (not mirrored).
+6. **Key without the chart:** with `chart.open_without_item = true`, open the chart with M and empty hands: no pose,
+   nothing unrolls (the flag is set, but nobody holds a chart).
+7. **Switching items while reading is impossible**, but closing and immediately scrolling the hotbar: the chart's
+   hotbar icon may show a rolling-up frame for up to half a second (known, minor).
+8. **Option off:** `chart.held_open = false` (server config) and `/reload` or a restart: opening the chart keeps it
+   rolled in the hand for you and for B.
+9. **Without PAL** (if you can remove the Player Animation Library jar): the chart still unrolls, held in vanilla's
+   one-armed pose (the chart then floats to the side of the hand; expected).

@@ -103,6 +103,18 @@ class Piece:
     def get(self, x, y, z):
         return self.blocks.get((x, y, z))
 
+    def loot_chest(self, x, y, z, facing: str, table: str, waterlogged: bool = False):
+        """A vanilla chest whose block entity names the loot table ``pirates_n_ships:chests/<table>`` (STR6), so the loot
+        is rolled when a player first opens it (no ``LootTableSeed``). Written as a ``block_entity`` operation through
+        ``self.jigsaws``, which ``spec`` writes that way; ``tools/check_structures.py`` accepts a chest whose data is
+        only the loot table. The table is datagen (``world/structure/StructureLoot``)."""
+        self._check(x, y, z)
+        self.blocks.pop((x, y, z), None)
+        self.jigsaws[(x, y, z)] = {
+            "block": f"minecraft:chest[facing={facing},type=single,waterlogged={str(waterlogged).lower()}]",
+            "data": {"LootTable": f"{MOD}:chests/{table}"},
+        }
+
     # ------------------------------------------------------------ roofs
 
     def roof_ridge_x(self, x0, x1, z_lo, z_hi, y_base, block, ridge, gable, plate=None, overhang=1):
@@ -185,7 +197,32 @@ class Piece:
 
     # ------------------------------------------------------------ output
 
+    # STR6: the cells a door's approach must keep clear: both sides of the door (one step along its facing and one
+    # against it), on the door's two rows. The converter drops plain air, so terrain (a hillside, sand, grass) stays
+    # wherever a template writes nothing; cave air is kept and clears it.
+    CLEAR = "minecraft:cave_air"
+    DOOR_SIDES = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
+
+    def door_approaches(self) -> list[tuple[int, int, int]]:
+        """The free cells inside the box on both sides of every door (lower half), on the door's two rows."""
+        out = []
+        for (x, y, z), key in sorted(self.blocks.items()):
+            state = self.palette.get(key, key)
+            name, _, rest = state.partition("[")
+            props = dict(kv.split("=", 1) for kv in rest.rstrip("]").split(",") if "=" in kv)
+            if not name.endswith("_door") or props.get("half") != "lower" or props.get("facing") not in self.DOOR_SIDES:
+                continue
+            dx, dz = self.DOOR_SIDES[props["facing"]]
+            for sign in (1, -1):
+                for dy in (0, 1):
+                    cell = (x + dx * sign, y + dy, z + dz * sign)
+                    if self.inside(*cell) and cell not in self.blocks and cell not in self.jigsaws:
+                        out.append(cell)
+        return out
+
     def spec(self, style: str, notes: list[str]) -> dict:
+        for cell in self.door_approaches():
+            self.put(*cell, self.CLEAR)
         ops = []
         rows = sorted({(y, z) for (_, y, z) in self.blocks})
         for (y, z) in rows:

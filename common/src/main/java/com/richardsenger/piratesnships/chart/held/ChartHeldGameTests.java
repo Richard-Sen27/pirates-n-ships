@@ -18,8 +18,10 @@ import java.util.UUID;
 
 /**
  * The held chart's open flag (CHART3) on the server: set on the player while their chart screen is open, cleared when
- * it closes (the client's close payload) and never set with {@code chart.held_open} off. The client side (frames and
- * arm pose) is covered by {@code ChartHeldModelTest} and the playtest.
+ * it closes (the client's close payload) and never set with {@code chart.held_open} off. The test player is outside the
+ * player list (a mock connection), so the flag lives in {@link ChartHeld}'s server-side set rather than the synced
+ * attachment; the sync itself and the client side (frames and arm pose) are covered by {@code ChartHeldModelTest} and
+ * the playtest.
  */
 public final class ChartHeldGameTests {
 

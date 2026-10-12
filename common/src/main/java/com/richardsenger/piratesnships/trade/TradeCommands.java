@@ -13,6 +13,7 @@ import com.richardsenger.piratesnships.trade.cargo.CargoContainerBlockEntity;
 import com.richardsenger.piratesnships.trade.cargo.CargoWeighing;
 import com.richardsenger.piratesnships.trade.coin.Wallet;
 import com.richardsenger.piratesnships.trade.contract.ContractGenerator;
+import com.richardsenger.piratesnships.trade.client.MarketLines;
 import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
 import com.richardsenger.piratesnships.trade.exchange.MarketTransactions;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
@@ -206,7 +207,7 @@ public final class TradeCommands {
 
     private static void line(CommandContext<CommandSourceStack> c, DeliveryContract k) {
         c.getSource().sendSuccess(() -> Component.translatable(KEY + "contract_line", k.id().toString(), k.quantity(), k.good().getPath(),
-                k.destination().getPath(), k.deadlineDay(), k.reward(), k.deposit(), k.state().getSerializedName()), false);
+                MarketLines.portName(k.destination()), k.deadlineDay(), k.reward(), k.deposit(), k.state().getSerializedName()), false);
     }
 
     private static int myContracts(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

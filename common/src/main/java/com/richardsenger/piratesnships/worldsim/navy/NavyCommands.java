@@ -48,7 +48,9 @@ public final class NavyCommands {
     }
 
     private static Component chase(MinecraftServer server, Voyage v, long now) {
-        if (v.pursuit().isEmpty()) return Component.translatable(KEY + "on_route", v.from().toString(), v.to().toString());
+        if (v.pursuit().isEmpty()) return Component.translatable(KEY + "on_route",
+                com.richardsenger.piratesnships.world.port.PortNameBook.label(v.from()),
+                com.richardsenger.piratesnships.world.port.PortNameBook.label(v.to()));
         String target = v.pursuit().get().toString().substring(0, 8);
         Optional<NavyData.Pursuit> p = NavyData.get(server).get(v.id());
         if (p.isPresent() && p.get().surrenderedUntil() > 0) {

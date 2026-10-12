@@ -1280,6 +1280,13 @@ Every port in the world has a market: each [seafarer village](#seafarer-villages
 and [pirate island](#pirate-islands) registers one when it generates, run from its harbor master's desk. For testing,
 `/pirates trade port <name> <kind> <climate>` creates a port anywhere (kinds `seafarer_village`, `navy_outpost`,
 `pirate_island`; climates `tropical`, `temperate`, `arid`, `cold`).
+- **Port names.** Every generated port has a proper name of its own, drawn from the world seed when it registers:
+  villages read like "Port Marlow", "Saltmarsh Quay", "Falmouth" or "St. Brendan's", navy outposts "Fort Anson",
+  "Fort St. Anne" or "Gullsend Battery", pirate islands "Bone Cay", "Dead Man's Reach" or "Kidd's Folly". No two ports
+  of a world share a name. The harbor master's greeting, the desk's title, contracts, quests, harbor dues, desertions
+  and the voyage and lane replies all use it; a world from before names existed gets them on its first load. With
+  `world.ports.names` off you see the readable id instead ("Village 1192 1530"). Ports made with `/pirates trade port`
+  have no registry entry and keep their readable id.
 - A port **produces** some goods (cheap there) and **demands** others (expensive there), depending on its kind and
   climate.
 - **Buying raises the price, selling lowers it.** Prices drift back by about 30% of the gap per day.
@@ -1311,7 +1318,8 @@ are suspected of piracy once per ship and day. Fence your plunder before you go 
 ### The harbor master
 Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
 the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
-open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
+open the port's market, just as using the desk does; he greets you by the port's name when it opens ("Welcome to Port
+Marlow, captain."). If you hit him, or he is running
 from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
 dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
 `cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
@@ -1738,7 +1746,7 @@ other level in use.
 | `/pirates brig capture <target>` | Takes the target prisoner. |
 | `/pirates brig deliver <prisoner> [deckhand\|buccaneer\|officer\|captain]`, `… ransom <prisoner> <common\|merchant\|navy_officer> [captain]`, `… pressgang <prisoner>`, `… release <prisoner>` | What an officer or the whistle does with a prisoner, without them. |
 | `/pirates brig releases [target]` | The release record. |
-| `/pirates world ports`, `/pirates world port nearest` | The port registry; the nearest port with its berths and treasure sites. |
+| `/pirates world ports`, `/pirates world port nearest`, `/pirates world port <port>` | The port registry (name and id); the nearest port, or one port, with its berths and treasure sites. A `<port>` here, in `voyages spawn convoy`, `voyages lane` and `raid` is its id (`pirates_n_ships:village_1192_1530`, or just `village_1192_1530`) or its name in quotes (`"Port Marlow"`, any case); the start of a name is enough when only one port's name starts so, otherwise the reply lists the ports it could mean. |
 | `/pirates world treasure give [port]` | A treasure map for that port or the nearest pirate island. |
 | `/pirates world factions`, `… factions report <event>`, `… factions reset` | The faction state; applies an event; resets it. |
 | `/pirates world raid chance`, `/pirates world raid <port>` | Raid chances per settlement; starts a raid at once. |
@@ -1801,7 +1809,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (`names`: ports show their proper names, off shows the readable ids). |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |

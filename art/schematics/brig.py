@@ -141,7 +141,7 @@ put(CX, 9, QD, "door_upper")
 for x in (2, 4, 6):
     put(x, 9, STERN, "stern_window")
 for x in (1, 7):
-    put(x, 9, 28, "pane")
+    put(x, 9, 29, "pane")
 
 # stairs from the weather deck up to the quarterdeck on both sides (landing on the quarterdeck at z QD), one block in
 # from the rail so the deck beside the ratline latches (x 1 and 7, z 22..24) stays free for the climber
@@ -163,6 +163,16 @@ put(CX, DECK, 17, "stair_down")
 fit(CX, 6, 16, "stair_down")
 fit(CX, 5, 15, "stair_down")
 fit(CX, 5, 16, "deck")
+
+# the after companion (SHIP1 pathfinding: from the quarterdeck the crew's pathfinder runs out of nodes before it finds
+# the gun deck's after half by way of the forward companion): the same three-block opening at x 4, z 21..23 with the
+# stair in the deck at z 24 (at the cabin door), descending toward the bow onto the gun deck at z 21
+for zs in (21, 22, 23):
+    blocks.pop((CX, DECK, zs))
+put(CX, DECK, 24, "stair_down")
+fit(CX, 6, 23, "stair_down")
+fit(CX, 5, 22, "stair_down")
+fit(CX, 5, 23, "deck")
 
 # hatches with ladders from the gun deck into each hold compartment (ladder on the mast or the bulkhead)
 for zs in (FMZ + 1, MMZ + 1, BULKHEADS[1] + 1):
@@ -194,8 +204,8 @@ def railing_cells():
     # gaps over the stair landings in the quarterdeck front
     for x in STAIR_XS:
         out.pop((x, 11, QD))
-    # rope railing round the companion opening
-    for zs in (14, 15, 16):
+    # rope railing round both companion openings
+    for zs in (14, 15, 16, 21, 22, 23):
         out[(CX - 1, 8, zs)] = ("rope", ["east"])
         out[(CX + 1, 8, zs)] = ("rope", ["west"])
     # a wide port (two ports side by side) and a gate on each side of the waist
@@ -255,14 +265,19 @@ fit(2, 9, 27, "lantern_e")
 fit(1, 5, 12, "pantry")
 fit(7, 5, 12, "water")
 
-# hammocks: two fore and aft in the fore berth (hull at z 8, posts at z 11), four across the gun deck between the guns
-# (hull and a post; at z 22 and 26, so the middle lane past the aft hatch at z 24 stays open), two across the cabin
-# (cabin wall and a post); eight in all
+# hammocks: two fore and aft in the fore berth (hull at z 8, posts at z 11), two across the gun deck abaft the guns
+# (hull and a post, z 26), four across the cabin (two at z 26 between the cabin wall and a post, two at z 28 between
+# the walls and a post in the middle); eight in all
 for x in (2, 6):
     fit(x, 5, 9, "ham_foot_s")
     fit(x, 5, 10, "ham_head_s")
     fit(x, 5, 11, "post")
-for zs in (22, 26):
+fit(2, 8, 28, "ham_foot_e")
+fit(3, 8, 28, "ham_head_e")
+fit(4, 8, 28, "post")
+fit(5, 8, 28, "ham_foot_e")
+fit(6, 8, 28, "ham_head_e")
+for zs in (26,):
     fit(1, 5, zs, "ham_foot_e")
     fit(2, 5, zs, "ham_head_e")
     fit(3, 5, zs, "post")

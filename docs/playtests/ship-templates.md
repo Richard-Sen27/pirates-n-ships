@@ -115,7 +115,7 @@ Prepare: creative, open sea at least 40 blocks across, `/pirates wind set 180 8`
 1. **Place:** stand at the shore facing north, `/pirates ship place brig assemble`.
    - **Expected:** a 32-block brig appears ahead of you and floats level (no list, no trim) with the gun port lids
      shut a little above the water; nothing dark or wet in the hold (look down the three hatches on the gun deck).
-2. **Look round:** walk the weather deck, down the companion amidships to the gun deck, down a hatch ladder into each
+2. **Look round:** walk the weather deck, down each companion (forward and abaft the main mast) to the gun deck, down a hatch ladder into each
    hold, back up, up the stairs to the quarterdeck, into the cabin.
    - **Expected:** every stair is walkable without a jump; the railing runs round the weather deck with a wide port
      and a gate on each side; the rope railing along the quarterdeck's break; the cabin's stern windows, chart table
@@ -138,7 +138,7 @@ Prepare: creative, open sea at least 40 blocks across, `/pirates wind set 180 8`
    - **Expected:** the ball leaves through the port; the lid stays open.
 8. **Crew:** hire eight hands, assign them with the whistle to the helm, both winches, the capstan, the pump, two guns
    and the nest.
-   - **Expected:** each walks to his station (down the companion for the gun deck); the lookout is put in the nest. At
+   - **Expected:** each walks to his station (down a companion for the gun deck); the lookout is put in the nest. At
      night every hand finds a hammock.
 9. **Order:** at a seafarer village's harbor master's desk, Orders tab.
    - **Expected:** the Brig is listed at 725 doubloons with more build days and materials than the sloop; at pickup

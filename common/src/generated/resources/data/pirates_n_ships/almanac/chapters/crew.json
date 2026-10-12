@@ -54,6 +54,10 @@
           "key": "pirates_n_ships.almanac.crew.p2.text2"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p2.text3"
+        },
+        {
           "type": "spotlight3d",
           "caption": "pirates_n_ships.almanac.crew.p2.spotlight3d1",
           "id": "pirates_n_ships:crew_member",
@@ -62,7 +66,7 @@
         {
           "type": "text",
           "color": "#9a1c14",
-          "key": "pirates_n_ships.almanac.crew.p2.text3"
+          "key": "pirates_n_ships.almanac.crew.p2.text4"
         }
       ]
     },

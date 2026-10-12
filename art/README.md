@@ -1661,7 +1661,7 @@ players"):
   frames, the even split, the ease and the rig for every frame.
   Render `renders/chart_held.png` (CHART4, replacing CHART3's): the closed item and seven of the frames held as others
   see them (front three-quarter view, each at its own PAL time), drawn by `tools/render_chart_held.js` in Blockbench's
-  `risky_eval` (`eval(require('fs').readFileSync('tools/render_chart_held.js', 'utf8'))` with the absolute path; the
+  `risky_eval` (`globalThis.CHART_ROOT = '<repository root>'; eval(require('fs').readFileSync(CHART_ROOT + '/tools/render_chart_held.js', 'utf8'))`, optionally `CHART_OUT` for another output file; the
   real model JSON and palette textures, the box player posed from `chart_read.json`, the item placed through vanilla's
   chain as above).
 

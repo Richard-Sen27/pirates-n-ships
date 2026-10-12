@@ -217,7 +217,7 @@ Preparation: two clients (a second account, or a LAN world joined by a second in
 2. **First person, opening:** right-click with the chart. Behind the chart screen's blurred background the chart
    unrolls at the bottom of the view (half a second); close the screen (Esc): the open chart is low in the middle of
    the view, tilted away like vanilla's map, and rolls up within half a second. No flicker between the frames beyond
-   the visible steps (five frames).
+   the visible steps (CHART3: five frames; CHART4: fourteen, see below).
 3. **Third person (F5, front and back):** press F5 first, then open the chart (the world shows blurred behind the
    screen; closing it shows the roll-up sharply): both arms come forward and the fists meet round the
    rolled chart, then draw apart; each fist grips one roller in its middle, the knobs stick out above and below the

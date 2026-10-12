@@ -1,6 +1,7 @@
 (async () => {
 const fs = require('fs');
-const W = '/Users/richard/Projects/modding/mc/pirates-n-ships/.claude/worktrees/agent-chart4';
+const W = globalThis.CHART_ROOT || (typeof __filename === 'string' && __filename.endsWith('render_chart_held.js') ? require('path').resolve(require('path').dirname(__filename), '..') : null);
+if (!W) throw new Error('set globalThis.CHART_ROOT to the repository root before evaluating tools/render_chart_held.js');
 const MODELS = W + '/common/src/main/resources/assets/pirates_n_ships/models/item/';
 const TEX = W + '/common/src/main/resources/assets/pirates_n_ships/textures/item/';
 const OUT = globalThis.CHART_OUT || (W + '/art/renders/chart_held.png');

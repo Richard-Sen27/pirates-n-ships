@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.chart;
 
+import com.richardsenger.piratesnships.chart.render.ChartStyle;
 import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
@@ -40,6 +41,11 @@ public final class ChartConfig {
             "Wrecks and the mod's other structures (and ports, without ports_always_known) go on your chart for good once you came this many blocks near them (horizontal distance to their bounds)");
     public static final ConfigValue<Boolean> HELD_OPEN = S.bool("held_open", true,
             "CHART3: a player reading their chart holds it unrolled in both hands, and everyone around sees it unroll; false: the chart stays rolled up in the hand");
+
+    public static final ConfigValue<ChartStyle> STYLE = S.enumValue("style", ChartStyle.COLOURED,
+            "CHART4: how the chart draws land; COLOURED: the colours of the blocks as on a vanilla map, softened onto the parchment (villages, paths and fields show); INK: the parchment inks of the pirate chart. The sea keeps its wash in both; map tiles always draw in ink");
+    public static final ConfigValue<Integer> COLOUR_COLUMNS = S.intRange("colour_columns", 4, 1, 16,
+            "CHART4: columns per cell side read for a cell's map colour (capped at cell_blocks; 4 at 4-block cells reads every column like a vanilla map, fewer is cheaper)");
 
     private static final ConfigSection TILES = S.section("tiles", "Map tiles (work package MAP2): a part of a player's chart drawn onto a block for everyone to see");
 

@@ -10,7 +10,9 @@ import java.util.function.LongFunction;
  * for {@code c x c} cells, chosen like a map board's zoomed pixel ({@link MapTileRaster#downsample}: the most common
  * known class, coast if any cell is coast, unknown only when none is known), so far zooms stay readable: coasts stay
  * inked and small islands fold into their surroundings. {@code c} is a power of two up to 32, so a pixel's block
- * always lies inside one region; absent regions read as unknown without being walked.
+ * always lies inside one region; absent regions read as unknown without being walked. CHART4: a far pixel carries a
+ * colour the same way ({@link MapTileRaster#downsample}: the most common colour of its land cells), drawn in the
+ * chart's {@link ChartStyle}.
  */
 public final class ChartZoomOut {
 
@@ -52,11 +54,16 @@ public final class ChartZoomOut {
         int cz0 = vz * c;
         ChartRegion r = regions.apply(ChartRegion.keyOfCell(cx0, cz0));
         if (r == null) return 0;
-        return MapTileRaster.downsample((x, z) -> r.get(x & ChartRegion.MASK, z & ChartRegion.MASK) & 0xFF, cx0, cz0, c);
+        return MapTileRaster.downsample((x, z) -> r.wide(x & ChartRegion.MASK, z & ChartRegion.MASK), cx0, cz0, c);
     }
 
     /** The ARGB pixels of far tile {@code (tx, tz)}: {@link #TILE} squared, row-major, in the chart's pirate style. */
     public static int[] render(LongFunction<ChartRegion> regions, int tx, int tz, int c) {
-        return ChartRaster.render(tileLookup(regions, tx, tz, c), tx * TILE, tz * TILE, TILE, TILE, 1);
+        return render(regions, tx, tz, c, ChartStyle.INK);
+    }
+
+    /** CHART4: {@link #render(LongFunction, int, int, int)} in {@code style}. */
+    public static int[] render(LongFunction<ChartRegion> regions, int tx, int tz, int c, ChartStyle style) {
+        return ChartRaster.render(tileLookup(regions, tx, tz, c), tx * TILE, tz * TILE, TILE, TILE, 1, style);
     }
 }

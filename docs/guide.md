@@ -460,11 +460,21 @@ With your hook set in a ship and the rope in your hand, hold sneak: the rope's l
 rope pulls the ship toward you; a hook near the bow or stern swings it round. Let go of sneak and the rope pays out
 again. Pull too hard and the rope slips through your hand rather than snapping. Standing on the ground or a deck
 you feel nothing; in the air or in the water the rope pulls you toward the hook. A rope tied to a cleat can't be
-hauled by hand. **Climbing:** right-click your own rope while it is still in your hand to climb it: you are pulled hand over hand to
-the hook when it is at least two blocks above your feet (a mast, a cliff, a hull side from the water); sneak to let
-go. A hook level with you or below is no climb; tie the rope off on a cleat to use it as a line, and only such a tied
-rope is a line others can slide along. Server config
-`grapple.hauling`, `haul_stiffness`, `haul_damping`, `haul_max_force`, `haul_player_pull`.
+hauled by hand. **Climbing:** with your own rope still in your hand (an empty hand or a hook in it), each right-click
+is one pull: the rope gets a step shorter (1.5 blocks) and draws you up toward the hook, when the hook is at least two
+blocks above your feet (a mast, a cliff, a hull side from the water). After a pull the hook in your hotbar shows a short
+cooldown (half a second) in which further clicks do nothing; holding the button pulls once per cooldown, so you climb
+steadily. Close under the hook a pull puts you on top, where the hook bit in. A hook level with you or below is no
+climb; tie the rope off on a cleat to use it as a line, and only such a tied rope is a line others can slide along.
+**Hanging and swinging:** once you are off the ground with the hook above you (climbing, pulled up off a deck, or
+stepping off an edge with the rope in hand), the rope holds you like a liana: you get no farther from the hook than the
+rope is long, you swing down under it, and walking pushes the swing so you can swing across a gap. The swing dies down
+in a few seconds. The rope hangs from the hook under its own weight: straight when you hang at full length, sagging
+when it is slack. Take another item in hand to let go and drop (sneaking lets go too, except on a hook in a ship,
+where sneak freezes the rope for hauling as above); the hook stays where it is. On a ship under way the hook moves
+with the hull and you hang on with it. Server config `grapple.hauling`, `haul_stiffness`, `haul_damping`,
+`haul_max_force`, `haul_player_pull`, `pull_cooldown_ticks`, `rope_climb_step`, `rope_climb_speed`, `swing`,
+`swing_push`, `swing_damping`.
 
 ### Fire at will
 Pick "Fire at will" on the captain's whistle and your gun crews take over their cannons. Every second each crew
@@ -1073,6 +1083,16 @@ them; vanilla structures never do (`chart.show_structures` turns all of this off
 The M key opens the chart while you hold one in either hand; only if the server turns on `chart.open_without_item`
 (off by default) does it open without one. Only the overworld's seas are charted.
 
+The land on the chart shows the colours of the blocks, as on a vanilla map but softened onto the parchment: roofs,
+paths, fields, sand, snow and stone each in their colour, a little brighter where the ground rises and darker where it
+falls, so villages and other buildings stand out (`chart.style` `COLOURED`, the default). The sea keeps the chart's
+blue wash and the coasts their ink line. `chart.style` `INK` draws the land in the plain parchment inks instead; the
+server tells every client its style, so a change shows the next time the chart is opened. Ground charted before this
+version has no colours yet and stays in ink until you sail past it again. Map tiles and boards always draw in ink.
+`chart.colour_columns` (4) sets how many columns per cell side are read for the colour (fewer is cheaper on a busy
+server). While you read the chart you hold it unrolled in both hands; it unrolls and rolls up smoothly over half a
+second, and other players see it too (`chart.held_open`).
+
 ## 4. Crew
 
 A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
@@ -1651,7 +1671,9 @@ on another ship catches on it and holds twice as far before tearing loose. With 
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.
 
-**Throwing by hand.** Without a musket in the other hand, right-click throws the hook. If it hits the hull of another
+**Throwing by hand.** Without a musket in the other hand, right-click throws the hook, gently: a level throw lands about
+nine blocks away and the farthest lob about twenty (`grapple.hand_throw_velocity`), enough to reach a rail from
+alongside; for range, fire it from the musket. If it hits the hull of another
 ship it bites in and hangs there, following the ship; from your own ship the taut rope hauls both ships together
 until they lie side by side, ready for boarding, then goes slack. It also holds on your own ship (a line, not a haul;
 `grapple.latch_own_ship`) and on land (`grapple.latch_world_blocks`). On land the rope does not drag a hooked ship by
@@ -1922,10 +1944,10 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, a barrel run into a bulwark (`walls_block_barrel`), glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
-| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
+| `grapple` | Grappling hook on/off, throw speed (`hand_throw_velocity` by hand), rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing (`pull_cooldown_ticks`, `rope_climb_step`), hanging and swinging on the rope (`swing`, `swing_push`, `swing_damping`); `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | The "Board!" order on/off (`board_order`), the widest gap jumped (`board_gap`, 2), gunners and helmsman staying (`boarders_keep_stations`), the clear deck's hold before "Her deck is yours" (`capture_seconds`), NPC boarding on/off and its delay (`npc_boarding`, `npc_board_delay`), the NPC recall (`npc_recall_outnumbered`, `npc_recall_flooded`), swords from the chests (`take_arms`), the punch (`unarmed_damage`), the crew's sword skill (`crew_skill`), the crossing's fallback (`cross_timeout_ticks`), how often boarders look around (`order_check_ticks`); `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
-| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`); other players are never shown; `tiles` (map tiles). |
+| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`), the land's look (`style`: `COLOURED` block colours or `INK`; `colour_columns` read per cell side), the held chart (`held_open`); other players are never shown; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |
 
 **Client config**

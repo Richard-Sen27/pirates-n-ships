@@ -1630,21 +1630,75 @@
 		},
 		{
 			"predicate": {
-				"pirates_n_ships:chart_open": 0.3
+				"pirates_n_ships:chart_open": 0.3633
 			},
 			"model": "pirates_n_ships:item/chart_unroll_1"
 		},
 		{
 			"predicate": {
-				"pirates_n_ships:chart_open": 0.5
+				"pirates_n_ships:chart_open": 0.4163
 			},
 			"model": "pirates_n_ships:item/chart_unroll_2"
 		},
 		{
 			"predicate": {
-				"pirates_n_ships:chart_open": 0.7
+				"pirates_n_ships:chart_open": 0.4694
 			},
 			"model": "pirates_n_ships:item/chart_unroll_3"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.5224
+			},
+			"model": "pirates_n_ships:item/chart_unroll_4"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.5755
+			},
+			"model": "pirates_n_ships:item/chart_unroll_5"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.6286
+			},
+			"model": "pirates_n_ships:item/chart_unroll_6"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.6816
+			},
+			"model": "pirates_n_ships:item/chart_unroll_7"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.7347
+			},
+			"model": "pirates_n_ships:item/chart_unroll_8"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.7878
+			},
+			"model": "pirates_n_ships:item/chart_unroll_9"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.8408
+			},
+			"model": "pirates_n_ships:item/chart_unroll_10"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.8939
+			},
+			"model": "pirates_n_ships:item/chart_unroll_11"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:chart_open": 0.9469
+			},
+			"model": "pirates_n_ships:item/chart_unroll_12"
 		},
 		{
 			"predicate": {

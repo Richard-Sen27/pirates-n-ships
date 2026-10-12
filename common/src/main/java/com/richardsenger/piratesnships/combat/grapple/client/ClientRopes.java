@@ -92,6 +92,25 @@ public final class ClientRopes {
     }
 
     /**
+     * GR7: the length [blocks] to draw a hand-held rope with between {@code eye} (the hook's eye) and {@code hand} (the
+     * drawn hand) while its thrower hangs on it: their distance plus the rope's slack, the rope's length
+     * ({@link ClientRopeSwing#length}, the synced one for other players' ropes) less the distance from the hook to the
+     * hand the rope holds ({@link GrapplingHookEntity#HAND_BELOW_EYES} below the eyes). NaN when the rope pays out freely.
+     */
+    public static double handRopeLength(GrapplingHookEntity hook, Vec3 eye, Vec3 hand, float partialTick) {
+        if (hook.state() != GrapplingHookEntity.State.LATCHED || hook.syncedTiedRing().isPresent() || hook.getOwner() == null) {
+            return Double.NaN;
+        }
+        double length = ClientRopeSwing.length(hook);
+        if (Double.isNaN(length)) {
+            return Double.NaN;
+        }
+        Vec3 held = hook.getOwner().getEyePosition(partialTick).subtract(0, GrapplingHookEntity.HAND_BELOW_EYES, 0);
+        double slack = Math.max(0.0, length - held.distanceTo(hookPos(hook, partialTick)));
+        return eye.distanceTo(hand) + slack;
+    }
+
+    /**
      * Where the riders on {@code hook}'s rope from {@code from} to {@code to} grip it (world, render time), ordered from
      * {@code from} to {@code to}; empty when nobody rides.
      */
@@ -99,7 +118,7 @@ public final class ClientRopes {
         double hang = GrappleConfig.HANG_OFFSET.get();
         AABB box = new AABB(from, to).inflate(1.0).expandTowards(0, -hang - 1.0, 0);
         List<Vec3> grips = new ArrayList<>();
-        // GR5: the thrower pulling themselves along their own hand-held rope holds its end, it is no grip in between
+        // the thrower riding along their own hand-held rope holds its end, it is no grip in between
         boolean handHeld = hook.syncedTiedRing().isEmpty();
         for (RopeRiderEntity r : hook.level().getEntitiesOfClass(RopeRiderEntity.class, box,
                 r -> r.hookId() == hook.getId() && !(handHeld && r.getFirstPassenger() == hook.getOwner()))) {

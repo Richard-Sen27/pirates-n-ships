@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
 import com.richardsenger.piratesnships.chart.render.ChartRaster;
+import com.richardsenger.piratesnships.chart.render.ChartZoomOut;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -20,12 +21,18 @@ import java.util.Set;
  * itself and its eight neighbours stale (coast strokes read across the border); a stale texture is redrawn when it is
  * next needed, at most {@link #REBUILDS_PER_FRAME} per frame. At most {@link #MAX_TEXTURES} are kept, least
  * recently used released first. Render thread only.
+ *
+ * <p>CHART2: at the zoom-out steps one texture is a <b>far tile</b> of {@code c x c} regions at {@code c} cells per
+ * pixel ({@link ChartZoomOut}, 64 pixels square), keyed with the level {@code -c}; a region that arrives marks the far
+ * tiles holding it or a neighbour stale too. So a screen needs about as many textures at the widest zoom as at the
+ * old widest one.
  */
 public final class ChartTextures {
 
     public static final int MAX_TEXTURES = 64;
     public static final int REBUILDS_PER_FRAME = 4;
 
+    /** {@code tile} is a region key, or a far tile's key at {@code level = -cellsPerPixel}; {@code level} &gt; 0 is pixels per cell. */
     private record Key(long region, int px) {
     }
 
@@ -76,7 +83,8 @@ public final class ChartTextures {
             }
             if (STALE.isEmpty()) return;
             for (Map.Entry<Key, Entry> e : CACHE.entrySet()) {
-                if (STALE.contains(e.getKey().region())) e.getValue().stale = true;
+                Key k = e.getKey();
+                if (k.px() > 0 ? STALE.contains(k.region()) : farStale(k)) e.getValue().stale = true;
             }
             STALE.clear();
         }
@@ -95,6 +103,54 @@ public final class ChartTextures {
             NativeImage image = new NativeImage(NativeImage.Format.RGBA, size, size, true);
             DynamicTexture texture = new DynamicTexture(image);
             ResourceLocation id = Constants.id("chart/region_" + rx + "_" + rz + "_" + px);
+            Minecraft.getInstance().getTextureManager().register(id, texture);
+            e = new Entry(id, texture);
+            CACHE.put(key, e);
+            trim();
+        }
+        NativeImage pixels = e.texture.getPixels();
+        if (pixels != null) {
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    pixels.setPixelRGBA(x, y, toAbgr(argb[y * size + x]));
+                }
+            }
+            e.texture.upload();
+        }
+        e.stale = false;
+        return e.id;
+    }
+
+    private static boolean farStale(Key k) {
+        int c = -k.px();
+        int tx = ChartRegion.keyX(k.region());
+        int tz = ChartRegion.keyZ(k.region());
+        for (long r : STALE) {
+            if (ChartZoomOut.tileOf(ChartRegion.keyX(r), c) == tx && ChartZoomOut.tileOf(ChartRegion.keyZ(r), c) == tz) return true;
+        }
+        return false;
+    }
+
+    /**
+     * CHART2: the texture of far tile {@code (tx, tz)} at {@code c} cells per pixel ({@link ChartZoomOut}), or
+     * {@code null} if it waits for a rebuild budget. A far tile counts as two rebuilds (it reads up to {@code c x c}
+     * regions).
+     */
+    public static ResourceLocation farTexture(int tx, int tz, int c) {
+        Key key = new Key(ChartRegion.key(tx, tz), -c);
+        Entry e = CACHE.get(key);
+        if (e != null && !e.stale) return e.id;
+        if (rebuiltThisFrame >= REBUILDS_PER_FRAME) return e == null ? null : e.id;
+        rebuiltThisFrame += 2;
+        int[] argb = ChartZoomOut.render(k -> ClientChart.regions().get(k), tx, tz, c);
+        return upload(key, e, argb, ChartZoomOut.TILE, "chart/far_" + c + "_" + tx + "_" + tz);
+    }
+
+    private static ResourceLocation upload(Key key, Entry e, int[] argb, int size, String path) {
+        if (e == null) {
+            NativeImage image = new NativeImage(NativeImage.Format.RGBA, size, size, true);
+            DynamicTexture texture = new DynamicTexture(image);
+            ResourceLocation id = Constants.id(path);
             Minecraft.getInstance().getTextureManager().register(id, texture);
             e = new Entry(id, texture);
             CACHE.put(key, e);

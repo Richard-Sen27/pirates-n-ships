@@ -26,10 +26,18 @@ public final class ChartConfig {
             "Most chart cells kept per player, counted in whole regions of 64x64 cells (one byte each); beyond it the least recently visited regions are forgotten");
     public static final ConfigValue<Boolean> OPEN_WITHOUT_ITEM = S.bool("open_without_item", false,
             "The chart key (default M) opens the chart without a chart in hand");
-    public static final ConfigValue<Boolean> SHOW_OTHER_PLAYERS = S.bool("show_other_players", false,
-            "Other players within view distance appear on the chart");
-    public static final ConfigValue<Integer> MAX_MARKERS = S.intRange("max_markers", 64, 0, 512,
-            "Most markers a player can put on their chart");
+    public static final ConfigValue<Integer> MAX_MARKERS = S.intRange("max_markers", 0, 0, 4096,
+            "Most markers a player can put on their chart; 0 = no limit (CHART2; an old config file keeps its old number until it is changed)");
+    public static final ConfigValue<Integer> MAX_ZOOM_OUT = S.intRange("max_zoom_out", 3, 0, 5,
+            "Zoom-out steps beyond one pixel per cell, each halving the scale (3 at 4-block cells: 32 blocks per pixel, about 13,000 blocks across the screen); 0 = the old widest view");
+    public static final ConfigValue<Boolean> SHOW_SHIPS = S.bool("show_ships", true,
+            "The ship you stand on and your own loaded ships appear on your chart with their heading (never other players or their ships)");
+    public static final ConfigValue<Boolean> SHOW_STRUCTURES = S.bool("show_structures", true,
+            "Ports, wrecks and the mod's other structures appear on the chart once known (false: none are drawn or revealed)");
+    public static final ConfigValue<Boolean> PORTS_ALWAYS_KNOWN = S.bool("ports_always_known", true,
+            "Every registered port (village, navy outpost, pirate island) is on every chart; false: a port appears only after you came within structure_reveal_distance of it");
+    public static final ConfigValue<Integer> STRUCTURE_REVEAL_DISTANCE = S.intRange("structure_reveal_distance", 96, 8, 512,
+            "Wrecks and the mod's other structures (and ports, without ports_always_known) go on your chart for good once you came this many blocks near them (horizontal distance to their bounds)");
 
     private static final ConfigSection TILES = S.section("tiles", "Map tiles (work package MAP2): a part of a player's chart drawn onto a block for everyone to see");
 

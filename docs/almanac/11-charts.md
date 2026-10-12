@@ -19,8 +19,17 @@ Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in t
 {recipe:chart}
 
 - Use it, or press **M** with it in hand, to open the map.
-- Drag to pan, scroll to zoom.
+- Drag to pan; scroll to zoom, far enough out to see a whole sea.
 - Right-click to place a named marker; click one to change it.
+
+## Markers and landmarks
+Mark as many places as you like. The **Markers** button lists them, nearest first, with their bearing; click one and the chart finds it.
+
+Every port is on your chart from the start. Wrecks appear once you have sailed near them. Hover over an icon to learn what it is.
+
+The red-tipped needle is you, pointing where you face; your ships are drawn with their bows.
+
+> A chart shows only you and your own ships, never another captain or his ship.
 
 ## Map tiles
 illustration: map_tile

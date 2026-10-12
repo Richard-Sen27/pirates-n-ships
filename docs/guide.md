@@ -725,7 +725,16 @@ start per cell, at least `separation` chunks from the next. Defaults (WG6, dense
 28/10, pirate islands 36/14, wrecks 24/8, so a village is usually a few hundred blocks from the next on a coast. A changed value
 applies to chunks generated afterwards; structures already in the world stay where they are. `/locate` follows the
 configured grid. An existing config file keeps the values it has: delete the `spacing` and `separation` lines (or the
-file) to take new defaults.
+file) to take new defaults. A navy outpost never starts within 8 chunks of a village's start, and a pirate camp never
+within 6 chunks of a village's or an outpost's, so two ports never stand wall to wall (STR6).
+
+Chests in the ports' buildings hold loot (STR6), rolled when you first open them: household goods, food and a few
+doubloons in village houses, the warehouse and the chapel; rum, food and coins in taverns and inns; nails, rope, cloth
+and tools at the shipwright's and the net loft; rations, lead shot, powder and now and then a weapon in an outpost's
+barracks, brig and officers' quarters, more arms in its armoury, stores in its store house and towers; rum, food and
+plunder in a pirate camp's tents, huts and taverns, and in a captain's hut a blank treasure map, a purse of doubloons
+and a blade or pistol. Server config `world.structures.loot` (off: new chests generate empty) and
+`world.structures.loot_rolls` (scales how much they hold).
 
 ### Navy outposts
 Navy outposts are stone forts on beaches, rarer than villages. A sea gate leads to a quay with two berths. The
@@ -1814,7 +1823,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate; `loot` and `loot_rolls` for the chests in the ports' buildings), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |

@@ -2,6 +2,16 @@
   "placement": {
     "type": "pirates_n_ships:configured_spread",
     "config": "pirate_island",
+    "exclusion_zone": {
+      "chunk_count": 6,
+      "other_set": "pirates_n_ships:seafarer_villages"
+    },
+    "exclusion_zones": [
+      {
+        "chunk_count": 6,
+        "other_set": "pirates_n_ships:navy_outposts"
+      }
+    ],
     "frequency": 1.0,
     "salt": 739215604,
     "separation": 14,

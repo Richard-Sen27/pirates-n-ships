@@ -81,7 +81,7 @@ for x in (1, 3, 7, 9):
 for x in (1, 9):
     bed(p, x, 2, Z1 - 2, "south")
 for x, facing in ((2, "north"), (8, "north")):
-    p.put(x, 1, Z1 - 1, f"minecraft:chest[facing={facing},type=single,waterlogged=false]")
+    p.loot_chest(x, 1, Z1 - 1, facing, "navy_outpost/barracks")
 
 # the mess table with stools, the weapon rack along the front wall west of the door, stores, a runner to the door
 table(p, 5, 1, 4)

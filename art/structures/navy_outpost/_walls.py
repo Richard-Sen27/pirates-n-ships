@@ -447,7 +447,7 @@ def round_tower():
     p.put(2, 2, 3, "lantern")
     p.put(4, 1, 4, "pirates_n_ships:cargo_crate")
     p.put(4, WALK + 1, 4, "pirates_n_ships:cargo_barrel")
-    p.put(2, WALK + 1, 4, "minecraft:chest[facing=east,type=single,waterlogged=false]")
+    p.loot_chest(2, WALK + 1, 4, "east", "navy_outpost/store_house")
     p.put(3, ROOF - 1, 3, "lantern_hanging")
     age(p)
     connector(p, 0, 0, EAST_Z, "wall_east_in", "west", "minecraft:stone_bricks")

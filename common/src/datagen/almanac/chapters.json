@@ -3376,6 +3376,10 @@
          "pirates_n_ships.almanac.charts.p2.list1_2",
          "pirates_n_ships.almanac.charts.p2.list1_3"
         ]
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.charts.p2.text2"
        }
       ]
      },
@@ -4244,7 +4248,7 @@
   "pirates_n_ships.almanac.trade.p6.heading": "The paddle",
   "pirates_n_ships.almanac.trade.p6.text1": "Use a {item:pirates_n_ships:paddle}**paddle** on a floating sea chest to sit on the lid and paddle it like a little boat. Sneak to get off.",
   "pirates_n_ships.almanac.trade.p7.heading": "Doubloons",
-  "pirates_n_ships.almanac.trade.p7.text1": "The gold {item:pirates_n_ships:doubloon}**doubloon** is the coin of the sea. You earn it by trading, from pirates' purses, wrecks and buried treasure, and from bounties, contracts and quests.",
+  "pirates_n_ships.almanac.trade.p7.text1": "The gold {item:pirates_n_ships:doubloon}**doubloon** is the coin of the sea. You earn it by trading, from pirates' purses, wrecks and buried treasure, from the chests in the houses, taverns and barracks of the ports, and from bounties, contracts and quests.",
   "pirates_n_ships.almanac.trade.p7.text2": "Keep them in your inventory; markets take them from there.",
   "pirates_n_ships.almanac.trade.p8.heading": "Harbours",
   "pirates_n_ships.almanac.trade.p8.text1": "Every port has a harbour master's desk.",
@@ -4428,6 +4432,7 @@
   "pirates_n_ships.almanac.charts.p2.list1_1": "Use it, or press **M** with it in hand, to open the map.",
   "pirates_n_ships.almanac.charts.p2.list1_2": "Drag to pan; scroll to zoom, far enough out to see a whole sea.",
   "pirates_n_ships.almanac.charts.p2.list1_3": "Right-click to place a named marker; click one to change it.",
+  "pirates_n_ships.almanac.charts.p2.text2": "While you read it, you hold the chart unrolled between both hands, and every hand on deck sees you unroll it.",
   "pirates_n_ships.almanac.charts.p3.heading": "Markers and landmarks",
   "pirates_n_ships.almanac.charts.p3.text1": "Mark as many places as you like. The **Markers** button lists them, nearest first, with their bearing; click one and the chart finds it.",
   "pirates_n_ships.almanac.charts.p3.text2": "Every port is on your chart from the start. Wrecks appear once you have sailed near them. Hover over an icon to learn what it is.",

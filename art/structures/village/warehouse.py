@@ -82,6 +82,8 @@ p.put(5, TOP, 5, "lantern_hanging")
 lantern_post(p, 2, 1, 0)
 lantern_post(p, 8, 1, 0)
 
+# STR6: a loot chest of household stores by the west wall
+p.loot_chest(1, 1, 5, "east", "village/house")
 p.connector(5, 0, 0, "building_in", "north", "minecraft:cobblestone")
 p.emit("a two-storey warehouse of cobblestone and spruce boards, gable-end to the street, with a hoist beam",
        ["Faces north: the building_in connector is on the -z side in front of the loading way, row z 0 is the apron."])

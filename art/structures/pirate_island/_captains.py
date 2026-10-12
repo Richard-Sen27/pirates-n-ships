@@ -106,6 +106,7 @@ def build(piece_id, name, size, extras=None):
     p.put(5, FLOOR + 2, 6, "pirates_n_ships:map_tile[face=floor,facing=north]")
     stool(p, 5, FLOOR + 1, 5, "north")
     p.put(7, FLOOR + 1, 6, "pirates_n_ships:sea_chest[facing=west]")
+    p.loot_chest(7, FLOOR + 1, 5, "west", "pirate_island/captain")   # STR6: the captain's loot (the sea chest stays empty)
     p.put(7, FLOOR + 1, 4, "pirates_n_ships:cargo_crate")
     p.fill(2, FLOOR + 1, 5, 3, FLOOR + 1, 6, "minecraft:red_carpet")
     p.put(DOOR, TOP, Z1 - 1, "minecraft:black_wall_banner[facing=north]")

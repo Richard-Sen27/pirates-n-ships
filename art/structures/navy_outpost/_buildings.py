@@ -70,7 +70,7 @@ def bunk_row(p, xs, z_foot, upper=(), chests=()):
     for x in upper:
         bed(p, x, 2, z_foot, "south")
     for x in chests:
-        p.put(x, 1, z_foot + 1, "minecraft:chest[facing=north,type=single,waterlogged=false]")
+        p.loot_chest(x, 1, z_foot + 1, "north", "navy_outpost/barracks")
 
 
 def rack(p, xs, z):
@@ -101,7 +101,7 @@ def barracks_long():
     banner(p, 7, TOP, Z1 - 1, "north")
     bunk_row(p, (1, 3, 11, 13), Z1 - 2, upper=(1, 13), chests=(2, 12))
     bunk_row(p, (6, 8), Z1 - 2)
-    p.put(7, 1, Z1 - 1, "minecraft:chest[facing=north,type=single,waterlogged=false]")
+    p.loot_chest(7, 1, Z1 - 1, "north", "navy_outpost/barracks")
     for tx in (4, 10):
         table(p, tx, 1, 4)
         stool(p, tx - 1, 1, 4, "west")
@@ -151,7 +151,7 @@ def barracks_mess():
         bed(p, X1 - 1, 1, z, "east")
         bed(p, 1, 2, z, "west")
     for z in (10, 12):
-        p.put(1, 1, z, "minecraft:chest[facing=east,type=single,waterlogged=false]")
+        p.loot_chest(1, 1, z, "east", "navy_outpost/barracks")
     rack(p, (4, 5, 6), Z1 - 1)
     p.put(X1 - 1, 1, 12, "minecraft:barrel[facing=up,open=false]")
     p.put(X1 - 1, 2, 12, "lantern")
@@ -188,7 +188,7 @@ def brig_large():
     fort_face(p, [(x, Z1) for x in range(X0, X1 + 1)], "north", pilasters={(X0, Z1), (X1, Z1)} | {(x, Z1) for x in walls},
               corbel=TOP)
     for z in range(Z0 + 1, Z1):
-        if z != CELL_Z:
+        if abs(z - CELL_Z) > 1:          # STR6: not beside the cells' front, where the first cell's door opens
             p.put(X0 + 1, 2, z, "bricks")
             p.put(X1 - 1, 2, z, "bricks")
     for x in range(X0 + 1, X1):
@@ -238,7 +238,7 @@ def brig_large():
     # the guard room: table, stools, a chest and barrels, the keys' hooks, a hanging lantern, a bench by the window
     table(p, 3, 1, 3)
     stool(p, 2, 1, 3, "west")
-    p.put(10, 1, 2, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+    p.loot_chest(10, 1, 2, "west", "navy_outpost/barracks")
     p.put(11, 1, 2, "minecraft:barrel[facing=up,open=false]")
     p.put(11, 2, 2, "lantern")
     p.put(11, 1, 3, "pirates_n_ships:cargo_crate")
@@ -360,8 +360,10 @@ def officers_quarters():
         p.put(X1, 2, z, pane("z"))
         p.put(X0, G + 3, z, pane("z"))
         p.put(X1, G + 3, z, pane("z"))
-    p.put(5, G + 2, Z0, "minecraft:spruce_door[facing=north,half=lower,hinge=left,open=false,powered=false]")
-    p.put(5, G + 3, Z0, "minecraft:spruce_door[facing=north,half=upper,hinge=left,open=false,powered=false]")
+    # a tall window over the balcony rail (STR6: the rail stands on the one row the box leaves, so a door here opened
+    # onto it)
+    p.put(5, G + 2, Z0, pane("x"))
+    p.put(5, G + 3, Z0, pane("x"))
     for x in range(3, 8):
         p.put(x, G + 1, 0, "spruce_slab_top")
     fence_run(p, [(x, 0) for x in range(3, 8)], G + 2)
@@ -375,7 +377,7 @@ def officers_quarters():
     p.put(1, 1, 6, "minecraft:bookshelf")
     p.put(1, 2, 6, "minecraft:bookshelf")
     p.put(1, 1, 5, "minecraft:bookshelf")
-    p.put(1, 1, 2, "minecraft:chest[facing=east,type=single,waterlogged=false]")
+    p.loot_chest(1, 1, 2, "east", "navy_outpost/barracks")
     p.fill(2, 1, 3, 4, 1, 4, "minecraft:blue_carpet")
     p.clear(3, 1, 4)
     for tx in (7, 8):
@@ -390,8 +392,8 @@ def officers_quarters():
     # upstairs: two beds, chests, a wardrobe of barrels, a rug
     bed(p, 2, G + 2, 3, "south")
     bed(p, 6, G + 2, 3, "south")
-    p.put(3, G + 2, 5, "minecraft:chest[facing=north,type=single,waterlogged=false]")
-    p.put(7, G + 2, 5, "minecraft:chest[facing=north,type=single,waterlogged=false]")
+    p.loot_chest(3, G + 2, 5, "north", "navy_outpost/barracks")
+    p.loot_chest(7, G + 2, 5, "north", "navy_outpost/barracks")
     p.put(1, G + 2, 2, "minecraft:barrel[facing=east,open=false]")
     p.put(1, G + 3, 2, "minecraft:barrel[facing=east,open=false]")
     p.fill(4, G + 2, 3, 5, G + 2, 4, "minecraft:blue_carpet")
@@ -504,7 +506,7 @@ def armoury():
     rack(p, (1, 2, 3), 6)
     rack(p, (1,), 3)
     rack(p, (1,), 4)
-    p.put(1, 1, 2, "minecraft:chest[facing=east,type=single,waterlogged=false]")
+    p.loot_chest(1, 1, 2, "east", "navy_outpost/armoury")
     p.put(7, 1, 2, "minecraft:barrel[facing=west,open=false]")
     p.put(6, 1, 2, "pirates_n_ships:cargo_crate")
     p.put(4, TOP + 3, 4, "lantern_hanging")
@@ -616,6 +618,7 @@ def store_house():
     p.put(3, TOP + 1, 5, "pirates_n_ships:cargo_crate")
     p.put(1, 1, 3, "minecraft:barrel[facing=east,open=false]")
     p.put(5, TOP - 1, 4, "lantern_hanging")
+    p.loot_chest(1, 1, 4, "east", "navy_outpost/store_house")    # STR6: the stores' loot chest
     finish(p, 5, "a timber store house the size of a stable, double doors under a hoist beam, a loft of stores",
            ["Doors at x 5..6 and building_in [5, 0, 0]; post soldier [2, 1, 3]."],
            where=lambda x, y, z: not (X0 < x < X1 and Z0 < z < Z1))

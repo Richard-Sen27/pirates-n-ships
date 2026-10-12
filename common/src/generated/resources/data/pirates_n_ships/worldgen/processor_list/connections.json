@@ -2,6 +2,9 @@
   "processors": [
     {
       "processor_type": "pirates_n_ships:connections"
+    },
+    {
+      "processor_type": "pirates_n_ships:loot_chests"
     }
   ]
 }

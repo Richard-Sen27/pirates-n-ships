@@ -79,7 +79,7 @@ final class TriangularSailsScene {
         scene.idle(40);
 
         // the rope: head, then tack; the cleats keep both ends and the head works out its sail
-        scene.overlay().showControls(util.vector().blockSurface(head, Direction.NORTH), Pointing.RIGHT, 20).rightClick()
+        scene.overlay().showControls(util.vector().blockSurface(head, Direction.DOWN), Pointing.UP, 20).rightClick()
                 .withItem(SceneKit.item("rope"));
         scene.idle(22);
         scene.overlay().showControls(util.vector().topOf(tack), Pointing.DOWN, 20).rightClick().withItem(SceneKit.item("rope"));
@@ -103,7 +103,7 @@ final class TriangularSailsScene {
                 .placeNearTarget();
         scene.idle(45);
 
-        scene.overlay().showControls(util.vector().blockSurface(head, Direction.NORTH), Pointing.RIGHT, 30).rightClick();
+        scene.overlay().showControls(util.vector().blockSurface(head, Direction.DOWN), Pointing.UP, 30).rightClick();
         say(scene.overlay().showText(35), Triangular.TRIM)
                 .pointAt(util.vector().blockSurface(head, Direction.NORTH))
                 .placeNearTarget();

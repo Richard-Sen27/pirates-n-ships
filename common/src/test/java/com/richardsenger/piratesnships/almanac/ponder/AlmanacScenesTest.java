@@ -90,7 +90,7 @@ class AlmanacScenesTest {
     @Test
     void thereAreSeventeenScenes() {
         // ALM4's cannon, PND1's eight ship mechanics, PND2's eight for crew, combat and life aboard
-        assertEquals(22, AlmanacScenes.ALL.size()); // OAR1: oars; PND4: nets, railings, identity, on deck
+        assertEquals(23, AlmanacScenes.ALL.size()); // OAR1: oars; PND4: nets, railings, identity, on deck; SAIL5: triangular sails
     }
 
     @Test

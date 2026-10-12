@@ -17,7 +17,8 @@
 #
 # Environment: SMOKE_TIMEOUT (seconds from the server's start to "Done", default 600), SMOKE_TICK_SECONDS (ticking time
 # after the commands, default 30), SMOKE_SEED (level seed, default below), SMOKE_GRADLE_ARGS (extra Gradle arguments,
-# e.g. "-Pversion=0.1.0-beta.1" on CI so that the run uses the release build).
+# e.g. "-Pversion=0.1.0-beta.1" on CI so that the run uses the release build), SMOKE_RCON_TIMEOUT (seconds one command
+# reply may take, default 300: the /locate of the port structures searched for minutes on a loaded machine, WG6).
 set -uo pipefail
 
 usage() {
@@ -45,6 +46,7 @@ summary="$out/summary.txt"
 timeout="${SMOKE_TIMEOUT:-600}"
 tick_seconds="${SMOKE_TICK_SECONDS:-30}"
 seed="${SMOKE_SEED:-2718281828}"
+export RCON_TIMEOUT="${SMOKE_RCON_TIMEOUT:-300}"
 rcon_password="smoke-$RANDOM-$RANDOM"
 mod_id="pirates_n_ships"
 

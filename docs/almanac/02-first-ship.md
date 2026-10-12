@@ -51,4 +51,4 @@ To unmake her, sneak and use the helm with an empty hand and press **Disassemble
 > Now read [[pirates_n_ships:ships|Ships]] and [[pirates_n_ships:sailing|Sailing]].
 
 ## No hand for building?
-A seafarer village's shipwright builds sloops to order: see the **Orders** tab of the harbour master's desk, and [[pirates_n_ships:ships|Ships]].
+A seafarer village's shipwright builds to order: a sloop (300 or 400 doubloons) or a two-masted brig (650) with a gun deck pierced for eight guns, three holds, a cabin and four square sails and a jib. See the **Orders** tab of the harbour master's desk, and [[pirates_n_ships:ships|Ships]].

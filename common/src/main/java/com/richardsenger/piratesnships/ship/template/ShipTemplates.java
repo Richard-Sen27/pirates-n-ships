@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.ship.template;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.data.DefinitionType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -53,9 +55,65 @@ public final class ShipTemplates {
     public static final ShipTemplate PIRATE_SLOOP_ARMED = new ShipTemplate(Constants.id("ships/pirate_sloop_armed"),
             nameKey(PIRATE_SLOOP_ARMED_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 0, false);
 
+    /** The brig's helm on the quarterdeck (SHIP1, art/schematics/brig.py). */
+    public static final BlockPos BRIG_HELM = new BlockPos(4, 11, 27);
+    /**
+     * The brig's waterline row: the keel (0), the bottom (1) and the hold (2, 3) under water, the gun deck floor (4) just
+     * above it and the gun ports (5) clear of the sea.
+     */
+    public static final int BRIG_WATERLINE = 3;
+
+    public static final ResourceLocation BRIG_ID = Constants.id("brig");
+
+    /**
+     * The brig (SHIP1, art/schematics/brig.py): two masts with two square sails each and a jib, 9×26×32, bow to the
+     * north; a hold in three watertight compartments, a lower gun deck pierced for eight guns (the lids shut), the
+     * weather deck and a cabin under the raised quarterdeck. 1112 blocks; sold at the shipwright for 650 doubloons, the
+     * starter sloop's 400 in proportion to her blocks (1112 against 685).
+     */
+    public static final ShipTemplate BRIG = new ShipTemplate(Constants.id("ships/brig"), nameKey(BRIG_ID),
+            Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 650);
+
+    /**
+     * The armed brig's ratline nets (SHIP1): a fan of three strands on each side, from the railing latches on the
+     * weather deck's rail abaft the main mast (x 0 and 8, y 9, z 22..24) up to the mast hoops under the crow's nest
+     * (x 3 and 5, y 24, z 19).
+     */
+    public static final List<ShipTemplate.Net> BRIG_NETS = brigNets();
+
+    public static final ResourceLocation NAVY_BRIG_ARMED_ID = Constants.id("navy_brig_armed");
+
+    /**
+     * The navy patrols' brig (SHIP1, art/schematics/navy_brig_armed.py): {@link #BRIG} with four carriage cannons a
+     * side on the lower gun deck behind open gun ports, four shot lockers (barrels) between them, a crow's nest on the
+     * main masthead with mast hoops under it, railing latches on the rail and the {@link #BRIG_NETS} strung between
+     * them on placement, and two swivel guns on the quarterdeck rails. Same hull, helm and waterline. Not sold.
+     */
+    public static final ShipTemplate NAVY_BRIG_ARMED = new ShipTemplate(Constants.id("ships/navy_brig_armed"),
+            nameKey(NAVY_BRIG_ARMED_ID), Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 0, false,
+            BRIG_NETS);
+
+    public static final ResourceLocation PIRATE_BRIG_ARMED_ID = Constants.id("pirate_brig_armed");
+
+    /** The pirate raiders' brig (SHIP1): the same blocks and nets as {@link #NAVY_BRIG_ARMED}. Not sold. */
+    public static final ShipTemplate PIRATE_BRIG_ARMED = new ShipTemplate(Constants.id("ships/pirate_brig_armed"),
+            nameKey(PIRATE_BRIG_ARMED_ID), Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 0, false,
+            BRIG_NETS);
+
     public static final Map<ResourceLocation, ShipTemplate> DEFAULTS = Map.of(STARTER_SLOOP_ID, STARTER_SLOOP,
             STARTER_SLOOP_BASIC_ID, STARTER_SLOOP_BASIC, NAVY_SLOOP_ARMED_ID, NAVY_SLOOP_ARMED,
-            PIRATE_SLOOP_ARMED_ID, PIRATE_SLOOP_ARMED);
+            PIRATE_SLOOP_ARMED_ID, PIRATE_SLOOP_ARMED, BRIG_ID, BRIG, NAVY_BRIG_ARMED_ID, NAVY_BRIG_ARMED,
+            PIRATE_BRIG_ARMED_ID, PIRATE_BRIG_ARMED);
+
+    private static List<ShipTemplate.Net> brigNets() {
+        List<ShipTemplate.Net> out = new ArrayList<>();
+        for (int[] side : new int[][] {{0, 3}, {8, 5}}) {
+            for (int z = 22; z <= 24; z++) {
+                out.add(new ShipTemplate.Net(new BlockPos(side[0], 9, z), new BlockPos(side[1], 24, 19)));
+            }
+        }
+        return List.copyOf(out);
+    }
 
     private ShipTemplates() {
     }

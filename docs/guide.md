@@ -712,6 +712,18 @@ berths are taken, come back later; the receipt stays valid. The shipwright works
 Server config `ships.shipwright_orders`, `build_time_days`, `order_price_factor`, `order_materials_factor`,
 `max_orders_per_port`.
 
+The shipwright offers the starter sloop (400 doubloons), the basic sloop (300) and the **brig** (650: the sloop's price
+in proportion to her blocks, 1112 against 685; she takes longer to build and wants more logs and wool). The brig is a
+two-masted ship 32 blocks long and 9 wide: two square sails on each mast (set at the sail winch abaft each mast) and a
+jib (rig a rope from the head cleat high on the fore mast to the bowsprit cleat), a hold in three watertight
+compartments under the lower gun deck (hatches and ladders from the gun deck), a gun deck pierced for eight guns with
+the gun port lids shut (place a cannon behind a port, facing it, and its lid opens), the galley and the crew's
+hammocks on the gun deck, a brig cell at its after end, and the cabin with a chart table and a sea chest under the
+raised quarterdeck, where the helm and the flag are. The capstan forward works the anchor; the bilge pump on the gun
+deck reaches the main hold. Go below by the companion stairs amidships. She is too big to rejoin as one piece with the
+shipwright's toolkit (200 blocks). Navy patrols and pirate raiders also sail armed brigs: eight guns, a crow's nest on
+the main mast with ratline nets up to it from the rails, and swivel guns on the quarterdeck.
+
 ### Seafarer villages
 Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
 straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a

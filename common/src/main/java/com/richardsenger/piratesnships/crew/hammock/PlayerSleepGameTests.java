@@ -307,6 +307,34 @@ public final class PlayerSleepGameTests {
     }
 
     /**
+     * SHIP1: on the brig afloat a player sleeps in a hammock of the fore berth on the gun deck (hull and post supports)
+     * and sneaking gets it up again.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "brig")
+    public static void aHammockOfTheBrigSleeps(GameTestHelper h) {
+        com.richardsenger.piratesnships.ship.sable.ShipBody ship = com.richardsenger.piratesnships.ship.template.BrigGameTests.brig(h,
+                com.richardsenger.piratesnships.ship.template.ShipTemplates.BRIG_ID);
+        BlockPos foot = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 5, 9));
+        BlockPos head = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 5, 10));
+        Sleeper[] p = {null};
+        h.runAfterDelay(60, () -> {
+            p[0] = sleeper(h, ship.toWorld(Vec3.atBottomCenterOf(com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship,
+                    new BlockPos(3, 5, 10)))));
+            setTimeOfDay(h, MIDNIGHT);
+        });
+        h.runAfterDelay(60 + DUSK, () -> {
+            h.assertTrue(use(h, p[0], head).consumesAction(), "the brig's hammock did nothing");
+            assertAsleepOnSeat(h, p[0], foot, head, "lying down on the brig");
+            p[0].setShiftKeyDown(true);
+        });
+        h.runAfterDelay(60 + DUSK + 4, () -> {
+            assertUp(h, p[0], foot, "after sneaking");
+            morning(h);
+            h.succeed();
+        });
+    }
+
+    /**
      * The ship is moved and turned under the sleeper: it lies at the hammock's new world position; "Leave Bed" (vanilla's
      * stopSleepInBed, as the client's button sends it) gets it up beside the hammock where the ship is now.
      */

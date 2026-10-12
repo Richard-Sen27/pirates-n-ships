@@ -2749,6 +2749,9 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
 | `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
+| `brig` | `brig.py` | two-masted brig (SHIP1): hold in three compartments, a lower gun deck pierced for eight guns (lids shut), weather deck, cabin under a raised quarterdeck, 1112 blocks | shipwright (650), merchant convoys |
+| `navy_brig_armed` | `navy_brig_armed.py` | the brig with eight carriage guns behind open ports, four shot lockers, a crow's nest, mast hoops and railing latches (six ratline nets strung on placement) and two swivel guns, 1143 blocks | navy patrols (not sold) |
+| `pirate_brig_armed` | `pirate_brig_armed.py` | the same blocks and nets as `navy_brig_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
 `starter_sloop.py`, which adds to the starter sloop's cells and changes nothing else: two cannons a side in the waist
@@ -2789,6 +2792,68 @@ hung net, step over into the nest. `ArmedSloopLayoutTest` pins the nest, the sta
 supports, the cloth and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock
 player without jumping on the structure placed on land, and `theRatlinesStandOnTheAssembledSloop` checks every link
 stands on the assembled sloop afloat. The starter sloop gets no nest: it is the player's ship to rig.
+
+**The brig (SHIP1).** The human (2026-10-12): "create another ship model, a bit larger with multiple sails, cannons,
+the railing, crow's nest, ratlines, etc. so an actual full ship utilising all the possibilities of this mod."
+Source `art/schematics/brig.py` (one generator; `navy_brig_armed.py` and `pirate_brig_armed.py` call its
+`armed_spec`), built through the lab and converted like the sloop. Bow north, 9 wide, 26 high, 32 long over all (hull
+z 4..30, the bowsprit z 0..3, the name boards at z 31); dark oak planks and a stripped dark oak wale and keel for the
+hull, spruce decks, masts and yards, the railing family in dark oak, like the sloop.
+
+- **Decks** (template y): keel 0 (z 5..27); bottom 1; **hold** 2..3, cut by two dark oak bulkheads at z 14 and 23 into
+  three watertight rooms (fore hold z 5..13, main hold 15..22, aft hold 24..29), each with a spruce trapdoor hatch in
+  the gun deck floor and a ladder (on the fore mast, the main mast, the after bulkhead); a bottom plank under every
+  hollow cell (SH1b), and the forefoot (z 5..6, y 1) closes the two forward hold cells onto the keel. **Lower gun deck**
+  floor 4, headroom 5..6, the hull side pierced at y 5 by four gun ports a side (`dark_oak_bulwark_port`, z 13, 17, 21,
+  25) with planking above them (a lintel only for the drawn barrel at the highest elevations: only bulwarks are in
+  `barrel_blocking`). **Weather deck** 7 with the dark oak railing at y 8, a wide port (two ports) a side at z 13..14
+  and a gate a side at z 17. **Cabin** y 8..9 aft of z 25 under the raised **quarterdeck** (floor 10), its rails at
+  y 11: dark oak railing at the sides and the taffrail, a dark oak rope railing along the break (z 25) with gaps over
+  the two stair landings.
+- **Waterline row 3**: keel, bottom and hold under water, the gun deck floor just above it, the ports 1.9 blocks clear.
+  The auto-ballast keeps her level (BrigGameTests measures it).
+- **Getting about:** stairs from the weather deck to the quarterdeck on both sides (x 1 and 7, z 22..24, landing on
+  z 25); the **companion**: a three-block opening in the weather deck (x 4, z 14..16, rope railing on both sides) with
+  a stair in the deck at z 17 and two below, down to the gun deck at z 14, all in half steps a crew member walks;
+  hatches and ladders into the holds (the pathfinder has no ladders: only players and the pump reach the hold).
+- **Rig:** fore mast z 11 (y 1..22), main mast z 19 (y 1..24); three yards each, one block forward of the mast (the
+  yard rule): fore y 11, 16, 20 (9, 7, 5 long), main y 11, 17, 22, so two square sails a mast (YardLinker: a middle
+  yard is the lower yard of one sail and the upper of the next). A sail winch abaft each mast (z 12, 20). The jib on
+  the fore mast: head cleat above the upper fore yard [4, 21, 10], clew cleat below the lower [4, 10, 10], tack on the
+  bowsprit [4, 9, 1]: 0.5 x 11 x 9 = 49.5 blocks².
+- **Stations and gear:** helm on the quarterdeck [4, 11, 27] (facing south), capstan forward [4, 8, 7] (the anchor),
+  bilge pump on the gun deck over the main hold [5, 5, 20] (its intake reaches the hold, `pump_reach` 4), the ship's
+  bell on the cabin front [3, 9, 24], the flag on a three-block staff in a flag pedestal at the taffrail
+  [4, 11..14, 29], a lion figurehead under the bowsprit, three name boards on the transom [3..5, 6, 31], three stern
+  windows in the cabin's stern [2|4|6, 9, 30], ship's lanterns on the cabin front, the gun deck sides and in the cabin.
+- **Below:** eight hammocks: two fore and aft in the fore berth (x 2 and 6, z 9..10, between the hull and a post),
+  four across the gun deck between the guns (z 22 and 24, hull and post), two across the cabin; the galley at the fore
+  end of the gun deck's waist (pantry [1, 5, 12], water barrel [7, 5, 12]); cargo crates and barrels in all three
+  holds; a chart table and a sea chest in the cabin; a brig cell at the after end of the gun deck (brig bars across
+  z 27 with a brig door). **No sea cots:** a sea cot is an entity block without a block entity, which FIX3's structure
+  check (`check_structures.py`, `StructureBlockEntityGameTests`) refuses in every structure template, ship templates
+  included; the cabin has two hammocks instead.
+- **Armed (navy and pirate):** a carriage cannon behind every port (master at x 1 facing west / x 7 facing east, rear
+  inboard, the crew's place behind it in the gun deck's middle lane), the lids open; four shot lockers (vanilla
+  barrels, `shot_lockers`) against the hull between the guns [1|7, 5, 15|23], each feeding the two guns 2 blocks from
+  it; the crow's nest on the main masthead [4, 25, 19]; mast hoops right under it on the mast's sides [3|5, 24, 19];
+  railing latches on the weather deck rail abaft the main mast [0|8, 9, 22..24]; two swivel guns on the quarterdeck
+  rails [1|7, 12, 28]. **The nets:** a structure template cannot carry a strung net (its cells and fittings name each
+  other in block entity data the lab does not write), so the template definition lists them (`ShipTemplate.nets`, new
+  in SHIP1: pairs of fitting positions) and `ShipTemplatePlacer` strings them after placing, before assembling, as the
+  net item would (`RatlineNets.check`/`string`); a net that cannot be strung is logged and its latch removed. Each side
+  is a fan of three strands from the latches to the side's hoop (RL4/RL5: one sheet); the latches stand far enough
+  aft (z 22..24, the rings 16 to 17 blocks from the hoop) that the sheet stays clear of the main course and topsail at
+  full belly. A climber at the foot holds forward toward the mast, the net carries him to the hoop and he steps over
+  the hoop into the nest (RL3's top exit).
+- **Tests:** `BrigLayoutTest` (JUnit, the committed structures: only the guns, ports, lockers, nest, fittings and
+  swivels differ; every gun supplied and firing through a port; the nest and the flag; the nets climb to the nest and
+  keep clear of the cloth; the yards and the four square sails and the jib; the hold closed in three rooms);
+  `BrigGameTests` (placing north and east, afloat level and dry, sailing and steering, the anchor, a crew of eight,
+  the guns, the lookout, the net climb, a plank from a gate, the hammocks, a reload, and every station, door and hatch
+  reachable from the helm on foot); `PlayerSleepGameTests.aHammockOfTheBrigSleeps`.
+- **Renders:** `art/renders/ships/brig_side.png`, `brig_bow.png`, `brig_quarter.png`, `brig_deck.png` and
+  `brig_cutaway.png` (the decks), of the armed brig.
 
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never

@@ -284,7 +284,8 @@ class SchemToStructureTest {
 
     /** Each committed ship structure is exactly what the converter makes from its committed schematic. */
     @ParameterizedTest
-    @ValueSource(strings = {"starter_sloop", "starter_sloop_basic", "navy_sloop_armed", "pirate_sloop_armed"})
+    @ValueSource(strings = {"starter_sloop", "starter_sloop_basic", "navy_sloop_armed", "pirate_sloop_armed", "brig", "navy_brig_armed",
+            "pirate_brig_armed"})
     void committedShipIsUpToDate(String name) throws Exception {
         Path schem = root.resolve("art/schematics/" + name + ".schem");
         Path committed = root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships/" + name + ".nbt");
@@ -292,7 +293,7 @@ class SchemToStructureTest {
         String log = convert(out, schem);
         assertArrayEquals(Files.readAllBytes(committed), Files.readAllBytes(out.resolve(name + ".nbt")),
                 "rerun python3 tools/schem_to_structure.py and commit the result");
-        assertTrue(log.contains("helm at [4, 8, 22]"), log);
+        assertTrue(log.contains(name.contains("brig") ? "helm at [4, 11, 27]" : "helm at [4, 8, 22]"), log);
     }
 
     // ------------------------------------------------------------------ block entity check (FIX3)

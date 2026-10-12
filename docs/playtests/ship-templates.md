@@ -104,3 +104,46 @@ heading north).
 
 Report: a screenshot of each sloop from the side with both sails set, one of the jib's edge passing the yards, and
 `latest.log`.
+
+## SHIP1: the brig
+
+A second, larger template: the two-masted `brig` (shipwright, 650 doubloons) and the armed `navy_brig_armed` and
+`pirate_brig_armed` (NPC patrols and raiders). Design and renders: `art/README.md` "The brig (SHIP1)",
+`art/renders/ships/brig_*.png`.
+
+Prepare: creative, open sea at least 40 blocks across, `/pirates wind set 180 8` (from the south).
+1. **Place:** stand at the shore facing north, `/pirates ship place brig assemble`.
+   - **Expected:** a 32-block brig appears ahead of you and floats level (no list, no trim) with the gun port lids
+     shut a little above the water; nothing dark or wet in the hold (look down the three hatches on the gun deck).
+2. **Look round:** walk the weather deck, down the companion amidships to the gun deck, down a hatch ladder into each
+   hold, back up, up the stairs to the quarterdeck, into the cabin.
+   - **Expected:** every stair is walkable without a jump; the railing runs round the weather deck with a wide port
+     and a gate on each side; the rope railing along the quarterdeck's break; the cabin's stern windows, chart table
+     and sea chest; the brig cell with its door at the after end of the gun deck; the hammocks and the galley. Report
+     anything that looks wrong (a gap in the rail, a post where none belongs, a lintel cutting a gun's barrel).
+3. **Sail:** use each sail winch (abaft each mast) to full; rig the jib with a rope from the head cleat high on the
+   fore mast to the bowsprit cleat; take the helm.
+   - **Expected:** four square sails (two per mast) and the jib draw; she gathers way before the wind and answers the
+     helm, a little slower to turn than the sloop.
+4. **Anchor:** use the capstan forward.
+   - **Expected:** the anchor drops on the side nearer the capstan and holds; using it again weighs it.
+5. **Navy brig:** `/pirates ship place navy_brig_armed assemble` beside her.
+   - **Expected:** eight carriage guns on the gun deck behind open ports; four shot barrels between them; two swivel
+     guns on the quarterdeck rails; the crow's nest on the main masthead and on each side three ratline nets from
+     iron latches on the rail abaft the main mast fanning up to a hoop under the nest, clear of the main sails when set.
+6. **Climb:** stand on the deck beside a latch, look at the main mast and hold forward.
+   - **Expected:** the net carries you up to the hoop and you step over into the crow's nest without jumping; walk
+     back out over the hoop, let go and the net brings you down to the rail.
+7. **Guns:** load a gun (powder, then a ball) and fire it.
+   - **Expected:** the ball leaves through the port; the lid stays open.
+8. **Crew:** hire eight hands, assign them with the whistle to the helm, both winches, the capstan, the pump, two guns
+   and the nest.
+   - **Expected:** each walks to his station (down the companion for the gun deck); the lookout is put in the nest. At
+     night every hand finds a hammock.
+9. **Order:** at a seafarer village's harbor master's desk, Orders tab.
+   - **Expected:** the Brig is listed at 650 doubloons with more build days and materials than the sloop; at pickup
+     she appears at a free berth (STR7's berth depth applies; report if she is placed over the quay or the beach).
+10. **NPC ships:** meet navy patrols and pirate raiders (`/pirates world voyages spawn near patrol`).
+   - **Expected:** some sail the armed brig; she sails and her lookout sits in the nest.
+
+Report: screenshots from the side, from the bow and of the deck, one of the nets with the sails set, and `latest.log`.

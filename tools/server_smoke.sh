@@ -331,6 +331,27 @@ crash_hits="$(grep -n -E "$crash_pattern" "$log" "$replies" | grep -v -E '^[^:]+
 [[ -n "$crash_hits" ]] && fail "crash signs in the log or the replies ($(wc -l <<<"$crash_hits" | tr -d ' ') lines)"
 mod_warnings="$(grep -E '(WARN|ERROR).*('"$mod_id"'|piratesnships|Pirates)' "$log" || true)"
 
+# Ports on the seed (WG6): the nearest port structure of each kind from spawn (the first /locate replies, run from the
+# console at the world spawn) and every pair of the listed ports less than 6000 blocks apart (the default convoy reach,
+# world_simulation.voyages.convoy_max_distance), centre to centre from the coordinates in the port ids.
+port_report="$(
+    for structure in seafarer_village navy_outpost pirate_island; do
+        away="$(grep -A2 -F "> locate structure $mod_id:$structure" "$replies" 2>/dev/null \
+            | sed -E -n 's/.*\[(-?[0-9]+), [^,]+, (-?[0-9]+)\] \(([0-9]+) blocks away\).*/\3 blocks (at \1 \2)/p' | head -1)"
+        echo "nearest $structure from spawn: ${away:-not found}"
+    done
+    grep -oE "$mod_id:(village|pirate_island|navy_outpost)_-?[0-9]+_-?[0-9]+" "$replies" 2>/dev/null | awk '!seen[$0]++' \
+        | sed -E 's/.*_(-?[0-9]+)_(-?[0-9]+)$/& \1 \2/' \
+        | awk '{ id[NR] = $1; x[NR] = $2; z[NR] = $3 }
+            END {
+                for (i = 1; i <= NR; i++) for (j = i + 1; j <= NR; j++) {
+                    d = sqrt((x[i] - x[j]) ^ 2 + (z[i] - z[j]) ^ 2)
+                    if (d < 6000) { printf "%s - %s: %d blocks\n", id[i], id[j], d; pairs++ }
+                }
+                printf "%d listed ports, %d pairs under 6000 blocks\n", NR, pairs
+            }'
+)"
+
 {
     echo "Dedicated-server smoke test, $loader: $( ((status == 0)) && echo PASSED || echo FAILED)"
     echo "Server: $summary_mode"
@@ -347,6 +368,9 @@ mod_warnings="$(grep -E '(WARN|ERROR).*('"$mod_id"'|piratesnships|Pirates)' "$lo
         head -40 <<<"$crash_hits" | sed 's/^/  /'
         echo
     fi
+    echo "Ports on the seed:"
+    sed 's/^/  /' <<<"$port_report"
+    echo
     echo "Command replies:"
     sed 's/^/  /' "$replies"
     echo

@@ -4,8 +4,8 @@
     "config": "navy_outpost",
     "frequency": 1.0,
     "salt": 902417385,
-    "separation": 16,
-    "spacing": 40,
+    "separation": 10,
+    "spacing": 28,
     "spread_type": "linear"
   },
   "structures": [

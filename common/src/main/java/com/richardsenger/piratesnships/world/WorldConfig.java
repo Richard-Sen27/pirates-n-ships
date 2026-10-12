@@ -57,13 +57,13 @@ public final class WorldConfig {
      * {@code pirates_n_ships:pirate_islands} (WG5: 52/20, before 64/24); {@code frequency} is read at placement time.
      */
     public static final StructurePlacement PIRATE_ISLAND = new StructurePlacement(
-            ISLAND.intRange("spacing", 52, 2, 4096,
+            ISLAND.intRange("spacing", 36, 2, 4096,
                     "Average distance between two pirate islands (the side of the grid cell in which at most one starts)" + SPREAD_NOTE),
             ISLAND.doubleRange("frequency", 0.8, 0.0, 1.0,
                     "Chance that pirate islands generate at a possible location (0 = never, 1 = always); read at placement"));
     public static final ConfigValue<Boolean> PIRATE_ISLAND_ENABLED = ISLAND.bool("enabled", true,
             "Pirate island camps generate in new chunks (off = no new camps; existing ones stay)");
-    public static final ConfigValue<Integer> PIRATE_ISLAND_SEPARATION = ISLAND.intRange("separation", 20, 1, 4095,
+    public static final ConfigValue<Integer> PIRATE_ISLAND_SEPARATION = ISLAND.intRange("separation", 14, 1, 4095,
             "Minimum distance between two pirate islands; kept below spacing (a larger value counts as spacing - 1)" + SPREAD_NOTE);
     public static final ConfigValue<Integer> PIRATE_ISLAND_SHORE_PROBE = ISLAND.intRange("shore_probe_blocks", 24, 4, 64,
             "How far (blocks) a camp site looks in each direction for the sea; the direction with the most water gets the jetty");
@@ -89,13 +89,13 @@ public final class WorldConfig {
      * {@code pirates_n_ships:seafarer_villages} (WG5: 30/10, before 36/12); {@code frequency} is read at placement time.
      */
     public static final StructurePlacement SEAFARER_VILLAGE = new StructurePlacement(
-            VILLAGE.intRange("spacing", 30, 2, 4096,
+            VILLAGE.intRange("spacing", 20, 2, 4096,
                     "Average distance between two seafarer villages (the side of the grid cell in which at most one starts)" + SPREAD_NOTE),
             VILLAGE.doubleRange("frequency", 1.0, 0.0, 1.0,
                     "Chance that seafarer villages generate at a possible location (0 = never, 1 = always); read at placement"));
     public static final ConfigValue<Boolean> SEAFARER_VILLAGE_ENABLED = VILLAGE.bool("enabled", true,
             "Seafarer villages generate in new chunks (off = no new villages; existing ones stay)");
-    public static final ConfigValue<Integer> SEAFARER_VILLAGE_SEPARATION = VILLAGE.intRange("separation", 10, 1, 4095,
+    public static final ConfigValue<Integer> SEAFARER_VILLAGE_SEPARATION = VILLAGE.intRange("separation", 7, 1, 4095,
             "Minimum distance between two seafarer villages; kept below spacing (a larger value counts as spacing - 1)" + SPREAD_NOTE);
     public static final ConfigValue<Integer> SEAFARER_VILLAGE_SHORE_PROBE = VILLAGE.intRange("shore_probe_blocks", 24, 4, 64,
             "How far (blocks) a village site looks in each direction for the sea; the direction with the most water gets the pier");
@@ -115,13 +115,13 @@ public final class WorldConfig {
      * {@code pirates_n_ships:navy_outposts} (WG5: 40/16, before 48/20); {@code frequency} is read at placement time.
      */
     public static final StructurePlacement NAVY_OUTPOST = new StructurePlacement(
-            OUTPOST.intRange("spacing", 40, 2, 4096,
+            OUTPOST.intRange("spacing", 28, 2, 4096,
                     "Average distance between two navy outposts (the side of the grid cell in which at most one starts)" + SPREAD_NOTE),
             OUTPOST.doubleRange("frequency", 0.8, 0.0, 1.0,
                     "Chance that navy outposts generate at a possible location (0 = never, 1 = always); read at placement"));
     public static final ConfigValue<Boolean> NAVY_OUTPOST_ENABLED = OUTPOST.bool("enabled", true,
             "Navy outposts generate in new chunks (off = no new outposts; existing ones stay)");
-    public static final ConfigValue<Integer> NAVY_OUTPOST_SEPARATION = OUTPOST.intRange("separation", 16, 1, 4095,
+    public static final ConfigValue<Integer> NAVY_OUTPOST_SEPARATION = OUTPOST.intRange("separation", 10, 1, 4095,
             "Minimum distance between two navy outposts; kept below spacing (a larger value counts as spacing - 1)" + SPREAD_NOTE);
     public static final ConfigValue<Integer> NAVY_OUTPOST_SHORE_PROBE = OUTPOST.intRange("shore_probe_blocks", 24, 4, 64,
             "How far (blocks) an outpost site looks in each direction for the sea; the direction with the most water gets the quay");

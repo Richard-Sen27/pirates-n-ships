@@ -4,8 +4,8 @@
     "config": "pirate_island",
     "frequency": 1.0,
     "salt": 739215604,
-    "separation": 20,
-    "spacing": 52,
+    "separation": 14,
+    "spacing": 36,
     "spread_type": "linear"
   },
   "structures": [

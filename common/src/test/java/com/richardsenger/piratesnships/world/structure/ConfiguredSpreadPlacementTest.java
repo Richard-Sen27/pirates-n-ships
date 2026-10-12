@@ -64,7 +64,7 @@ class ConfiguredSpreadPlacementTest {
 
     @Test
     void withoutTheConfigTheJsonNumbersMatchVanilla() {
-        // the JSON numbers differ from the config defaults (30/10): the fallback must use the JSON's
+        // the JSON numbers differ from the config defaults (20/7): the fallback must use the JSON's
         ConfiguredSpreadPlacement placement = new ConfiguredSpreadPlacement(36, 12, RandomSpreadType.LINEAR, SALT, "seafarer_village");
         assertFalse(WorldConfig.SEAFARER_VILLAGE.spacing().isLive());
         assertEquals(36, placement.spacing());
@@ -75,11 +75,11 @@ class ConfiguredSpreadPlacementTest {
     @Test
     void configValuesReplaceTheJsonNumbers() {
         ConfiguredSpreadPlacement placement = new ConfiguredSpreadPlacement(36, 12, RandomSpreadType.LINEAR, SALT, "seafarer_village");
-        override(WorldConfig.SEAFARER_VILLAGE.spacing(), 20);
+        override(WorldConfig.SEAFARER_VILLAGE.spacing(), 16);
         override(WorldConfig.SEAFARER_VILLAGE_SEPARATION, 5);
-        assertEquals(20, placement.spacing());
+        assertEquals(16, placement.spacing());
         assertEquals(5, placement.separation());
-        assertSameChunks(new RandomSpreadStructurePlacement(20, 5, RandomSpreadType.LINEAR, SALT), placement);
+        assertSameChunks(new RandomSpreadStructurePlacement(16, 5, RandomSpreadType.LINEAR, SALT), placement);
     }
 
     @Test
@@ -100,13 +100,13 @@ class ConfiguredSpreadPlacementTest {
 
     @Test
     void onlyTheConfigOfItsOwnStructureCounts() {
-        ConfiguredSpreadPlacement outposts = new ConfiguredSpreadPlacement(40, 16, RandomSpreadType.LINEAR, SALT, "navy_outpost");
-        override(WorldConfig.SEAFARER_VILLAGE.spacing(), 20);
-        assertEquals(40, outposts.spacing());
+        ConfiguredSpreadPlacement outposts = new ConfiguredSpreadPlacement(28, 10, RandomSpreadType.LINEAR, SALT, "navy_outpost");
+        override(WorldConfig.SEAFARER_VILLAGE.spacing(), 12);
+        assertEquals(28, outposts.spacing());
         override(WorldConfig.NAVY_OUTPOST.spacing(), 64);
         assertEquals(64, outposts.spacing());
-        assertEquals(16, outposts.separation(), "separation not overridden: the JSON's");
-        assertSameChunks(new RandomSpreadStructurePlacement(64, 16, RandomSpreadType.LINEAR, SALT), outposts);
+        assertEquals(10, outposts.separation(), "separation not overridden: the JSON's");
+        assertSameChunks(new RandomSpreadStructurePlacement(64, 10, RandomSpreadType.LINEAR, SALT), outposts);
     }
 
     @Test
@@ -161,13 +161,14 @@ class ConfiguredSpreadPlacementTest {
     }
 
     @Test
-    void newDefaultsAreALittleDenser() {
-        assertEquals(30, WorldConfig.SEAFARER_VILLAGE.spacing().defaultValue());
-        assertEquals(10, WorldConfig.SEAFARER_VILLAGE_SEPARATION.defaultValue());
-        assertEquals(40, WorldConfig.NAVY_OUTPOST.spacing().defaultValue());
-        assertEquals(16, WorldConfig.NAVY_OUTPOST_SEPARATION.defaultValue());
-        assertEquals(52, WorldConfig.PIRATE_ISLAND.spacing().defaultValue());
-        assertEquals(20, WorldConfig.PIRATE_ISLAND_SEPARATION.defaultValue());
+    void defaultsAreDenserAgain() {
+        // WG6 (2026-10-12): villages 20/7, outposts 28/10, islands 36/14; wrecks unchanged
+        assertEquals(20, WorldConfig.SEAFARER_VILLAGE.spacing().defaultValue());
+        assertEquals(7, WorldConfig.SEAFARER_VILLAGE_SEPARATION.defaultValue());
+        assertEquals(28, WorldConfig.NAVY_OUTPOST.spacing().defaultValue());
+        assertEquals(10, WorldConfig.NAVY_OUTPOST_SEPARATION.defaultValue());
+        assertEquals(36, WorldConfig.PIRATE_ISLAND.spacing().defaultValue());
+        assertEquals(14, WorldConfig.PIRATE_ISLAND_SEPARATION.defaultValue());
         assertEquals(24, WorldConfig.WRECK.spacing().defaultValue());
         assertEquals(8, WorldConfig.WRECK_SEPARATION.defaultValue());
     }

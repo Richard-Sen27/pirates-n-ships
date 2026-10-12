@@ -721,8 +721,8 @@ list ports with `/pirates world ports` and find the nearest with `/pirates world
 `world.structures.seafarer_village`.
 
 How far apart the structures lie is server config too (WG5): each kind has a grid of `spacing` chunks with at most one
-start per cell, at least `separation` chunks from the next. Defaults: villages 30/10, navy outposts 40/16, pirate
-islands 52/20, wrecks 24/8, so a village is usually a few hundred blocks from the next on a coast. A changed value
+start per cell, at least `separation` chunks from the next. Defaults (WG6, denser again): villages 20/7, navy outposts
+28/10, pirate islands 36/14, wrecks 24/8, so a village is usually a few hundred blocks from the next on a coast. A changed value
 applies to chunks generated afterwards; structures already in the world stay where they are. `/locate` follows the
 configured grid. An existing config file keeps the values it has: delete the `spacing` and `separation` lines (or the
 file) to take new defaults.

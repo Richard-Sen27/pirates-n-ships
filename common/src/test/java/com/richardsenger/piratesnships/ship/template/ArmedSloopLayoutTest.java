@@ -84,15 +84,22 @@ class ArmedSloopLayoutTest {
 
     @BeforeAll
     static void findRoot() {
-        root = Path.of("").toAbsolutePath();
-        while (root != null && !Files.exists(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships"))) {
-            root = root.getParent();
-        }
+        root = shipsRoot();
         Assumptions.assumeTrue(root != null, "ship structures not found above the working directory");
     }
 
-    /** pos -> "name[props]" (props sorted) of a committed ship structure. */
-    private static Map<BlockPos, String> blocks(String name) throws IOException {
+    /** The checkout above the working directory that holds the ship structures, or null (shared with BrigLayoutTest). */
+    static Path shipsRoot() {
+        Path r = Path.of("").toAbsolutePath();
+        while (r != null && !Files.exists(r.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships"))) {
+            r = r.getParent();
+        }
+        return r;
+    }
+
+    /** pos -> "name[props]" (props sorted) of a committed ship structure (shared with BrigLayoutTest). */
+    static Map<BlockPos, String> blocks(String name) throws IOException {
+        Path root = shipsRoot();
         CompoundTag s = NbtIo.readCompressed(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships/" + name + ".nbt"),
                 NbtAccounter.unlimitedHeap());
         ListTag palette = s.getList("palette", Tag.TAG_COMPOUND);

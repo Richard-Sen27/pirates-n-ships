@@ -36,7 +36,9 @@ import java.util.List;
  * ({@link GrappleLaunch}, {@link MusketHookLoad}). GR4 drops the crossbow, guards the rope grab, lengthens the ropes
  * and lets the hook latch on any solid surface: another ship, the thrower's own ship, or a world block. GR5 lets the
  * thrower haul a hooked ship by hand ({@link GrappleHaul}: sneak freezes the rope, walking away pulls) and pull
- * themselves along their own rope; only a rope tied to a cleat or ring is a line to slide along.
+ * themselves along their own rope; only a rope tied to a cleat or ring is a line to slide along. GR7 throws the hook
+ * more gently by hand, makes each use of the own rope one pull with a cooldown, and lets the thrower hang and swing on
+ * it ({@link RopeSwingService}).
  * Config section {@code grapple}. The item is
  * {@code combat.content.CombatContent#GRAPPLING_HOOK}.
  */
@@ -72,6 +74,7 @@ public final class GrappleModule implements ModModule {
     public void registerEvents() {
         CommonEvents.SERVER_TICK_END.register(GrappleService::onServerTick);
         CommonEvents.PLAYER_LOGOUT.register(GrappleService::onLogout);
+        CommonEvents.PLAYER_TICK_END.register(RopeSwingService::onPlayerTick); // GR7: players the server moves itself
         CommonEvents.SERVER_STOPPED.register(server -> GrappleService.onServerStopped());
         SableShips.onPhysicsTick(GrappleService::onPhysicsTick);
         SableShips.onPhysicsTick(GrappleHaul::onPhysicsTick); // GR5
@@ -89,7 +92,8 @@ public final class GrappleModule implements ModModule {
         data.lang(lang -> lang
                 .add(GrappleContent.HOOK.get().getDescriptionId(), "Grappling Hook")
                 .add(GrapplingHookItem.TOOLTIP_KEY, "Throw it at a ship to haul it alongside, or at a cliff or mast to string a rope. "
-                        + "Hold sneak to hold the rope and walk back to haul a hooked ship; use the rope to pull yourself to the hook. "
+                        + "Hold sneak to hold the rope and walk back to haul a hooked ship. With the rope in hand, use pulls you up a "
+                        + "step; in the air you hang and swing on it. "
                         + "Sneak + use with an empty hand to let go")
                 .add(GrapplingHookItem.LAUNCH_TOOLTIP_KEY, "In the off hand with a musket in the main hand: "
                         + "hold use to load it into the musket, then use again to fire it twice as far")
@@ -170,6 +174,6 @@ public final class GrappleModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class, GrappleHaulGameTests.class,
-                HookPoseGameTests.class);
+                HookPoseGameTests.class, RopeSwingGameTests.class);
     }
 }

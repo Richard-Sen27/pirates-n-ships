@@ -95,6 +95,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Byte> LATCH_KIND = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.BYTE);
     /** GR4: the latched pose, in the frame of the block it bit (the ship's plot, or the world). */
     private static final EntityDataAccessor<Quaternionf> LATCH_ROT = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.QUATERNION);
+    /** GR7: the hand-held rope's length while it holds its thrower ({@link RopeSwing}); negative while it pays out freely. */
+    private static final EntityDataAccessor<Float> SWING_LENGTH = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.FLOAT);
 
     /** How far below the eyes the thrower holds the rope [blocks] (the renderer's third-person hand height). */
     public static final double HAND_BELOW_EYES = 0.45;
@@ -124,6 +126,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private @Nullable BlockPos tiedRing;
     /** Ship of {@link #tiedRing}, null for a ring on land. */
     private @Nullable UUID tiedShip;
+    /** GR7: the hand-held rope's length while it holds its thrower ({@link RopeSwingService}), NaN while it pays out. */
+    private double swingLength = Double.NaN;
     /** Hauling by hand (GR5): the frozen rope length and its tension. */
     private final GrappleHaul.State haul = new GrappleHaul.State();
 
@@ -176,6 +180,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         builder.define(GRAVITY_FACTOR, 1.0f);
         builder.define(LATCH_KIND, (byte) HookPose.Kind.HANGING.ordinal());
         builder.define(LATCH_ROT, new Quaternionf());
+        builder.define(SWING_LENGTH, -1.0f);
     }
 
     @Override
@@ -287,6 +292,26 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return new Vec3(b.getX() + (double) o.x, b.getY() + (double) o.y, b.getZ() + (double) o.z);
     }
 
+    /**
+     * GR7: the hand-held rope's length while it holds its thrower, as synched (both sides); NaN while it pays out freely
+     * (the thrower on the ground, or not holding it).
+     */
+    public double syncedSwingLength() {
+        float f = entityData.get(SWING_LENGTH);
+        return f < 0f ? Double.NaN : f;
+    }
+
+    /** GR7: the hand-held rope's length while it holds its thrower (server), NaN while it pays out freely. */
+    public double swingLength() {
+        return swingLength;
+    }
+
+    /** GR7: sets the hand-held rope's length (NaN: free) and syncs it. */
+    void setSwingLength(double length) {
+        swingLength = length;
+        entityData.set(SWING_LENGTH, Double.isNaN(length) ? -1.0f : (float) length);
+    }
+
     /** The mooring ring the rope is tied to, as synched (both sides). */
     public Optional<BlockPos> syncedTiedRing() {
         return entityData.get(TIED_RING);
@@ -352,6 +377,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
 
     /** Ties the rope's near end to the ring at {@code ring} on ship {@code ship} (null: on land). */
     void tieTo(BlockPos ring, @Nullable UUID ship) {
+        setSwingLength(Double.NaN); // GR7: a tied rope no longer hangs from the hand
         tiedRing = ring.immutable();
         tiedShip = ship;
         anchorPlot = null;
@@ -646,6 +672,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             taut = haulKind == GrappleRules.Haul.SHORE && shoreDrags() && throwerPos != null && GrappleRules.taut(horizontal(hookWorld, throwerPos),
                     GrappleConfig.holdLength(), GrappleConfig.SHORE_HAUL_FORCE.get());
         }
+        RopeSwingService.tickRope(level, this, ship, hookWorld, owner); // GR7: the hand-held rope holds its thrower in the air
         boolean hauled = GrappleHaul.tick(level, this, ship, hookWorld, owner); // GR5: a frozen rope pulled taut by hand
         entityData.set(TAUT, taut && !holding.holding() || hauled); // a holding rope does not pull
     }

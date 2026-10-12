@@ -38,9 +38,10 @@ seafarer village, a navy outpost and a pirate island (`/locate structure pirates
 9. **Config off:** set `world.ports.names = false` in the server config (or the in-game settings), then talk to a
    harbor master: the greeting names the readable id ("Village 1192 1530"); `/pirates world ports` shows ids only.
    Rejoin: the desk title and the quest texts show the readable id too. Set it back to true and rejoin: names again.
-10. **Dedicated server (optional):** on a dedicated server with a second client, the desk title and quest texts on the
+10. **Chart:** open a chart near a known port: the port's icon is labelled with its name (hover shows it too); with
+    `world.ports.names` off, reopen the chart: the label is the id's path (`village_1192_1530`).
+11. **Dedicated server (optional):** on a dedicated server with a second client, the desk title and quest texts on the
     remote client show the names, too (they come from the sync on join).
 
 ### Expected problems
 - A port registered with `/pirates trade port <name> …` has no registry entry, so it keeps its readable id.
-- The world chart's port labels are CHART2's work (it reads `Port.name()`).

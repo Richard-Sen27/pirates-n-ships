@@ -180,7 +180,7 @@ nearby (`/locate structure pirates_n_ships:wreck`), a ship of your own, a second
    chunks is not shown. `show_ships = false`: no ships, the needle stays.
 7. **Ports:** every port of the world is on the chart from the start with its icon (village: red-roofed houses, navy
    outpost: a grey tower with a navy flag, pirate island: a palm on sand) and, from MAP1's widest step inward, its
-   name or (until ports have names) its id under it; hover: the name and the kind. `ports_always_known = false`: a new
+   proper name (NAME3; its id while `world.ports.names` is off) under it; hover: the name and the kind. `ports_always_known = false`: a new
    player sees no ports; sail within 96 blocks of a port's walls and it appears for good (also after a relog and death).
 8. **Wrecks:** dive or sail within 96 blocks of a wreck: within two seconds a wreck icon (a broken hull in the waves)
    appears at it, hover "Wreck"; it stays after you leave. Vanilla shipwrecks, ruins and monuments never appear.

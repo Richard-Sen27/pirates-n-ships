@@ -368,6 +368,13 @@ public final class ChartGameTests {
         return new Port(Constants.id(name), kind, Level.OVERWORLD, new BlockPos(x, 64, z), box, Climate.TEMPERATE, List.of());
     }
 
+    /** The proper name the registry gave {@code port} (NAME3). */
+    private static String registeredName(GameTestHelper helper, net.minecraft.resources.ResourceLocation port) {
+        String name = PortRegistry.get(helper.getLevel().getServer()).index().byId(port).orElseThrow().name();
+        helper.assertTrue(!name.isEmpty(), "the registry named " + port);
+        return name;
+    }
+
     /** Runs {@code body} with {@code port} registered, and removes it again however the body ends. */
     private static void withPort(GameTestHelper helper, Port port, Runnable body) {
         PortRegistry registry = PortRegistry.get(helper.getLevel().getServer());
@@ -380,7 +387,7 @@ public final class ChartGameTests {
     }
 
     /**
-     * Opening the chart sends the state with every registered port (its kind and its id as the label) and no ships; it
+     * Opening the chart sends the state with every registered port (its kind and its proper name as the label, NAME3) and no ships; it
      * carries nothing about another player standing right next to the viewer (the human, 2026-10-12: the chart shows
      * only its owner).
      */
@@ -402,7 +409,7 @@ public final class ChartGameTests {
         ChartStructure shown = state.structures().orElseThrow().stream().filter(st -> st.x() == FAR + 5000).findFirst()
                 .orElseThrow(() -> new AssertionError("the port is on the chart: " + state.structures()));
         helper.assertValueEqual(shown.kind(), StructureKind.VILLAGE, "a village's icon");
-        helper.assertValueEqual(shown.label(), "chart_test_village", "named by its id while it has no name");
+        helper.assertValueEqual(shown.label(), registeredName(helper, Constants.id("chart_test_village")), "named by its proper name (NAME3)");
         helper.assertTrue(state.ships().isEmpty(), "no ships: the viewer owns none and stands on none");
         // the payload type has no field for other players at all; their names appear nowhere
         String everything = state.toString();
@@ -428,13 +435,17 @@ public final class ChartGameTests {
         ServerPlayer p = player(helper, "chart_explorer");
         p.setPos(FAR + 0.5, 64, FAR + 7000 - 20 - 51.5);
         ChartStructures.reveal(p);
-        helper.assertTrue(ChartStructures.shown(p).stream().noneMatch(st -> st.label().equals("chart_test_island")), "51 blocks off: unknown");
+        String name = registeredName(helper, port.id());
+        helper.assertTrue(ChartStructures.shown(p).stream().noneMatch(st -> st.label().equals(name)), "51 blocks off: unknown");
         p.setPos(FAR + 0.5, 64, FAR + 7000 - 20 - 49.5);
         ChartStructures.reveal(p);
         helper.assertTrue(ChartStructures.sightings(p).knowsPort(port.id()), "49 blocks off: revealed");
         p.setPos(0.5, 64, 0.5);
-        helper.assertTrue(ChartStructures.shown(p).stream().anyMatch(st -> st.label().equals("chart_test_island") && st.kind() == StructureKind.ISLAND),
-                "still on the chart far away");
+        helper.assertTrue(ChartStructures.shown(p).stream().anyMatch(st -> st.label().equals(name) && st.kind() == StructureKind.ISLAND),
+                "still on the chart far away, by its name");
+        // NAME3: with world.ports.names off the chart labels the port by its id's path again
+        ConfigOverrides.during(helper, com.richardsenger.piratesnships.world.WorldConfig.PORT_NAMES, false);
+        helper.assertTrue(ChartStructures.shown(p).stream().anyMatch(st -> st.label().equals("chart_test_island")), "names off: the id");
         // with show_structures off nothing is drawn
         ConfigOverrides.during(helper, ChartConfig.SHOW_STRUCTURES, false);
         helper.assertTrue(ChartStructures.shown(p).isEmpty(), "show_structures off: no structures");

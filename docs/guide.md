@@ -319,8 +319,9 @@ close-hauled to a dead run on either tack. How to rig one: put the head cleat hi
 or aft of the mast (the yard rule's column), place the boom on the same face of the mast lower down, straight below the
 head (it sits on a mast block or a sturdy face behind it, like a wall cleat), put the tack cleat on the deck, a bowsprit
 or a boomkin at or below the boom's height, and rope the head to the tack. The sail's foot now runs along the boom: the
-boom's arm is drawn from its pivot out as far as the tack lies horizontally, the cloth hangs from the head to the boom's
-end, and a sheet rope runs from the boom's end to the tack. A mainsail has its boom pointing aft to a tack on the stern;
+boom's arm is drawn from its pivot out as far as the tack lies horizontally, the stay rope is drawn from the head to the boom's end (SAIL6; it still
+links the head to the tack cleat), the cloth fills the triangle of that rope, the boom and the mast side (no rope there),
+and a sheet rope runs from the boom's end to the tack. A mainsail has its boom pointing aft to a tack on the stern;
 pointing forward to a bowsprit it is a club-footed jib. The area is the same as with a clew cleat.
 - **Sheeting.** The boom swings to port or starboard in 9 steps of 15°, up to 60° each way (block state `sheet`, 4 is
   centred). Its sail draws by the boom's angle to the wind: centred close-hauled (no closer than 45° off the wind,

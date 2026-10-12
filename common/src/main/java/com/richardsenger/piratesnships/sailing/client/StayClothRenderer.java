@@ -46,6 +46,10 @@ import org.joml.Vector3f;
  * two blocks ({@link SailFoot}, ART5). Every other rope of the cleat (RP1: lines to cleats
  * or mooring rings, and a stay without a sail) is drawn with sag by {@link RopeLineRenderer#drawLines}.
  *
+ * <p><b>Boomed sail (SAIL6).</b> The triangle is the head, the boom's gooseneck and the boom's outer end: the stay rope
+ * runs from the head to the boom's end ({@link #stayEnd}, the leech), the boom is the foot, the mast side has no rope,
+ * and a sheet rope runs from the boom's end to the tack cleat. The stay's physical end stays at the tack cleat.
+ *
  * <p><b>In the wind (VIS1b).</b> With client {@code sail_visuals.enabled} the cloth moves in its own frame like a
  * square sail's ({@link SailShape#triangle}, {@link SailAirTracker}; on a ship the bow is the synced one, VIS1c, and
  * without it the bow is taken toward the tack until the ship's motion says otherwise); off: the fixed bulge of before.
@@ -98,25 +102,28 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         pose.pushPose();
         pose.translate(0.5f, 0.5f, 0.5f);
         PoseStack.Pose last = pose.last();
+        TriangleCloth g = be.cloth();
+        double now = level.getGameTime() + (double) partialTick;
+        // SAIL5: a boomed sail's foot runs along the boom, swung out by its (eased) sheet
+        float sheet = g != null && g.boomed() && g.drop() > 0 ? boomSheet(level, p.below(g.drop()), now) : 0f;
+        BlockPos clothTack = be.clothTack();
         for (BlockPos target : stays) { // only the higher end of a stay draws it
             Vector3f tack = new Vector3f(target.getX() - p.getX(), target.getY() - p.getY(), target.getZ() - p.getZ());
-            beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), tack, ROPE_HALF, light, overlay);
+            // SAIL6: the stay of a boomed sail is the leech, from the head to the boom's end, not to the tack
+            Vector3f end = g != null && g.drop() > 0 && target.equals(clothTack) ? stayEnd(g, sheet, tack) : tack;
+            beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), end, ROPE_HALF, light, overlay);
         }
-        TriangleCloth g = be.cloth();
         int tint = be.clothTint(); // SAIL2: the head's synced dye
         tintR = (tint >> 16) & 0xFF;
         tintG = (tint >> 8) & 0xFF;
         tintB = tint & 0xFF;
         if (g != null && g.drop() > 0) {
-            double now = level.getGameTime() + (double) partialTick;
             SailTrim trim = state.getValue(CleatBlock.TRIM);
             float shown = animate(be, (float) TriangularSail.drawnFraction(trim), now);
-            // SAIL5: a boomed sail's foot runs along the boom, swung out by its (eased) sheet
-            float sheet = g.boomed() ? boomSheet(level, p.below(g.drop()), now) : 0f;
             float[] c = g.corner(sheet);
             Vector3f corner = new Vector3f(c[0], c[1], c[2]);
             if (g.boomed()) { // the sheet: a rope from the boom's end to the tack
-                beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(corner),
+                beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(corner), // = stayEnd
                         new Vector3f(g.tackX(), g.tackY(), g.tackZ()), ROPE_HALF, light, overlay);
             }
             Vector3f normal = new Vector3f(corner.z, 0f, -corner.x);
@@ -193,6 +200,18 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
      */
     static int heldSide(TriangleCloth g, float sheet) {
         return !g.boomed() || Math.abs(sheet) <= 0.5f ? 0 : sheet > 0f ? -1 : 1;
+    }
+
+    /**
+     * SAIL6: where the drawn stay of the sail {@code g} ends, relative to the head: the boom's end for a boomed sail
+     * (the leech; the sheet rope then runs from there to the tack), the tack {@code tack} otherwise.
+     */
+    static Vector3f stayEnd(TriangleCloth g, float sheet, Vector3f tack) {
+        if (!g.boomed()) {
+            return tack;
+        }
+        float[] c = g.corner(sheet);
+        return new Vector3f(c[0], c[1], c[2]);
     }
 
     /** The drawn sheet of the boom at {@code boom} (eased by its block entity, as the arm draws it), 0 without one. */

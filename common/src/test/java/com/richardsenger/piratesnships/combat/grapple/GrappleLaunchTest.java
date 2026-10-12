@@ -106,8 +106,8 @@ class GrappleLaunchTest {
 
     @Test
     void theMusketScalesTheThrowSpeed() {
-        assertEquals(2.8, GrappleLaunch.speed(Mode.THROW, 2.8, 1.6), EPS);
-        assertEquals(4.48, GrappleLaunch.speed(Mode.MUSKET, 2.8, 1.6), EPS);
+        assertEquals(0.7, GrappleLaunch.speed(Mode.THROW, 0.7, 2.8, 1.6), EPS);
+        assertEquals(4.48, GrappleLaunch.speed(Mode.MUSKET, 0.7, 2.8, 1.6), EPS);
     }
 
     @Test

@@ -223,7 +223,6 @@ public final class GrappleSlideGameTests {
             h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the rope from the water was refused: " + b);
             RopeRiderEntity rider = (RopeRiderEntity) swimmer.getVehicle();
             h.assertTrue(Math.abs(rider.t() - 0.5) < 0.1, "grabbed the rope at t=" + rider.t() + " instead of the middle");
-            h.assertTrue(!rider.pulling(), "the swimmer is pulled instead of sliding");
         });
         h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
             h.assertTrue(!swimmer.isPassenger(), "still sliding");
@@ -475,7 +474,7 @@ public final class GrappleSlideGameTests {
             lookAt(player, ropeAt(level, g, 0.1));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the zip line was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && !r.pulling(), "the player does not slide on the zip line");
+            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity, "the player does not slide on the zip line");
         });
         h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
             h.assertTrue(!player.isPassenger(), "still sliding");

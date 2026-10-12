@@ -83,7 +83,10 @@ public final class ShipTemplateCommands {
                 .add(ShipTemplates.STARTER_SLOOP.name(), "Starter Sloop")
                 .add(ShipTemplates.STARTER_SLOOP_BASIC.name(), "Starter Sloop (basic)")
                 .add(ShipTemplates.NAVY_SLOOP_ARMED.name(), "Navy Sloop (armed)")
-                .add(ShipTemplates.PIRATE_SLOOP_ARMED.name(), "Pirate Sloop (armed)");
+                .add(ShipTemplates.PIRATE_SLOOP_ARMED.name(), "Pirate Sloop (armed)")
+                .add(ShipTemplates.BRIG.name(), "Brig")
+                .add(ShipTemplates.NAVY_BRIG_ARMED.name(), "Navy Brig (armed)")
+                .add(ShipTemplates.PIRATE_BRIG_ARMED.name(), "Pirate Brig (armed)");
     }
 
     /** The template id as typed: a bare path that is not a known {@code minecraft:} id means ours. */

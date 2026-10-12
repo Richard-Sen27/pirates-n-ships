@@ -134,8 +134,15 @@ public final class CaptainVoyageGameTests {
         return c;
     }
 
-    /** The captain puts to sea on the basin route; the record is moved to the basin's middle. */
+    /**
+     * The captain puts to sea on the basin route; the record is moved to the basin's middle. SHIP1: his hull is pinned to
+     * the armed pirate sloop these tests were made for ({@code pirate_templates} also names the armed pirate brig), so
+     * each caller runs in a config batch of its own.
+     */
     private static Voyage sail(GameTestHelper h, ResourceLocation island) {
+        com.richardsenger.piratesnships.core.gametest.ConfigOverrides.during(h,
+                com.richardsenger.piratesnships.worldsim.voyage.VoyageConfig.PIRATE_TEMPLATES,
+                List.of(com.richardsenger.piratesnships.ship.template.ShipTemplates.PIRATE_SLOOP_ARMED_ID.toString()));
         MinecraftServer server = h.getLevel().getServer();
         List<Lane.Point> route = route(h);
         CaptainVoyages.Departure d = CaptainVoyages.departOn(server, island, route, island, RandomSource.create(7));
@@ -233,7 +240,7 @@ public final class CaptainVoyageGameTests {
      * A forced voyage: the registry marks him at sea and his post is empty (he is not lost); the materialised ship has
      * him aboard as one of its fighters, the same entity (UUID, name) in place of a pirate, with the voyage's tags.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "board")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "board")
     public static void forcedVoyageTakesTheCaptainAboard(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -276,7 +283,7 @@ public final class CaptainVoyageGameTests {
      * ship would have had): in the ship's record, on its nameplate, in the voyage list's label, and every lookout calls
      * it by that name ({@link Lookouts#renownedName}).
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "name")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "name")
     public static void hisShipCarriesHisName(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -311,7 +318,7 @@ public final class CaptainVoyageGameTests {
     }
 
     /** Dematerialised and materialised again, the ship brings him back: same UUID, his health kept, still at sea. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "demat")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "demat")
     public static void dematerialiseAndRematerialiseKeepHim(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -348,7 +355,7 @@ public final class CaptainVoyageGameTests {
      * Killed aboard by a player: the bounty proof goes to the killer, the registry marks him lost today as on land, and
      * the bounty waits for the proof. His voyage sails on without him and brings nobody home.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "death")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "death")
     public static void deathAtSeaPaysTheBountyAndMarksTheRegistry(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -380,7 +387,7 @@ public final class CaptainVoyageGameTests {
     }
 
     /** His ship sinks after a player's hit: he drowns with it, the player gets his bounty proof, the registry marks him lost. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 300, batch = BATCH + "sink")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 300, batch = CONFIG_BATCH + "sink")
     public static void sinkingDrownsHimAndCreditsTheShooter(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -420,7 +427,7 @@ public final class CaptainVoyageGameTests {
      * Shackled aboard, he leaves his voyage: no longer at sea or its fighter, so his ship becoming a record leaves him
      * behind as a prisoner; handed over (removed alive), the registry marks him lost as on land.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "prisoner")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "prisoner")
     public static void shackledAtSeaHeLeavesHisVoyage(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -454,7 +461,7 @@ public final class CaptainVoyageGameTests {
     }
 
     /** An abstract voyage that arrives brings him back to his post, the same captain with the health he left with. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "home")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "home")
     public static void homecomingPutsHimBackAtHisPost(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();
@@ -480,7 +487,7 @@ public final class CaptainVoyageGameTests {
     }
 
     /** A voyage that ends while his ship is real (cancelled) stows him with the ship and brings him home too. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "home")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "home_ship")
     public static void voyageEndingWithItsShipBringsHimHome(GameTestHelper h) {
         basin(h);
         ResourceLocation island = island();

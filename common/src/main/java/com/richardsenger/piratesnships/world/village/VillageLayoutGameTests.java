@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.port.PortService;
+import com.richardsenger.piratesnships.world.structure.PierExtensions;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
 import com.richardsenger.piratesnships.world.structure.RegionSchematic;
 import com.richardsenger.piratesnships.world.structure.StructureLayout;
@@ -122,7 +123,8 @@ public final class VillageLayoutGameTests {
         Map<String, Long> sequences = new HashMap<>();
         clearDumps("village-layout-");
         for (long seed : VILLAGE_SEEDS) {
-            StructureLayout layout = StructureLayout.of(planVillage(helper, level, seaY, seed));
+            // STR7: the pier's extension sections follow the water, not the layout on land
+            StructureLayout layout = StructureLayout.of(PierExtensions.landward(planVillage(helper, level, seaY, seed)));
             BoundingBox pier = single(helper, layout, "pier", seed);
             boolean waterEnd = pier.minZ() < PLAN_SHORE_Z;
             write(layout.lines(VillageKeys.SEAFARER_VILLAGE.location().toString(), seed, buildings, waterEnd),
@@ -264,7 +266,11 @@ public final class VillageLayoutGameTests {
         Port port = PortRegistry.get(level.getServer()).index()
                 .byId(PortService.portId(PortKind.SEAFARER_VILLAGE, PortService.centreOf(new PiecesContainer(pieces)))).orElse(null);
         helper.assertTrue(port != null, "seed " + seed + ": the port is registered");
-        helper.assertValueEqual(port.berths().size(), 2, "seed " + seed + ": berths");
+        // STR7: the plan's terrain puts the pier's end in four blocks of water (shallower than the depth rule), so the
+        // pier runs on by two extension sections with two berths each
+        int sections = layout.named("pier_extension").size();
+        helper.assertValueEqual(sections, PierExtensions.MAX_SECTIONS, "seed " + seed + ": pier extension sections");
+        helper.assertValueEqual(port.berths().size(), 2 + 2 * sections, "seed " + seed + ": berths");
         for (Berth berth : port.berths()) {
             helper.assertTrue(level.getBlockState(berth.pos()).is(Blocks.WATER), "seed " + seed + ": berth " + berth.pos().toShortString()
                     + " is water");

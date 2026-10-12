@@ -91,6 +91,8 @@ public final class WorldModule implements ModModule {
                 StructureBlockEntityGameTests.class, StructureLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.structure.OutpostLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.village.VillageLayoutGameTests.class,
-                com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class);
+                com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class,
+                com.richardsenger.piratesnships.world.village.BerthDepthGameTests.class,
+                com.richardsenger.piratesnships.world.port.ShipSpotGameTests.class);
     }
 }

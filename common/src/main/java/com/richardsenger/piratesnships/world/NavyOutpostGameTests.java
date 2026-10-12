@@ -238,11 +238,14 @@ public final class NavyOutpostGameTests {
         helper.assertTrue(port != null, "the port is registered");
         helper.assertTrue(port.id().getPath().startsWith("navy_outpost_"), "port id " + port.id());
         helper.assertValueEqual(port.kind(), PortKind.NAVY_OUTPOST, "port kind");
-        helper.assertValueEqual(port.berths().size(), 2, "two berths");
+        // STR7: two berths on the quay, two more on each extension section where its end stands in shallow water
+        List<StructurePiece> sections = pieces.stream().filter(com.richardsenger.piratesnships.world.structure.PierExtensions::isExtension).toList();
+        helper.assertValueEqual(port.berths().size(), 2 + 2 * sections.size(), "two berths and two per section");
         for (Berth berth : port.berths()) {
             helper.assertValueEqual(berth.bow(), sea, "bow points out to sea");
             helper.assertValueEqual(berth.pos().getY(), seaY, "berth at the sea surface");
-            helper.assertTrue(quay.getBoundingBox().isInside(berth.pos()), "berth beside the quay");
+            helper.assertTrue(quay.getBoundingBox().isInside(berth.pos())
+                    || sections.stream().anyMatch(x -> x.getBoundingBox().isInside(berth.pos())), "berth beside the quay");
             helper.assertTrue(level.getBlockState(berth.pos()).is(Blocks.WATER), "berth " + berth.pos().toShortString() + " is water");
         }
         helper.assertTrue(TradeService.market(level.getServer(), port.id()).isPresent(), "the outpost's market is open");

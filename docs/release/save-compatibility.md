@@ -145,6 +145,27 @@ Two block-entity types were added after this table was written (FIX3): `cannon_r
 
 Not in the lang file and so not guarded here: block entity type ids (e.g. `boarding_plank`, `net_fitting`, `ratline_net_cell`, `nameplate`), data component, attachment and saved-data ids. They are equally part of the save format; renaming one loses its data the same way.
 
+## Ports generated before STR7 (after 0.1.0)
+
+STR7 (room for ships at ports) changes only how new ports generate and where a ship appears; nothing saved changes
+shape.
+
+- **Old ports keep their shallow berths.** A village, island or outpost generated before STR7 has no extension
+  sections and no carved basin (both happen once, when the structure's chunks generate; `world.ports.pier_extension`
+  and `carve_berths` do nothing to chunks that exist). Its `ports` record and berths load unchanged.
+- **Ships still find room there.** A shipwright's pickup, a granted ship and an NPC ship leaving or reaching the port
+  now go through the spot search (`world.port.ShipSpots`): the berth's own mooring when it is deep, otherwise the
+  nearest deep, open water reached from the berths within `world.ports.ship_spot_search` (64 blocks), so at an old,
+  shallow port the ship is placed farther out instead of on the sand. Where there is none, the pickup refuses with
+  "No deep water near the pier for her" and the receipt or commission stays.
+- **Chunks generated after the update** at the edge of an old port are not carved either: the carve belongs to the
+  structure's own placement. An old port's start is not re-placed.
+- **New config keys** `world.ports.ship_clearance` (3), `berth_depth` (3), `ship_spot_search` (64), `pier_extension`
+  (true), `carve_berths` (true) are added to an existing server file with their defaults.
+- **Template pieces changed:** the pier's seaward rail and the jetty's west end post went (no jigsaw was added, so the
+  jigsaw draws and the layout of a port generated after the update are the same as before for the same seed, apart
+  from the extension sections). Already generated piers keep their blocks.
+
 ## Known risks found while writing this
 
 - **Enum names in saved data:** several codecs read an enum by name with `valueOf` inside an `xmap` (`FactionState`, `Voyage.faction`, `ReleaseRecord`, `ShipAnchor`), which throws on an unknown name instead of returning a codec error. Renaming or removing one of those enum constants after 0.1.0 would make the whole file fail to read, and vanilla then starts that saved data empty and overwrites it on the next save. Treat these enum constants like ids.

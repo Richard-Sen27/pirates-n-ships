@@ -96,4 +96,5 @@ connector(p, 3, DECK, L - 1, "quay_in", "south", "minecraft:stone_bricks")
 dry(p)
 p.emit("stone quay with mooring rings, cleats, bollards, a crane and two berths",
        ["Runs north from quay_in (south end, deck y 5 = the fort gate's paving row).",
-        "Sea level is row y 4; berth markers at [0, 4, 9] and [6, 4, 9], bow north."])
+        "Sea level is row y 4; berth markers at [0, 4, 9] and [6, 4, 9], bow north.",
+        "STR7: a quay_extension section hangs from the seaward end in line with quay_in when the water is shallow."])

@@ -4004,7 +4004,7 @@
   "pirates_n_ships.almanac.ships.p20.text1": "Seafarer villages build ships to order. The **Orders** tab of the harbour master's desk shows each ship's price, days and materials.",
   "pirates_n_ships.almanac.ships.p20.text2": "**1.** Bring the doubloons and materials and press **Order** for a {item:pirates_n_ships:ship_receipt}**ship receipt** that counts the days.",
   "pirates_n_ships.almanac.ships.p20.text3": "**2.** When it reads \"Ready for pickup\", use the desk with the receipt in hand.",
-  "pirates_n_ships.almanac.ships.p20.text4": "**3.** She waits at a berth by the pier.",
+  "pirates_n_ships.almanac.ships.p20.text4": "**3.** She waits at a berth by the pier, or in the nearest deep water off it when the berth is shallow or taken. Never on the sand: with no deep water near, the harbour master says so and keeps your receipt.",
   "pirates_n_ships.almanac.ships.p20.text5": "Armed sloops are never for sale: earn one by rank or take one at sea ([[pirates_n_ships:law|Law]], [[pirates_n_ships:combat|Weapons and combat]]).",
   "pirates_n_ships.almanac.ships.p21.heading": "Limits to know",
   "pirates_n_ships.almanac.ships.p21.list1_1": "Keep near the middle of the world: very far out, ships stop moving true.",

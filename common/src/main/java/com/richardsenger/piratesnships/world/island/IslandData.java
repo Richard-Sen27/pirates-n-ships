@@ -102,7 +102,7 @@ public final class IslandData {
     }
 
     public static void gather(DataContributions data) {
-        PortStructureData.writeStructure(data, IslandKeys.PIRATE_ISLAND, spec());
+        PortStructureData.writeStructure(data, IslandKeys.PIRATE_ISLAND, spec(), IslandKeys.JETTY_EXTENSION);
         PortStructureData.writeStructureSet(data, IslandKeys.PIRATE_ISLANDS, IslandKeys.PIRATE_ISLAND, "pirate_island", SALT);
         PortStructureData.pool(data, IslandKeys.START, GROUP, "minecraft:empty", "rigid", weights("camp_start", 1));
         PortStructureData.pool(data, IslandKeys.PATHS, GROUP, IslandKeys.TERMINATORS.location().toString(), "terrain_matching",
@@ -111,6 +111,7 @@ public final class IslandData {
                 "terrain_matching", IslandKeys.TRAIL_PROCESSORS, TRAILHEADS);
         PortStructureData.pool(data, IslandKeys.HUTS, GROUP, "minecraft:empty", "rigid", HUTS);
         PortStructureData.pool(data, IslandKeys.JETTY, GROUP, "minecraft:empty", "rigid", weights("jetty", 1));
+        PortStructureData.pool(data, IslandKeys.JETTY_EXTENSION, GROUP, "minecraft:empty", "rigid", weights("jetty_extension", 1));
         // The paths' fallback once the depth runs out; never empty (vanilla skips a connector with an empty fallback)
         PortStructureData.pool(data, IslandKeys.TERMINATORS, GROUP, "minecraft:empty", "terrain_matching",
                 IslandKeys.TRAIL_PROCESSORS, TERMINATORS);

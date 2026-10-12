@@ -246,6 +246,48 @@ public final class MaterializeGameTests {
         });
     }
 
+    /**
+     * STR7: a voyage leaving its port from a berth in sand shallows (the basin's south rows: two blocks of water) does
+     * not appear on the sand: the ship takes the nearest spot of deep water reached from the berth, clear of the
+     * shallows by the clearance, heading the spot's way.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "port")
+    public static void shipAtItsPortAppearsInDeepWater(GameTestHelper h) {
+        basin(h);
+        int shallowFrom = 38;
+        for (int x = 1; x < 47; x++) {
+            for (int z = shallowFrom; z < 47; z++) {
+                for (int y = 2; y <= 5; y++) h.setBlock(new BlockPos(x, y, z), y == 5 ? Blocks.SAND : Blocks.STONE);
+            }
+        }
+        MinecraftServer server = h.getLevel().getServer();
+        BlockPos berth = h.absolutePos(new BlockPos(24, SURFACE, 42));
+        net.minecraft.world.level.levelgen.structure.BoundingBox box = net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(
+                h.absolutePos(BlockPos.ZERO), h.absolutePos(new BlockPos(47, 30, 47)));
+        com.richardsenger.piratesnships.world.port.Port port = new com.richardsenger.piratesnships.world.port.Port(
+                Constants.id("gametest/str7_port_" + UUID.randomUUID().toString().substring(0, 8)),
+                com.richardsenger.piratesnships.trade.market.PortKind.SEAFARER_VILLAGE, h.getLevel().dimension(), berth.above(), box,
+                com.richardsenger.piratesnships.trade.market.Climate.TEMPERATE,
+                List.of(new com.richardsenger.piratesnships.world.port.Berth(berth, net.minecraft.core.Direction.NORTH)));
+        com.richardsenger.piratesnships.world.port.PortService.register(server, port);
+        List<Lane.Point> route = List.of(new Lane.Point(berth.getX(), berth.getZ()), new Lane.Point(berth.getX(), berth.getZ() - 300));
+        Voyage v = Voyage.depart(UUID.randomUUID(), VoyageKind.CONVOY, Faction.MERCHANTS, ShipTemplates.STARTER_SLOOP_ID, port.id(), port.id(),
+                route, Map.of(), h.getLevel().getGameTime());
+        VoyageData.get(server).put(v);
+        h.runAtTickTime(5, () -> {
+            ShipBody ship = materialize(h, v);
+            Vec3 c = Materializer.centre(ship);
+            int shallowZ = h.absolutePos(new BlockPos(0, 0, shallowFrom)).getZ();
+            int clearance = com.richardsenger.piratesnships.world.WorldConfig.PORTS_SHIP_CLEARANCE.get();
+            // the hull's half beam (4) or half length (14) north of the centre, the clearance before the shallows
+            h.assertTrue(c.z + 4 + clearance < shallowZ, "the ship (centre " + c + ") lies off the shallows from z " + shallowZ);
+            h.assertTrue(Math.hypot(c.x - berth.getX(), c.z - berth.getZ()) > 4.0, "not on the berth in the sand");
+            finish(h, v);
+            com.richardsenger.piratesnships.world.port.PortRegistry.get(server).remove(port.id());
+            h.succeed();
+        });
+    }
+
     /** A pirate voyage flies the Jolly Roger and carries fighters_pirate pirates; a navy one has its officer. */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "place")
     public static void piratesFlyTheJollyRoger(GameTestHelper h) {

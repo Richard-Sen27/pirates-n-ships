@@ -3,7 +3,11 @@
 The pier runs north (seaward) from its ``pier_in`` connector at the south end, which hangs it from the dock head's
 quay: the deck is at y 5, level with the quay paving, the piles stand on cobblestone footings on the seabed (y 0) and
 the sea surface is row y 4. The deck is x 1..5; columns x 0 and x 6 hold the two berth markers (one per side, at sea
-level, at the berth's centre one block out from the deck, pointing north: ships lie alongside, bow to the sea)."""
+level, at the berth's centre one block out from the deck, pointing north: ships lie alongside, bow to the sea).
+
+STR7: the seaward end is open between its lantern posts; the port structure hangs ``pier_extension`` sections there,
+in line with ``pier_in`` (no jigsaw of its own: a new jigsaw would change the jigsaw's random and every village's
+layout), where the water at the end is shallow."""
 from _style import PALETTE, lantern_post
 from buildspec import Piece
 
@@ -40,11 +44,10 @@ p.fill(WEST + 1, DECK, 0, EAST - 1, DECK, L - 1, "spruce")
 for x, z in ((2, 2), (4, 5), (3, 8), (2, 12), (4, 14), (3, 17)):      # weathered replacement boards
     p.put(x, DECK, z, "dark")
 
-# the seaward end: a rail between two lantern posts, open in the middle over a ladder down the centre pile
+# the seaward end: two lantern posts and a ladder down the centre pile; the deck between them stays open (STR7: an
+# extension section may carry the pier on from here)
 lantern_post(p, WEST, DECK + 1, 0)
 lantern_post(p, EAST, DECK + 1, 0)
-p.put(WEST + 1, DECK + 1, 0, "fence")
-p.put(EAST - 1, DECK + 1, 0, "fence")
 for y in range(SEA - 1, DECK + 1):
     p.put(3, y, 0, "minecraft:ladder[facing=north]")
 
@@ -72,4 +75,5 @@ p.connector(3, DECK, L - 1, "pier_in", "south", "minecraft:spruce_planks")
 
 p.emit("plank pier on spruce piles with mooring rings, cleats and two berths",
        ["Runs north from pier_in (south end, deck y 5 = the dock head's quay row).",
-        "Sea level is row y 4; berth markers at [0, 4, 9] and [6, 4, 9], bow north."])
+        "Sea level is row y 4; berth markers at [0, 4, 9] and [6, 4, 9], bow north.",
+        "STR7: a pier_extension section hangs from the seaward end in line with pier_in when the water is shallow."])

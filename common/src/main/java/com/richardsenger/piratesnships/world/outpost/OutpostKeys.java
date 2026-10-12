@@ -20,6 +20,8 @@ public final class OutpostKeys {
     public static final ResourceKey<StructureTemplatePool> WALLS = pool("walls");
     public static final ResourceKey<StructureTemplatePool> BUILDINGS = pool("buildings");
     public static final ResourceKey<StructureTemplatePool> QUAY = pool("quay");
+    /** STR7: the quay's extension sections (hung by {@code PierExtensions}, not by the jigsaw). */
+    public static final ResourceKey<StructureTemplatePool> QUAY_EXTENSION = pool("quay_extension");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
     /** STR4: the wall trace's flank (after a salient angle). */
     public static final ResourceKey<StructureTemplatePool> WALLS_FLANK = pool("walls_flank");

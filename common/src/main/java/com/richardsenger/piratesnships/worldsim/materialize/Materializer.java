@@ -18,7 +18,11 @@ import com.richardsenger.piratesnships.station.helm.CourseEvent;
 import com.richardsenger.piratesnships.station.helm.CourseOrder;
 import com.richardsenger.piratesnships.station.helm.HelmCourses;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
+import com.richardsenger.piratesnships.world.port.Port;
+import com.richardsenger.piratesnships.world.port.PortIndex;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
+import com.richardsenger.piratesnships.world.port.ShipSpot;
+import com.richardsenger.piratesnships.world.port.ShipSpots;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageConfig;
@@ -74,6 +78,9 @@ import java.util.function.BiFunction;
  *       dematerialises and skips to the waypoint it was heading for (islands, headwinds), then waits
  *       {@code retry_ticks} before it may appear again.</li>
  *   <li><b>Endings</b>: {@link VoyageEndings}.</li>
+ *   <li><b>STR7</b>: within {@code world.ports.ship_spot_search} of a berth of its own port (the one it left or is
+ *       bound for) the ship takes the nearest spot of deep, open water from its lane point ({@code world.port.ShipSpots}),
+ *       heading the spot's way; its lane goes on from there.</li>
  *   <li><b>WS3c</b>: a ship that appears again is flooded back to its record's health ({@link VoyageHull}); its idle
  *       deckhands stand still like the fighters ({@link VoyageCrew}).</li>
  * </ul>
@@ -193,16 +200,33 @@ public final class Materializer {
             VoyageChunks.request(level, pos.x(), pos.z(), level.getGameTime());
             return Outcome.WAITING_FOR_CHUNKS;
         }
-        OptionalInt surface = surfaceY(level, pos.x(), pos.z());
-        if (surface.isEmpty()) {
-            retryLater(server, id);
-            return Outcome.NO_WATER;
+        Direction facing;
+        ShipTemplatePlacer.Result r;
+        Optional<Port> port = portNear(server, level, v, pos);
+        if (port.isPresent()) {
+            // STR7: at a port the ship appears in deep, open water near her lane point (never on the sand by the pier)
+            Optional<ShipSpots.Found> atPort = spotNear(level, port.get(), v, pos);
+            if (atPort.isEmpty() || atPort.get().spot().isEmpty()) {
+                retryLater(server, id);
+                return Outcome.NO_WATER;
+            }
+            ShipSpot.Spot spot = atPort.get().spot().get();
+            facing = spot.heading();
+            r = ShipTemplatePlacer.placeAtOrigin(level, v.template(), atPort.get().origin(), atPort.get().rotation(),
+                    atPort.get().surfaceY(), true, null);
+            pos = new Lane.Position(spot.footprint().centreX(), spot.footprint().centreZ(), pos.leg(), (facing.toYRot() + 180.0) % 360.0);
+        } else {
+            OptionalInt surface = surfaceY(level, pos.x(), pos.z());
+            if (surface.isEmpty()) {
+                retryLater(server, id);
+                return Outcome.NO_WATER;
+            }
+            facing = Direction.fromYRot(pos.headingDegrees() + 180.0);
+            int off = ShipTemplatePlacer.GAP + (length - 1) / 2;
+            BlockPos feet = new BlockPos((int) Math.floor(pos.x()) - facing.getStepX() * off, surface.getAsInt(),
+                    (int) Math.floor(pos.z()) - facing.getStepZ() * off);
+            r = ShipTemplatePlacer.place(level, v.template(), feet, facing, false, true, null);
         }
-        Direction facing = Direction.fromYRot(pos.headingDegrees() + 180.0);
-        int off = ShipTemplatePlacer.GAP + (length - 1) / 2;
-        BlockPos feet = new BlockPos((int) Math.floor(pos.x()) - facing.getStepX() * off, surface.getAsInt(),
-                (int) Math.floor(pos.z()) - facing.getStepZ() * off);
-        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(level, v.template(), feet, facing, false, true, null);
         if (!r.outcome().success) {
             retryLater(server, id);
             return r.outcome() == ShipTemplatePlacer.Outcome.OBSTRUCTED ? Outcome.OBSTRUCTED : Outcome.FAILED;
@@ -349,6 +373,29 @@ public final class Materializer {
             case PIRATES -> PIRATE_NAMES;
         };
         return names.get(Math.floorMod(v.id().hashCode(), names.size()));
+    }
+
+    /**
+     * STR7: the voyage's own port (where it left or where it is bound) when its lane point lies within
+     * {@code world.ports.ship_spot_search} of one of that port's berths in this level.
+     */
+    static Optional<Port> portNear(MinecraftServer server, ServerLevel level, Voyage v, Lane.Position pos) {
+        PortIndex index = PortRegistry.get(server).index();
+        List<Port> ports = new ArrayList<>(2);
+        index.byId(v.from()).ifPresent(ports::add);
+        index.byId(v.to()).ifPresent(ports::add);
+        return ShipSpots.portNear(ports, level.dimension(), pos.x(), pos.z());
+    }
+
+    /** The spot a ship of the voyage takes near its lane point at {@code port} (heading along the leg first). */
+    static Optional<ShipSpots.Found> spotNear(ServerLevel level, Port port, Voyage v, Lane.Position pos) {
+        Optional<ShipSpots.Shape> shape = ShipSpots.shape(level, v.template());
+        Optional<Integer> surface = ShipSpots.surface(port);
+        if (shape.isEmpty() || surface.isEmpty()) return Optional.empty();
+        Direction bow = Direction.fromYRot(pos.headingDegrees() + 180.0);
+        ShipSpot.Anchor start = ShipSpot.Anchor.point((int) Math.floor(pos.x()), (int) Math.floor(pos.z()), bow);
+        return Optional.of(new ShipSpots.Found(shape.get(), ShipSpots.search(level, shape.get(), List.of(start), surface.get()),
+                surface.get()));
     }
 
     /**

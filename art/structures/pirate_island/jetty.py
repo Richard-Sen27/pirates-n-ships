@@ -48,12 +48,11 @@ for x, z in ((3, 2), (1, 11)):
 for x, z in ((3, 5), (1, 9)):
     p.put(x, DECK, z, "minecraft:spruce_slab[type=top]")
 
-# the seaward end: a lantern on a post, a short rail with a net hung on it, a ladder down the middle
+# the seaward end: a lantern on a post and a ladder down the middle; the west edge stays open (STR7: a jetty_extension
+# section may carry the jetty on from there)
 p.put(EAST, DECK + 1, 0, "fence")
 p.put(EAST, DECK + 2, 0, "fence")
 p.put(EAST, DECK + 3, 0, "lantern")
-p.put(WEST, DECK + 1, 0, "fence")
-p.put(WEST, DECK + 2, 0, "cobweb")
 for y in range(SEA - 1, DECK + 1):
     p.put(2, y, 0, "minecraft:ladder[facing=north]")
 p.put(2, SEA - 1, 1, "post")     # the ladder's backing below the cross beam row
@@ -89,4 +88,5 @@ p.connector(2, DECK, L - 1, "jetty_in", "south", "minecraft:spruce_planks")
 p.emit("rough plank jetty on crooked posts with palm bollards, rope rails, a crude crane, a cleat, a mooring ring, "
        "a lantern and two berths",
        ["Runs north from jetty_in (south end, deck y 5 = the camp's sand row).",
-        "Sea level is row y 4; berth markers at [0, 4, 7] and [4, 4, 7], bow north."])
+        "Sea level is row y 4; berth markers at [0, 4, 7] and [4, 4, 7], bow north.",
+        "STR7: a jetty_extension section hangs from the seaward end in line with jetty_in when the water is shallow."])

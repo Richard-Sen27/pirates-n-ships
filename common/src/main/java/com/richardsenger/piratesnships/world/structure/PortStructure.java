@@ -32,6 +32,7 @@ import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
 import net.minecraft.world.level.levelgen.structure.pools.DimensionPadding;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawJunction;
@@ -64,6 +65,11 @@ import java.util.Optional;
  *     read from the pieces' templates, binds the harbor desks, buries the treasure chests and (navy outposts, WG3)
  *     places the garrison posts of the chunk being placed ({@link PortService}, {@link TreasureChests},
  *     {@link Garrison}); a pirate island places its named captain (BOS1, {@link IslandCaptains}).</li>
+ *     <li><b>Room for ships (STR7).</b> Where the water at the pier's, jetty's or quay's end is shallower than the
+ *     largest ship's draught plus {@code world.ports.berth_depth}, up to two extension sections from
+ *     {@code extension_pool} are hung from its end ({@link PierExtensions}); {@link #afterPlace} deepens the sea floor
+ *     round every berth ({@link BerthBasins}), and {@link #adjustBoundingBox} grows the box so those chunks are
+ *     placed.</li>
  * </ol>
  * Terrain adaptation comes from the JSON; the village uses {@code none}, because vanilla's beardifier treats every
  * rigid piece alike and would raise land under the pier (see {@code VillageData}); the pirate island (STR2) and the navy
@@ -85,7 +91,8 @@ public final class PortStructure extends Structure {
             ShoreAnchor.CODEC.optionalFieldOf("shore_anchor", ShoreAnchor.VILLAGE).forGetter(s -> s.shoreAnchor),
             PortKind.CODEC.optionalFieldOf("port_kind", PortKind.SEAFARER_VILLAGE).forGetter(s -> s.portKind),
             Codec.BOOL.optionalFieldOf("land_pieces_on_land", false).forGetter(s -> s.landPiecesOnLand),
-            Codec.BOOL.optionalFieldOf("unbearded_start", false).forGetter(s -> s.unbeardedStart)
+            Codec.BOOL.optionalFieldOf("unbearded_start", false).forGetter(s -> s.unbeardedStart),
+            StructureTemplatePool.CODEC.optionalFieldOf("extension_pool").forGetter(s -> s.extensionPool)
     ).apply(i, PortStructure::new));
 
     /** Salt of the frequency roll (independent of the layout random); the port kind is mixed in. */
@@ -99,6 +106,7 @@ public final class PortStructure extends Structure {
     private final PortKind portKind;
     private final boolean landPiecesOnLand;
     private final boolean unbeardedStart;
+    private final Optional<Holder<StructureTemplatePool>> extensionPool;
     private volatile boolean warnedUnconfigured;
 
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
@@ -109,7 +117,15 @@ public final class PortStructure extends Structure {
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
                          int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand,
                          boolean unbeardedStart) {
+        this(settings, startPool, maxDepth, startHeight, maxDistanceFromCenter, shoreAnchor, portKind, landPiecesOnLand, unbeardedStart,
+                Optional.empty());
+    }
+
+    public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
+                         int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand,
+                         boolean unbeardedStart, Optional<Holder<StructureTemplatePool>> extensionPool) {
         super(settings);
+        this.extensionPool = extensionPool;
         this.startPool = startPool;
         this.maxDepth = maxDepth;
         this.startHeight = startHeight;
@@ -162,6 +178,11 @@ public final class PortStructure extends Structure {
 
     public Holder<StructureTemplatePool> startPool() {
         return startPool;
+    }
+
+    /** STR7: the pool the pier's, jetty's or quay's extension sections come from ({@link PierExtensions}). */
+    public Optional<Holder<StructureTemplatePool>> extensionPool() {
+        return extensionPool;
     }
 
     /** The salt of this kind's frequency roll; the village's is WG1's, so existing village worlds roll the same. */
@@ -234,6 +255,7 @@ public final class PortStructure extends Structure {
                     ? LandFilter.keep(nodes, (x, z) -> terrain.firstFree(x, z) <= seaSurface)
                     : null;
             boolean[] chain = rigidChain(pieces, nodes);
+            List<StructurePiece> placed = new java.util.ArrayList<>(pieces.size());
             for (int i = 0; i < pieces.size(); i++) {
                 StructurePiece piece = pieces.get(i);
                 if (keep != null && !keep[i]) continue;
@@ -243,8 +265,14 @@ public final class PortStructure extends Structure {
                 if ((chain[i] || (i == 0 && unbeardedStart)) && piece instanceof PoolElementStructurePiece p) {
                     piece = unbearded(p, context.structureTemplateManager(), !unbeardedStart);
                 }
-                builder.addPiece(piece);
+                placed.add(piece);
             }
+            // STR7: the pier, jetty or quay grows where the water at its end is shallow
+            if (extensionPool.isPresent() && WorldConfig.PORTS_PIER_EXTENSION.get()) {
+                placed.addAll(PierExtensions.extend(context.structureTemplateManager(), extensionPool.get(), placed, terrain, seaSurface,
+                        BerthBasins.depth()));
+            }
+            placed.forEach(builder::addPiece);
         }));
     }
 
@@ -343,11 +371,23 @@ public final class PortStructure extends Structure {
         return !junctions.isEmpty() && junctions.get(0).getDestProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING;
     }
 
+    /**
+     * STR7: the box reaches round the berths' basins ({@link BerthBasins#margin}), so worldgen places (and
+     * {@link #afterPlace} carves) the chunks of the water beside the pier as well; at least vanilla's 12 for the beard.
+     */
+    @Override
+    public BoundingBox adjustBoundingBox(BoundingBox box) {
+        int margin = WorldConfig.PORTS_CARVE_BERTHS.get() ? BerthBasins.margin() : 0;
+        return box.inflatedBy(Math.max(margin, terrainAdaptation() != TerrainAdjustment.NONE ? 12 : 0));
+    }
+
     @Override
     public void afterPlace(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random,
                            BoundingBox chunkBox, ChunkPos chunkPos, PiecesContainer pieces) {
         if (pieces.isEmpty()) return;
         ServerLevel server = level.getLevel();
+        // STR7: deep water at the berths (before the port reads its berths: they do not change, the water does)
+        if (WorldConfig.PORTS_CARVE_BERTHS.get()) BerthBasins.carve(level, chunkBox, pieces.pieces(), server.getStructureManager());
         Port port = PortService.portOf(server, generator, pieces, portKind);
         PortService.report(server, port);
         PortService.intersection(chunkBox, port.box()).ifPresent(area -> PortService.bindDesks(level, area, port.id()));

@@ -712,9 +712,22 @@ berths are taken, come back later; the receipt stays valid. The shipwright works
 Server config `ships.shipwright_orders`, `build_time_days`, `order_price_factor`, `order_materials_factor`,
 `max_orders_per_port`.
 
+Where she appears (STR7): alongside a berth, on the side away from the pier with one water column between hull and
+pier, if the water there is deep (her draught plus three blocks under the keel, no kelp or ice) and nothing of the
+beach, sand or rock lies within three blocks of her. If the berth is shallow (a village generated before this
+version) or taken, the shipwright looks outward over the water from the berths, up to 64 blocks, and puts her in the
+nearest deep, open water, sometimes turned across the pier; the chat still names the berth he started from. If there
+is none, the action bar says "No deep water near the pier for her" and the receipt stays. A granted ship (a navy or
+pirate commission) is delivered the same way, and so is an NPC ship leaving or reaching its port. Operators can ask
+`/pirates port spot <template>` where a ship would appear at the nearest port. New ports carve the sea floor round
+their berths to that depth and lengthen a pier, jetty or quay by one or two sections where its end stands in shallow
+water. Server config `world.ports` (`ship_clearance`, `berth_depth`, `ship_spot_search`, `pier_extension`,
+`carve_berths`).
+
 ### Seafarer villages
 Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
-straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a
+straight out over the water with two ship berths, one on each side halfway out; where the water at its end is
+shallow, it runs on by one or two sections with two more berths each (STR7). Streets lead inland with cottages, a
 tavern and a shipwright's shed, and end in a small cobbled place. The harbor master's desk belongs to the village's
 port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
@@ -1801,7 +1814,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`, `ports` (STR7: where a delivered or arriving ship appears, `ship_clearance`, `berth_depth`, `ship_spot_search`; new ports' `pier_extension` and `carve_berths`). |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |

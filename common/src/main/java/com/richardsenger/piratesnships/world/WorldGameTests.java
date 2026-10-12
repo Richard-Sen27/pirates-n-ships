@@ -135,7 +135,8 @@ public final class WorldGameTests {
         helper.assertValueEqual(names.stream().filter("pier"::equals).count(), 1L, "one pier");
         helper.assertValueEqual(names.stream().filter(VillageData.STREETHEADS::containsKey).count(), 1L,
                 "one street piece from the streetheads pool: " + names);
-        helper.assertTrue(names.stream().allMatch(n -> n.equals("dock_head") || n.equals("pier") || VillageData.STREETHEADS.containsKey(n)
+        helper.assertTrue(names.stream().allMatch(n -> n.equals("dock_head") || n.equals("pier") || n.equals("pier_extension")
+                || VillageData.STREETHEADS.containsKey(n)
                 || VillageData.TERMINATORS.containsKey(n)), "only the dock head, the pier, the street and its ends: " + names);
         List<StructurePiece> inside = planned.stream().filter(p -> insideXZ(area, p.getBoundingBox())).toList();
         StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
@@ -158,11 +159,14 @@ public final class WorldGameTests {
                 .orElse(null);
         helper.assertTrue(port != null, "the port is registered");
         helper.assertValueEqual(port.kind(), PortKind.SEAFARER_VILLAGE, "port kind");
-        helper.assertValueEqual(port.berths().size(), 2, "two berths");
+        // STR7: two berths on the pier, two more on each extension section where its end stands in shallow water
+        List<StructurePiece> sections = pieces.stream().filter(com.richardsenger.piratesnships.world.structure.PierExtensions::isExtension).toList();
+        helper.assertValueEqual(port.berths().size(), 2 + 2 * sections.size(), "two berths and two per section");
         for (Berth berth : port.berths()) {
             helper.assertValueEqual(berth.bow(), sea, "bow points out to sea");
             helper.assertValueEqual(berth.pos().getY(), seaY, "berth at the sea surface");
-            helper.assertTrue(pier.getBoundingBox().isInside(berth.pos()), "berth beside the pier");
+            helper.assertTrue(pier.getBoundingBox().isInside(berth.pos())
+                    || sections.stream().anyMatch(s -> s.getBoundingBox().isInside(berth.pos())), "berth beside the pier");
             helper.assertTrue(level.getBlockState(berth.pos()).is(Blocks.WATER), "berth " + berth.pos().toShortString() + " is water");
             helper.assertTrue(!level.getBlockState(berth.pos().above()).isFaceSturdy(level, berth.pos().above(), Direction.UP),
                     "berth " + berth.pos().toShortString() + " is open above");

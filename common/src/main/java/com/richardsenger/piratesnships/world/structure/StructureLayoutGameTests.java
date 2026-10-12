@@ -111,7 +111,8 @@ public final class StructureLayoutGameTests {
         Map<String, Long> sequences = new HashMap<>();
         clearDumps("layout-");
         for (long seed : ISLAND_SEEDS) {
-            StructureLayout layout = StructureLayout.of(planIsland(helper, level, seaY, seed));
+            // STR7: the jetty's extension sections follow the water, not the layout on land
+            StructureLayout layout = StructureLayout.of(PierExtensions.landward(planIsland(helper, level, seaY, seed)));
             BoundingBox jetty = single(helper, layout, "jetty", seed);
             int shoreZ = PLAN_SHORE_Z;
             boolean waterEnd = jetty.minZ() < shoreZ;
@@ -237,7 +238,10 @@ public final class StructureLayoutGameTests {
         Port port = PortRegistry.get(level.getServer()).index()
                 .byId(PortService.portId(PortKind.PIRATE_ISLAND, PortService.centreOf(new PiecesContainer(pieces)))).orElse(null);
         helper.assertTrue(port != null, "seed " + seed + ": the port is registered");
-        helper.assertValueEqual(port.berths().size(), 2, "seed " + seed + ": berths");
+        // STR7: the plan's shallow water (four blocks at the jetty's end) adds extension sections, two berths each
+        int sections = layout.named("jetty_extension").size();
+        helper.assertTrue(sections >= 1 && sections <= PierExtensions.MAX_SECTIONS, "seed " + seed + ": jetty sections " + sections);
+        helper.assertValueEqual(port.berths().size(), 2 + 2 * sections, "seed " + seed + ": berths");
 
         BoundingBox b = layout.bounds();
         BoundingBox region = new BoundingBox(b.minX() - MARGIN, Math.max(level.getMinBuildHeight(), b.minY() - MARGIN),

@@ -3,12 +3,12 @@ package com.richardsenger.piratesnships.trade.client;
 import com.richardsenger.piratesnships.trade.market.GoodRole;
 import com.richardsenger.piratesnships.trade.market.Market;
 import com.richardsenger.piratesnships.trade.net.MarketView;
+import com.richardsenger.piratesnships.world.port.PortNameBook;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.OptionalInt;
 
 /**
@@ -99,17 +99,12 @@ public final class MarketLines {
         };
     }
 
-    /** A readable port name from its id: {@code pirates_n_ships:debug/port_royal} reads {@code "Port Royal"}. */
+    /**
+     * A port's shown name (NAME3, {@link PortNameBook#label}): its proper name ("Port Marlow"), or while names are off
+     * or the port is unknown here, the readable id: {@code pirates_n_ships:debug/port_royal} reads {@code "Port Royal"}.
+     */
     public static String portName(ResourceLocation port) {
-        String path = port.getPath();
-        String last = path.substring(path.lastIndexOf('/') + 1);
-        StringBuilder sb = new StringBuilder();
-        for (String word : last.split("[_\\-]+")) {
-            if (word.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(word.substring(0, 1).toUpperCase(Locale.ROOT)).append(word.substring(1));
-        }
-        return sb.isEmpty() ? path : sb.toString();
+        return PortNameBook.label(port);
     }
 
     /** Index of the first visible row for a scroll offset, clamped so the last page stays full. */

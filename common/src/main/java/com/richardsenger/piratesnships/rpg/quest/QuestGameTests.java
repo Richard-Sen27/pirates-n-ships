@@ -165,6 +165,25 @@ public final class QuestGameTests {
         h.succeed();
     }
 
+    /** NAME3: quest texts name ports by their proper names: the delivery's destination and the giver. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH)
+    public static void questTextsNamePortsByName(GameTestHelper h) {
+        MinecraftServer server = h.getLevel().getServer();
+        Port giver = port(h, PortKind.SEAFARER_VILLAGE);
+        Port destination = port(h, PortKind.NAVY_OUTPOST);
+        String giverName = PortRegistry.get(server).index().byId(giver.id()).orElseThrow().name();
+        String destinationName = PortRegistry.get(server).index().byId(destination.id()).orElseThrow().name();
+        h.assertTrue(!giverName.isEmpty() && !destinationName.isEmpty(), "both ports are named");
+        Quest q = offer(h, giver, QuestType.DELIVER, new QuestTarget.Cargo(TradeGoods.SUGAR, 8, destination.id(), Optional.empty()), 8, 50);
+        String title = QuestText.title(q, false).getString();
+        h.assertTrue(title.contains(destinationName), "the title names the destination: " + title);
+        h.assertFalse(title.contains(destination.id().getPath()), "and not its id: " + title);
+        String detail = QuestText.activeDetail(q).getString();
+        h.assertTrue(detail.contains(giverName), "the detail names the giver: " + detail);
+        cleanup(h, null, giver, destination);
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ types
 
     /** Pirate hunt at an outpost: accepted into the log, three kill deeds complete it with coins and the navy quest deed. */

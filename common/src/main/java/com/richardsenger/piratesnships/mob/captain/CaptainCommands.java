@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.world.port.Port;
+import com.richardsenger.piratesnships.world.port.PortNameBook;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -62,10 +63,10 @@ public final class CaptainCommands {
         ResourceLocation port = portAt(level, pos);
         PirateCaptain captain = IslandCaptains.spawn(level, port, pos, facing, nextGeneration(level, port));
         if (captain == null) {
-            source.sendFailure(Component.translatable(KEY_REFUSED, port.toString()));
+            source.sendFailure(Component.translatable(KEY_REFUSED, PortNameBook.label(port)));
             return 0;
         }
-        source.sendSuccess(() -> Component.translatable(KEY_SPAWNED, captain.getName(), port.toString(),
+        source.sendSuccess(() -> Component.translatable(KEY_SPAWNED, captain.getName(), PortNameBook.label(port),
                 LawService.bountyTotal(level.getServer(), captain.getUUID())), true);
         return 1;
     }
@@ -85,12 +86,12 @@ public final class CaptainCommands {
             CaptainEntry c = e.getValue();
             String post = c.post().toShortString();
             Component line = c.atSea()
-                    ? Component.translatable(KEY_LINE_AT_SEA, c.name(), e.getKey().toString(),
+                    ? Component.translatable(KEY_LINE_AT_SEA, c.name(), PortNameBook.label(e.getKey()),
                     c.voyage().map(v -> v.toString().substring(0, 8)).orElse("?"), LawService.bountyTotal(server, c.id()))
                     : c.alive()
-                    ? Component.translatable(KEY_LINE_ALIVE, c.name(), e.getKey().toString(), post,
+                    ? Component.translatable(KEY_LINE_ALIVE, c.name(), PortNameBook.label(e.getKey()), post,
                     LawService.bountyTotal(server, c.id()))
-                    : Component.translatable(KEY_LINE_LOST, c.name(), e.getKey().toString(), post, c.diedDay());
+                    : Component.translatable(KEY_LINE_LOST, c.name(), PortNameBook.label(e.getKey()), post, c.diedDay());
             source.sendSuccess(() -> line, false);
         });
         return all.size();

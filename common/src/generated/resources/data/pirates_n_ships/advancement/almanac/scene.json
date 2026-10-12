@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:almanac/open",
+  "criteria": {
+    "scene_opened": {
+      "trigger": "pirates_n_ships:scene_opened"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.almanac.scene.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:map_tile"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.almanac.scene.title"
+    }
+  },
+  "requirements": [
+    [
+      "scene_opened"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

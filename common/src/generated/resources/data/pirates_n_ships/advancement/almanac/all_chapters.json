@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:almanac/open",
+  "criteria": {
+    "all": {
+      "conditions": {
+        "kind": "all"
+      },
+      "trigger": "pirates_n_ships:chapters_read"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.almanac.all_chapters.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:captains_almanac"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.almanac.all_chapters.title"
+    }
+  },
+  "requirements": [
+    [
+      "all"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

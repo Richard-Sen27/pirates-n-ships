@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:law/bounty_paid",
+  "criteria": {
+    "shackled": {
+      "conditions": {
+        "kind": "shackled"
+      },
+      "trigger": "pirates_n_ships:prisoner_taken"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.law.shackled.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:shackles"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.law.shackled.title"
+    }
+  },
+  "requirements": [
+    [
+      "shackled"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:shipwright/craft_helm",
+  "criteria": {
+    "ship_assembled": {
+      "trigger": "pirates_n_ships:ship_assembled"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.launch_ship.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:nameplate"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.launch_ship.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_assembled"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

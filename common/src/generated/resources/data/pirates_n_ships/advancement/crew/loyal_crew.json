@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:crew/wages_paid",
+  "criteria": {
+    "crew_loyal": {
+      "conditions": {
+        "value": {
+          "min": 10
+        }
+      },
+      "trigger": "pirates_n_ships:crew_loyal"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.loyal_crew.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:figurehead_mermaid"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.loyal_crew.title"
+    }
+  },
+  "requirements": [
+    [
+      "crew_loyal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

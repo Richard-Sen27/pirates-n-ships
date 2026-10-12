@@ -62,6 +62,7 @@ public final class Careers {
             CareerTeams.refresh(sp, record); // HON1: the title prefix follows promotion, demotion and resignation
         }
         CareerRewards.afterStore(player, before, record); // CAR2: promotion gifts
+        if (!record.equals(before)) com.richardsenger.piratesnships.core.advancement.ModAdvancements.careerChanged(player, record); // ADV1
     }
 
     /**

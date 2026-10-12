@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:law/shackled",
+  "criteria": {
+    "letter": {
+      "conditions": {
+        "kind": "letter"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.law.letter.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:navy_flag"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.law.letter.title"
+    }
+  },
+  "requirements": [
+    [
+      "letter"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,39 @@
+{
+  "parent": "pirates_n_ships:combat/shark",
+  "criteria": {
+    "kraken": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "pirates_n_ships:kraken"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.kraken.description"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:kraken_beak"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.kraken.title"
+    }
+  },
+  "requirements": [
+    [
+      "kraken"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

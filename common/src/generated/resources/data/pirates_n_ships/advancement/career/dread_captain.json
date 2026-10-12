@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:career/buccaneer",
+  "criteria": {
+    "infamy_dread_captain": {
+      "conditions": {
+        "kind": "infamy/dread_captain"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.dread_captain.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:pistol"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.dread_captain.title"
+    }
+  },
+  "requirements": [
+    [
+      "infamy_dread_captain"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

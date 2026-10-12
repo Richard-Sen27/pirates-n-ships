@@ -63,6 +63,7 @@ public final class Wallet {
             player.getInventory().placeItemBackInInventory(new ItemStack(TradeContent.DOUBLOON.get(), n));
         }
         player.containerMenu.broadcastChanges();
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.doubloonsEarned(player, amount); // ADV1
     }
 
     private static int[] slotCounts(Container container) {

@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:shipwright/launch_ship",
+  "criteria": {
+    "sail_set": {
+      "trigger": "pirates_n_ships:sail_set"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.set_sail.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:sail_winch"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.set_sail.title"
+    }
+  },
+  "requirements": [
+    [
+      "sail_set"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

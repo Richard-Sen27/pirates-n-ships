@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:combat/grapple",
+  "criteria": {
+    "ship_boarded": {
+      "trigger": "pirates_n_ships:ship_boarded"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.board.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:boarding_plank"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.board.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_boarded"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

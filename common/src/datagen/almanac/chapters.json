@@ -88,6 +88,10 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.welcome.p4.text2"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.welcome.p4.text3"
        }
       ]
      },
@@ -3924,7 +3928,8 @@
   "pirates_n_ships.almanac.welcome.p3.text2": "Or hover any block or item a scene shows, such as the cannon or a railing of any wood, and hold the Ponder key.",
   "pirates_n_ships.almanac.welcome.p4.heading": "Where to start",
   "pirates_n_ships.almanac.welcome.p4.text1": "Start with [[pirates_n_ships:first_ship|Your first ship]]: from planks to sail in a few pages.",
-  "pirates_n_ships.almanac.welcome.p4.text2": "At the back, [[pirates_n_ships:inventory|The ship's inventory]] lists every block and item, [[pirates_n_ships:ledger|The Quartermaster's ledger]] serves a server's keeper, and [[pirates_n_ships:not_yet|Not yet charted]] owns up to what is still missing.",
+  "pirates_n_ships.almanac.welcome.p4.text2": "Your deeds at sea are kept, too: open the advancements screen and turn to the **Pirates 'n' Ships** tab, from your first launch to the kraken.",
+  "pirates_n_ships.almanac.welcome.p4.text3": "At the back, [[pirates_n_ships:inventory|The ship's inventory]] lists every block and item, [[pirates_n_ships:ledger|The Quartermaster's ledger]] serves a server's keeper, and [[pirates_n_ships:not_yet|Not yet charted]] owns up to what is still missing.",
   "pirates_n_ships.almanac.welcome.p5.heading": "Contents",
   "pirates_n_ships.almanac.welcome.p5.list1_1": "[[pirates_n_ships:first_ship]]",
   "pirates_n_ships.almanac.welcome.p5.list1_2": "[[pirates_n_ships:ships]]",

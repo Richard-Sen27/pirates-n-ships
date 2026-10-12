@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:shipwright/launch_ship",
+  "criteria": {
+    "ship_ordered": {
+      "trigger": "pirates_n_ships:ship_ordered"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.order_ship.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:ship_receipt"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.order_ship.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_ordered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -245,6 +245,7 @@ public final class ChartBackend {
             };
         }
         if (outcome.ok()) ChartService.setData(player, outcome.data());
+        if (outcome.ok()) com.richardsenger.piratesnships.core.advancement.ModAdvancements.markersPlaced(player, outcome.data().markers().size()); // ADV1
         Optional<String> refusal = outcome.ok() ? Optional.empty() : Optional.of(MSG + "refused." + outcome.refusal().key());
         Session s = SESSIONS.get(player.getUUID());
         List<ChartShip> ships = s != null ? s.lastShips : ChartShips.of(player);

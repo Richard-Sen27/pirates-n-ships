@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "port_visited": {
+      "trigger": "pirates_n_ships:port_visited"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.landfall.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:mooring_ring"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.landfall.title"
+    }
+  },
+  "requirements": [
+    [
+      "port_visited"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

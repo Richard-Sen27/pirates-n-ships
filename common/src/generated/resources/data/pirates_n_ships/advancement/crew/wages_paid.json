@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:crew/hire_hand",
+  "criteria": {
+    "wages_paid": {
+      "trigger": "pirates_n_ships:wages_paid"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.wages_paid.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:sea_chest"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.wages_paid.title"
+    }
+  },
+  "requirements": [
+    [
+      "wages_paid"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

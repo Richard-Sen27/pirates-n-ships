@@ -281,6 +281,7 @@ public final class SwivelService {
         if (ship != null && recoil > 0) {
             ship.applyImpulseNow(Vec3.atCenterOf(pos), CannonRules.recoilImpulse(local.direction(), recoil));
         }
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.cannonFired(owner, "swivel_gun"); // ADV1
         return new Use(Outcome.FIRED, Component.empty(), ball); // MSG1: the shot is seen and heard
     }
 }

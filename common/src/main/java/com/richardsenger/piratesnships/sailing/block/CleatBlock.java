@@ -197,6 +197,7 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
         }
         if (level instanceof ServerLevel serverLevel) {
             SailTrim next = TriangularSails.cycle(serverLevel, pos);
+            if (next != null && next != SailTrim.FURLED) com.richardsenger.piratesnships.core.advancement.ModAdvancements.sailSet(player, 1); // ADV1
             if (next == null) { // MSG1: a new trim shows in the cloth
                 player.displayClientMessage(Component.translatable(KEY_NO_SAIL), true);
             }

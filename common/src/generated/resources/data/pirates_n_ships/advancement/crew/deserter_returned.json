@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:crew/wages_paid",
+  "criteria": {
+    "deserter_returned": {
+      "trigger": "pirates_n_ships:deserter_returned"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.deserter_returned.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:rum"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.deserter_returned.title"
+    }
+  },
+  "requirements": [
+    [
+      "deserter_returned"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -132,6 +132,7 @@ public final class BrigService {
         }
         TRACKED.add(target);
         target.level().playSound(null, target.blockPosition(), SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 0.8f);
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.prisonerTaken(captor, "shackled"); // ADV1
         return result;
     }
 
@@ -334,6 +335,7 @@ public final class BrigService {
                 setLed(e, false);
                 Player captor = e.level().getPlayerByUUID(st.captor());
                 if (captor != null) captor.displayClientMessage(Component.translatable(MSG + "in_cell", e.getName()), true);
+                com.richardsenger.piratesnships.core.advancement.ModAdvancements.prisonerTaken(captor, "brigged"); // ADV1
             }
             checkEscape(e, inCell, crewMoraleLow(e), false);
         }

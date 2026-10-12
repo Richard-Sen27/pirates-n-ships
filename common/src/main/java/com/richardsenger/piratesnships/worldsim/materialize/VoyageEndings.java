@@ -242,6 +242,7 @@ public final class VoyageEndings {
         }
         String name = registry.find(ship.id()).map(ShipData::name).orElse("");
         player.displayClientMessage(Component.translatable(KEY_CAPTURED, name), true);
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipCaptured(player, v.faction().name()); // ADV1
         Constants.LOG.debug("Voyage {} captured by {} (ship {})", v.shortId(), player.getName().getString(), ship.id());
         fire(new Ending(v, ship.id(), Outcome.CAPTURED, Optional.of(player.getUUID()), deed, null));
     }

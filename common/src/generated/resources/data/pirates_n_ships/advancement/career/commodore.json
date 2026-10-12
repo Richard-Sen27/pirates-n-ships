@@ -1,0 +1,30 @@
+{
+  "parent": "pirates_n_ships:career/captain",
+  "criteria": {
+    "navy_commodore": {
+      "conditions": {
+        "kind": "navy/commodore"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.commodore.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:saber"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.commodore.title"
+    }
+  },
+  "requirements": [
+    [
+      "navy_commodore"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

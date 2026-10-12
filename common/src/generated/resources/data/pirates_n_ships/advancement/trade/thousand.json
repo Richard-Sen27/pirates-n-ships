@@ -1,0 +1,32 @@
+{
+  "parent": "pirates_n_ships:trade/first_doubloon",
+  "criteria": {
+    "doubloons_earned": {
+      "conditions": {
+        "value": {
+          "min": 1000
+        }
+      },
+      "trigger": "pirates_n_ships:doubloons_earned"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.thousand.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:cargo_barrel"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.thousand.title"
+    }
+  },
+  "requirements": [
+    [
+      "doubloons_earned"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

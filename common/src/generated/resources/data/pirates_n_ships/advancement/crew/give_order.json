@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:crew/hire_hand",
+  "criteria": {
+    "order_given": {
+      "trigger": "pirates_n_ships:order_given"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.crew.give_order.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:captains_whistle"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.crew.give_order.title"
+    }
+  },
+  "requirements": [
+    [
+      "order_given"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

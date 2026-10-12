@@ -156,6 +156,7 @@ public final class PlayerSleep {
             return; // a bed on land: vanilla's
         }
         BlockState state = level.getBlockState(at.get());
+        if (player.isSleepingLongEnough() && state.getBlock() instanceof HammockBlock) com.richardsenger.piratesnships.core.advancement.ModAdvancements.hammockNight(player); // ADV1
         if (state.hasProperty(BedBlock.OCCUPIED) && state.getValue(BedBlock.OCCUPIED)) {
             level.setBlock(at.get(), state.setValue(BedBlock.OCCUPIED, false), Block.UPDATE_ALL);
         }

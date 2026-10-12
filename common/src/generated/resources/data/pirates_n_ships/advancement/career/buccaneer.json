@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "infamy_buccaneer": {
+      "conditions": {
+        "kind": "infamy/buccaneer"
+      },
+      "trigger": "pirates_n_ships:rank_reached"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.career.buccaneer.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:pirate_hat"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.career.buccaneer.title"
+    }
+  },
+  "requirements": [
+    [
+      "infamy_buccaneer"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

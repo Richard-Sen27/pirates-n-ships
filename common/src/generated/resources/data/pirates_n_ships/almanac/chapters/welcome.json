@@ -80,6 +80,10 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.welcome.p4.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.welcome.p4.text3"
         }
       ]
     },

@@ -226,6 +226,7 @@ public final class MarketTransactions {
         }
         from.remove(item.get(), false, r.consumed());
         Wallet.give(player, r.payout());
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.contractDelivered(player); // ADV1
         return TransactionResult.contract(TransactionResult.Status.OK, good, r.consumed(), r.payout(), r.outcome());
     }
 }

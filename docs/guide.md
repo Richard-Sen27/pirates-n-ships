@@ -114,6 +114,19 @@ below.
 - **Settings:** `flooding.pump_reach` 4, `crew_stations.ticks_per_trim_step` 40 (the 2-second trim step). A datapack
   can add chapters to the Almanac or replace ours (`data/<ns>/almanac/chapters/`, format in `docs/almanac.md`).
 
+### Advancements (ADV1)
+The advancements screen (L) has a tab of its own, "Pirates 'n' Ships", with the helm as its icon. It opens on joining
+and branches into Shipwright (a helm, launching, setting sail, the anchor, a patched leak, a ship ordered, a brig, a
+ship of 500 blocks), Crew (hiring, an order, a night in a hammock, eight hands, wages, a deserter won back, ten loyal
+days), Trade (doubloons earned in all: 1, 1,000 and 10,000; a contract; a quest; an escorted convoy), Combat (a gun
+fired, a ship hit, a grapple on another ship, boarding, a capture, a shark, the kraken), The world (every port kind
+visited, a treasure, a wreck chest, a flag, ten chart markers, a minute aboard in a storm), The law (a fine paid,
+shackles, the brig, a letter of marque or the Jolly Roger), Career (every navy rank and every infamy rank) and The
+Almanac (opened, a "Show me" scene, every chapter read). The kraken, the treasure and the capture stay hidden until
+earned. Each pays experience once (task 5, goal 15, challenge 40), times `advancements.experience_scale`; with
+`advancements.enabled` off none of the mod's criteria fires. The full table, every criterion and where it fires:
+[`advancements.md`](advancements.md).
+
 ## 1. Your first ship
 
 1. **Build a hull** from any blocks, floating in water. Planks, slabs, stairs and glass are watertight. Leave a
@@ -1921,6 +1934,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`), the land's look (`style`: `COLOURED` block colours or `INK`; `colour_columns` read per cell side), the held chart (`held_open`); other players are never shown; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |
+| `advancements` | The mod's advancement criteria on/off (`enabled`; off: none of them fires and no experience is paid) and the multiplier on the experience each advancement pays (`experience_scale`, 1.0). |
 
 **Client config**
 

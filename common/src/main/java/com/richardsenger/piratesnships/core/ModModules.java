@@ -62,6 +62,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.station.lookout.LookoutModule(),
             new com.richardsenger.piratesnships.almanac.AlmanacModule(),
             new com.richardsenger.piratesnships.almanac.ponder.AlmanacPonderModule(),
-            new com.richardsenger.piratesnships.compat.CompatModule()
+            new com.richardsenger.piratesnships.compat.CompatModule(),
+            new com.richardsenger.piratesnships.core.advancement.AdvancementModule() // ADV1
     );
 }

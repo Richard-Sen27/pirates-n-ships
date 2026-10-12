@@ -211,6 +211,7 @@ public final class ShipOrders {
         PortRegistry.get(server).update(port.get().withOrders(orders));
         player.getInventory().placeItemBackInInventory(ShipReceiptItem.stack(ShipReceipt.of(portId, order, q.template().name())));
         player.containerMenu.broadcastChanges();
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipOrdered(player, templateId); // ADV1
         Constants.LOG.debug("Ship order {} of {} at {} for {}, ready on day {}", order.shortId(), templateId, portId,
                 player.getGameProfile().getName(), order.finishDay());
         return new OrderPayloads.OrderResult(true, KEY_ORDERED, List.of(q.template().name(), ShipOrderMath.formatDays(q.buildDays())));
@@ -290,6 +291,8 @@ public final class ShipOrders {
             message = Component.translatable(KEY_NOT_ASSEMBLED, name, berth);
             Constants.LOG.warn("Ship order {}: placed at berth {} of {} but not assembled: {}", order.get().shortId(), berth,
                     port.get().id(), a == null ? null : a.outcome());
+        } else {
+            com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipLaunched(player, order.get().template(), a.count()); // ADV1
         }
         return Optional.of(new PickupResult(Pickup.PICKED_UP, message, a == null ? null : a.shipId(), berth, placed));
     }

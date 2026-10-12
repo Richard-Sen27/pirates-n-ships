@@ -1,0 +1,28 @@
+{
+  "parent": "pirates_n_ships:combat/board",
+  "criteria": {
+    "ship_captured": {
+      "trigger": "pirates_n_ships:ship_captured"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.capture.description"
+    },
+    "frame": "goal",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:cutlass"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.capture.title"
+    }
+  },
+  "requirements": [
+    [
+      "ship_captured"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

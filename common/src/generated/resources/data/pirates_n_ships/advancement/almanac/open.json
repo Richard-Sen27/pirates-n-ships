@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "almanac_opened": {
+      "trigger": "pirates_n_ships:almanac_opened"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.almanac.open.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:captains_almanac"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.almanac.open.title"
+    }
+  },
+  "requirements": [
+    [
+      "almanac_opened"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

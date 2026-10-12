@@ -1,0 +1,154 @@
+{
+  "parent": "pirates_n_ships:shipwright/craft_helm",
+  "criteria": {
+    "placed_acacia_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:acacia_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_bamboo_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:bamboo_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_birch_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:birch_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_cherry_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:cherry_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_crimson_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:crimson_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_dark_oak_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:dark_oak_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_jungle_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:jungle_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_mangrove_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:mangrove_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_oak_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:oak_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_spruce_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:spruce_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    },
+    "placed_warped_rope_railing": {
+      "conditions": {
+        "location": [
+          {
+            "block": "pirates_n_ships:warped_rope_railing",
+            "condition": "minecraft:block_state_property"
+          }
+        ]
+      },
+      "trigger": "minecraft:placed_block"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.rope_railing.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:oak_rope_railing"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.rope_railing.title"
+    }
+  },
+  "requirements": [
+    [
+      "placed_oak_rope_railing",
+      "placed_spruce_rope_railing",
+      "placed_birch_rope_railing",
+      "placed_jungle_rope_railing",
+      "placed_acacia_rope_railing",
+      "placed_dark_oak_rope_railing",
+      "placed_mangrove_rope_railing",
+      "placed_cherry_rope_railing",
+      "placed_bamboo_rope_railing",
+      "placed_crimson_rope_railing",
+      "placed_warped_rope_railing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -124,6 +124,7 @@ public final class TreasureMapService {
             }
         }
         if (!any) return;
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.treasureDug(player); // ADV1
         boolean told = false;
         Inventory inv = player.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {

@@ -1,0 +1,37 @@
+{
+  "parent": "pirates_n_ships:combat/fire_cannon",
+  "criteria": {
+    "shark": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "pirates_n_ships:shark"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.shark.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:shark_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.shark.title"
+    }
+  },
+  "requirements": [
+    [
+      "shark"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

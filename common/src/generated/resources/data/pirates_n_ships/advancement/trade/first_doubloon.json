@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "doubloons_earned": {
+      "trigger": "pirates_n_ships:doubloons_earned"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.trade.first_doubloon.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:doubloon"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.trade.first_doubloon.title"
+    }
+  },
+  "requirements": [
+    [
+      "doubloons_earned"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

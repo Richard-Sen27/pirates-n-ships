@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:shipwright/set_sail",
+  "criteria": {
+    "anchor_dropped": {
+      "trigger": "pirates_n_ships:anchor_dropped"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.shipwright.drop_anchor.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:capstan"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.shipwright.drop_anchor.title"
+    }
+  },
+  "requirements": [
+    [
+      "anchor_dropped"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

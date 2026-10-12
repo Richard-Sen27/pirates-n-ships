@@ -87,6 +87,7 @@ public final class WhistleOrders {
         }
         ShipBody ship = StationConfig.ENABLED.get() ? CaptainsWhistleItem.shipOf(level, player) : null;
         Issued issued = issue(level, ship, order.get(), whistle, player);
+        if (issued.result().outcome() == Outcome.ISSUED) com.richardsenger.piratesnships.core.advancement.ModAdvancements.orderGiven(player, order.get().id()); // ADV1
         player.displayClientMessage(issued.message(), true);
         return issued.result();
     }
@@ -127,6 +128,7 @@ public final class WhistleOrders {
             // BRD3: "Board!" while no party of this ship (or of the captain, from the deck he boarded) is out, else "Back aboard"
             BoardingParties.Outcome o = BoardingParties.toggle(level, ship, captain);
             boolean done = o.result() == BoardingParties.Result.BOARDING || o.result() == BoardingParties.Result.RECALLED;
+            if (o.result() == BoardingParties.Result.BOARDING) com.richardsenger.piratesnships.core.advancement.ModAdvancements.shipBoarded(captain, "party"); // ADV1
             return new Issued(new Result(done ? Outcome.ISSUED : Outcome.REFUSED, o.boarders(), 0), o.message());
         }
         // WHS1: the anchor toggle takes the direction the anchor's state needs now, as the capstan does for a player

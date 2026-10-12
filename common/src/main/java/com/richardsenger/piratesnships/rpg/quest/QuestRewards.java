@@ -24,6 +24,7 @@ public final class QuestRewards {
             Wallet.give(player, coins);
             player.containerMenu.broadcastChanges();
         }
+        com.richardsenger.piratesnships.core.advancement.ModAdvancements.questCompleted(player, quest.type().name()); // ADV1
         Deeds.record(player, quest.rewardDeed(), DeedContext.port(quest.port(), quest.rewardCoins()));
         Component title = QuestText.title(quest, false);
         player.displayClientMessage(coins > 0 ? Component.translatable(QuestText.COMPLETED_PAID, title, coins)

@@ -798,6 +798,10 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         level.playSound(null, world.x, world.y, world.z, SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 0.9f);
         level.playSound(null, world.x, world.y, world.z, SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 0.8f, 1.0f);
         level.sendParticles(ParticleTypes.CRIT, world.x, world.y, world.z, 6, 0.1, 0.1, 0.1, 0.1);
+        if (ship != null && getOwner() instanceof net.minecraft.server.level.ServerPlayer thrower) { // ADV1: onto another ship
+            ShipBody near = nearEndShip(level, thrower);
+            if (near == null || !near.id().equals(ship.id())) com.richardsenger.piratesnships.core.advancement.ModAdvancements.grappleLatched(thrower);
+        }
     }
 
     /** A world direction {@code v} in the frame of {@code ship}'s plot (unchanged without a ship). */

@@ -1,0 +1,26 @@
+{
+  "parent": "pirates_n_ships:root",
+  "criteria": {
+    "cannon_fired": {
+      "trigger": "pirates_n_ships:cannon_fired"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.combat.fire_cannon.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:cannon"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.combat.fire_cannon.title"
+    }
+  },
+  "requirements": [
+    [
+      "cannon_fired"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,29 @@
+{
+  "parent": "pirates_n_ships:world/landfall",
+  "criteria": {
+    "wreck": {
+      "conditions": {
+        "loot_table": "pirates_n_ships:chests/wreck"
+      },
+      "trigger": "minecraft:player_generates_container_loot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.pirates_n_ships.world.wreck.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "pirates_n_ships:ship_lantern"
+    },
+    "title": {
+      "translate": "advancements.pirates_n_ships.world.wreck.title"
+    }
+  },
+  "requirements": [
+    [
+      "wreck"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

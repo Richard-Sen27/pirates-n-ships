@@ -28,6 +28,8 @@ Some pages carry a **Show me** button: the Almanac acts the thing out on a littl
 ## Where to start
 Start with [[pirates_n_ships:first_ship|Your first ship]]: from planks to sail in a few pages.
 
+Your deeds at sea are kept, too: open the advancements screen and turn to the **Pirates 'n' Ships** tab, from your first launch to the kraken.
+
 At the back, [[pirates_n_ships:inventory|The ship's inventory]] lists every block and item, [[pirates_n_ships:ledger|The Quartermaster's ledger]] serves a server's keeper, and [[pirates_n_ships:not_yet|Not yet charted]] owns up to what is still missing.
 
 ## Contents

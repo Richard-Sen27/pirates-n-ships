@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.ship.template;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,12 +24,30 @@ import org.jetbrains.annotations.Nullable;
  *                          //           missing = helm y - 1, or 0 for a template without a helm
  *   "bow": "north",        // optional: where the bow points inside the template (default north)
  *   "price": 400,          // optional: doubloons at a shipwright (later), default 0
- *   "orderable": false     // optional: whether shipwrights build it (default true; NPC-only ships say false)
+ *   "orderable": false,    // optional: whether shipwrights build it (default true; NPC-only ships say false)
+ *   "nets": [              // optional (SHIP1): ratline nets strung when the template is placed, template positions
+ *     {"a": [0, 10, 22], "b": [3, 25, 19]}   //   of the two fittings (railing latch, chainplate or mast hoop)
+ *   ]
  * }
  * }</pre>
+ * A structure template cannot carry a strung net (its cells and fittings name each other through block entity data
+ * the schematic lab does not write), so a template holds the fittings and names the nets between them; the placer
+ * strings them ({@link ShipTemplatePlacer}) as the ratline net item would, before the ship is assembled.
  */
 public record ShipTemplate(ResourceLocation structure, String name, Optional<BlockPos> helm, Optional<Integer> waterline,
-                           Direction bow, int price, boolean orderable) {
+                           Direction bow, int price, boolean orderable, List<Net> nets) {
+
+    /** A ratline net from fitting {@code a} to fitting {@code b} (template positions). */
+    public record Net(BlockPos a, BlockPos b) {
+        public static final Codec<Net> CODEC = RecordCodecBuilder.create(i -> i.group(
+                BlockPos.CODEC.fieldOf("a").forGetter(Net::a),
+                BlockPos.CODEC.fieldOf("b").forGetter(Net::b)
+        ).apply(i, Net::new));
+    }
+
+    public ShipTemplate {
+        nets = List.copyOf(nets);
+    }
 
     private static final Codec<Direction> HORIZONTAL = Direction.CODEC.comapFlatMap(
             d -> d.getAxis().isHorizontal() ? DataResult.success(d) : DataResult.error(() -> "bow must be horizontal: " + d),
@@ -41,8 +60,15 @@ public record ShipTemplate(ResourceLocation structure, String name, Optional<Blo
             Codec.intRange(0, 4096).optionalFieldOf("waterline").forGetter(ShipTemplate::waterline),
             HORIZONTAL.optionalFieldOf("bow", Direction.NORTH).forGetter(ShipTemplate::bow),
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("price", 0).forGetter(ShipTemplate::price),
-            Codec.BOOL.optionalFieldOf("orderable", true).forGetter(ShipTemplate::orderable)
+            Codec.BOOL.optionalFieldOf("orderable", true).forGetter(ShipTemplate::orderable),
+            Net.CODEC.listOf().optionalFieldOf("nets", List.of()).forGetter(ShipTemplate::nets)
     ).apply(i, ShipTemplate::new));
+
+    /** A template without nets. */
+    public ShipTemplate(ResourceLocation structure, String name, Optional<BlockPos> helm, Optional<Integer> waterline,
+                        Direction bow, int price, boolean orderable) {
+        this(structure, name, helm, waterline, bow, price, orderable, List.of());
+    }
 
     /** A template shipwrights build. */
     public ShipTemplate(ResourceLocation structure, String name, Optional<BlockPos> helm, Optional<Integer> waterline,

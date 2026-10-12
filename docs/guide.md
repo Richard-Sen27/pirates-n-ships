@@ -712,8 +712,8 @@ berths are taken, come back later; the receipt stays valid. The shipwright works
 Server config `ships.shipwright_orders`, `build_time_days`, `order_price_factor`, `order_materials_factor`,
 `max_orders_per_port`.
 
-The shipwright offers the starter sloop (400 doubloons), the basic sloop (300) and the **brig** (650: the sloop's price
-in proportion to her blocks, 1112 against 685; she takes longer to build and wants more logs and wool). The brig is a
+The shipwright offers the starter sloop (400 doubloons), the basic sloop (300) and the **brig** (725: the sloop's price
+in proportion to her blocks, 1242 against 685; she takes longer to build and wants more logs and wool). The brig is a
 two-masted ship 32 blocks long and 9 wide: two square sails on each mast (set at the sail winch abaft each mast) and a
 jib (rig a rope from the head cleat high on the fore mast to the bowsprit cleat), a hold in three watertight
 compartments under the lower gun deck (hatches and ladders from the gun deck), a gun deck pierced for eight guns with

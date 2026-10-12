@@ -55,18 +55,18 @@ class BrigLayoutTest {
     private static final String MAST = "minecraft:spruce_log[axis=y]";
     private static final String DECK = "minecraft:spruce_planks";
     private static final int SUPPLY_RANGE = 4;
-    private static final int FORE_Z = 11, MAIN_Z = 19, FORE_TOP = 22, MAIN_TOP = 24, MAST_X = 4;
+    private static final int FORE_Z = 11, MAIN_Z = 19, FORE_TOP = 23, MAIN_TOP = 25, MAST_X = 4;
     /** The yards of each mast (one block forward of it), lowest first. */
-    private static final int[] FORE_YARDS = {11, 16, 20}, MAIN_YARDS = {11, 17, 22};
+    private static final int[] FORE_YARDS = {12, 17, 21}, MAIN_YARDS = {12, 18, 23};
     private static final int[] FORE_HALF = {4, 3, 2}, MAIN_HALF = {4, 3, 2};
     private static final BlockPos NEST = new BlockPos(MAST_X, MAIN_TOP + 1, MAIN_Z);
     private static final int[] GUN_ZS = {13, 17, 21, 25};
-    private static final List<BlockPos> LOCKERS = List.of(new BlockPos(1, 5, 15), new BlockPos(1, 5, 23),
-            new BlockPos(7, 5, 15), new BlockPos(7, 5, 23));
-    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(1, 12, 28), new BlockPos(7, 12, 28));
-    private static final BlockPos FLAG_FOOT = new BlockPos(MAST_X, 11, 29);
-    private static final BlockPoint JIB_HEAD = new BlockPoint(MAST_X, 21, FORE_Z - 1), JIB_CLEW = new BlockPoint(MAST_X, 10, FORE_Z - 1),
-            JIB_TACK = new BlockPoint(MAST_X, 9, 1);
+    private static final List<BlockPos> LOCKERS = List.of(new BlockPos(1, 6, 15), new BlockPos(1, 6, 23),
+            new BlockPos(7, 6, 15), new BlockPos(7, 6, 23));
+    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(1, 13, 28), new BlockPos(7, 13, 28));
+    private static final BlockPos FLAG_FOOT = new BlockPos(MAST_X, 12, 29);
+    private static final BlockPoint JIB_HEAD = new BlockPoint(MAST_X, 22, FORE_Z - 1), JIB_CLEW = new BlockPoint(MAST_X, 11, FORE_Z - 1),
+            JIB_TACK = new BlockPoint(MAST_X, 10, 1);
     /** The jib's area: 0.5 x 11 (head to clew) x 9 (clew to tack). */
     private static final double JIB_AREA = 49.5;
     /** sail_visuals.max_belly and flutter_amplitude at their defaults (SailVisualsConfig), as in ArmedSloopLayoutTest. */
@@ -95,20 +95,20 @@ class BrigLayoutTest {
     private static Map<BlockPos, String> expectedChanges() {
         Map<BlockPos, String> out = new TreeMap<>();
         for (int z : GUN_ZS) {
-            out.put(new BlockPos(0, 5, z), port("west", true));
-            out.put(new BlockPos(1, 5, z), cannon("west", "front"));
-            out.put(new BlockPos(2, 5, z), cannon("west", "rear"));
-            out.put(new BlockPos(8, 5, z), port("east", true));
-            out.put(new BlockPos(7, 5, z), cannon("east", "front"));
-            out.put(new BlockPos(6, 5, z), cannon("east", "rear"));
+            out.put(new BlockPos(0, 6, z), port("west", true));
+            out.put(new BlockPos(1, 6, z), cannon("west", "front"));
+            out.put(new BlockPos(2, 6, z), cannon("west", "rear"));
+            out.put(new BlockPos(8, 6, z), port("east", true));
+            out.put(new BlockPos(7, 6, z), cannon("east", "front"));
+            out.put(new BlockPos(6, 6, z), cannon("east", "rear"));
         }
         for (BlockPos l : LOCKERS) out.put(l, "minecraft:barrel[facing=up,open=false]");
         out.put(NEST, "pirates_n_ships:crows_nest");
         out.put(new BlockPos(MAST_X - 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=west,waterlogged=false]");
         out.put(new BlockPos(MAST_X + 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=east,waterlogged=false]");
         for (int z = 22; z <= 24; z++) {
-            out.put(new BlockPos(0, 9, z), "pirates_n_ships:railing_latch[facing=west,waterlogged=false]");
-            out.put(new BlockPos(8, 9, z), "pirates_n_ships:railing_latch[facing=east,waterlogged=false]");
+            out.put(new BlockPos(0, 10, z), "pirates_n_ships:railing_latch[facing=west,waterlogged=false]");
+            out.put(new BlockPos(8, 10, z), "pirates_n_ships:railing_latch[facing=east,waterlogged=false]");
         }
         for (BlockPos s : SWIVELS) out.put(s, "pirates_n_ships:swivel_gun");
         return out;
@@ -159,7 +159,7 @@ class BrigLayoutTest {
         });
         guns.sort(Comparator.<BlockPos>comparingInt(BlockPos::getX).thenComparingInt(BlockPos::getZ));
         List<BlockPos> expected = new ArrayList<>();
-        for (int x : new int[] {1, 7}) for (int z : GUN_ZS) expected.add(new BlockPos(x, 5, z));
+        for (int x : new int[] {1, 7}) for (int z : GUN_ZS) expected.add(new BlockPos(x, 6, z));
         assertEquals(expected, guns);
         for (BlockPos g : guns) {
             boolean west = armed.get(g).contains("facing=west");
@@ -421,7 +421,7 @@ class BrigLayoutTest {
     }
 
     /**
-     * SH1b on the brig: the hold (y 2..3) is closed below the gun deck: no air cell of the hull below the gun deck floor is
+     * SH1b on the brig: the hold (y 2..4) is closed below the gun deck: no air cell of the hull below the gun deck floor is
      * reached from outside through air (ladders count as air), and the two bulkheads cut it into three rooms (a fore, a
      * main and an aft hold), each with its own hatch and ladder from the gun deck.
      */
@@ -432,7 +432,7 @@ class BrigLayoutTest {
             String s = ship.get(p);
             return s == null || s.startsWith("minecraft:ladder");
         };
-        // flood the air outside the hull below the gun deck floor (y 0..3), from beyond the structure's box
+        // flood the air outside the hull below the gun deck floor (y 0..4), from beyond the structure's box
         Set<BlockPos> outside = new HashSet<>();
         java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
         BlockPos start = new BlockPos(-1, 0, -1);
@@ -442,14 +442,14 @@ class BrigLayoutTest {
             BlockPos p = queue.poll();
             for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
                 BlockPos n = p.relative(d);
-                if (n.getX() < -1 || n.getX() > 9 || n.getY() < 0 || n.getY() > 3 || n.getZ() < -1 || n.getZ() > 32) continue;
+                if (n.getX() < -1 || n.getX() > 9 || n.getY() < 0 || n.getY() > 4 || n.getZ() < -1 || n.getZ() > 32) continue;
                 if (open.test(n) && outside.add(n)) queue.add(n);
             }
         }
         // the hold's air: below the gun deck floor, inside the hull (between hull blocks along x)
         List<Set<BlockPos>> rooms = new ArrayList<>();
         Set<BlockPos> seen = new HashSet<>();
-        for (int y = 2; y <= 3; y++) {
+        for (int y = 2; y <= 4; y++) {
             for (int z = 0; z < 32; z++) {
                 for (int x = 1; x < 8; x++) {
                     BlockPos p = new BlockPos(x, y, z);
@@ -461,7 +461,7 @@ class BrigLayoutTest {
                         BlockPos c = q.poll();
                         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
                             BlockPos n = c.relative(d);
-                            if (n.getY() < 1 || n.getY() > 3) continue;
+                            if (n.getY() < 1 || n.getY() > 4) continue;
                             assertTrue(!outside.contains(n), "the hold is open to the sea at " + n);
                             if (open.test(n) && room.add(n)) {
                                 seen.add(n);
@@ -481,7 +481,7 @@ class BrigLayoutTest {
             int lo = spans[i][0], hi = spans[i][1];
             assertTrue(room.stream().allMatch(p -> p.getZ() >= lo && p.getZ() <= hi), "hold room " + i + " crosses a bulkhead");
             assertTrue(room.stream().anyMatch(p -> ship.getOrDefault(p, "").startsWith("minecraft:ladder")), "no ladder in hold room " + i);
-            long hatches = room.stream().filter(p -> p.getY() == 3 && ship.getOrDefault(p.above(), "").startsWith("minecraft:spruce_trapdoor")).count();
+            long hatches = room.stream().filter(p -> p.getY() == 4 && ship.getOrDefault(p.above(), "").startsWith("minecraft:spruce_trapdoor")).count();
             assertEquals(1, hatches, "hatches over hold room " + i);
         }
     }

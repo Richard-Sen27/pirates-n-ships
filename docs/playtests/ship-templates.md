@@ -107,7 +107,7 @@ Report: a screenshot of each sloop from the side with both sails set, one of the
 
 ## SHIP1: the brig
 
-A second, larger template: the two-masted `brig` (shipwright, 650 doubloons) and the armed `navy_brig_armed` and
+A second, larger template: the two-masted `brig` (shipwright, 725 doubloons) and the armed `navy_brig_armed` and
 `pirate_brig_armed` (NPC patrols and raiders). Design and renders: `art/README.md` "The brig (SHIP1)",
 `art/renders/ships/brig_*.png`.
 
@@ -141,7 +141,7 @@ Prepare: creative, open sea at least 40 blocks across, `/pirates wind set 180 8`
    - **Expected:** each walks to his station (down the companion for the gun deck); the lookout is put in the nest. At
      night every hand finds a hammock.
 9. **Order:** at a seafarer village's harbor master's desk, Orders tab.
-   - **Expected:** the Brig is listed at 650 doubloons with more build days and materials than the sloop; at pickup
+   - **Expected:** the Brig is listed at 725 doubloons with more build days and materials than the sloop; at pickup
      she appears at a free berth (STR7's berth depth applies; report if she is placed over the quay or the beach).
 10. **NPC ships:** meet navy patrols and pirate raiders (`/pirates world voyages spawn near patrol`).
    - **Expected:** some sail the armed brig; she sails and her lookout sits in the nest.

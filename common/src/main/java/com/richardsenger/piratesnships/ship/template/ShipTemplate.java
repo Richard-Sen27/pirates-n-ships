@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *   "price": 400,          // optional: doubloons at a shipwright (later), default 0
  *   "orderable": false,    // optional: whether shipwrights build it (default true; NPC-only ships say false)
  *   "nets": [              // optional (SHIP1): ratline nets strung when the template is placed, template positions
- *     {"a": [0, 9, 22], "b": [3, 24, 19]}   //   of the two fittings (railing latch, chainplate or mast hoop)
+ *     {"a": [0, 10, 22], "b": [3, 25, 19]}   //   of the two fittings (railing latch, chainplate or mast hoop)
  *   ]
  * }
  * }</pre>

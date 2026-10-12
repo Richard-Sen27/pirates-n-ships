@@ -23,7 +23,7 @@ HW = [0, 1, 1, 2, 2, 3, 3, 3] + [4] * 15 + [3, 3, 3, 3]
 assert len(HW) == L
 
 # lower layers: half-width reduction and hull z range (rocker)
-LOWER = {1: (2, 3, 23), 2: (1, 1, 25)}
+LOWER = {1: (1, 2, 24), 2: (0, 1, 25)}
 
 HOLD = (2, 3)                # hold rows
 GUN_FLOOR = 4                # lower gun deck floor
@@ -120,7 +120,8 @@ for y in HOLD:
 
 # the forefoot: the bottom of the two forward hold cells sits on the keel (layer 1 starts at z 7)
 for zs in (OFF + 1, OFF + 2):
-    fit(CX, 1, zs, "lower")
+    if (CX, 1, zs) not in blocks:
+        fit(CX, 1, zs, "lower")
 
 # ---------------------------------------------------------------- cabin and quarterdeck
 
@@ -255,12 +256,13 @@ fit(1, 5, 12, "pantry")
 fit(7, 5, 12, "water")
 
 # hammocks: two fore and aft in the fore berth (hull at z 8, posts at z 11), four across the gun deck between the guns
-# (hull and a post), two across the cabin (cabin wall and a post); eight in all
+# (hull and a post; at z 22 and 26, so the middle lane past the aft hatch at z 24 stays open), two across the cabin
+# (cabin wall and a post); eight in all
 for x in (2, 6):
     fit(x, 5, 9, "ham_foot_s")
     fit(x, 5, 10, "ham_head_s")
     fit(x, 5, 11, "post")
-for zs in (22, 24):
+for zs in (22, 26):
     fit(1, 5, zs, "ham_foot_e")
     fit(2, 5, zs, "ham_head_e")
     fit(3, 5, zs, "post")
@@ -452,7 +454,7 @@ def latches():
 
 
 # the ratline nets of the armed brig: every latch on a side to that side's hoop (a fan of three strands each, RL4/RL5)
-NETS = [((x, y, z), next((hx, hy, hz) for hx, hy, hz, f in HOOPS if f == side)) for x, y, z, side in latches()]
+NETS = [((x, y + 1, z), next((hx, hy + 1, hz) for hx, hy, hz, f in HOOPS if f == side)) for x, y, z, side in latches()]  # final (deepened)
 
 
 def armed(base):
@@ -485,8 +487,29 @@ def armed(base):
     return out
 
 
+# SHIP1: laid out above with a two-row hold, the brig floated with her gun deck floor awash (Sable's buoyancy and the dry
+# hull lift against her weight: waterline 4.55 rows over the keel). ``deepen`` gives her a third hold row: every cell
+# from y DEEPEN_AT up moves one row up, and the new row repeats the hold row under it (sides, bulkheads, ladders, masts;
+# cargo stays on the hold floor). All coordinates in this file above are before deepening; the notes, art/README.md,
+# ShipTemplates and the tests use the final ones (y + 1 from the gun deck floor up).
+DEEPEN_AT = GUN_FLOOR
+
+
+def deepen(cells):
+    out = {}
+    for (x, y, z), b in cells.items():
+        out[(x, y + 1 if y >= DEEPEN_AT else y, z)] = b
+    for (x, y, z), b in cells.items():
+        if y == DEEPEN_AT - 1 and b in ("wale", "bulkhead", "ladder", "mast"):
+            out[(x, y + 1, z)] = b
+            if b == "wale":
+                out[(x, y, z)] = "lower"
+    return out
+
+
 def spec(cells, pal, spec_id, name, style, notes):
-    """The BuildSpec of ``cells``: runs along x merged into box operations, the palette keys in use only."""
+    """The BuildSpec of ``cells`` (deepened): runs along x merged into box operations, the palette keys in use only."""
+    cells = deepen(cells)
     ops = []
     for (y, zs) in sorted({(y, z) for (_, y, z) in cells}):
         xs = sorted(x for (x, yy, z) in cells if yy == y and z == zs)
@@ -503,28 +526,29 @@ def spec(cells, pal, spec_id, name, style, notes):
         "id": spec_id,
         "name": name,
         "minecraftVersion": "1.21.1",
-        "size": {"x": 9, "y": NEST[1] + 1, "z": STERN + 2},
+        "size": {"x": 9, "y": NEST[1] + 2, "z": STERN + 2},
         "palette": {k: v for k, v in pal.items() if k in used},
         "operations": ops,
         "metadata": {"style": style, "notes": notes},
     }
 
 
-NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 11, 27], facing south.",
-         "Decks: hold y=2..3 (bulkheads at z=14 and 23), lower gun deck floor y=4, weather deck y=7, cabin y=8..9, "
-         "quarterdeck y=10.",
-         "Fore mast z=11 (top y=22), yards at z=10, y=11/16/20; main mast z=19 (top y=24), yards at z=18, y=11/17/22.",
-         "Jib: rope on the head cleat [4, 21, 10], then on the bowsprit cleat [4, 9, 1]; clew cleat [4, 10, 10]."]
+NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 12, 27], facing south.",
+         "Decks: hold y=2..4 (bulkheads at z=14 and 23), lower gun deck floor y=5, weather deck y=8, cabin y=9..10, "
+         "quarterdeck y=11.",
+         "Fore mast z=11 (top y=23), yards at z=10, y=12/17/21; main mast z=19 (top y=25), yards at z=18, y=12/18/23.",
+         "Jib: rope on the head cleat [4, 22, 10], then on the bowsprit cleat [4, 10, 1]; clew cleat [4, 11, 10]."]
 ARMED_NOTES = NOTES + [
     "Guns: four a side on the lower gun deck at z=13, 17, 21, 25, muzzles at x=1 (west) and x=7 (east) behind open "
-    "gun ports; shot lockers (barrels) at [1|7, 5, 15] and [1|7, 5, 23].",
-    "Crow's nest on the main mast top at [4, 25, 19]; mast hoops at [3|5, 24, 19]; railing latches at "
-    "[0|8, 9, 22..24]: the template strings a net from every latch to its side's hoop when it is placed.",
-    "Swivel guns on the quarterdeck rails at [1|7, 12, 28]."]
+    "gun ports; shot lockers (barrels) at [1|7, 6, 15] and [1|7, 6, 23].",
+    "Crow's nest on the main mast top at [4, 26, 19]; mast hoops at [3|5, 25, 19]; railing latches at "
+    "[0|8, 10, 22..24]: the template strings a net from every latch to its side's hoop when it is placed.",
+    "Swivel guns on the quarterdeck rails at [1|7, 13, 28]."]
 
 
 def brig_cells(armed_variant):
-    return armed(blocks) if armed_variant else dict(blocks)
+    """The final cells (deepened) of either variant."""
+    return deepen(armed(blocks) if armed_variant else dict(blocks))
 
 
 def armed_spec(spec_id, name):

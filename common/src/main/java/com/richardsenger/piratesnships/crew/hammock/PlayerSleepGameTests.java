@@ -314,14 +314,12 @@ public final class PlayerSleepGameTests {
     public static void aHammockOfTheBrigSleeps(GameTestHelper h) {
         com.richardsenger.piratesnships.ship.sable.ShipBody ship = com.richardsenger.piratesnships.ship.template.BrigGameTests.brig(h,
                 com.richardsenger.piratesnships.ship.template.ShipTemplates.BRIG_ID);
-        BlockPos foot = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 5, 9));
-        BlockPos head = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 5, 10));
-        Sleeper[] p = {null};
-        h.runAfterDelay(60, () -> {
-            p[0] = sleeper(h, ship.toWorld(Vec3.atBottomCenterOf(com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship,
-                    new BlockPos(3, 5, 10)))));
-            setTimeOfDay(h, MIDNIGHT);
-        });
+        BlockPos foot = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 6, 9));
+        BlockPos head = com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship, new BlockPos(2, 6, 10));
+        // made at once: scheduling from a scheduled task changes the task map while it is being iterated
+        Sleeper[] p = {sleeper(h, ship.toWorld(Vec3.atBottomCenterOf(com.richardsenger.piratesnships.ship.template.BrigGameTests.plot(ship,
+                new BlockPos(3, 6, 10)))))};
+        h.runAfterDelay(60, () -> setTimeOfDay(h, MIDNIGHT));
         h.runAfterDelay(60 + DUSK, () -> {
             h.assertTrue(use(h, p[0], head).consumesAction(), "the brig's hammock did nothing");
             assertAsleepOnSeat(h, p[0], foot, head, "lying down on the brig");

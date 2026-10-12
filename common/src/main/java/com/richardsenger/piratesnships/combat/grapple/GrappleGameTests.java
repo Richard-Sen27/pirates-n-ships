@@ -461,7 +461,7 @@ public final class GrappleGameTests {
         h.assertTrue(player.getMainHandItem().isEmpty(), "the thrown hook is still in the hand");
         GrapplingHookEntity first = GrappleService.hookOf(player);
         h.assertTrue(first != null && first.getOwner() == player, "no hook out after the throw");
-        h.assertTrue(first.getDeltaMovement().length() > 0.5 * GrappleConfig.THROW_VELOCITY.get(), "the hook was not thrown");
+        h.assertTrue(first.getDeltaMovement().length() > 0.5 * GrappleConfig.speed(GrappleLaunch.Mode.THROW), "the hook was not thrown");
 
         GrapplingHookEntity second = GrappleService.launch(level, player, stand.add(0, 3, 0), new Vec3(0, 0.5, 0),
                 new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);

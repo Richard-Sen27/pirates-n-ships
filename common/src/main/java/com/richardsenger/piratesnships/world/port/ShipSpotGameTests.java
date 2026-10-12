@@ -39,6 +39,7 @@ import java.util.UUID;
  *     names the same place.</li>
  *     <li>{@link #noDeepWaterRefuses}: all shallows: no ship, the refusal is the action-bar "No deep water near the pier
  *     for her".</li>
+ *     <li>{@link #aBrigNeedsDeeperWaterThanASloop} (SHIP1): six blocks of water take a sloop, not a brig.</li>
  * </ul>
  */
 public final class ShipSpotGameTests {
@@ -175,6 +176,29 @@ public final class ShipSpotGameTests {
         h.assertTrue(ShipOrders.isNoDeepWater(d.refusal()), "the refusal: " + d.refusal().getString());
         h.assertTrue(SableShips.all(level).stream().noneMatch(b -> port.box().isInside(BlockPos.containing(b.worldBounds().getCenter()))),
                 "no ship placed");
+        PortRegistry.get(level.getServer()).remove(port.id());
+        h.succeed();
+    }
+
+    /**
+     * SHIP1: six blocks of water everywhere (the basin's floor at y 1): enough for a sloop (draught 2 + berth depth 3),
+     * too shallow for an ordered brig (draught 4 + 3): she is refused with the deep-water message and nothing is placed,
+     * while a sloop ordered at the same berth is delivered.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, batch = BATCH + "brig_too_deep", timeoutTicks = 100)
+    public static void aBrigNeedsDeeperWaterThanASloop(GameTestHelper h) {
+        basin(h, 48);
+        Port port = port(h);
+        ServerLevel level = h.getLevel();
+        ShipOrders.Delivery brig = ShipOrders.deliver(level, port, ShipTemplates.BRIG_ID, player(h), "SHIP1 test");
+        brig.berthed().map(b -> b.placed().assembly()).filter(a -> a != null && a.shipId() != null)
+                .ifPresent(a -> ShipTestCleanup.track(h, a.shipId()));
+        h.assertTrue(brig.berthed().isEmpty(), "a brig in six blocks of water");
+        h.assertTrue(ShipOrders.isNoDeepWater(brig.refusal()), "the refusal: " + brig.refusal().getString());
+        ShipOrders.Delivery sloop = ShipOrders.deliver(level, port, ShipTemplates.STARTER_SLOOP_ID, player(h), "SHIP1 test");
+        sloop.berthed().map(b -> b.placed().assembly()).filter(a -> a != null && a.shipId() != null)
+                .ifPresent(a -> ShipTestCleanup.track(h, a.shipId()));
+        h.assertTrue(sloop.berthed().isPresent(), "no sloop either: " + sloop.failure());
         PortRegistry.get(level.getServer()).remove(port.id());
         h.succeed();
     }

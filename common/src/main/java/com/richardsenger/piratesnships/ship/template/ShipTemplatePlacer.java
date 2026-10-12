@@ -6,6 +6,9 @@ import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.assembly.HullWater;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.assembly.ShipBlockRule;
+import com.richardsenger.piratesnships.ship.rigging.RailingLatchBlock;
+import com.richardsenger.piratesnships.ship.rigging.RatlineNets;
+import com.richardsenger.piratesnships.ship.rigging.RiggingConfig;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -204,6 +207,7 @@ public final class ShipTemplatePlacer {
                 level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
+        stringNets(level, id, template, rotation, origin);
         BlockPos helmWorld = helmLocal == null ? null : TemplatePlacement.toWorld(helmLocal, rotation, origin);
         AssemblyResult assembly = null;
         if (assemble) {
@@ -213,6 +217,47 @@ public final class ShipTemplatePlacer {
             assembly = ShipAssembler.assemble(level, helmWorld, player);
         }
         return new Result(Outcome.PLACED, id, template, origin, rotation, helmWorld, null, blocks.size(), surfaceY, seaLevel, assembly);
+    }
+
+    /**
+     * SHIP1: strings the template's ratline nets ({@link ShipTemplate#nets}) between its fittings as the ratline net item
+     * would ({@link RatlineNets#check}, {@link RatlineNets#string}), in the order listed, so a hoop's fan forms strand by
+     * strand. A net that cannot be strung (nets switched off, a fitting missing, the line blocked or too long for
+     * {@code rigging.net_max_length}) is left out with a warning, and a railing latch left holding no net is taken away
+     * again, as the game never leaves an orphan latch. Returns how many nets were strung.
+     */
+    static int stringNets(ServerLevel level, ResourceLocation id, ShipTemplate template, Rotation rotation, BlockPos origin) {
+        int strung = 0;
+        for (ShipTemplate.Net n : template.nets()) {
+            BlockPos a = TemplatePlacement.toWorld(n.a(), rotation, origin);
+            BlockPos b = TemplatePlacement.toWorld(n.b(), rotation, origin);
+            String why = null;
+            if (!RiggingConfig.NETS_ENABLED.get()) {
+                why = "nets are switched off";
+            } else if (RatlineNets.ring(level, a) == null || RatlineNets.ring(level, b) == null) {
+                why = "no fitting at both ends";
+            } else {
+                RatlineNets.Check check = RatlineNets.check(level, a, b, RiggingConfig.NET_MAX_LENGTH.get(),
+                        RiggingConfig.NET_MIN_PITCH.get());
+                if (check.refusal() == RatlineNets.Refusal.NONE && !check.boarding()) {
+                    RatlineNets.string(level, check.net());
+                    strung++;
+                } else {
+                    why = check.refusal() + (check.blocked() == null ? "" : " at " + check.blocked().toShortString());
+                }
+            }
+            if (why != null) {
+                if (RiggingConfig.NETS_ENABLED.get()) {
+                    Constants.LOG.warn("Ship template {}: the net from {} to {} was not strung: {}", id, n.a(), n.b(), why);
+                }
+                for (BlockPos end : List.of(a, b)) {
+                    if (level.getBlockState(end).getBlock() instanceof RailingLatchBlock && RatlineNets.netsOf(level, end).isEmpty()) {
+                        level.setBlock(end, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+        }
+        return strung;
     }
 
     /**

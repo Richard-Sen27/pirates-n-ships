@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * The grappling hook (docs/design.md §8.3, G11, GR3, GR4).
  * <ul>
- *   <li><b>Thrown by hand</b> (G11): use without a musket in the other hand throws it at {@code throw_velocity}
+ *   <li><b>Thrown by hand</b> (G11): use without a musket in the other hand throws it at {@code hand_throw_velocity} (GR7)
  *       ({@link GrappleService#throwHook}). The item leaves the hand (not in creative) and comes back when the hook
  *       is released or reeled in.</li>
  *   <li><b>Launched</b> (GR3): with the hook in the <i>off hand</i> and our musket in the main hand (with

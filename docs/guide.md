@@ -990,10 +990,23 @@ in the server config under `hazards`, the particles under the client's `hazard_v
 Every captain keeps their own chart. As you sail, the coasts within about 96 blocks are drawn in automatically:
 ink coastlines, hatched shallows, sandy beaches, and the open sea, where the odd sea serpent lurks. Craft a
 Chart (paper, leather, a feather) and use it to open your map. Drag to pan, scroll to zoom, and right-click to
-place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. Your ship
-shows where you are and which way you are heading. The M key opens the chart while you hold one in either hand; only
-if the server turns on `chart.open_without_item` (off by default) does it open without one. Other players can appear
-as ships (`chart.show_other_players`). Only the overworld's seas are charted.
+place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. There is no
+limit on markers (`chart.max_markers` 0; a number brings a cap back; an old config file keeps its old 64 until you
+change or delete that line). The **Markers (n)** button in the bottom-right corner opens a list of your markers,
+nearest first, each with its compass point and distance ("NW, 340 blocks"); click one and the chart centres on it
+and rings it for a moment; the wheel scrolls the list, Esc or the button closes it. Map boards have the same button
+when you draw on them. The wheel zooms out three steps further than before (`chart.max_zoom_out` 3: at the default
+4-block cells the widest view is 32 blocks per pixel, about 13,000 blocks across); far out the coasts are drawn
+coarser, the most common kind of ground per pixel, with the coast still inked. You are a small compass needle whose
+red tip points where you face. The ship you stand on is drawn as a ship pointing along its bow, and your own ships
+lying anywhere loaded are drawn in navy blue (`chart.show_ships`). **The chart never shows other players or their
+ships** (multiplayer: nobody can find you with a chart), nor the convoys and patrols of the world simulation. Ports
+are on every chart from the start (village, navy outpost, pirate island, each with its own icon and its name, or its
+id while ports have no names; `chart.ports_always_known`, false: only once you came near). Wrecks and the mod's other
+structures go on your chart for good once you have been within `chart.structure_reveal_distance` (96) blocks of
+them; vanilla structures never do (`chart.show_structures` turns all of this off). Hover over an icon for its legend.
+The M key opens the chart while you hold one in either hand; only if the server turns on `chart.open_without_item`
+(off by default) does it open without one. Only the overworld's seas are charted.
 
 ## 4. Crew
 
@@ -1673,7 +1686,7 @@ A slain pirate captain drops each piece of his clothing with a 35 % chance (serv
 | Merchant Flag | 1 stick, 2 white wool, 1 red dye | Flag for the flagpole. |
 | Navy Flag | 1 stick, 2 blue wool, 1 white dye | Flag for the flagpole. |
 | Jolly Roger | 1 stick, 2 black wool, 1 bone | Flag for the flagpole. |
-| Chart | paper, leather, feather | Opens your own chart (coastlines, markers). |
+| Chart | paper, leather, feather | Opens your own chart (coastlines, markers, ports and wrecks you know, your ships). |
 | Bounty Proof | none | Given for killing a target with a bounty. Hand it in for the reward. |
 | Captain's Whistle | none | Assigns crew to stations and gives orders from a radial menu. See [Crew](#4-crew). |
 
@@ -1819,7 +1832,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | The "Board!" order on/off (`board_order`), the widest gap jumped (`board_gap`, 2), gunners and helmsman staying (`boarders_keep_stations`), the clear deck's hold before "Her deck is yours" (`capture_seconds`), NPC boarding on/off and its delay (`npc_boarding`, `npc_board_delay`), the NPC recall (`npc_recall_outnumbered`, `npc_recall_flooded`), swords from the chests (`take_arms`), the punch (`unarmed_damage`), the crew's sword skill (`crew_skill`), the crossing's fallback (`cross_timeout_ticks`), how often boarders look around (`order_check_ticks`); `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
-| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |
+| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`); other players are never shown; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |
 
 **Client config**

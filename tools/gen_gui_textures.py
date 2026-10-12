@@ -655,7 +655,9 @@ def lockout():
 #     (64, 0)  marker icons, 9x9 each, 10 px apart: X, anchor, skull, port, danger
 #     (64, 10) selection ring, 11x11
 #     (76, 10) own ship (bow up = north), 9x9
-#     (86, 10) other player's ship, 9x9
+#     (86, 10) other player's ship, 9x9 (CHART2: the player's own ships they are not aboard)
+#     (96, 10) the player (CHART2): a compass needle, red tip = facing, 9x9
+#     (64, 22) structure icons (CHART2), 9x9 each, 10 px apart: village, navy outpost, pirate island, wreck, other
 #   item/chart.png, 16x16: the chart item, a rolled parchment with a red wax seal (placeholder until a Blockbench model)
 #   block/map_tile.png, item/map_tile.png, 16x16: the map tile's parchment face and item (work package MAP2, placeholders)
 EXTRAS = {}
@@ -886,6 +888,80 @@ SHIP = [
     "..OOOOO..",
 ]
 
+PLAYER = [  # a compass needle: the red tip points where the player faces (drawn turned)
+    "....O....",
+    "...ORO...",
+    "...ORO...",
+    "..ORRRO..",
+    "..ORRRO..",
+    ".OWWWWWO.",
+    ".OWWOWWO.",
+    "OWWO.OWWO",
+    "OOO...OOO",
+]
+
+SAND = rgb(220, 196, 142)
+PALM = rgb(74, 120, 84)
+PALM_L = rgb(118, 158, 104)
+
+STRUCTURES = [
+    ([  # seafarer village: two houses with red roofs
+        "..O......",
+        ".ORO.....",
+        "ORRRO.O..",
+        "OBBBOORO.",
+        "OBOBORRRO",
+        "OBOBOBBBO",
+        "OOOOOBOBO",
+        ".....BOBO",
+        ".....OOOO",
+    ], {"O": INK, "R": WAX, "B": PAPER_L}),
+    ([  # navy outpost: a stone tower with a navy flag
+        "....ONNN.",
+        "....ONNN.",
+        "....O....",
+        "O.O.O.O.O",
+        "OOOOOOOOO",
+        "OGGGGGGGO",
+        "OGGOOOGGO",
+        "OGGO.OGGO",
+        "OOOO.OOOO",
+    ], {"O": INK, "G": GREY_L, "N": NAVY}),
+    ([  # pirate island: a palm on a sandy mound
+        "OLLO.OLLO",
+        ".OOLLLOO.",
+        "...OWO...",
+        "...OWO...",
+        "....OWO..",
+        "....OWO..",
+        "..OSSSSO.",
+        ".OSSSSSSO",
+        "OOOOOOOOO",
+    ], {"O": INK, "L": PALM_L, "W": WOOD_L, "S": SAND}),
+    ([  # wreck: a broken hull, the mast askew, sinking in the waves
+        ".....O...",
+        "....OPO..",
+        "...O.PO..",
+        "..O..O...",
+        "OWWWOWWWO",
+        ".OWWWWWO.",
+        "..OOOOO..",
+        "SS.SS.SS.",
+        ".S..S..S.",
+    ], {"O": INK, "W": WOOD_L, "P": PAPER_L, "S": SEA_INK}),
+    ([  # another structure of the mod: a brass diamond
+        "....O....",
+        "...OBO...",
+        "..OBLBO..",
+        ".OBLBBBO.",
+        "OBLBBBBBO",
+        ".OBBBBDO.",
+        "..OBBDO..",
+        "...ODO...",
+        "....O....",
+    ], {"O": INK, "B": BRASS, "L": BRASS_L, "D": BRASS_D}),
+]
+
 RING = [
     "...OOOOO...",
     "..O.....O..",
@@ -914,6 +990,10 @@ def chart_sheet():
     blit(c, from_pattern(RING, {"O": BRASS_L}), 64, 10)
     blit(c, from_pattern(SHIP, {"O": INK, "B": WOOD_L, "S": PAPER_L}), 76, 10)
     blit(c, from_pattern(SHIP, {"O": INK, "B": WOOD_L, "S": NAVY_L}), 86, 10)
+    blit(c, from_pattern(PLAYER, {"O": INK, "R": WAX, "W": BONE}), 96, 10)
+    for i, (rows, colours) in enumerate(STRUCTURES):
+        assert len(rows) == 9 and all(len(r) == 9 for r in rows), i
+        blit(c, from_pattern(rows, colours), 64 + 10 * i, 22)
     return c
 
 

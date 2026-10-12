@@ -17,7 +17,8 @@ import java.util.Optional;
  * Server side of the chart's exploration (work package MAP1): every {@code chart.sample_interval_ticks} each player
  * in the overworld samples the loaded world within {@code chart.sample_radius} ({@link ChartSampler}) and merges it
  * into their chart ({@link ChartMerge}). Players are spread over the interval by their UUID so they do not all
- * sample in the same tick. Spectators chart nothing.
+ * sample in the same tick. Spectators chart nothing. CHART2: each sample also reveals the structures near the player
+ * ({@link ChartStructures#reveal}).
  */
 public final class ChartService {
 
@@ -71,6 +72,8 @@ public final class ChartService {
                     player.getGameProfile().getName(), ChartConfig.MAX_CELLS.get(), result.droppedRegions().size());
         }
         setData(player, result.data());
+        // CHART2: the ports and structures near the player go on the chart
+        ChartStructures.reveal(player);
         return Optional.of(result);
     }
 }

@@ -95,6 +95,8 @@ p.put(11, 1, Z0 - 1, "minecraft:barrel[facing=up,open=false]")
 p.put(10, 1, 0, "pirates_n_ships:cargo_crate")
 crate_stack(p, X1, 1, Z1 + 1, salt=405)
 
+# STR6: the hall's loot chest by the west wall
+p.loot_chest(1, 1, 7, "east", "pirate_island/tavern")
 p.connector(DOOR, 0, 0, "hut_in", "north", "minecraft:coarse_dirt")
 
 p.emit("long tavern hall with an open bar front, a hanging sign, a long bar, three tables and barrels outside",

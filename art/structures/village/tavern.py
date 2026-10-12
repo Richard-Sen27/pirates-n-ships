@@ -2,7 +2,7 @@
 as JSON. The door and the building connector are on the north (-z) side; row z 0 is the porch.
 
 Ground floor: the bar along the back with barrels behind it, two tables with stools, a hanging lantern, a hearth under
-the chimney, a staircase along the west wall. Upper floor: two beds, a table, a french door onto the gallery rail over
+the chimney, a staircase along the west wall. Upper floor: two beds, a table, a tall window over the gallery rail over
 the porch. Above the door a dark oak panel is left for a sign.
 
 Look (ST4a): a mossy cobblestone plinth, white render between stripped spruce corner and mid posts and the stripped oak
@@ -50,11 +50,12 @@ lantern_post(p, 4, 1, 0)
 lantern_post(p, 6, 1, 0)
 
 # a gallery rail over the porch (the box leaves one row, so it is a rail on a ledge, not a walk-out balcony): a slab
-# ledge on upside-down stair brackets, a fence rail, a french door behind it from the upper floor
+# ledge on upside-down stair brackets, a fence rail, a tall window behind it (STR6: a door here opened onto the rail)
 p.fill(1, FLOOR2, 0, 9, FLOOR2, 0, "minecraft:spruce_slab[type=top]")
 rafter_ends(p, [(x, FLOOR2 - 1, 0) for x in (1, 3, 7, 9)], "north")
 p.fill(1, FLOOR2 + 1, 0, 9, FLOOR2 + 1, 0, "fence")
-door(p, 5, FLOOR2 + 1, Z0)
+p.put(5, FLOOR2 + 1, Z0, "pane")
+p.put(5, FLOOR2 + 2, Z0, "pane")
 
 # windows: tall ones on the ground floor, single ones upstairs; shutters and sills where the box leaves room
 for x in (2, 8):
@@ -109,7 +110,7 @@ bed(p, 9, FLOOR2 + 1, 3, "north")
 bed(p, 9, FLOOR2 + 1, 7, "south")
 table(p, 6, FLOOR2 + 1, 5)
 p.put(5, FLOOR2 + 1, 5, "minecraft:spruce_stairs[facing=west,half=bottom]")
-p.put(9, FLOOR2 + 1, 5, "minecraft:chest[facing=west]")
+p.loot_chest(9, FLOOR2 + 1, 5, "west", "village/tavern")
 p.put(9, FLOOR2 + 2, 5, "lantern")
 p.put(4, FLOOR2 + 1, 2, "minecraft:barrel[facing=up]")
 p.put(6, FLOOR2 + 1, 8, "minecraft:red_carpet")

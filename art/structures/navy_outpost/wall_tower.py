@@ -91,7 +91,7 @@ p.put(4, 2, 4, "lantern")
 p.put(2, 1, 3, "pirates_n_ships:cargo_crate")
 p.put(2, WALK + 1, 4, "pirates_n_ships:cargo_barrel")
 p.put(2, WALK + 2, 4, "lantern")
-p.put(4, WALK + 1, 4, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+p.loot_chest(4, WALK + 1, 4, "west", "navy_outpost/store_house")
 p.put(3, CORBEL, 3, "lantern_hanging")
 
 age(p)

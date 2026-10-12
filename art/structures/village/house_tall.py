@@ -27,7 +27,7 @@ p.put(1, 5, 6, "minecraft:spruce_trapdoor[facing=north,half=top,open=true,powere
 # upper floor: two beds, a chest, a bookshelf, a lantern
 bed(p, 5, 5, 5, "south", "blue")
 bed(p, 3, 5, 5, "south", "white")
-p.put(5, 5, 2, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+p.loot_chest(5, 5, 2, "west", "village/house")
 p.put(1, 5, 2, "minecraft:bookshelf")
 p.put(2, 5, 3, "minecraft:white_carpet")
 tie_beam_lantern(p, X0, X1, 4, top + 1)

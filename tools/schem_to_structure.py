@@ -17,8 +17,9 @@ Rules:
 - Sponge schematic version 2 (``Palette`` + ``BlockData`` at the root) and version 3 (everything inside a
   ``Schematic`` compound, blocks in ``Blocks`` with ``Palette``/``Data``/``BlockEntities``) are read. Block data is a
   varint array indexed ``x + z * Width + y * Width * Length``.
-- Air (``minecraft:air``, ``cave_air``, ``void_air``) and ``structure_void`` are dropped, so placing the template
-  never carves a box of air out of the sea; the ship's own hold is drained when it is placed.
+- Air (``minecraft:air``, ``void_air``) and ``structure_void`` are dropped, so placing the template never carves a box
+  of air out of the sea; the ship's own hold is drained when it is placed. ``minecraft:cave_air`` is kept (STR6): a
+  structure piece writes it where it must clear the terrain, at the approach to every door (``buildspec.Piece.spec``).
 - Block entities are kept: their data becomes the block's ``nbt`` (with ``id``; the position keys are dropped).
   Version 2 keeps the data at the top level of each block entity, version 3 under ``Data``.
 - Entities are not copied (``entities`` is empty); the script says how many it skipped.
@@ -56,7 +57,7 @@ STRUCTURES_IN = DEFAULT_IN / "structures"
 PONDER_GROUP = "ponder"
 PONDER_DIR = ROOT / "common" / "src" / "main" / "resources" / "assets" / "pirates_n_ships" / "ponder"
 DATA_VERSION_1_21_1 = 3955
-DROPPED = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air", "minecraft:structure_void"}
+DROPPED = {"minecraft:air", "minecraft:void_air", "minecraft:structure_void"}
 HELM = "pirates_n_ships:helm"
 JIGSAW = "minecraft:jigsaw"
 

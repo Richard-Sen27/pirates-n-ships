@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.port.PortService;
+import com.richardsenger.piratesnships.world.structure.DoorAccess;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
 import com.richardsenger.piratesnships.world.structure.RegionSchematic;
 import com.richardsenger.piratesnships.world.structure.StructureLayout;
@@ -286,6 +287,9 @@ public final class VillageLayoutGameTests {
         } catch (IOException e) {
             throw new IllegalStateException("could not write the region of seed " + seed, e);
         }
+        // STR6: every door can be walked through from both sides (after the dump, so a failure leaves the region to look at)
+        List<String> blockedDoors = DoorAccess.blockedDoors(level, start.getBoundingBox());
+        helper.assertTrue(blockedDoors.isEmpty(), "seed " + seed + ": " + blockedDoors.size() + " blocked doors: " + blockedDoors);
         helper.succeed();
     }
 

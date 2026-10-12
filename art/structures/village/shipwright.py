@@ -103,6 +103,8 @@ p.put(8, 1, 6, "minecraft:grindstone[face=floor,facing=north]")
 # the apron: a lantern post either side of the way in, the connector in the middle
 lantern_post(p, 3, 1, 0)
 lantern_post(p, 7, 1, 0)
+# STR6: a loot chest of the yard's tools and stores by the front post
+p.loot_chest(9, 1, 1, "west", "village/shipwright")
 p.connector(5, 0, 0, "building_in", "north", "minecraft:gravel")
 
 p.emit("open shipwright's shed on stripped spruce posts with a dark roof and a half-built hull",

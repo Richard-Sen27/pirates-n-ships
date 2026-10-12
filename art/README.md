@@ -2946,7 +2946,7 @@ deeper, the footings hang in the water.
 | `street` | 7×4×7 | 54 | cobbled crown with gravel and moss patches between stone brick kerbs (some mossy or cracked), dirt path verges with coarse patches, a lantern post, a barrel with a flower pot (both clear of the doors at z 3); `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
 | `street_end` (terminator) | 7×4×3 | 29 | cobbled turning place, the kerbs turning along the far edge, a lantern post between two benches, two barrels (one with a flower pot); `street_in` [3, 0, 0] | |
 | `house_small` | 7×9×9 | 261 | 7×7 cottage: mossy cobblestone plinth, white render between stripped spruce corner posts, framed door under a hood, windows with sills (outside on the front and back, set into the wall on the gables), shutters on the back, spruce wall plate and gable band, rafter ends under both eaves, render gables with attic lights, brick chimney on the east gable over a furnace hearth, red tile roof; bed, table and stool, chest, barrel with lantern, crafting table with flower pot, bookshelf, rug, a lantern on a tie beam; `building_in` [3, 0, 0] | |
-| `tavern` | 11×15×11 | 774 | 11×9, two floors: mossy plinth, render between stripped spruce corner and mid posts and oak door posts, spruce band at the upper floor, tall framed ground floor windows and single upper ones with shutters and sills, a gallery rail on a slab ledge and brackets over the porch with a french door behind it, lanterns either side of the door, rafter ends, boarded gables with lights, brick chimney on the east gable over a hearth; bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs, a crate, rugs, a lantern on a tie beam; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel`, `cargo_crate` |
+| `tavern` | 11×15×11 | 774 | 11×9, two floors: mossy plinth, render between stripped spruce corner and mid posts and oak door posts, spruce band at the upper floor, tall framed ground floor windows and single upper ones with shutters and sills, a gallery rail on a slab ledge and brackets over the porch with a tall window behind it (a french door before STR6), lanterns either side of the door, rafter ends, boarded gables with lights, brick chimney on the east gable over a hearth; bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs, a crate, rugs, a lantern on a tie beam; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel`, `cargo_crate` |
 | `shipwright` | 11×13×10 | 469 | open shed on posts (mossy cobblestone footings, knee braces under the beams) with a dark roof, a king post truss in the open front gable, a back wall of two cobblestone courses, a spruce band and render with three windows, an oak boarded gable with a light; a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, a hoist chain from a collar beam over the bow, sawhorses, stacked logs and planks, crafting and smithing tables, a grindstone, a tar cauldron; `building_in` [5, 0, 0] | |
 
 Renders: `art/renders/structures/village/{dock_head,pier,street,street_end,house_small,tavern,shipwright}.png`.
@@ -3533,7 +3533,7 @@ building on a lane):
 | `barracks_mess` | 11×10×14 | 555 | a mess hall in front (long table, benches, hearth, dresser of barrels) and a bunk room behind a partition; ridge north-south | soldier [3, 1, 4] |
 | `brig_large` | 13×8×10 | 523 | the brig's masonry round a guard room and four cells of brig bars with brig doors (closed, unlocked), straw, buckets, barred windows | soldier [6, 1, 3] facing the cells |
 | `signal_tower` | 7×14×7 | 300 | a stone shaft, a gallery on dark oak corbels, a signal fire (a lit campfire on a hay bale in an iron cage) | soldier [1, 11, 1] |
-| `officers_quarters` | 11×13×9 | 572 | stone below, timber above, a balcony over the door, the captain's office (cartography table, lectern, bookshelves), a dining table, two bedrooms | officer [3, 1, 4], soldier [8, 1, 3] |
+| `officers_quarters` | 11×13×9 | 572 | stone below, timber above, a balcony over the door (a tall window behind its rail since STR6), the captain's office (cartography table, lectern, bookshelves), a dining table, two bedrooms | officer [3, 1, 4], soldier [8, 1, 3] |
 | `powder_magazine` | 9×8×9 | 310 | thick stone walls sunk into an earth bank to two rows, a turf vault, an iron door, kegs, crates and shot, no flame | soldier [2, 1, 5] |
 | `armoury` | 9×10×9 | 341 | stone walls with barred windows under a spruce gable, a forge (blast furnace, anvil, grindstone, smithing table), racks, chests | soldier [6, 1, 3] |
 | `gun_battery` | 11×6×9 | 240 | a raised stone platform with two cannons in embrasures facing away from its lane, gabions (composters), shot | soldier [5, 3, 4] |
@@ -3680,3 +3680,70 @@ others, sizes within bounds, every row used, existing blocks and states (mod blo
 states), `waterlogged=true` wherever the block has the property, no jigsaws, the wreck loot table (and no seed) in
 every chest, the sea chest in the sloop, the generated loot table's items and doubloon count, and a fresh conversion
 equal to the committed NBT. The wrecks were built on lab port 8769.
+
+### Structure polish (STR6)
+The human, 2026-10-12: "Remove blocks in front of doors at generated structures (EVERY single structure has that
+problem). Replace half slabs at Leuchtturm with full blocks, looks strange and detached. Add loot. navy_post directly
+next to mansion, should not happen." (design.md §10.1, the post-0.1.0 list.)
+
+**The door rule.** Both sides of every door must be walkable: the cell one step along the door's `facing` and the
+cell one step against it, on the door's two rows, hold nothing with a collision box (no block at all in the template,
+air, water, a carpet, a pressure plate, a torch, a plant, a sign or banner, a rail; a cobweb counts as blocking); a
+bottom slab on the door's lower row is a step, and then the two rows above it count. A jigsaw there counts as its
+`final_state`. `tools/check_structures.py` checks it on every structure piece (`data/.../structure/<group>`, not the
+ship templates nor Ponder scenes; a side beyond the template's box is left to the placed check) and refuses a bad
+template at conversion like FIX3's block entity rules; `world/structure/DoorAccess` checks the same rule on the placed
+blocks in the island, village and outpost layout GameTests (`pirate_islandPlaced*`, `villagePlaced*`,
+`navyOutpostPlaced*`), so a neighbour piece or a decoration in front of a door is caught as well. Pieces that failed
+and why:
+
+| piece | what stood there | fix |
+|---|---|---|
+| `village/tavern` | the upper-floor "french door" opened onto the gallery's fence rail: the box leaves one row in front, so the rail stands right before the door | a tall window (two panes) instead of the door |
+| `navy_outpost/officers_quarters` | the same: the balcony door opened onto the balcony's rail on the one front row | a tall window instead of the door |
+| `navy_outpost/brig_large` | the inner wall's brick ledge at head height (y 2) ran past the first cell's door on both sides | the ledge stops one row short of the cells' front |
+| `navy_outpost/lane_end_privy` | a one-deep booth: the back wall stood right behind the door | the booth is two deep (piece 7×5×6, was 7×5×5), the floor with the seat behind the door |
+| `village/lighthouse` | the lantern room's door opened onto the glowstone light in its 1×1 middle | the door is a pane; the lantern room is glazed all round |
+
+Every other door passed in its template and in the placed layouts on the flat test beach. The real cause of "every
+structure" showed in the REL3 smoke world (seed 2718281828, ten ports cut out with `tools/world_region.py`): the
+**terrain**. The converter drops plain air, so a piece clears nothing it does not build, and where a building, a wall's
+sally port or a lane end sits on rising ground (a dune, a grassy slope) the beard does not always take the ground away:
+grass blocks, sand and coarse dirt stood on the doors' rows (both sides of the outposts' sally ports, a lane end's
+store door, an island hut's door). The fix is in the pipeline: `buildspec.Piece.spec` writes `minecraft:cave_air` into
+every free cell inside the box on both sides of every door, on the door's two rows (`door_approaches`), and
+`tools/schem_to_structure.py` keeps cave air (it still drops `air`, `void_air` and `structure_void`, so no piece carves
+the sea). `DoorAccessGameTests` places every port piece with a door into four rows of dirt and checks its doors. A side
+beyond the piece's box (a hut whose door is on its box edge) is the neighbour's cell and can still hold terrain.
+
+**The lighthouse.** Its gallery was a 7×7 ring of bottom stone brick slabs on the corbels, which read as a thin plate
+floating on the tower; it is a course of full stone bricks now (`lighthouse.py`, render
+`art/renders/structures/village/lighthouse.png`).
+
+**Loot chests.** `buildspec.Piece.loot_chest(x, y, z, facing, table)` writes a vanilla chest whose block entity data
+is only `{LootTable: "pirates_n_ships:chests/<table>"}` (no seed: the loot is rolled when a player first opens it; the
+FIX3 rules accept it, its id is the chest's). Tables (datagen, `world/structure/StructureLoot`, written to
+`data/pirates_n_ships/loot_table/chests/<structure>/<kind>.json`):
+
+| table | pieces | contents (rolls) |
+|---|---|---|
+| `village/house` | `house_small`, `house_tall`, `house_fisher`, `house_garden`, `chapel` (alms chest), `warehouse` (new chest) | doubloons 1-4 at 50 %; 2-4 of bread, salted fish, apples, potatoes, carrots, string, wool, candles, cloth, limes, a book |
+| `village/tavern` | `tavern`, `inn` | doubloons 2-6; 2-4 of rum, bread, cooked cod, salt pork, hardtack, tobacco, glass bottles |
+| `village/shipwright` | `shipwright` (new chest), `net_loft` | doubloons 1-3 at 30 %; 3-5 of nails, rope, cloth, spruce planks, iron, a carpenter's hammer, a saw, a shipwright's toolkit |
+| `navy_outpost/barracks` | `barracks`, `barracks_long`, `barracks_mess`, `brig`, `brig_large`, `officers_quarters`, `fort_gate` (office) | doubloons 1-4 at 50 %; 2-4 of hardtack, lead shot, gunpowder, salt pork, limes, a cutlass, a pistol |
+| `navy_outpost/armoury` | `armoury` | 3-5 of lead shot, gunpowder, cannonballs, iron, cutlass, saber, pistol, musket |
+| `navy_outpost/store_house` | `store_house` (new chest), `wall_tower`, `round_tower` (landing) | 3-5 of hardtack, salt pork, salted fish, limes, gunpowder, lead shot, rum, rope |
+| `pirate_island/hut` | `tent`, `tent_large`, `hut_porch`, `hut_stilts`, `hut_thatch`, `camp_start` (loot heap) | doubloons 1-6 at 60 %; 2-4 of rum, salted fish, cooked cod, tobacco, gold nuggets, lead shot, bones, spices, an emerald |
+| `pirate_island/tavern` | `tavern_hut`, `tavern_deck`, `tavern_long` (new chests) | doubloons 2-8; 2-4 of rum, tobacco, salt pork, cooked cod, spices, gold nuggets |
+| `pirate_island/captain` | `captains_hut`, `captains_lookout`, `captains_cabin` (a new vanilla chest beside the sea chest, which stays empty) | a blank treasure map; doubloons 6-16; one of cutlass, pistol, saber, rapier; 1-3 of rum, gold, emeralds, lead shot |
+
+Every pool's rolls are `pirates_n_ships:configured_rolls` (`ConfiguredRolls`): the base times the server config's
+`world.structures.loot_rolls` (a fraction rounds at random). The processor list `pirates_n_ships:connections` that every
+port pool element names now runs `pirates_n_ships:loot_chests` (`LootChestProcessor`) after the connections: while
+`world.structures.loot` is off it places these chests without their table (wrecks and buried treasure keep theirs).
+The wreck chests and the buried treasure are unchanged.
+
+**Ports apart.** The navy outposts' structure set has a vanilla `exclusion_zone` of 8 chunks against
+`pirates_n_ships:seafarer_villages`; the pirate islands' set 6 chunks against the villages (`exclusion_zone`) and the
+outposts (`exclusion_zones`, a list `ConfiguredSpreadPlacement` adds). Why 8 and 6: `OutpostData.VILLAGE_EXCLUSION_CHUNKS`,
+`IslandData.PORT_EXCLUSION_CHUNKS`.

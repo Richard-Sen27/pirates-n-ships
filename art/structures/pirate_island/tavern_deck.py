@@ -92,6 +92,8 @@ crate_stack(p, X1, 1, Z1 + 1, salt=414)
 rope_coil(p, X0, 1, Z1 + 1, layers=3)
 patch(p, X0, DECK0, X1, Z1, reach=1, salt=415)
 
+# STR6: the shack's loot chest by the west wall
+p.loot_chest(1, 2, 8, "east", "pirate_island/tavern")
 p.connector(STEP, 0, 0, "hut_in", "north", "minecraft:coarse_dirt")
 
 p.emit("grog shack behind a plank terrace with barrel tables, a serving hatch under an awning and a hanging sign",

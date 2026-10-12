@@ -1,0 +1,11 @@
+{
+  "helm": [
+    4,
+    12,
+    27
+  ],
+  "name": "ship_template.pirates_n_ships.brig",
+  "price": 725,
+  "structure": "pirates_n_ships:ships/brig",
+  "waterline": 4
+}

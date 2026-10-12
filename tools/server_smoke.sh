@@ -195,6 +195,7 @@ if [[ -n "$done_line" ]]; then
     here="execute in minecraft:overworld positioned $sx 64 $sz run"
     rcon "forceload add $((sx - 32)) $((sz - 32)) $((sx + 32)) $((sz + 32))" \
         "$here pirates ship place starter_sloop assemble" \
+        "execute in minecraft:overworld positioned $((sx + 16)) 64 $sz rotated 0 0 run pirates ship place navy_brig_armed assemble" \
         "$here pirates mob spawn pirate 2" \
         "$here pirates mob spawn shark" \
         "pirates mob spawn sailor" \

@@ -129,7 +129,7 @@ class ChartCodecsTest {
     @Test
     void payloadsRoundTrip() {
         ChartData d = sample();
-        ChartSettings s = new ChartSettings(true, true, 4, 64, 3);
+        ChartSettings s = new ChartSettings(true, true, 4, 64, 3, com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
         assertEquals(new ChartSettingsPayload(s), roundTrip(ChartSettingsPayload.CODEC, new ChartSettingsPayload(s)));
         ChartOpenPayload open = new ChartOpenPayload(s, d.markers());
         assertEquals(open, roundTrip(ChartOpenPayload.CODEC, open));

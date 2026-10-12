@@ -5,7 +5,10 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
+import com.richardsenger.piratesnships.ship.template.ShipTemplates;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -178,6 +181,24 @@ public final class LaneVoyageGameTests {
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = 400, batch = BATCH)
     public static void villageLaneToAnIslandCarriesAConvoy(GameTestHelper h) {
+        // SHIP1: the convoy's hull is pinned to the sloop, the hull this test was tuned for (the defaults pick a brig
+        // too); a brig convoy has its own test, aBrigConvoySailsTheLaneToTheIsland
+        ConfigOverrides.during(h, VoyageConfig.MERCHANT_TEMPLATES, List.of(ShipTemplates.STARTER_SLOOP_ID.toString()));
+        laneConvoy(h, 300, 4.0);
+    }
+
+    /**
+     * SHIP1: a merchant brig on the same lane: she appears on the longest leg and sails on along the lane with the wind
+     * astern; the window and the distance are measured from her real way (she is heavier than the sloop and slower to
+     * gather way from rest).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = 700, batch = BATCH + "_brig")
+    public static void aBrigConvoySailsTheLaneToTheIsland(GameTestHelper h) {
+        ConfigOverrides.during(h, VoyageConfig.MERCHANT_TEMPLATES, List.of(ShipTemplates.BRIG_ID.toString()));
+        laneConvoy(h, 600, 8.0);
+    }
+
+    private static void laneConvoy(GameTestHelper h, int checkAt, double minSailed) {
         ConfigOverrides.during(h, MaterializeConfig.LINGER_TICKS, 2_000); // no player near: keep the ship real for the test
         basin(h);
         MinecraftServer server = h.getLevel().getServer();
@@ -196,7 +217,7 @@ public final class LaneVoyageGameTests {
             return departed;
         });
         List<Lane.Point> pts = v.waypoints();
-        // the middle of the longest leg, where the sloop has room
+        // the middle of the longest leg, where the ship has room
         int leg = 0;
         double best = -1, at = 0, sum = 0;
         for (int i = 1; i < pts.size(); i++) {
@@ -214,7 +235,7 @@ public final class LaneVoyageGameTests {
         VoyageData.get(server).put(placed);
         double heading = Lane.heading(pts.get(leg), pts.get(leg + 1));
         String dim = h.getLevel().dimension().location().toString();
-        WindOverride.set(dim, heading + 180.0, 8.0, h.getLevel().getGameTime() + 320);
+        WindOverride.set(dim, heading + 180.0, 8.0, h.getLevel().getGameTime() + checkAt + 20);
         double[] start = new double[1];
         ShipBody[] ship = new ShipBody[1];
         h.runAtTickTime(5, () -> guard(clean, () -> {
@@ -222,6 +243,7 @@ public final class LaneVoyageGameTests {
             Voyage m = Voyages.get(server, v.id()).orElseThrow();
             m.shipId().ifPresent(id -> ShipTestCleanup.track(h, id));
             h.assertTrue(o == Materializer.Outcome.SPAWNED, "materialize: " + o + " at " + placed.position());
+            h.assertTrue(m.template().equals(v.template()), "template");
             ship[0] = SableShips.byId(h.getLevel(), m.shipId().orElseThrow());
             h.assertTrue(ship[0] != null, "no ship");
             h.assertTrue(HelmCourses.course(ship[0].id()) != null, "no course along the lane");
@@ -229,14 +251,22 @@ public final class LaneVoyageGameTests {
         }));
         h.onEachTick(() -> {
             if (ship[0] != null && h.getTick() > 5 && h.getTick() % 10 == 0) Materializer.update(server, v.id());
+            if (ship[0] != null && h.getTick() % 50 == 0) {
+                Voyage m = Voyages.get(server, v.id()).orElse(null);
+                SailingRuntime rt = ship[0].isRemoved() ? null : SailingRuntimes.getOrCreate(ship[0]);
+                Constants.LOG.info("[SHIP1 lane] {} t {}: state {}, progress {}, speed {}, sails {}", v.template().getPath(), h.getTick(),
+                        m == null ? "-" : m.state(), m == null ? "-" : String.format(java.util.Locale.ROOT, "%.1f", m.progress() - start[0]),
+                        rt == null ? "-" : String.format(java.util.Locale.ROOT, "%.2f", rt.shipFrameVelocity(ship[0], new org.joml.Vector3d()).z),
+                        rt == null ? "-" : rt.unfurledCount() + "/" + rt.sailCount());
+            }
         });
-        h.runAtTickTime(300, () -> {
+        h.runAtTickTime(checkAt, () -> {
             guard(clean, () -> {
                 Voyage m = Voyages.get(server, v.id()).orElseThrow();
                 h.assertTrue(m.state() == Voyage.State.MATERIALISED, "state " + m.state());
                 Vec3 c = Materializer.centre(ship[0]);
                 double sailed = m.progress() - start[0];
-                h.assertTrue(sailed >= 4.0, "sailed only " + sailed + " blocks along the lane in 295 ticks (centre " + c + ")");
+                h.assertTrue(sailed >= minSailed, "sailed only " + sailed + " blocks along the lane in " + (checkAt - 5) + " ticks (centre " + c + ")");
             });
             WindOverride.clear(dim);
             clean.run();

@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""CHART3: the chart held in 3D. Writes the chart's six item models and its two PAL arm animations.
+"""CHART3/CHART4: the chart held in 3D. Writes the chart's item models (the closed chart and the unroll frames), their
+Blockbench sources in art/models/ and the two PAL arm animations.
 
 The chart is a parchment on two wooden rollers (a double scroll). Closed it is the two rolls side by side with a cord
 round them (`chart`, the normal item); while its owner reads the chart screen it unrolls between both hands over half a
-second (`chart_unroll_0` .. `chart_unroll_3`, `chart_open`, chosen by the item property `pirates_n_ships:chart_open`
+second (`chart_unroll_0` .. `chart_unroll_12`, `chart_open`, chosen by the item property `pirates_n_ships:chart_open`
 through overrides on `chart`), and rolls up again when the screen closes. The arms follow the PAL animations
 `chart_read` (raise the rolled chart with the hands together, then draw the hands apart to the shoulders) and
 `chart_stow` (the same keys backwards), in `assets/pirates_n_ships/chart_animations/`.
 
-Frames: the progress p goes 0 -> 1 in ChartHeldMotion.UNROLL_TICKS (10) ticks. The PAL time is p * 0.5 s. Frame k is
-shown from its threshold on (overrides, the last match wins). Each frame's third-person display is solved for the arm
+Frames: the progress p goes 0 -> 1 in ChartHeldMotion.UNROLL_TICKS (10) ticks, linearly, and the item property is p
+interpolated over the partial tick. The PAL time is p * 0.5 s. The motion itself is eased (CHART4): at progress p the
+arms and rollers stand where the linear CHART3 motion stood at ease(p) (smoothstep, ease-in-out), so it starts and
+stops gently; the PAL keys sample that curve every 25 ms (and at every frame's own time), and the frames split it:
+`chart_unroll_0` holds the rolled chart while the fists come together (up to the raise's end), then twelve frames share
+the unroll evenly in p, each drawn for the pose at its middle, and `chart_open` at p = 1. Closing plays the same keys
+backwards (`chart_stow`), so the chart rolls up along the same curve. Frame k is shown from its threshold on
+(overrides, the last match wins). Each frame's third-person display is solved for the arm
 pose at its middle time, so the chart stays level and centred between the hands while the right (holding) arm turns:
 the rollers sit in both fists and the face is turned to the reader, tilted up towards the eyes. The left-hand entries are solved through
 the left-hand chain the same way (they come out as ART17's rule says: the right-hand values, the game mirrors them).
@@ -274,8 +281,35 @@ REST_RIGHT = (-18.0, 0.0, 0.0)   # vanilla's holding-an-item arm; PAL hands over
 REST_LEFT = (0.0, 0.0, 0.0)
 
 
+UNROLL_FRAMES = 12              # CHART4: frames between the rolled chart and the open one (14 frames in all)
+KEY_STEP = 0.025                 # s between PAL keys
+
+
+def ease(p):
+    """CHART4: the ease-in-out of the unroll (smoothstep), ChartHeldMotion.ease."""
+    p = max(0.0, min(1.0, p))
+    return p * p * (3 - 2 * p)
+
+
+def uneased(e):
+    """The progress p with ease(p) = e (bisection)."""
+    lo, hi = 0.0, 1.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if ease(mid) < e:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def arm_angles(t):
-    """(right, left) arm rotations in degrees (vanilla angles, PAL file values) at time t of chart_read."""
+    """(right, left) arm rotations in degrees (vanilla angles, PAL file values) at PAL time t of chart_read (eased)."""
+    return linear_arm_angles(ease(t / LENGTH) * LENGTH)
+
+
+def linear_arm_angles(t):
+    """CHART3's linear motion: the arm rotations at time t of the uneased half second."""
     if t <= RAISE_TIME:
         f = t / RAISE_TIME
         right = [REST_RIGHT[0] + (READ_PITCH - REST_RIGHT[0]) * f, -TOGETHER_YAW * f, 0.0]
@@ -343,14 +377,20 @@ def roller_half(t):
 
 
 # ------------------------------------------------------------------------------------------------ the frames
-# (model, override threshold of chart_open, the PAL time its pose is solved for)
-FRAMES = [
-    ('chart_unroll_0', 0.01, RAISE_TIME),
-    ('chart_unroll_1', 0.3, 0.2),
-    ('chart_unroll_2', 0.5, 0.3),
-    ('chart_unroll_3', 0.7, 0.42),
-    ('chart_open', 1.0, 0.5),
-]
+def build_frames():
+    """(model, override threshold of chart_open, the PAL time its pose is solved for), CHART4's eased frames."""
+    raise_end = uneased(RAISE_TIME / LENGTH)            # the progress at which the fists are together
+    out = [('chart_unroll_0', 0.01, round(raise_end * LENGTH, 3))]
+    step = (1.0 - raise_end) / UNROLL_FRAMES
+    for j in range(1, UNROLL_FRAMES + 1):
+        start = raise_end + (j - 1) * step
+        middle = start + step / 2
+        out.append(('chart_unroll_%d' % j, round(start, 4), round(middle * LENGTH, 3)))
+    out.append(('chart_open', 1.0, LENGTH))
+    return out
+
+
+FRAMES = build_frames()
 
 # first person: the open chart low in the view and tilted away like vanilla's map (ItemInHandRenderer's
 # applyItemArmTransform puts the item origin at (+-0.56, -0.52, -0.72); the translation takes it to the middle)
@@ -421,8 +461,17 @@ def key_time(t):
     return s + '0' if s.endswith('.') else s
 
 
+def key_times():
+    """Every KEY_STEP, every frame's own time and the mirror of each (so chart_stow keys the same instants)."""
+    times = {round(i * KEY_STEP, 3) for i in range(int(round(LENGTH / KEY_STEP)) + 1)}
+    for _, _, t in FRAMES:
+        times.add(round(t, 3))
+        times.add(round(LENGTH - t, 3))
+    return sorted(times)
+
+
 def animation(name, reverse):
-    times = [0.0, 0.05, 0.1, RAISE_TIME, 0.25, 0.35, 0.45, LENGTH]
+    times = key_times()
     bones = {}
     for bone, idx in (('right_arm', 0), ('left_arm', 1)):
         keys = {}
@@ -434,6 +483,49 @@ def animation(name, reverse):
         'animation_length': LENGTH, 'loop': False if reverse else 'hold_on_last_frame', 'bones': bones}}}
 
 
+# ------------------------------------------------------------------------------------------------ Blockbench sources
+BBMODELS = os.path.join(ROOT, 'art/models')
+TEXTURE_INDEX = {'#0': 0, '#2': 1, '#3': 2, '#4': 3}       # the order of the textures in the template project
+FACES = ('north', 'east', 'south', 'west', 'up', 'down')
+
+
+def bb_element(model_name, i, e):
+    """One Java block element as a Blockbench element (deterministic uuid from the model and element names)."""
+    import uuid
+    out = {'name': e['name'], 'box_uv': False, 'render_order': 'default', 'rescale': False, 'locked': False,
+           'shade_direction_override': '', 'light_emission': 0, 'export': True, 'scope': 0,
+           'allow_mirror_modeling': True, 'from': e['from'], 'to': e['to'], 'autouv': 0, 'color': i % 8}
+    rot = e.get('rotation')
+    if rot:
+        axis = 'xyz'.index(rot['axis'])
+        angles = [0, 0, 0]
+        angles[axis] = rot['angle']
+        out['rotation'] = angles
+        out['origin'] = rot['origin']
+    else:
+        out['origin'] = [0, 0, 0]
+    faces = {}
+    for d in FACES:
+        f = e['faces'].get(d)
+        faces[d] = {'uv': f['uv'], 'texture': TEXTURE_INDEX[f['texture']]} if f else {'uv': [0, 0, 0, 0], 'texture': None}
+    out['faces'] = faces
+    out['type'] = 'cube'
+    out['uuid'] = str(uuid.uuid5(uuid.NAMESPACE_URL, 'pirates_n_ships/%s/%s' % (model_name, e['name'])))
+    return out
+
+
+def bbmodel(template, name, m):
+    """A Blockbench project of model m, with the template project's settings and textures."""
+    out = {k: v for k, v in template.items() if k not in ('elements', 'outliner', 'display', 'groups')}
+    out['name'] = name
+    out['credit'] = m['credit']
+    out['elements'] = [bb_element(name, i, e) for i, e in enumerate(m['elements'])]
+    out['groups'] = []
+    out['outliner'] = [e['uuid'] for e in out['elements']]
+    out['display'] = m['display']
+    return out
+
+
 def write(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
@@ -441,13 +533,20 @@ def write(path, data):
 
 
 def main():
+    with open(os.path.join(BBMODELS, 'chart_open.bbmodel'), encoding='utf-8') as f:
+        template = json.load(f)
     for name, m in frames().items():
         write(os.path.join(MODELS, name + '.json'), m)
+        with open(os.path.join(BBMODELS, name + '.bbmodel'), 'w', encoding='utf-8', newline='\n') as f:
+            f.write(json.dumps(bbmodel(template, name, m), separators=(',', ':')))
     write(os.path.join(ANIMS, 'chart_read.json'), animation('chart_read', False))
     write(os.path.join(ANIMS, 'chart_stow.json'), animation('chart_stow', True))
     for name, threshold, t in FRAMES:
-        print(name, 'half %.2f' % rollers(name, t),
+        print(name, 'from %.4f' % threshold, 'at %.3f s' % t, 'half %.2f' % rollers(name, t),
               solve_display(t, False, 0)['rotation'], solve_display(t, True, 0)['rotation'])
+    print('ChartHeldMotion.FRAMES:')
+    for name, threshold, t in FRAMES:
+        print('            new Frame("%s", %sf, %sf),' % (name, repr(threshold), repr(round(t / LENGTH, 4))))
 
 
 if __name__ == '__main__':

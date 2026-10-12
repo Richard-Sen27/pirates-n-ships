@@ -200,3 +200,43 @@ pose of the surface it bit into (renders `art/renders/grapple_poses.png`). The r
 
 Tell us: is the hook big enough to read at 20 blocks (it is half a block long now), and does the hanging hook sit
 right on a rail you hit low on its side (the hook hangs from where it struck, not from the top edge)?
+
+## GR7 (2026-10-12): a gentle hand throw, one pull per click, hanging and swinging on the rope
+
+A hook thrown by hand flies at `grapple.hand_throw_velocity` (0.7; the musket keeps `throw_velocity` 3.0 × 1.6). Each
+right-click on your own rope (an empty hand or a hook in it) is one pull: the rope gets `grapple.rope_climb_step` (1.5)
+blocks shorter and draws you up, then `grapple.pull_cooldown_ticks` (10) ticks pass before the next pull takes. Off
+the ground the rope holds you at its length and you swing under the hook (`grapple.swing`, `swing_push` 0.015,
+`swing_damping` 0.03). Replaces GR6's continuous climb ride (steps 2, 3 and 7 of "GR5 no floating rope end, GR6 climb
+only" now climb in pulls).
+
+1. **Hand throw range.** On flat ground throw level, then lob at about 40° up.
+   - **Expected:** the level throw lands about 9 blocks away, the lob about 20, never near the 32-block rope. From
+     alongside another ship, a lob at her rail (2 blocks above you, 4 to 6 away) catches it.
+2. **Pull and cooldown.** Throw at a wall face 4+ blocks above your feet. Right-click once.
+   - **Expected:** you rise about 1.5 blocks toward the hook and hang there; the hook icon in your hotbar (if you have
+     another hook, or in creative) shows the grey cooldown sweep for half a second. Spam right-click: no pull faster than
+     twice a second, no message, no second hook thrown in creative. Hold right-click: a steady climb, one step every
+     half second; near the hook a pull puts you on top of the block it bit into.
+3. **The rope's look.** While you hang (F5 to see yourself, and from a second player):
+   - **Expected:** hanging at full length the rope is a straight line from the hook's eye to your hand; straight below
+     the hook it is vertical; when you swing in toward the hook (the rope slack) it sags in a smooth curve. On the
+     ground it looks as before (a slight sag).
+4. **Swing (liana).** Hang from a hook under a beam or a branch, off the ground. Walk forward, then back, in time with
+   the swing.
+   - **Expected:** you swing out further with each push; without input the swing dies down in about 5 seconds. You
+     never get farther from the hook than the rope; no fall damage while you hang.
+5. **Step off an edge.** Stand on a ledge with the hook above and beyond the edge, walk off.
+   - **Expected:** the rope catches you at the length it had, you swing down under the hook and up the other side.
+6. **Let go.** While hanging, select a hotbar slot with another item (a sword).
+   - **Expected:** you drop; the hook stays latched. Select the empty slot again in the air: the rope catches you again
+     (at the length you have then). Sneaking also drops you from a hook on land; on a hook in a ship sneak freezes the
+     rope for hauling (GR5) and keeps holding you.
+7. **On a ship under way.** Hook the end of a yard (or the rail of a tall ship) and hang over her side while she sails.
+   - **Expected:** you travel with the ship under the hook, not dragged behind or yanked; the swing feels the same as on
+     land. Report any jitter (the client predicts the swing, the server only corrects you beyond 3 blocks).
+8. **Config.** `grapple.swing = false`: in the air the rope does not hold you, and right-clicking your own rope does not
+   climb it. `grapple.pull_cooldown_ticks = 0`: every click pulls.
+
+Tell us: is 9 blocks the right hand range, is 1.5 blocks per pull and half a second right, and does the swing feel
+like a liana (enough push, enough damping)?

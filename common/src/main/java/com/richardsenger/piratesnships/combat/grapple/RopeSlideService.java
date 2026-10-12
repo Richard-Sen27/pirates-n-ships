@@ -25,10 +25,11 @@ import java.util.WeakHashMap;
  * for the latency). The rope must be latched; the player must be within {@code board_reach} of the rope point the look
  * ray passes within {@code board_pick_radius} of. GR5 ("no floating near end"): a rope is a line to slide along only
  * when both ends are fixed, the hook and a cleat or mooring ring it is tied to; then the player rides a
- * {@link RopeRiderEntity} at the picked point. A rope whose near end is in the thrower's hand is never pinned in mid-air:
- * its thrower using it is pulled hand over hand toward the hook instead ({@link #tickPull}, the rope still running from
- * the hook to their hand), and nobody else can mount it. GR6: that pull is only a climb, allowed when the hook is at
- * least {@code climb_min_rise} above the thrower's feet ({@link #isClimb}); otherwise the use does nothing but show a
+ * {@link RopeRiderEntity} at the picked point. A rope whose near end is in the thrower's hand is never pinned in mid-air,
+ * and nobody else can mount it. Its thrower using it pulls once (GR7, {@link RopeSwingService#pull}: the rope gets
+ * {@code rope_climb_step} shorter and draws them up, at most once per {@code pull_cooldown_ticks}; between pulls they
+ * hang and swing on it). GR6: that pull is only a climb, allowed when the hook is at least {@code climb_min_rise} above
+ * the thrower's feet ({@link #isClimb}) or the thrower already hangs below it; otherwise the use does nothing but show a
  * hint to tie the rope off.
  *
  * <p><b>Riding.</b> {@link #tickRider} moves the rider by {@link RopeSlide#step} along the rope's live ends and hangs
@@ -67,6 +68,8 @@ public final class RopeSlideService {
         HAND_BUSY,
         /** GR4: the hook left less than {@code grab_cooldown_ticks} ago ({@link RopeSlide.Grab#TOO_SOON}). */
         TOO_SOON,
+        /** GR7: the thrower pulled their own rope less than {@code pull_cooldown_ticks} ago: the use is ignored. */
+        COOLDOWN,
         NOT_LATCHED, OUT_OF_REACH
     }
 
@@ -117,6 +120,10 @@ public final class RopeSlideService {
         if (pull && player.isShiftKeyDown()) {
             return Board.BUSY; // sneaking hauls the rope (GR5) and sneak + use lets go of it: no pull
         }
+        if (pull) {
+            // GR7: one pull on the own rope (it runs from the hand, so no pick): shorter by a step, then the player hangs
+            return RopeSwingService.pull(level, player, hook);
+        }
         Vec3 a = hook.ropeNearEnd(level);
         Vec3 b = hook.ropeFarEnd(level);
         if (a == null || b == null || a.distanceTo(b) < RopeSlide.MIN_LENGTH) {
@@ -127,12 +134,7 @@ public final class RopeSlideService {
         if (pick == null) {
             return Board.OUT_OF_REACH;
         }
-        if (pull && !isClimb(b.y, player.getY(), GrappleConfig.CLIMB_MIN_RISE.get())) {
-            hintTieOff(level, player);
-            return Board.NOT_A_CLIMB; // GR6: level, below or across a gap: tie the rope off to use it as a line
-        }
-        RopeRiderEntity rider = pull ? RopeRiderEntity.createPull(level, hook, player.position())
-                : RopeRiderEntity.create(level, hook, pick.t(), hangPos(RopeSlide.at(a, b, pick.t())));
+        RopeRiderEntity rider = RopeRiderEntity.create(level, hook, pick.t(), hangPos(RopeSlide.at(a, b, pick.t())));
         level.addFreshEntity(rider);
         if (!player.startRiding(rider)) {
             rider.discard();
@@ -162,7 +164,7 @@ public final class RopeSlideService {
     private static final Map<Player, Long> LAST_HINT = new WeakHashMap<>();
 
     /** Shows {@code player} the tie-off hint on the status bar, at most once per {@link #HINT_INTERVAL_TICKS}. */
-    private static void hintTieOff(ServerLevel level, Player player) {
+    static void hintTieOff(ServerLevel level, Player player) {
         long now = level.getGameTime();
         synchronized (LAST_HINT) {
             if (!hintDue(now, LAST_HINT.getOrDefault(player, Long.MIN_VALUE))) {
@@ -206,10 +208,6 @@ public final class RopeSlideService {
             rider.letGo(null);
             return;
         }
-        if (rider.pulling()) {
-            tickPull(level, rider, player, hook);
-            return;
-        }
         if (!hook.nearEndFixed()) {
             rider.letGo(null); // GR5: the rope's anchor was lost, it is no line to slide along any more
             return;
@@ -229,59 +227,6 @@ public final class RopeSlideService {
             return;
         }
         rider.slideTo(step.t(), step.speed(), step.dir(), hangPos(RopeSlide.at(a, b, step.t())));
-        player.resetFallDistance();
-    }
-
-    /** Gap kept between the pulled player's box and the blocks around it when checking for a way ahead [blocks]. */
-    private static final double PULL_CLEARANCE = 1.0e-3;
-    /** Shortest leg [blocks] of the pull worth trying a step along (a shorter one would stand still for ever). */
-    private static final double MIN_PULL_STEP = 1.0e-3;
-
-    /**
-     * One tick of the thrower pulling themselves along their own hand-held rope (GR5): their feet move straight toward
-     * the standing spot at the hook ({@link #landing}) at {@code slide_min_speed}, the rope's crawling speed, until they
-     * are within {@code dismount_distance} of it (they land there) or the way ahead is blocked (they let go where they
-     * are). GR6: a straight step that is blocked is tried as its vertical leg (up the face of the wall or cliff the hook
-     * bit into, the way a climb runs into the lip), then as its horizontal leg; only when both are blocked too do they
-     * let go. The rope keeps running from the hook to their hand. A rope tied off meanwhile drops the puller.
-     */
-    static void tickPull(ServerLevel level, RopeRiderEntity rider, Player player, GrapplingHookEntity hook) {
-        Vec3 b = hook.ropeFarEnd(level);
-        if (b == null || hook.nearEndFixed()) {
-            rider.letGo(null);
-            return;
-        }
-        Vec3 land = landing(level, hook, true, b);
-        Vec3 feet = rider.position();
-        Vec3 to = land.subtract(feet);
-        double dist = to.length();
-        RopeSlide.Params p = GrappleConfig.slideParams();
-        if (dist <= p.dismountDistance()) {
-            rider.letGo(land.add(0, LANDING_NUDGE, 0));
-            level.playSound(null, land.x, land.y, land.z, SoundEvents.ARMOR_EQUIP_LEATHER.value(), SoundSource.PLAYERS, 0.8f, 1.0f);
-            return;
-        }
-        double v = Math.min(p.minSpeed(), dist);
-        Vec3 next = null;
-        // GR6: straight toward the spot; blocked (the lip of a wall or cliff the hook bit into), climb straight up the
-        // face first, or (under an overhang) work along it; blocked every way, the player lets go where they are
-        for (Vec3 dir : new Vec3[]{to, new Vec3(0, to.y, 0), new Vec3(to.x, 0, to.z)}) {
-            double len = dir.length();
-            if (len < MIN_PULL_STEP) {
-                continue;
-            }
-            Vec3 cand = feet.add(dir.scale(Math.min(v, len) / len));
-            Vec3 move = cand.subtract(player.position());
-            if (level.noCollision(player, player.getBoundingBox().move(move).deflate(PULL_CLEARANCE))) {
-                next = cand;
-                break;
-            }
-        }
-        if (next == null) {
-            rider.letGo(null);
-            return;
-        }
-        rider.slideTo(0.0, next.distanceTo(feet), 1, next);
         player.resetFallDistance();
     }
 

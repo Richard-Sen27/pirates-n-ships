@@ -88,12 +88,13 @@ public final class PortSiteGameTests {
         ServerLevel level = helper.getLevel();
         int seaY = seaY(helper);
         BlockPos site = new BlockPos(PLAN_X, seaY, PLAN_SHORE_Z + 8);
-        // the sea to the north (first water 8 out) with a sandbar 20 to 21 out, under the pier's run; the sea to the east
-        // from 10 out. The north has as much water in the probe's 24 blocks and is nearer: WG1's pick
+        // the sea to the north (first water 9 out, 14 of the probe's 24 columns) with a sandbar 20 to 21 out, under the pier's
+        // run; the sea to the east from 12 out (13 columns). WG1 picks the north
+
         PortStructure.Terrain sandbar = (x, z) -> sea(seaY, z < PLAN_SHORE_Z && !(site.getZ() - z >= 20 && site.getZ() - z <= 21)
-                || x - site.getX() >= 10);
+                || x - site.getX() >= 12);
         PortStructure.Terrain barred = (x, z) -> sea(seaY, z < PLAN_SHORE_Z && !(site.getZ() - z >= 20 && site.getZ() - z <= 21)
-                || x - site.getX() >= 10 && !(x - site.getX() >= 20 && x - site.getX() <= 21));
+                || x - site.getX() >= 12 && !(x - site.getX() >= 22 && x - site.getX() <= 23));
         ChunkGenerator beach = StructureLayoutGameTests.beachGenerator(helper, level, seaY + 2);
         for (ResourceKey<Structure> key : KINDS) {
             PortStructure structure = structure(level, key);

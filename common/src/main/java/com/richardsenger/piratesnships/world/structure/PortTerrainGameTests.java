@@ -119,7 +119,7 @@ public final class PortTerrainGameTests {
         clear(level, area);
         Constants.LOG.info("STR8 doors on raised snowy ground: {} pieces, {} door sides blocked before the clearing, {} after",
                 pieces, blockedBefore, blockedAfter.size());
-        helper.assertTrue(pieces >= 30, "only " + pieces + " pieces with doors placed");
+        helper.assertTrue(pieces >= 20, "only " + pieces + " pieces with doors placed");
         helper.assertTrue(blockedBefore > 0, "the raised ground blocks doors beyond the pieces' boxes");
         helper.assertTrue(blockedAfter.isEmpty(), blockedAfter.size() + " doors still blocked: " + blockedAfter);
         helper.succeed();

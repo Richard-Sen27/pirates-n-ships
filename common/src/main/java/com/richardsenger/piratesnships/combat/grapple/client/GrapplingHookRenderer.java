@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
 import com.richardsenger.piratesnships.combat.grapple.HookPose;
+import com.richardsenger.piratesnships.combat.grapple.RopeCurve;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -33,7 +34,8 @@ import java.util.List;
  * thrower's hand (docs/design.md §8.3). A
  * latched hook is drawn at its plot position through the ship's render pose ({@link ClientShipPoses}), so it sits on
  * the moving hull without lag; the rope is a thin square strip with the {@code rope.png} texture, like the stays of
- * {@code sailing.client.StayClothRenderer}, straight while taut (also while a player hauls on it, GR5) and sagging otherwise. The near end is the thrower's
+ * {@code sailing.client.StayClothRenderer}, straight while taut (also while a player hauls on it, GR5) and sagging otherwise;
+ * while its thrower hangs on it (GR7) it is the catenary of its length ({@link ClientRopes#handRopeLength}, {@link RopeCurve}). The near end is the thrower's
  * hand or the mooring ring or cleat it is tied to (GR1, RP1, {@link ClientRopes#fixedNearEnd}); players sliding on it
  * pull it into straight pieces through their hands.
  */
@@ -93,7 +95,11 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
             Vector3f to = new Vector3f((float) hand.x, (float) hand.y, (float) hand.z);
             VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE));
             List<Vec3> grips = hook.state() == GrapplingHookEntity.State.LATCHED ? ClientRopes.grips(hook, at, end, partialTick) : List.of();
-            if (grips.isEmpty()) {
+            double hanging = ring == null && grips.isEmpty() ? ClientRopes.handRopeLength(hook, at, end, partialTick) : Double.NaN;
+            if (!Double.isNaN(hanging)) {
+                // GR7: the rope its thrower hangs on is a catenary of its length: straight at full length, sagging when slack
+                curve(vc, pose.last(), base, at, end, hanging, light);
+            } else if (grips.isEmpty()) {
                 float len = from.distance(to);
                 float sag = hook.taut() ? 0f : Math.min(MAX_SAG, SAG_PER_BLOCK * len);
                 rope(vc, pose.last(), from, to, sag, light);
@@ -125,6 +131,25 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
             float len = prev.distance(next);
             beam(vc, p, prev, next, v, v + len, light);
             v += len;
+            prev = next;
+        }
+    }
+
+    /**
+     * GR7: the rope from {@code a} to {@code b} (world) as {@link #SEGMENTS} straight pieces along the catenary of
+     * {@code length} ({@link RopeCurve}), drawn relative to {@code base}.
+     */
+    private static void curve(VertexConsumer vc, PoseStack.Pose p, Vec3 base, Vec3 a, Vec3 b, double length, int light) {
+        Vector3f prev = null;
+        float v = 0f;
+        for (Vec3 point : RopeCurve.sample(a, b, length, SEGMENTS)) {
+            Vec3 rel = point.subtract(base);
+            Vector3f next = new Vector3f((float) rel.x, (float) rel.y, (float) rel.z);
+            if (prev != null) {
+                float len = prev.distance(next);
+                beam(vc, p, prev, next, v, v + len, light);
+                v += len;
+            }
             prev = next;
         }
     }

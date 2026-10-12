@@ -129,7 +129,7 @@ public final class AnchorEntities {
         }
         if (t.entity != null) {
             t.entity.markSynced();
-            t.entity.setChain(status, pos);
+            t.entity.setChain(status, pos, AnchorPose.of(true, anchor.state().phase(), anchor.resting(), status != null && status.taut()));
         }
         effects(level, ship, t, anchor, status, hawseWorld, pos);
         t.lastPhase = anchor.state().phase();

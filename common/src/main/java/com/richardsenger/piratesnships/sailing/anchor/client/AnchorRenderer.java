@@ -2,10 +2,9 @@ package com.richardsenger.piratesnships.sailing.anchor.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntity;
-import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorPose;
 import com.richardsenger.piratesnships.sailing.anchor.ChainCurve;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -28,7 +27,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
+import org.joml.Quaternionf;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 /**
  * Renders the visible anchor (docs/design.md §5.3): a code-built anchor model about two blocks tall (ring, stock,
@@ -37,8 +38,9 @@ import org.joml.Vector3d;
  * ship's render pose every frame, so the chain and its curve follow the moving, swinging hull without lag.
  *
  * <p>A stowed anchor lives in the ship's plot, so Sable already moves and rotates it with the ship
- * ({@code LevelRendererMixin}); an anchor that is out lives in world space and hangs straight down, turned with the
- * ship's heading.
+ * ({@code LevelRendererMixin}); an anchor that is out lives in world space, turned with the ship's heading and lying
+ * as its {@link AnchorPose} says (GR4: falling along the chain, hanging upright, on the bottom along the seabed toward
+ * the ship with a fluke dug in), eased from one pose to the next; the chain is shackled to the ring in every pose.
  */
 public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
 
@@ -111,28 +113,32 @@ public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
     public void render(AnchorEntity e, float yaw, float pt, PoseStack pose, MultiBufferSource buffers, int light) {
         boolean out = e.isOut();
         Vec3 hawsePlot = e.hawse();
-        double armsYaw = e.armsAlongX() ? 0.0 : Math.PI / 2;
+        Vector3f arms = e.armsAlongX() ? new Vector3f(1f, 0f, 0f) : new Vector3f(0f, 0f, 1f);
+        AnchorPose.Kind kind = out ? e.anchorPose() : AnchorPose.Kind.STOWED;
+        Vec3 hawse = out ? ClientShipPoses.toWorld(e.level(), hawsePlot, pt) : null;
+        double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()), z = Mth.lerp(pt, e.zo, e.getZ());
+        Quaternionf rot;
         if (out) {
-            // hanging free: turn with the ship's heading (the plot's arm axis seen in world space)
-            Quaterniond rot = ClientShipPoses.orientation(e.level(), hawsePlot, pt);
-            if (rot != null) {
-                Vector3d axis = rot.transform(e.armsAlongX() ? new Vector3d(1, 0, 0) : new Vector3d(0, 0, 1));
-                armsYaw = Math.atan2(-axis.z, axis.x);
+            // GR4: turned with the ship's heading (the plot's arm axis seen in world space), lying as the pose says
+            Quaterniond ship = ClientShipPoses.orientation(e.level(), hawsePlot, pt);
+            if (ship != null) {
+                Vector3d axis = ship.transform(new Vector3d(arms.x, arms.y, arms.z));
+                arms.set((float) axis.x, 0f, (float) axis.z);
             }
+            Vector3f toHawse = hawse != null ? new Vector3f((float) (hawse.x - x), (float) (hawse.y - y), (float) (hawse.z - z))
+                    : new Vector3f(0f, 1f, 0f);
+            rot = e.easeRotation(AnchorPose.orientation(kind, toHawse, arms), e.tickCount + pt);
+        } else {
+            // stowed in the plot: Sable turns the plot with the ship
+            rot = AnchorPose.orientation(AnchorPose.Kind.STOWED, new Vector3f(0f, 1f, 0f), arms);
         }
         pose.pushPose();
-        pose.translate(0.0, AnchorTravel.HEIGHT, 0.0);
-        pose.mulPose(Axis.YP.rotation((float) armsYaw));
-        pose.scale(-1f, -1f, 1f);
+        pose.mulPose(AnchorPose.modelMatrix(rot, kind));
         model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, OverlayTexture.NO_OVERLAY);
         pose.popPose();
-        if (out) {
-            Vec3 hawse = ClientShipPoses.toWorld(e.level(), hawsePlot, pt);
-            if (hawse != null) {
-                double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()), z = Mth.lerp(pt, e.zo, e.getZ());
-                chain(e, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(CHAIN)), x, y, z,
-                        hawse.x - x, hawse.y - y, hawse.z - z);
-            }
+        if (hawse != null) {
+            Vector3f ring = AnchorPose.ring(rot, kind); // the chain is shackled to the ring in every pose
+            chain(e, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(CHAIN)), x, y, z, ring, hawse.x - x, hawse.y - y, hawse.z - z);
         }
         super.render(e, yaw, pt, pose, buffers, light);
     }
@@ -143,13 +149,14 @@ public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
      * seabed); falling, hanging or heaved up, the chain runs straight from the hawse, since it pays out or is wound in
      * as the anchor moves. Lit per point from the world, since it can reach from the seabed to the deck.
      */
-    private void chain(AnchorEntity e, PoseStack pose, VertexConsumer vc, double x, double y, double z, double hx, double hy, double hz) {
-        double ry = AnchorTravel.HEIGHT;
-        double distance = Math.sqrt(hx * hx + (hy - ry) * (hy - ry) + hz * hz);
+    private void chain(AnchorEntity e, PoseStack pose, VertexConsumer vc, double x, double y, double z, Vector3f ring,
+                       double hx, double hy, double hz) {
+        double rx = ring.x, ry = ring.y, rz = ring.z;
+        double distance = Math.sqrt((hx - rx) * (hx - rx) + (hy - ry) * (hy - ry) + (hz - rz) * (hz - rz));
         double length = Math.max(e.paidOut(), distance);
         boolean resting = e.isResting();
         double floor = resting ? FLOOR_LIFT : Double.NEGATIVE_INFINITY;
-        int n = curve.compute(0.0, ry, 0.0, hx, hy, hz, length, e.isTaut() || !resting, floor, ChainCurve.segmentsFor(length));
+        int n = curve.compute(rx, ry, rz, hx, hy, hz, length, e.isTaut() || !resting, floor, ChainCurve.segmentsFor(length));
         PoseStack.Pose p = pose.last();
         int lightFrom = light(e, x, y, z, 0);
         for (int i = 0; i < n; i++) {

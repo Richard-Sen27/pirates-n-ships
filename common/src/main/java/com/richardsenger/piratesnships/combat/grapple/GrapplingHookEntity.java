@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -14,6 +15,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -30,6 +32,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
+import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -64,6 +69,10 @@ import java.util.UUID;
  * hook on a railing or railing gate ({@code #pirates_n_ships:grapple_latches}, {@code grapple.latches_hold}), and a haul
  * pulling harder than {@code grapple.railing_break_force} tears that block out and lets the hook go.
  *
+ * <p><b>Pose</b> (GR4, {@link HookPose}): in flight the yaw and pitch follow the velocity exactly ({@link #updateRotation});
+ * latching stores the pose of the face it bit ({@link #pose()}, {@link #latchRotation()}, synched, in the frame of that
+ * block), so every client draws the same; free, it falls point down.
+ *
  * <p>The thrown item travels with the hook ({@link #getItem()}) and goes back to the thrower when the hook is released,
  * unless a snapped rope loses it ({@code rope_breaks_lose_hook}). Hooks are not saved with the chunk: a logout
  * releases them first ({@link GrappleService#onLogout}).
@@ -82,6 +91,10 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Optional<BlockPos>> TIED_RING = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     /** Multiple of {@code grapple.gravity} of this flight (GR4: lower for a musket shot). */
     private static final EntityDataAccessor<Float> GRAVITY_FACTOR = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.FLOAT);
+    /** GR4: the latched pose's {@link HookPose.Kind} (ordinal), meaningful only while {@link State#LATCHED}. */
+    private static final EntityDataAccessor<Byte> LATCH_KIND = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.BYTE);
+    /** GR4: the latched pose, in the frame of the block it bit (the ship's plot, or the world). */
+    private static final EntityDataAccessor<Quaternionf> LATCH_ROT = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.QUATERNION);
 
     /** How far below the eyes the thrower holds the rope [blocks] (the renderer's third-person hand height). */
     public static final double HAND_BELOW_EYES = 0.45;
@@ -124,6 +137,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private int anchorRefreshAt;
     /** Stall detector of the rope, updated every physics substep by {@link GrappleService}. */
     private final GrappleRules.Holding holding = new GrappleRules.Holding();
+    /** Client: {@link #tickCount} when the hook was last seen latching, for the settle (GR4); -1 before. */
+    private int latchedAtTick = -1;
 
     public GrapplingHookEntity(EntityType<? extends GrapplingHookEntity> type, Level level) {
         super(type, level);
@@ -143,6 +158,11 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         setItem(hook);
         this.consumed = consumed;
         setDeltaMovement(velocity);
+        // GR4: point first from the start, not swung in from yaw 0
+        setYRot(HookPose.yaw(velocity.x, velocity.z));
+        setXRot(HookPose.pitch(velocity.x, velocity.y, velocity.z));
+        yRotO = getYRot();
+        xRotO = getXRot();
     }
 
     @Override
@@ -154,6 +174,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         builder.define(PLOT_OFFSET, new Vector3f());
         builder.define(TIED_RING, Optional.empty());
         builder.define(GRAVITY_FACTOR, 1.0f);
+        builder.define(LATCH_KIND, (byte) HookPose.Kind.HANGING.ordinal());
+        builder.define(LATCH_ROT, new Quaternionf());
     }
 
     @Override
@@ -191,6 +213,66 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
 
     private void setState(State s) {
         entityData.set(STATE, (byte) s.ordinal());
+    }
+
+    /**
+     * GR4: the hook's pose ({@link HookPose}): {@link HookPose.Kind#FLYING} in flight, the synched latched pose while
+     * latched, {@link HookPose.Kind#FALLING} while it lies free and is pulled back (both sides).
+     */
+    public HookPose.Kind pose() {
+        return switch (state()) {
+            case FLYING -> HookPose.Kind.FLYING;
+            case RETRACTING -> HookPose.Kind.FALLING;
+            case LATCHED -> {
+                byte b = entityData.get(LATCH_KIND);
+                yield b >= 0 && b < HookPose.Kind.values().length ? HookPose.Kind.values()[b] : HookPose.Kind.HANGING;
+            }
+        };
+    }
+
+    /** GR4: the latched pose's rotation in the frame of the block it bit, the ship's plot or the world (copy, both sides). */
+    public Quaternionf latchRotation() {
+        return new Quaternionf(entityData.get(LATCH_ROT));
+    }
+
+    /**
+     * GR4: the hook's rotation in its own frame ({@link HookPose}) for the pose of this tick, without a ship's turn:
+     * in flight from its yaw and pitch (which follow the velocity, {@link #updateRotation}), latched the synched pose,
+     * free point down.
+     */
+    public Quaternionf poseRotation(float partialTick) {
+        return switch (state()) {
+            case FLYING -> HookPose.fromYawPitch(Mth.rotLerp(partialTick, yRotO, getYRot()), Mth.lerp(partialTick, xRotO, getXRot()));
+            case LATCHED -> latchRotation();
+            case RETRACTING -> HookPose.falling(getYRot());
+        };
+    }
+
+    /** Client: ticks since the hook was seen latching (with the partial tick), for the settle; huge when unknown. */
+    public float ticksSinceLatch(float partialTick) {
+        return latchedAtTick < 0 ? Float.MAX_VALUE : tickCount - latchedAtTick + partialTick;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (level().isClientSide && (STATE.equals(key) || LATCH_ROT.equals(key)) && state() == State.LATCHED) {
+            latchedAtTick = tickCount;
+        }
+    }
+
+    /**
+     * GR4: in flight the hook points along its velocity exactly (vanilla eases a projectile's angles by a fifth per
+     * tick, so a hook would fly sideways for a few ticks after the throw and lag behind the arc).
+     */
+    @Override
+    protected void updateRotation() {
+        Vec3 v = getDeltaMovement();
+        if (state() != State.FLYING || v.lengthSqr() < 1.0e-10) {
+            return;
+        }
+        setYRot(HookPose.yaw(v.x, v.z));
+        setXRot(HookPose.pitch(v.x, v.y, v.z));
     }
 
     /** The rope is taut and hauling (server: computed every tick; client: synched). */
@@ -525,7 +607,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         if (c == null) {
             return false;
         }
-        latch(level, c.ship(), c.block(), c.center(), true);
+        Vec3 v = inFrameOf(c.ship(), getDeltaMovement());
+        latch(level, c.ship(), c.block(), c.center(), true, HookPose.latched(HookPose.Kind.HANGING, 0, 1, 0, v.x, v.y, v.z), HookPose.Kind.HANGING);
         return true;
     }
 
@@ -645,7 +728,13 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             // RAIL3: a railing (#grapple_latches) holds like a ring where the hook bit, and can be torn out
             boolean strong = !ring && GrappleRules.holdsLikeRing(false, state.is(GrappleContent.GRAPPLE_LATCHES),
                     GrappleConfig.LATCHES_HOLD.get());
-            latch(level, ship, pos, ring ? ((RopeAnchor) state.getBlock()).anchorPoint(state, pos) : at, ring || strong);
+            // GR4: the pose from the face it bit and the way it flew, both in the frame of that block
+            boolean hangs = ring || state.is(GrappleContent.GRAPPLE_LATCHES);
+            Direction face = result.getDirection();
+            HookPose.Kind pose = HookPose.latchKind(face.getStepX(), face.getStepY(), face.getStepZ(), hangs);
+            Vec3 v = inFrameOf(ship, getDeltaMovement());
+            latch(level, ship, pos, ring ? ((RopeAnchor) state.getBlock()).anchorPoint(state, pos) : at, ring || strong,
+                    HookPose.latched(pose, face.getStepX(), face.getStepY(), face.getStepZ(), v.x, v.y, v.z), pose);
             onStrongPoint = strong;
         } else {
             miss(ship != null ? ship.toWorld(at) : at, false);
@@ -663,7 +752,9 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
      * null) onto the world block {@code block} at world position {@code at}; {@code ring}: the block is a mooring
      * ring or cleat, which holds the hook harder ({@link #breakLength}).
      */
-    void latch(ServerLevel level, @Nullable ShipBody ship, BlockPos block, Vec3 at, boolean ring) {
+    void latch(ServerLevel level, @Nullable ShipBody ship, BlockPos block, Vec3 at, boolean ring, Quaternionf pose, HookPose.Kind kind) {
+        entityData.set(LATCH_KIND, (byte) kind.ordinal());
+        entityData.set(LATCH_ROT, new Quaternionf(pose));
         onRing = ring;
         onStrongPoint = false;
         load = 0.0;
@@ -680,6 +771,16 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         level.playSound(null, world.x, world.y, world.z, SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 0.9f);
         level.playSound(null, world.x, world.y, world.z, SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 0.8f, 1.0f);
         level.sendParticles(ParticleTypes.CRIT, world.x, world.y, world.z, 6, 0.1, 0.1, 0.1, 0.1);
+    }
+
+    /** A world direction {@code v} in the frame of {@code ship}'s plot (unchanged without a ship). */
+    private static Vec3 inFrameOf(@Nullable ShipBody ship, Vec3 v) {
+        if (ship == null) {
+            return v;
+        }
+        Quaterniond toPlot = ship.orientation().conjugate();
+        Vector3d d = toPlot.transform(new Vector3d(v.x, v.y, v.z));
+        return new Vec3(d.x, d.y, d.z);
     }
 
     /** The hook missed: it lies at {@code worldPos} and is pulled back after {@code retract_ticks}. */

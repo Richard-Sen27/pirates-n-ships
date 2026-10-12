@@ -216,6 +216,29 @@ public final class ShipTemplatePlacer {
     }
 
     /**
+     * Places template {@code id} with its origin at {@code origin} turned by {@code rotation} (a spot found by
+     * {@code world.port.ShipSpots}, STR7), the waterline row on {@code surfaceY}; refuses when a cell is not free, drains
+     * the hold and assembles on request with {@code player} as owner.
+     */
+    public static Result placeAtOrigin(ServerLevel level, ResourceLocation id, BlockPos origin, Rotation rotation, int surfaceY,
+                                       boolean assemble, @Nullable Player player) {
+        ShipTemplate template = ShipTemplates.TYPE.server().get(id).orElse(null);
+        if (template == null) {
+            return Result.fail(Outcome.UNKNOWN_TEMPLATE, id, null, null);
+        }
+        StructureTemplate structure = structure(level, template).orElse(null);
+        if (structure == null || structure.getSize().getX() < 1) {
+            return Result.fail(Outcome.MISSING_STRUCTURE, id, template, null);
+        }
+        List<LocalBlock> blocks = blocks(structure, level.holderLookup(Registries.BLOCK));
+        BlockPos helmLocal = helm(template, blocks);
+        if (assemble && helmLocal == null) {
+            return Result.fail(Outcome.NO_HELM, id, template, null);
+        }
+        return placeAt(level, id, template, structure, blocks, helmLocal, origin, rotation, surfaceY, false, false, assemble, player);
+    }
+
+    /**
      * Places template {@code id} at a berth (shipwright pickup, SW1) and assembles it with {@code player} as owner:
      * bow along {@code bow}, centred on the berth along the bow axis, on the side of the berth away from the pier with
      * {@link #BERTH_GAP} blocks of water between (see {@link TemplatePlacement#berthOrigin}), the waterline row at the

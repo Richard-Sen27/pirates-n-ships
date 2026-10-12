@@ -209,7 +209,16 @@ class VillageDataTest {
         assertEquals(List.of("pirates_n_ships:connections", "pirates_n_ships:boardwalk"), types);
         // every committed village piece is drawn by some pool
         try (var files = Files.list(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/village"))) {
+            // STR7: the pier's extension section has its own pool, named by the structure (PierExtensions hangs it)
             Set<String> drawn = new java.util.HashSet<>(List.of("dock_head", "pier"));
+            JsonObject extension = generated("worldgen/template_pool/village/pier_extension").getAsJsonObject();
+            for (JsonElement e : extension.getAsJsonArray("elements")) {
+                JsonObject element = e.getAsJsonObject().getAsJsonObject("element");
+                assertEquals("rigid", element.get("projection").getAsString(), "pier_extension");
+                drawn.add(element.get("location").getAsString().replace("pirates_n_ships:village/", ""));
+            }
+            assertEquals(VillageKeys.PIER_EXTENSION.location().toString(),
+                    generated("worldgen/structure/seafarer_village").getAsJsonObject().get("extension_pool").getAsString());
             for (Map<String, Integer> pool : List.of(streets, VillageData.BUILDINGS, VillageData.TERMINATORS, VillageData.DECORATIONS)) {
                 drawn.addAll(pool.keySet());
             }

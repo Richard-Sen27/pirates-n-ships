@@ -98,7 +98,8 @@ public final class OutpostLayoutGameTests {
         clearDumps(DUMP_PREFIX);
         for (long seed : SEEDS) {
             List<StructurePiece> pieces = plan(helper, level, seaY, seed);
-            StructureLayout layout = StructureLayout.of(pieces);
+            // STR7: the quay's extension sections follow the water, not the layout on land
+            StructureLayout layout = StructureLayout.of(PierExtensions.landward(pieces));
             BoundingBox quay = single(helper, layout, "quay", seed);
             boolean waterEnd = quay.minZ() < StructureLayoutGameTests.PLAN_SHORE_Z;
             write(layout.lines(OutpostKeys.NAVY_OUTPOST.location().toString(), seed, buildings, waterEnd),
@@ -217,7 +218,7 @@ public final class OutpostLayoutGameTests {
         // the quay's far end and both berths stand in water
         BoundingBox quay = single(helper, layout, "quay", seed);
         for (BlockPos p : List.of(new BlockPos(quay.minX(), seaY, quay.minZ() + 9), new BlockPos(quay.maxX(), seaY, quay.minZ() + 9),
-                new BlockPos((quay.minX() + quay.maxX()) / 2, seaY - 2, quay.minZ() - 1))) {
+                new BlockPos((quay.minX() + quay.maxX()) / 2, seaY - 2, farEnd(layout, quay) - 1))) {
             helper.assertTrue(level.getBlockState(p).is(Blocks.WATER), "seed " + seed + ": water at " + p.toShortString());
         }
         // the walls are level with the gate (the bastions stand three rows deeper on their footings)
@@ -230,7 +231,10 @@ public final class OutpostLayoutGameTests {
         Port port = PortRegistry.get(level.getServer()).index()
                 .byId(PortService.portId(PortKind.NAVY_OUTPOST, PortService.centreOf(new PiecesContainer(pieces)))).orElse(null);
         helper.assertTrue(port != null, "seed " + seed + ": the port is registered");
-        helper.assertValueEqual(port.berths().size(), 2, "seed " + seed + ": berths");
+        // STR7: the plan's shallow water adds extension sections, two berths each
+        int sections = layout.named("quay_extension").size();
+        helper.assertTrue(sections >= 1 && sections <= PierExtensions.MAX_SECTIONS, "seed " + seed + ": quay sections " + sections);
+        helper.assertValueEqual(port.berths().size(), 2 + 2 * sections, "seed " + seed + ": berths");
         for (var berth : port.berths()) {
             helper.assertTrue(level.getBlockState(berth.pos()).is(Blocks.WATER), "seed " + seed + ": berth " + berth.pos().toShortString() + " is water");
         }
@@ -405,5 +409,12 @@ public final class OutpostLayoutGameTests {
         } catch (IOException e) {
             throw new IllegalStateException("could not write " + name, e);
         }
+    }
+
+    /** STR7: the seaward row of the quay or of its last extension section (the sea lies to the north, low z). */
+    static int farEnd(StructureLayout layout, BoundingBox quay) {
+        int z = quay.minZ();
+        for (StructureLayout.Piece p : layout.named("quay_extension")) z = Math.min(z, p.box().minZ());
+        return z;
     }
 }

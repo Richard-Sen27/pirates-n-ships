@@ -112,7 +112,7 @@ class IslandDataTest {
         Map<String, String> projections = new HashMap<>();
         Map<String, String> processors = new HashMap<>();
         for (ResourceKey<StructureTemplatePool> key : List.of(IslandKeys.START, IslandKeys.PATHS, IslandKeys.HUTS,
-                IslandKeys.JETTY, IslandKeys.TERMINATORS, IslandKeys.DECORATIONS, IslandKeys.TRAILHEADS)) {
+                IslandKeys.JETTY, IslandKeys.JETTY_EXTENSION, IslandKeys.TERMINATORS, IslandKeys.DECORATIONS, IslandKeys.TRAILHEADS)) {
             JsonObject json = StandAloneOps.generated("worldgen/template_pool/" + key.location().getPath()).getAsJsonObject();
             StructureTemplatePool pool = StructureTemplatePool.DIRECT_CODEC.parse(ops, json).getOrThrow();
             int total = 0;
@@ -134,6 +134,7 @@ class IslandDataTest {
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("pirates_n_ships:pirate_island/camp_start", 1);
         expected.put("pirates_n_ships:pirate_island/jetty", 1);
+        expected.put("pirates_n_ships:pirate_island/jetty_extension", 1);   // STR7, hung by PierExtensions
         for (Map<String, Integer> pool : List.of(IslandData.PATHS, IslandData.HUTS, IslandData.TERMINATORS, IslandData.DECORATIONS,
                 IslandData.TRAILHEADS)) {
             pool.forEach((piece, weight) -> expected.put("pirates_n_ships:pirate_island/" + piece, weight));
@@ -168,6 +169,10 @@ class IslandDataTest {
             }
         }
         assertEquals("rigid", projections.get("pirates_n_ships:pirate_island/jetty"));
+        assertEquals("rigid", projections.get("pirates_n_ships:pirate_island/jetty_extension"));
+        assertEquals(IslandKeys.JETTY_EXTENSION.location().toString(),
+                StandAloneOps.generated("worldgen/structure/pirate_island").getAsJsonObject().get("extension_pool").getAsString(),
+                "STR7: the island names the jetty's extension pool");
         // every committed island piece is drawn by some pool
         try (var files = Files.list(root.resolve("common/src/main/resources/data/pirates_n_ships/structure/pirate_island"))) {
             files.forEach(f -> {

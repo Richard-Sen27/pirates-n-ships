@@ -212,6 +212,7 @@ message.pirates_n_ships.sail_winch.no_sails
 message.pirates_n_ships.sail_winch.not_on_ship
 message.pirates_n_ships.sea_cot.no_sleeping
 message.pirates_n_ships.sea_cot.on_ship
+message.pirates_n_ships.ship_order.no_deep_water
 message.pirates_n_ships.ship_screen.disabled
 message.pirates_n_ships.ship_screen.not_yours
 message.pirates_n_ships.swivel.aiming

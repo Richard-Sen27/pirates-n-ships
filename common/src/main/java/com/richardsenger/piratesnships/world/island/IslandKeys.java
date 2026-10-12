@@ -23,6 +23,8 @@ public final class IslandKeys {
     public static final ResourceKey<StructureTemplatePool> TRAILHEADS = pool("trailheads");
     public static final ResourceKey<StructureTemplatePool> HUTS = pool("huts");
     public static final ResourceKey<StructureTemplatePool> JETTY = pool("jetty");
+    /** STR7: the jetty's extension sections (hung by {@code PierExtensions}, not by the jigsaw). */
+    public static final ResourceKey<StructureTemplatePool> JETTY_EXTENSION = pool("jetty_extension");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
     /** STR2: the small props hung on the trails' and the clearing's {@code deco_out} connectors. */
     public static final ResourceKey<StructureTemplatePool> DECORATIONS = pool("decorations");

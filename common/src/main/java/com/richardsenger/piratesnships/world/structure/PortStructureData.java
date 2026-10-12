@@ -135,6 +135,18 @@ public final class PortStructureData {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", key.location(), () -> structure(spec));
     }
 
+    /** As {@link #writeStructure(DataContributions, ResourceKey, Spec)} with the pier's extension pool (STR7). */
+    public static void writeStructure(DataContributions data, ResourceKey<Structure> key, Spec spec,
+                                      ResourceKey<StructureTemplatePool> extensionPool) {
+        data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", key.location(), () -> withExtension(structure(spec), extensionPool));
+    }
+
+    /** Adds {@code extension_pool} ({@code PortStructure}, STR7: the sections a shallow pier grows by) to a structure. */
+    public static JsonObject withExtension(JsonObject structure, ResourceKey<StructureTemplatePool> extensionPool) {
+        structure.addProperty("extension_pool", extensionPool.location().toString());
+        return structure;
+    }
+
     /** Writes {@link #structureSet} with the spacing and separation defaults of {@code WorldConfig.spread(config)}. */
     public static void writeStructureSet(DataContributions data, ResourceKey<StructureSet> key, ResourceKey<Structure> structure,
                                          String config, int salt) {

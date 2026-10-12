@@ -15,9 +15,10 @@ import com.richardsenger.piratesnships.trade.coin.Wallet;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.trade.net.OrderPayloads;
-import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
+import com.richardsenger.piratesnships.world.port.ShipSpot;
+import com.richardsenger.piratesnships.world.port.ShipSpots;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -64,6 +65,8 @@ public final class ShipOrders {
     public static final String KEY_NOT_ASSEMBLED = KEY + "not_assembled";
     public static final String KEY_NOT_READY = KEY + "not_ready";
     public static final String KEY_NO_BERTH = KEY + "no_berth";
+    /** STR7: no deep water near the port's berths for the ship (action bar). */
+    public static final String KEY_NO_DEEP_WATER = KEY + "no_deep_water";
     public static final String KEY_LOST = KEY + "lost";
     public static final String KEY_WRONG_PORT = KEY + "wrong_port";
 
@@ -272,8 +275,9 @@ public final class ShipOrders {
             return Optional.of(result(Pickup.NOT_READY, Component.translatable(KEY_NOT_READY,
                     ShipOrderMath.formatDays(ShipOrderMath.remaining(order.get().finishDay(), today)))));
         }
-        Optional<Berthed> berthed = placeAtFreeBerth(level, port.get(), order.get().template(), player, "Ship order " + order.get().shortId());
-        if (berthed.isEmpty()) return Optional.of(result(Pickup.NO_BERTH, Component.translatable(KEY_NO_BERTH)));
+        Delivery delivery = deliver(level, port.get(), order.get().template(), player, "Ship order " + order.get().shortId());
+        Optional<Berthed> berthed = delivery.berthed();
+        if (berthed.isEmpty()) return Optional.of(result(Pickup.NO_BERTH, delivery.refusal()));
         Result placed = berthed.get().placed();
         int berth = berthed.get().berth();
         removeOrder(server, port.get().id(), order.get().id());
@@ -295,32 +299,65 @@ public final class ShipOrders {
     }
 
     /**
-     * Places template {@code template}, assembled with {@code owner} as owner, at the first free berth of {@code port}
-     * (no ship's bounds over the berth or the ship's footprint there, nothing solid in the way): the shipwright's
-     * pickup, also the delivery of a granted ship (SHP1). Empty when no berth is free; {@code what} names the
-     * delivery in the log.
+     * Where a delivery went (STR7): the placement and the berth it was found from, else why not ({@code failure}:
+     * {@code OCCUPIED} when deep water was there but ships lie in it, {@code NO_WATER} when none fits).
      */
+    public record Delivery(Optional<Berthed> berthed, ShipSpot.Failure failure) {
+
+        /** The refusal's message: no berth free (come back later), or no deep water near the pier (action bar). */
+        public Component refusal() {
+            return Component.translatable(failure == ShipSpot.Failure.NO_WATER ? KEY_NO_DEEP_WATER : KEY_NO_BERTH);
+        }
+    }
+
+    /** Whether {@code message} is the no-deep-water refusal, which the desk shows on the action bar. */
+    public static boolean isNoDeepWater(Component message) {
+        return message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                && t.getKey().equals(KEY_NO_DEEP_WATER);
+    }
+
+    /**
+     * Places template {@code template}, assembled with {@code owner} as owner, at the port: the shipwright's pickup and
+     * the delivery of a granted ship (SHP1). The spot comes from {@link ShipSpots} (STR7, design.md §4.1): a berth's own
+     * mooring when the water there is deep and free (SW1's place alongside, away from the pier), else the nearest
+     * deep, open water reached from the berths within {@code world.ports.ship_spot_search}, never on sand or beside
+     * it. {@code what} names the delivery in the log.
+     */
+    public static Delivery deliver(ServerLevel level, Port port, ResourceLocation template, ServerPlayer owner, String what) {
+        Optional<ShipSpots.Found> found = ShipSpots.atPort(level, port, template);
+        if (found.isEmpty()) {
+            if (!port.berths().isEmpty()) Constants.LOG.warn("{}: template {} has no structure", what, template);
+            return new Delivery(Optional.empty(), ShipSpot.Failure.OCCUPIED);
+        }
+        ShipSpots.Found f = found.get();
+        if (f.spot().isEmpty()) {
+            Constants.LOG.debug("{}: no spot at {} for {} ({}, {} footprints tried)", what, port.id(), template,
+                    f.search().failure(), f.search().tried());
+            return new Delivery(Optional.empty(), f.search().failure());
+        }
+        ShipSpot.Spot spot = f.spot().get();
+        Result placed = ShipTemplatePlacer.placeAtOrigin(level, template, f.origin(), f.rotation(), f.surfaceY(), true, owner);
+        if (placed.outcome() != Outcome.PLACED) {
+            Constants.LOG.warn("{}: spot {} at {} refused: {} at {}", what, spot, port.id(), placed.outcome(), placed.where());
+            return new Delivery(Optional.empty(), ShipSpot.Failure.NO_WATER);
+        }
+        if (spot.distance() > 0) {
+            Constants.LOG.debug("{}: placed {} blocks out from berth {} of {}", what, spot.distance(), spot.anchor() + 1, port.id());
+        }
+        return new Delivery(Optional.of(new Berthed(placed, spot.anchor() + 1)), ShipSpot.Failure.NONE);
+    }
+
+    /** {@link #deliver}'s placement, empty when refused. */
     public static Optional<Berthed> placeAtFreeBerth(ServerLevel level, Port port, ResourceLocation template, ServerPlayer owner,
                                                      String what) {
-        List<AABB> ships = SableShips.all(level).stream().filter(b -> !b.isRemoved()).map(ShipOrders::bounds).toList();
-        List<Berth> berths = port.berths();
-        for (int i = 0; i < berths.size(); i++) {
-            Berth berth = berths.get(i);
-            Result placed = ShipTemplatePlacer.placeAtBerth(level, template, berth.pos(), berth.bow(),
-                    box -> ShipOrderMath.occupied(berth.pos(), box, ships), true, owner);
-            if (placed.outcome() == Outcome.PLACED) return Optional.of(new Berthed(placed, i + 1));
-            if (placed.outcome() != Outcome.OCCUPIED && placed.outcome() != Outcome.OBSTRUCTED) {
-                Constants.LOG.warn("{}: berth {} of {} refused: {} at {}", what, i + 1, port.id(), placed.outcome(), placed.where());
-            }
-        }
-        return Optional.empty();
+        return deliver(level, port, template, owner, what).berthed();
     }
 
     /**
      * A ship's world bounds: Sable's bounding box together with its plot's block box carried into the world (a ship
      * assembled this tick may not have its world box yet).
      */
-    static AABB bounds(ShipBody ship) {
+    public static AABB bounds(ShipBody ship) {
         AABB box = ship.worldBounds();
         BlockPos[] plot = ship.plotBounds();
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;

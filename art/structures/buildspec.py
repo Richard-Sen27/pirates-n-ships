@@ -20,6 +20,10 @@ CONNECTORS = {
     "building_in": ("building_out", EMPTY_POOL, "rollable"),
     "pier_out": ("pier_in", f"{MOD}:village/pier", "aligned"),
     "pier_in": ("pier_out", EMPTY_POOL, "aligned"),
+    # STR7: the seaward and landward ends of a pier, jetty or quay extension section; both pull from the
+    # empty pool, so vanilla's jigsaw never fills them: PortStructure hangs a section there where the water is shallow
+    "pier_end": ("pier_extension_in", EMPTY_POOL, "aligned"),
+    "pier_extension_in": ("pier_end", EMPTY_POOL, "aligned"),
 }
 
 # name of a connector -> its jigsaw's selection priority (default 0). Vanilla's jigsaw tries a piece's connectors in

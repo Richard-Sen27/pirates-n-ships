@@ -246,7 +246,7 @@ fit(*JIB_TACK, "cleat_floor")
 fit(CX, 8, 7, "capstan")
 fit(CX, 8, FMZ + 1, "winch")
 fit(CX, 8, MMZ + 1, "winch")
-fit(CX + 1, 5, MMZ + 1, "pump")             # gun deck over the main hold: its intake reaches the hold
+fit(7, 5, MMZ, "pump")                     # gun deck, against the starboard side over the main hold: its intake reaches the hold
 fit(CX, QD_FLOOR + 1, 27, "helm")
 fit(CX, QD_FLOOR + 1, 29, "pedestal")
 fit(CX, QD_FLOOR + 2, 29, "pole_bottom")
@@ -258,7 +258,7 @@ for x in (3, 5):
 fit(1, 6, 12, "lantern_e")
 fit(7, 6, 12, "lantern_w")
 fit(1, 6, 19, "lantern_e")
-fit(7, 6, 19, "lantern_w")
+fit(7, 6, 18, "lantern_w")
 fit(2, 9, 27, "lantern_e")
 
 # galley at the fore end of the gun deck's waist

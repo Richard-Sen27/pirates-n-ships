@@ -400,7 +400,7 @@ public final class BrigGameTests {
         stations.put("fore winch", new BlockPos(4, 9, 12));
         stations.put("main winch", new BlockPos(4, 9, 20));
         stations.put("capstan", new BlockPos(4, 9, 7));
-        stations.put("pump", new BlockPos(5, 6, 20));
+        stations.put("pump", new BlockPos(7, 6, 19));
         stations.put("port gun", new BlockPos(1, 6, 21));
         stations.put("starboard gun", new BlockPos(7, 6, 13));
         stations.put("lookout", new BlockPos(4, 26, 19));
@@ -466,7 +466,7 @@ public final class BrigGameTests {
         targets.put("fore winch (its spot)", new BlockPos(4, 9, 13));
         targets.put("main winch (its spot)", new BlockPos(4, 9, 21));
         targets.put("capstan", new BlockPos(4, 9, 7));
-        targets.put("pump", new BlockPos(5, 6, 20));
+        targets.put("pump", new BlockPos(7, 6, 19));
         for (int z : new int[] {13, 17, 21, 25}) {
             targets.put("port gun " + z + " (its crew)", new BlockPos(3, 6, z));
             targets.put("starboard gun " + z + " (its crew)", new BlockPos(5, 6, z));

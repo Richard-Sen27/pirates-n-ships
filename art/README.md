@@ -2833,7 +2833,7 @@ up by one row; see the comment there).
   the fore mast: head cleat above the upper fore yard [4, 22, 10], clew cleat below the lower [4, 11, 10], tack on the
   bowsprit [4, 10, 1]: 0.5 x 11 x 9 = 49.5 blocks².
 - **Stations and gear:** helm on the quarterdeck [4, 12, 27] (facing south), capstan forward [4, 9, 7] (the anchor),
-  bilge pump on the gun deck over the main hold [5, 6, 20] (its intake reaches the hold, `pump_reach` 4), the ship's
+  bilge pump on the gun deck against the starboard side over the main hold [7, 6, 19] (its intake reaches the hold, `pump_reach` 4), the ship's
   bell on the fore mast's after face over the fore winch [4, 10, 12], the flag on a three-block staff in a flag
   pedestal at the taffrail [4, 12..15, 29], a lion figurehead under the bowsprit, three name boards on the transom
   [3..5, 7, 31], three stern windows in the cabin's stern [2|4|6, 10, 30], side lights [1|7, 10, 29], ship's lanterns on the cabin front

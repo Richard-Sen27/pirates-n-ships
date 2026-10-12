@@ -55,7 +55,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * LANE1 GameTests: a village on a coast and a pirate island across open water, with a second island in the way, built
+ * LANE1 GameTests: a village on a coast and a pirate island across open water, with a second island in the way (from
+ * the north wall, LANE3, so the lane goes round it to the south), built
  * in a 160×160 basin (stone floor, water y=2..{@value #SEA_TOP}, stone coast and islands). The lane is searched on a
  * {@link SeaGrid} read from the basin's blocks (8-block cells: a cell is sea when its centre column is water at the
  * surface and three blocks down): the village's berth stands on the coast, so the lane starts in the nearest water
@@ -72,7 +73,7 @@ public final class LaneVoyageGameTests {
     /** The coast: x ≤ this is land. */
     private static final int COAST = 14;
     /** The island in the way: x, z ranges (relative). */
-    private static final int ISLE_X0 = 60, ISLE_X1 = 95, ISLE_Z0 = 20, ISLE_Z1 = 80;
+    private static final int ISLE_X0 = 60, ISLE_X1 = 95, ISLE_Z0 = 1, ISLE_Z1 = 80;
     /** The pirate island at the far side. */
     private static final int FAR_X0 = 132, FAR_X1 = 150, FAR_Z0 = 28, FAR_Z1 = 52;
     /** Berths (relative x, z): the village's on the coast's stone, the island's in the water west of it. */
@@ -102,7 +103,7 @@ public final class LaneVoyageGameTests {
             for (int z = 0; z < SIZE; z++) {
                 int fx = x - sx, fz = z - sz;
                 boolean land = x == 0 || x == SIZE - 1 || z == 0 || z == SIZE - 1 || fx <= COAST
-                        || (fx >= ISLE_X0 && fx <= ISLE_X1 && fz >= ISLE_Z0 && fz <= ISLE_Z1)
+                        || (fx >= ISLE_X0 && fx <= ISLE_X1 && fz <= ISLE_Z1)   // from the north wall, however far the layout moved
                         || (fx >= FAR_X0 && fx <= FAR_X1 && fz >= FAR_Z0 && fz <= FAR_Z1);
                 level.setBlock(h.absolutePos(new BlockPos(x, 1, z)), stone, Block.UPDATE_CLIENTS);
                 for (int y = 2; y <= SEA_TOP + 1; y++) {
@@ -264,7 +265,9 @@ public final class LaneVoyageGameTests {
      * cells fixed to world coordinates, so where the test grid put this test decided which way round the island the
      * lane went: at alignment (2, 1) (the full suite's position once LIFE1 and NB2 had grown the grid) it went north,
      * its corner waypoint 2 blocks off the island's corner, and the 29-block sloop, turning there under full sail, ran
-     * her bow into the island's side and stopped dead. Pinned to (0, 0), where it goes south with room.
+     * her bow into the island's side and stopped dead. The two ways round were nearly the same length, so the search's tie
+     * decided; the island in the way now reaches the basin's north wall (z 1), so the lane always goes south, and the
+     * layout is pinned to alignment (0, 0) so its cells are the same in every run.
      */
     private static final int[] ALIGN = {0, 0};
 

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom_item",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_willow_log",
+    "log_top": "biomesoplenty:block/stripped_willow_log_top",
+    "particle": "biomesoplenty:block/stripped_willow_log",
+    "planks": "biomesoplenty:block/willow_planks"
+  }
+}

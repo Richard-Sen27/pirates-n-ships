@@ -67,9 +67,15 @@ final class SailAirTracker {
      * @param normalZ    z of it
      * @param drop       the full drop of the sail [blocks]
      * @param currentSide the side shown so far
+     * @param heldSide   the side a boom holds the cloth to (SAIL5: the side it is sheeted out to), or 0: from the wind
      */
     int update(SailShape.Look look, Level level, Vec3 center, float partialTick, double now, EfficiencyCurve curve,
                SailTrim trim, double bowX, double bowZ, double normalX, double normalZ, float drop, int currentSide) {
+        return update(look, level, center, partialTick, now, curve, trim, bowX, bowZ, normalX, normalZ, drop, currentSide, 0);
+    }
+
+    int update(SailShape.Look look, Level level, Vec3 center, float partialTick, double now, EfficiencyCurve curve,
+               SailTrim trim, double bowX, double bowZ, double normalX, double normalZ, float drop, int currentSide, int heldSide) {
         Pose3dc pose = ClientShipPoses.renderPose(level, center, partialTick);
         Quaterniondc q = pose == null ? null : pose.orientation();
         if (pose != null) {
@@ -83,7 +89,9 @@ final class SailAirTracker {
         wind.set(w.dirX() * strength - look.velocityX, 0.0, w.dirZ() * strength - look.velocityZ);
         double speed = Math.hypot(wind.x, wind.z);
         int side = currentSide;
-        if (speed > 0.01) {
+        if (heldSide != 0) {
+            side = heldSide;
+        } else if (speed > 0.01) {
             outAxis.set(normalX, 0.0, normalZ);
             side = ClothSide.side(currentSide, outAxis, q, wind.x / speed, wind.z / speed);
         }

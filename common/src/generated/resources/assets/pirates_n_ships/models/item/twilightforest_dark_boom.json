@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom_item",
+  "textures": {
+    "log": "twilightforest:block/stripped_dark_log",
+    "log_top": "twilightforest:block/stripped_dark_log_top",
+    "particle": "twilightforest:block/stripped_dark_log",
+    "planks": "twilightforest:block/wood/planks_darkwood_0"
+  }
+}

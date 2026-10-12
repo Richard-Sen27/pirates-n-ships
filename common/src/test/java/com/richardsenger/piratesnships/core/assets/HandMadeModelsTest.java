@@ -53,7 +53,7 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "brig_bars", "brig_bars_post", "brig_bars_side",
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "boom", "boom_arm", "boom_item", "brig_bars", "brig_bars_post", "brig_bars_side",
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "bulwark_edge", "bulwark_item", "bulwark_port", "bulwark_port_item",
@@ -412,6 +412,8 @@ class HandMadeModelsTest {
         keys.put("notice_board", List.of("planks", "log", "log_top"));
         for (String n : List.of("flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top")) keys.put(n, List.of("log"));
         for (String n : List.of("flag_pedestal", "flag_pedestal_pole", "yard", "cleat")) keys.put(n, List.of("log", "log_top"));
+        // SAIL5: the boom's gooseneck, arm part and item (art/models/boom.bbmodel)
+        for (String n : List.of("boom", "boom_arm", "boom_item")) keys.put(n, List.of("log", "log_top"));
         for (String n : List.of("crows_nest", "crows_nest_pole")) keys.put(n, List.of("planks", "log"));
         // RAIL6: the railing family's parents (tools/gen_railing_models.py)
         for (String n : List.of("railing_edge", "bulwark_edge", "railing_item", "railing_gate_left", "railing_gate_item")) {

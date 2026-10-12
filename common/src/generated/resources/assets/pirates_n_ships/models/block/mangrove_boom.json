@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom",
+  "textures": {
+    "log": "minecraft:block/stripped_mangrove_log",
+    "log_top": "minecraft:block/stripped_mangrove_log_top",
+    "particle": "minecraft:block/stripped_mangrove_log",
+    "planks": "minecraft:block/mangrove_planks"
+  }
+}

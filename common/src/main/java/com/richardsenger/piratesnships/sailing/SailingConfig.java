@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.sailing.ballast.BallastRule;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.RightingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
+import com.richardsenger.piratesnships.sailing.sail.BoomRules;
 import com.richardsenger.piratesnships.sailing.sail.StayRules;
 import com.richardsenger.piratesnships.sailing.sail.YardRules;
 import com.richardsenger.piratesnships.sailing.wind.WindParams;
@@ -82,6 +83,21 @@ public final class SailingConfig {
             "How fast the side-to-side rolling dies down, per second (higher = settles sooner, too high looks glued to the water)");
     public static final ConfigValue<Double> PITCH_DAMPING = SAILING.doubleRange("pitch_damping", D.pitch(), 0.0, 10.0,
             "How fast the bow-up, bow-down pitching dies down, per second");
+
+    // SAIL5: the boom of a triangular sail
+    public static final ConfigValue<Boolean> BOOMS = SAILING.bool("booms", true,
+            "A boom in the clew's place of a triangular sail swings with its sheet: the sail draws by the boom's angle to the "
+                    + "wind, on either tack from close-hauled to a run. Off: a boom is a plain clew and its sail draws like a jib");
+    public static final ConfigValue<Double> BOOM_MIN_WIND_ANGLE = SAILING.doubleRange("boom_min_wind_angle", BoomRules.DEFAULT_MIN_WIND, 20.0, 90.0,
+            "Closest angle off the wind, in degrees, at which a boomed sail still draws (close-hauled); closer it luffs");
+    public static final ConfigValue<Boolean> BOOM_AUTO_TRIM = SAILING.bool("boom_auto_trim", true,
+            "The crew sheets every boom of an assembled ship to its best angle for the wind, one step of 15 degrees per "
+                    + "crew_stations.ticks_per_trim_step. Off: booms stay where a hand sheets them (the wind still swings a boom "
+                    + "that is aback across)");
+    public static final ConfigValue<Integer> BOOM_HAND_HOLD_TICKS = SAILING.intRange("boom_hand_hold_ticks", 600, 0, 24000,
+            "Ticks the crew leaves a boom alone after a player sheeted it by hand");
+    public static final ConfigValue<Double> GYBE_FORCE = SAILING.doubleRange("gybe_force", 0.5, 0.0, 10.0,
+            "Heel impulse, per unit of ship mass, when a boom gybes (slams across as the wind crosses the stern). 0 = none");
 
     private static final ConfigSection SAILS = SAILING.section("sails", "Square sails (two yards on one mast), triangular sails (a rope stay between cleats) and rope lines");
     public static final ConfigValue<Integer> YARD_MIN_GAP = SAILS.intRange("yard_min_gap", YardRules.DEFAULTS.minGap(), 1, 32,

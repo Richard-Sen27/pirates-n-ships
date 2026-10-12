@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 
 /**
- * Sailing blocks: the yard (square sails, docs/design.md §5.2 rule F5a), the sail winch and the capstan. The cleat
+ * Sailing blocks: the yard (square sails, docs/design.md §5.2 rule F5a), the boom (SAIL5), the sail winch and the capstan. The cleat
  * of the triangular sails (rule F5b) is registered in {@code sail.TriangularSailContent}.
  */
 public final class SailingBlocks {
@@ -29,6 +29,16 @@ public final class SailingBlocks {
     public static final RegistryEntry<Block, YardBlock> YARD = YARDS.entry(ShipWood.SPRUCE);
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<YardBlockEntity>> YARD_BLOCK_ENTITY =
             YARDS.blockEntity("yard", YardBlockEntity::new);
+    /**
+     * SAIL5: the boom of a triangular sail in every wood; the spruce member keeps the id {@code boom} (as the yard).
+     * Datagen: {@link BoomData}.
+     */
+    public static final WoodFamily<BoomBlock> BOOMS = WoodFamily.register("boom", ShipWood.SPRUCE,
+            wood -> new BoomBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The spruce boom, legacy id {@code boom}: for placing one; every member is a boom ({@code instanceof}). */
+    public static final RegistryEntry<Block, BoomBlock> BOOM = BOOMS.lead();
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<BoomBlockEntity>> BOOM_BLOCK_ENTITY =
+            BOOMS.blockEntity("boom", BoomBlockEntity::new);
     /** WOOD4: the sail winch in every wood; spruce keeps the legacy id {@code sail_winch}. */
     public static final WoodFamily<SailWinchBlock> SAIL_WINCHES = WoodFamily.register("sail_winch", ShipWood.SPRUCE,
             wood -> new SailWinchBlock(wood, WoodFamily.properties(wood).noOcclusion()));

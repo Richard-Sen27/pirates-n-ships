@@ -1,0 +1,425 @@
+{
+	"credit": "Made with Blockbench, source art/models/boom.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"2": "minecraft:block/anvil",
+		"log": "minecraft:block/stripped_spruce_log",
+		"log_top": "minecraft:block/stripped_spruce_log_top",
+		"particle": "minecraft:block/stripped_spruce_log"
+	},
+	"elements": [
+		{
+			"name": "strap",
+			"from": [
+				4,
+				4,
+				15
+			],
+			"to": [
+				12,
+				12,
+				16
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						4,
+						4,
+						12,
+						12
+					],
+					"texture": "#2"
+				},
+				"east": {
+					"uv": [
+						0,
+						4,
+						1,
+						12
+					],
+					"texture": "#2"
+				},
+				"south": {
+					"uv": [
+						4,
+						4,
+						12,
+						12
+					],
+					"texture": "#2"
+				},
+				"west": {
+					"uv": [
+						15,
+						4,
+						16,
+						12
+					],
+					"texture": "#2"
+				},
+				"up": {
+					"uv": [
+						4,
+						15,
+						12,
+						16
+					],
+					"texture": "#2"
+				},
+				"down": {
+					"uv": [
+						4,
+						0,
+						12,
+						1
+					],
+					"texture": "#2"
+				}
+			}
+		},
+		{
+			"name": "jaw",
+			"from": [
+				5.5,
+				5.5,
+				11
+			],
+			"to": [
+				10.5,
+				10.5,
+				15
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						5.5,
+						10.5,
+						10.5
+					],
+					"texture": "#log_top"
+				},
+				"east": {
+					"uv": [
+						5.5,
+						11,
+						10.5,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						5.5,
+						11,
+						10.5,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						5.5,
+						11,
+						10.5,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						5.5,
+						11,
+						10.5,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "cheek_top",
+			"from": [
+				6,
+				10,
+				6.5
+			],
+			"to": [
+				10,
+				11,
+				12
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						5,
+						10,
+						6
+					],
+					"texture": "#2"
+				},
+				"east": {
+					"uv": [
+						4,
+						5,
+						9.5,
+						6
+					],
+					"texture": "#2"
+				},
+				"south": {
+					"uv": [
+						6,
+						5,
+						10,
+						6
+					],
+					"texture": "#2"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						5,
+						12,
+						6
+					],
+					"texture": "#2"
+				},
+				"up": {
+					"uv": [
+						6,
+						6.5,
+						10,
+						12
+					],
+					"texture": "#2"
+				},
+				"down": {
+					"uv": [
+						6,
+						4,
+						10,
+						9.5
+					],
+					"texture": "#2"
+				}
+			}
+		},
+		{
+			"name": "cheek_bottom",
+			"from": [
+				6,
+				5,
+				6.5
+			],
+			"to": [
+				10,
+				6,
+				12
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						10,
+						10,
+						11
+					],
+					"texture": "#2"
+				},
+				"east": {
+					"uv": [
+						4,
+						10,
+						9.5,
+						11
+					],
+					"texture": "#2"
+				},
+				"south": {
+					"uv": [
+						6,
+						10,
+						10,
+						11
+					],
+					"texture": "#2"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						10,
+						12,
+						11
+					],
+					"texture": "#2"
+				},
+				"up": {
+					"uv": [
+						6,
+						6.5,
+						10,
+						12
+					],
+					"texture": "#2"
+				},
+				"down": {
+					"uv": [
+						6,
+						4,
+						10,
+						9.5
+					],
+					"texture": "#2"
+				}
+			}
+		},
+		{
+			"name": "pin",
+			"from": [
+				7.5,
+				4,
+				7.5
+			],
+			"to": [
+				8.5,
+				12,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						4,
+						8.5,
+						12
+					],
+					"texture": "#2"
+				},
+				"east": {
+					"uv": [
+						7.5,
+						4,
+						8.5,
+						12
+					],
+					"texture": "#2"
+				},
+				"south": {
+					"uv": [
+						7.5,
+						4,
+						8.5,
+						12
+					],
+					"texture": "#2"
+				},
+				"west": {
+					"uv": [
+						7.5,
+						4,
+						8.5,
+						12
+					],
+					"texture": "#2"
+				},
+				"up": {
+					"uv": [
+						7.5,
+						7.5,
+						8.5,
+						8.5
+					],
+					"texture": "#2"
+				},
+				"down": {
+					"uv": [
+						7.5,
+						7.5,
+						8.5,
+						8.5
+					],
+					"texture": "#2"
+				}
+			}
+		},
+		{
+			"name": "spar",
+			"from": [
+				6,
+				6,
+				0
+			],
+			"to": [
+				10,
+				10,
+				8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						6,
+						10,
+						10
+					],
+					"texture": "#log_top"
+				},
+				"east": {
+					"uv": [
+						6,
+						0,
+						10,
+						8
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						6,
+						6,
+						10,
+						10
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						6,
+						0,
+						10,
+						8
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6,
+						0,
+						10,
+						8
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						6,
+						0,
+						10,
+						8
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		}
+	]
+}

@@ -34,6 +34,7 @@ public final class AlmanacPonderPlugin implements PonderPlugin {
             Map.entry(AlmanacScenes.SHIP_ASSEMBLY, ShipAssemblyScene::program),
             Map.entry(AlmanacScenes.STEERING, SteeringScene::program),
             Map.entry(AlmanacScenes.SAILS_AND_WINCH, SailsAndWinchScene::program),
+            Map.entry(AlmanacScenes.TRIANGULAR_SAILS, TriangularSailsScene::program),
             Map.entry(AlmanacScenes.ANCHOR_AND_CAPSTAN, AnchorAndCapstanScene::program),
             Map.entry(AlmanacScenes.PUMPS_AND_FLOODING, PumpsAndFloodingScene::program),
             Map.entry(AlmanacScenes.HULL_REPAIR, HullRepairScene::program),

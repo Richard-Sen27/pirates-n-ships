@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.force;
 
+import com.richardsenger.piratesnships.sailing.sail.BoomRules;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
@@ -18,7 +19,8 @@ import org.joml.Vector3dc;
  *   <li>Torque {@code r × F}: the side force acting above the COM heels the ship to leeward, and sails away from the
  *       COM along the hull yaw it.</li>
  * </ol>
- * The crew is assumed to set the sheets optimally, so the efficiency depends on {@code β} only. A ship moving downwind
+ * The crew is assumed to set the sheets optimally, so the efficiency depends on {@code β} only, except for a boomed
+ * sail (SAIL5): its force is scaled by {@link BoomRules#factor} at the boom's real angle. A ship moving downwind
  * at wind speed feels no apparent wind and gets no push.
  */
 public final class SailForceModel {
@@ -54,6 +56,11 @@ public final class SailForceModel {
         // The wind comes from −a; β = angle between FORWARD and −a.
         double beta = Math.toDegrees(Math.atan2(Math.abs(lat), -fwd));
         double magnitude = params.sailForceScale() * speed * sail.area() * trim;
+        SailInstance.Boom boom = sail.boom();
+        if (boom != null) {
+            // SAIL5: a boomed sail draws by its boom's angle to the wind (luffing, aback, or the sheet off its best)
+            magnitude *= BoomRules.factor(lat, fwd, boom.port(), boom.forward(), boom.minWindDegrees());
+        }
         double drive = sail.type().curve().drive(beta) * magnitude;
         double side = sail.type().curve().side(beta) * magnitude;
         // Leeward: the side the apparent wind blows toward (sign of its lateral component).

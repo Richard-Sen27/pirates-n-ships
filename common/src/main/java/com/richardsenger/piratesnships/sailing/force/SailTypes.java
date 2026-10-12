@@ -50,6 +50,28 @@ public final class SailTypes {
             180, 0.45, 0.00);
 
     /**
+     * Boomed fore-and-aft sail (SAIL5): a triangular sail whose foot runs along a boom. Close to the wind and on a reach
+     * like the plain fore-and-aft sail; let out on its boom it keeps drawing on a broad reach and a run (0.75 dead
+     * downwind against the jib's 0.45), so it serves from close-hauled to a run on either tack. This curve assumes the
+     * boom sheeted to the best angle; the real boom angle scales it ({@code sailing.sail.BoomRules#factor}, through
+     * {@link SailInstance#boom()}).
+     */
+    public static final EfficiencyCurve BOOMED_CURVE = EfficiencyCurve.of(
+            0, -0.05, 0.00,
+            15, -0.04, 0.02,
+            30, 0.00, 0.10,
+            45, 0.60, 0.70,
+            60, 0.85, 0.62,
+            75, 0.97, 0.52,
+            90, 1.00, 0.42,
+            105, 1.00, 0.33,
+            120, 0.97, 0.25,
+            135, 0.92, 0.18,
+            150, 0.86, 0.11,
+            165, 0.80, 0.05,
+            180, 0.75, 0.00);
+
+    /**
      * Square sail between two yards (docs/design.md §5.2, rule F5a). Its real area comes from the yards and travels in
      * {@link SailInstance#area()}; 9 (three wide, three deep) is only the reference area that the three-argument
      * {@link SailInstance} constructor uses. The center of effort height is 0 because the runtime passes the centroid
@@ -64,7 +86,13 @@ public final class SailTypes {
      */
     public static final SailType FORE_AND_AFT = new SailType("fore_and_aft", 16.0, 0.0, FORE_AND_AFT_CURVE);
 
-    public static final List<SailType> ALL = List.of(SQUARE, FORE_AND_AFT);
+    /**
+     * A triangular sail with a boom in its clew's place (SAIL5): its area and centroid come from the triangle with the
+     * boom swung out, its drive from {@link #BOOMED_CURVE} scaled by the boom's angle to the wind.
+     */
+    public static final SailType BOOMED = new SailType("boomed", 16.0, 0.0, BOOMED_CURVE);
+
+    public static final List<SailType> ALL = List.of(SQUARE, FORE_AND_AFT, BOOMED);
 
     private SailTypes() {
     }

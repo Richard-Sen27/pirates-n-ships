@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom_arm",
+  "textures": {
+    "log": "minecraft:block/stripped_acacia_log",
+    "log_top": "minecraft:block/stripped_acacia_log_top",
+    "particle": "minecraft:block/stripped_acacia_log",
+    "planks": "minecraft:block/acacia_planks"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom_arm",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_redwood_log",
+    "log_top": "biomesoplenty:block/stripped_redwood_log_top",
+    "particle": "biomesoplenty:block/stripped_redwood_log",
+    "planks": "biomesoplenty:block/redwood_planks"
+  }
+}

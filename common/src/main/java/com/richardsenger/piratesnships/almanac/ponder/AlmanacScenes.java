@@ -71,6 +71,10 @@ public final class AlmanacScenes {
     public static final ResourceLocation HULL_REPAIR = Constants.id(ShipSceneText.HULL_REPAIR);
     public static final ResourceLocation MOORING = Constants.id(ShipSceneText.MOORING);
     public static final ResourceLocation CARGO_AND_WEIGHT = Constants.id(ShipSceneText.CARGO_AND_WEIGHT);
+    /** SAIL5: triangular sails, the stay and the boom. */
+    public static final ResourceLocation TRIANGULAR_SAILS = Constants.id(ShipSceneText.TRIANGULAR_SAILS);
+    /** The cleat (dark oak, legacy id), the triangular sail scene's component. */
+    public static final ResourceLocation CLEAT_ITEM = Constants.id("cleat");
 
     /** The items whose Ponder key plays those scenes (block items share their block's id). */
     public static final ResourceLocation HELM_ITEM = Constants.id("helm");
@@ -128,6 +132,7 @@ public final class AlmanacScenes {
             new Scene(SHIP_ASSEMBLY, HELM_ITEM, SHIP_ASSEMBLY, ids("cargo_barrel")),
             new Scene(STEERING, HELM_ITEM, STEERING, ids("captains_whistle")),
             new Scene(SAILS_AND_WINCH, SAIL_WINCH_ITEM, SAILS_AND_WINCH, ids("yard", "captains_whistle")),
+            new Scene(TRIANGULAR_SAILS, CLEAT_ITEM, TRIANGULAR_SAILS, ids("rope", "boom", "sail_winch")),
             new Scene(ANCHOR_AND_CAPSTAN, CAPSTAN_ITEM, ANCHOR_AND_CAPSTAN, ids("captains_whistle")),
             new Scene(PUMPS_AND_FLOODING, BILGE_PUMP_ITEM, PUMPS_AND_FLOODING, ids("hull_patch", "captains_whistle")),
             new Scene(HULL_REPAIR, HULL_PATCH_ITEM, HULL_REPAIR),

@@ -37,6 +37,7 @@ A square sail loves a wind from astern and is useless close to the wind. Longer 
 > Click a yard that heads no sail and it tells you what is wrong with the rig.
 
 ## Fore-and-aft sails
+show_me: triangular_sails | Show me: triangular sails and the boom
 A triangular sail is rigged with {item:pirates_n_ships:rope}**rope** and three {item:pirates_n_ships:cleat}**cleats**. It is the sail for a wind on the beam.
 {recipe:rope}
 {recipe:cleat}
@@ -47,6 +48,14 @@ A triangular sail is rigged with {item:pirates_n_ships:rope}**rope** and three {
 4. Use a rope on the head cleat, then on the tack cleat. A stay runs between them and the cloth fills the triangle.
 
 > A rope between two cleats or mooring rings that is no stay becomes a sagging rope line, for a rail or rigging.
+
+## The boom
+A {item:pirates_n_ships:boom}**boom** turns a triangular sail into a mainsail that serves from close-hauled to a dead run. Put it on the side of the mast in the clew cleat's place, straight below the head: the sail's foot then runs along the boom, out as far as the tack lies.
+{recipe:boom}
+
+The boom swings to port or starboard in steps of 15°, up to 60° each way. The crew sheets it to leeward for the wind: centred close-hauled at 45° off the wind, 45° out on a beam reach, all the way out on a run. A boom on the windward side is aback and gives nothing, and when the wind crosses the stern it slams across in a gybe.
+
+> Use a boom with an empty hand to sheet it a step toward the side you click; sneak-use centres it. The crew leaves a boom you sheeted alone for half a minute.
 
 ## Trimming the canvas
 illustration: sail_winch

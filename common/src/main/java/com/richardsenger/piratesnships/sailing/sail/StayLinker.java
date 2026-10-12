@@ -110,13 +110,13 @@ public final class StayLinker {
     }
 
     /**
-     * The clew below {@code head}: the first cleat from the block under the head down to {@code tackY} (inclusive),
+     * The clew below {@code head}: the first cleat or boom (SAIL5) from the block under the head down to {@code tackY} (inclusive),
      * through air, mast and yard blocks only (yards since TPL3); null when there is none or anything else comes first.
      */
     public static @Nullable BlockPoint findClew(CleatLookup lookup, BlockPoint head, int tackY) {
         for (int y = head.y() - 1; y >= tackY; y--) {
             CleatLookup.Cell c = lookup.at(head.x(), y, head.z());
-            if (c == CleatLookup.Cell.CLEAT) {
+            if (c == CleatLookup.Cell.CLEAT || c == CleatLookup.Cell.BOOM) {
                 return new BlockPoint(head.x(), y, head.z());
             }
             if (!c.isOpen()) {
@@ -137,7 +137,8 @@ public final class StayLinker {
         if (clew == null) {
             return null;
         }
-        TriangularSail s = new TriangularSail(head, tack, clew);
+        // SAIL5: a boom in the clew's place makes a boomed sail
+        TriangularSail s = new TriangularSail(head, tack, clew, lookup.at(clew.x(), clew.y(), clew.z()) == CleatLookup.Cell.BOOM);
         return s.area() > 1.0e-9 ? s : null;
     }
 }

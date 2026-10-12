@@ -20,6 +20,11 @@ public interface CleatLookup {
         YARD,
         /** A cleat. */
         CLEAT,
+        /**
+         * A boom (SAIL5): it takes the clew cleat's place below a stay's head, and the sail is a boomed sail. It is no
+         * open cell: it ends the clew search as the clew.
+         */
+        BOOM,
         /** Anything else: it ends the search for a clew cleat. */
         OTHER;
 

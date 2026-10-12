@@ -176,7 +176,7 @@ public final class SailingGameTestsShips {
     }
 
     /** The 5×4×5 plank hull with its helm and nothing on deck. Returns the helm. */
-    private static BlockPos bareHull(GameTestHelper h, int x0, int z0) {
+    static BlockPos bareHull(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {

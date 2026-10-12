@@ -99,6 +99,7 @@ public final class SailingModule implements ModModule {
         com.richardsenger.piratesnships.sailing.sail.TriangularSailData.gather(data); // cleat and rope (F5b)
         HelmSetup.gatherData(data); // wheel steering (HELM1)
         com.richardsenger.piratesnships.sailing.block.YardData.gather(data); // the yard in every wood (WOOD3)
+        com.richardsenger.piratesnships.sailing.block.BoomData.gather(data); // the boom in every wood (SAIL5)
         com.richardsenger.piratesnships.sailing.block.WinchAndCapstanData.gather(data); // winch and capstan families (WOOD4)
         data.lang(lang -> {
             lang.add(YardBlock.KEY_NO_SAIL, "No sail: hang a yard %s-%s below")
@@ -158,6 +159,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsTurning.class,
                 com.richardsenger.piratesnships.sailing.ship.ShipBowSyncGameTests.class,
                 com.richardsenger.piratesnships.sailing.ship.SailDyeGameTests.class,
-                com.richardsenger.piratesnships.sailing.ballast.BallastGameTests.class);
+                com.richardsenger.piratesnships.sailing.ballast.BallastGameTests.class,
+                com.richardsenger.piratesnships.sailing.ship.BoomGameTests.class);
     }
 }

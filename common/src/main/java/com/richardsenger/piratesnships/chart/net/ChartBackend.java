@@ -89,7 +89,7 @@ public final class ChartBackend {
     /** The settings the client is told about. */
     public static ChartSettings settings() {
         return new ChartSettings(ChartConfig.ENABLED.get(), ChartConfig.OPEN_WITHOUT_ITEM.get(),
-                ChartConfig.CELL_BLOCKS.get(), ChartConfig.MAX_MARKERS.get(), ChartConfig.MAX_ZOOM_OUT.get());
+                ChartConfig.CELL_BLOCKS.get(), ChartConfig.MAX_MARKERS.get(), ChartConfig.MAX_ZOOM_OUT.get(), ChartConfig.STYLE.get());
     }
 
     // --- lifecycle -----------------------------------------------------------------------------------------------

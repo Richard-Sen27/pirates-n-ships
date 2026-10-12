@@ -16,6 +16,12 @@ import java.util.List;
  * both last the same {@link #UNROLL_TICKS}, so an animation started at {@link #readStartTick} or
  * {@link #stowStartTick} meets the item frame that shows. Files and frames come from
  * {@code tools/gen_chart_held_models.py}.
+ *
+ * <p>CHART4, smoother: the progress still runs linearly (and the property is interpolated over the partial tick), but
+ * the motion it shows is eased in and out ({@link #ease}): the PAL keys sample the eased curve every 25 ms, and
+ * fourteen frames split it ({@code chart_unroll_0} holds the rolled chart while the fists come together, twelve frames
+ * share the unroll evenly in progress, {@code chart_open} at 1), each drawn for the pose at {@link Frame#at}. Rolling up
+ * plays the same keys backwards, so the close follows the same curve.
  */
 public final class ChartHeldMotion {
 
@@ -26,17 +32,29 @@ public final class ChartHeldMotion {
     /** Arm animation while rolling up; file {@code assets/pirates_n_ships/chart_animations/chart_stow.json}. */
     public static final String STOW = "chart_stow";
 
-    /** One item model frame and the progress it shows from (the chart model's overrides, in order). */
-    public record Frame(String model, float from) {
+    /**
+     * One item model frame, the progress it shows from (the chart model's overrides, in order) and the progress whose
+     * pose it is drawn for (the arms of {@link #READ} at {@code at * UNROLL_TICKS} ticks hold its rollers).
+     */
+    public record Frame(String model, float from, float at) {
     }
 
-    /** The unroll frames after the closed {@code chart} model, shown from their threshold on (the last match wins). */
+    /** The unroll frames after the closed {@code chart} model, shown from their threshold on (the last match wins); printed by the generator. */
     public static final List<Frame> FRAMES = List.of(
-            new Frame("chart_unroll_0", 0.01f),
-            new Frame("chart_unroll_1", 0.3f),
-            new Frame("chart_unroll_2", 0.5f),
-            new Frame("chart_unroll_3", 0.7f),
-            new Frame("chart_open", 1.0f));
+            new Frame("chart_unroll_0", 0.01f, 0.364f),
+            new Frame("chart_unroll_1", 0.3633f, 0.39f),
+            new Frame("chart_unroll_2", 0.4163f, 0.442f),
+            new Frame("chart_unroll_3", 0.4694f, 0.496f),
+            new Frame("chart_unroll_4", 0.5224f, 0.548f),
+            new Frame("chart_unroll_5", 0.5755f, 0.602f),
+            new Frame("chart_unroll_6", 0.6286f, 0.656f),
+            new Frame("chart_unroll_7", 0.6816f, 0.708f),
+            new Frame("chart_unroll_8", 0.7347f, 0.762f),
+            new Frame("chart_unroll_9", 0.7878f, 0.814f),
+            new Frame("chart_unroll_10", 0.8408f, 0.868f),
+            new Frame("chart_unroll_11", 0.8939f, 0.92f),
+            new Frame("chart_unroll_12", 0.9469f, 0.974f),
+            new Frame("chart_open", 1.0f, 1.0f));
 
     private ChartHeldMotion() {
     }
@@ -46,6 +64,12 @@ public final class ChartHeldMotion {
         float delta = 1f / UNROLL_TICKS;
         float next = open ? progress + delta : progress - delta;
         return Math.max(0f, Math.min(1f, next));
+    }
+
+    /** CHART4: the ease-in-out the motion follows (smoothstep): how far along CHART3's linear motion progress {@code p} stands. */
+    public static float ease(float p) {
+        float t = Math.max(0f, Math.min(1f, p));
+        return t * t * (3f - 2f * t);
     }
 
     /** The progress shown between two ticks. */

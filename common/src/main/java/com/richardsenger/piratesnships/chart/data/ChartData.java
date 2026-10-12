@@ -49,6 +49,12 @@ public record ChartData(int cellBlocks, Map<Long, ChartRegion> regions, List<Cha
         return r == null ? 0 : r.get(cx & ChartRegion.MASK, cz & ChartRegion.MASK);
     }
 
+    /** CHART4: the wide cell ({@link ChartCells#wide}: the cell byte and its packed map colour) at {@code (cx, cz)}, 0 when unknown. */
+    public int wide(int cx, int cz) {
+        ChartRegion r = regions.get(ChartRegion.keyOfCell(cx, cz));
+        return r == null ? 0 : r.wide(cx & ChartRegion.MASK, cz & ChartRegion.MASK);
+    }
+
     public Optional<ChartRegion> region(int rx, int rz) {
         return Optional.ofNullable(regions.get(ChartRegion.key(rx, rz)));
     }

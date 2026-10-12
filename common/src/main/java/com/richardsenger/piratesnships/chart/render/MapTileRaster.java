@@ -153,13 +153,21 @@ public final class MapTileRaster {
      * (ties: deep water, then shallow water, then the land classes in their stored order), its coast flag is set when
      * any known cell of the block is coast, and it is unknown (0) only when no cell of the block is known. At zoom 1
      * it is the cell itself (with free bits cleared).
+     *
+     * <p>CHART4: the cells may be wide cells ({@link ChartCells#wide}); the result then carries a colour the same way,
+     * when its class is a land class: the most common map colour id among the block's land cells that have one (ties:
+     * the lower id) with that colour's most common brightness step (ties: the lower step id), else none. Water pixels
+     * carry no colour (the sea keeps the chart's wash).
      */
     public static int downsample(CellLookup cells, int cx0, int cz0, int zoom) {
         if (zoom <= 1) {
             int c = cells.cell(cx0, cz0);
-            return ChartCells.known(c) ? c & (ChartCells.CLASS_MASK | ChartCells.COAST) : 0;
+            if (!ChartCells.known(c)) return 0;
+            int colour = ChartCells.cellClass(c).isLand() ? ChartCells.colour(c) : 0;
+            return ChartCells.wide(c & (ChartCells.CLASS_MASK | ChartCells.COAST), colour);
         }
         int[] counts = new int[CellClass.values().length];
+        int[] colours = null;
         boolean coast = false;
         boolean any = false;
         for (int j = 0; j < zoom; j++) {
@@ -167,8 +175,14 @@ public final class MapTileRaster {
                 int c = cells.cell(cx0 + i, cz0 + j);
                 if (!ChartCells.known(c)) continue;
                 any = true;
-                counts[ChartCells.cellClass(c).ordinal()]++;
+                CellClass cls = ChartCells.cellClass(c);
+                counts[cls.ordinal()]++;
                 if (ChartCells.coast(c)) coast = true;
+                int colour = ChartCells.colour(c);
+                if (colour != 0 && cls.isLand()) {
+                    if (colours == null) colours = new int[256];
+                    colours[colour]++;
+                }
             }
         }
         if (!any) return 0;
@@ -177,7 +191,26 @@ public final class MapTileRaster {
             // strictly greater: on a tie the lower ordinal (deeper water first, then land) stays
             if (counts[k] > (best == 0 ? 0 : counts[best])) best = k;
         }
-        return ChartCells.of(CellClass.of(best), coast) & 0xFF;
+        CellClass cls = CellClass.of(best);
+        int colour = cls.isLand() && colours != null ? dominantColour(colours) : 0;
+        return ChartCells.wide(ChartCells.of(cls, coast), colour);
+    }
+
+    /** CHART4: the packed colour standing for counts per packed colour: the most common id, then its most common step. */
+    static int dominantColour(int[] counts) {
+        int bestId = 0;
+        int bestCount = 0;
+        for (int id = 1; id < 64; id++) {
+            int n = counts[id << 2] + counts[id << 2 | 1] + counts[id << 2 | 2] + counts[id << 2 | 3];
+            if (n > bestCount) {
+                bestId = id;
+                bestCount = n;
+            }
+        }
+        if (bestId == 0) return 0;
+        int step = 0;
+        for (int s = 1; s < 4; s++) if (counts[bestId << 2 | s] > counts[bestId << 2 | step]) step = s;
+        return bestId << 2 | step;
     }
 
     /**

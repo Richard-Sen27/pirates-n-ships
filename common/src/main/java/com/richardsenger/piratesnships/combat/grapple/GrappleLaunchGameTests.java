@@ -270,7 +270,7 @@ public final class GrappleLaunchGameTests {
         h.assertTrue(thrown.consumesAction() && !empty.isUsingItem(), "the off-hand hook was not thrown: " + thrown);
         GrapplingHookEntity out = GrappleService.hookOf(empty);
         h.assertTrue(out != null, "the hook was not thrown");
-        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
+        assertSpeed(h, out, GrappleConfig.speed(GrappleLaunch.Mode.THROW), "the thrown hook");
         h.assertTrue(GrappleService.release(empty) && hooks(empty) == 1, "the released hook did not come back");
         h.succeed();
     }
@@ -345,10 +345,20 @@ public final class GrappleLaunchGameTests {
                 "the " + what + "'s rope ran out after " + roped.distance() + " blocks, not at " + rope + ": " + roped);
     }
 
+    /**
+     * GR7 (the human: "when thrown with hand, it goes WAY too far"): a level throw by hand lands 8 to 10 blocks away,
+     * as {@code HookFlightTest} pins the arithmetic, well inside its 32-block rope (which is still its length).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void aLevelThrowReachesTheWholeRope(GameTestHelper h) {
-        assertReach(h, GrappleLaunch.Mode.THROW, "throw");
-        h.assertTrue(GrappleConfig.ropeLength(GrappleLaunch.Mode.THROW) >= 32.0, "the thrown rope is shorter than 32 blocks");
+    public static void aLevelHandThrowLandsWithinThePinnedRange(GameTestHelper h) {
+        double rope = GrappleConfig.ropeLength(GrappleLaunch.Mode.THROW);
+        Flight free = flyLevel(h, GrappleLaunch.Mode.THROW, Double.NaN);
+        Constants.LOG.info("GR7 reach: a level hand throw lands {} blocks away after {} ticks (rope {})",
+                String.format(java.util.Locale.ROOT, "%.1f", free.distance()), free.ticks(), rope);
+        h.assertTrue(free.state() == GrapplingHookEntity.State.FLYING, "the hand throw's rope ran out: " + free);
+        h.assertTrue(free.distance() >= 8.0 && free.distance() <= 10.0, "a level hand throw lands " + free.distance()
+                + " blocks away, not 8 to 10");
+        h.assertTrue(rope >= 32.0, "the thrown rope is shorter than 32 blocks");
         h.succeed();
     }
 
@@ -370,7 +380,7 @@ public final class GrappleLaunchGameTests {
         h.assertTrue(r.consumesAction(), "the throw was refused: " + r);
         GrapplingHookEntity out = GrappleService.hookOf(player);
         h.assertTrue(out != null, "the hook was not thrown");
-        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
+        assertSpeed(h, out, GrappleConfig.speed(GrappleLaunch.Mode.THROW), "the thrown hook");
         h.assertTrue(out.ropeLength() == GrappleConfig.MAX_ROPE_LENGTH.get(), "a thrown hook has rope " + out.ropeLength());
         h.assertTrue(player.getMainHandItem().isEmpty(), "the thrown hook is still in the hand");
         h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");

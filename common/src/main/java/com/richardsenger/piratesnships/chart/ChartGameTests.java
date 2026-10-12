@@ -8,6 +8,41 @@ import com.richardsenger.piratesnships.chart.data.ChartRegion;
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
 import com.richardsenger.piratesnships.chart.data.MarkerRules;
 import com.richardsenger.piratesnships.chart.data.SampleGrid;
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.chart.data.KnownStructure;
+import com.richardsenger.piratesnships.chart.data.StructureKind;
+import com.richardsenger.piratesnships.chart.net.ChartShip;
+import com.richardsenger.piratesnships.chart.net.ChartStructure;
+import com.richardsenger.piratesnships.ship.ShipRegistry;
+import com.richardsenger.piratesnships.ship.ShipTestCleanup;
+import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
+import com.richardsenger.piratesnships.trade.market.Climate;
+import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.world.port.Port;
+import com.richardsenger.piratesnships.world.port.PortRegistry;
+import com.richardsenger.piratesnships.world.wreck.WreckKeys;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
+import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import com.richardsenger.piratesnships.chart.net.ChartBackend;
 import com.richardsenger.piratesnships.chart.net.ChartMarkerPayload;
 import com.richardsenger.piratesnships.chart.net.ChartOpenPayload;
@@ -33,7 +68,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -255,8 +293,10 @@ public final class ChartGameTests {
 
     // --- markers ------------------------------------------------------------------------------------------------
 
-    @ModGameTest
+    /** Own batch: changes config. {@code max_markers} set to a number still caps (an old config file's 64, CHART2). */
+    @ModGameTest(batch = "pirates_n_ships_config_chart_max_markers")
     public static void markerRequestsAreValidatedAndCapped(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ChartConfig.MAX_MARKERS, 5);
         ServerPlayer p = player(helper, "chart_marker");
         List<CustomPacketPayload> sent = ChartBackend.record(p.getUUID());
         MarkerRules.Outcome first = ChartBackend.handleMarker(p, ChartMarkerPayload.add(100, -200, MarkerIcon.SKULL, "  Dead Man's Chest "));
@@ -265,7 +305,7 @@ public final class ChartGameTests {
         helper.assertValueEqual(data.markers().size(), 1, "one marker");
         helper.assertValueEqual(data.markers().get(0).name(), "Dead Man's Chest", "the name is trimmed");
         ChartStatePayload state = of(sent, ChartStatePayload.class).get(0);
-        helper.assertValueEqual(state.markers(), data.markers(), "the client gets the new list");
+        helper.assertValueEqual(state.markers(), Optional.of(data.markers()), "the client gets the new list");
         helper.assertTrue(state.refusal().isEmpty(), "no refusal");
 
         // rename it, then a name that is too long
@@ -294,6 +334,209 @@ public final class ChartGameTests {
         finish(helper, p);
     }
 
+    /** CHART2: by default a chart takes markers beyond the old limits of 64 and 512; the hard limit stays. */
+    @ModGameTest
+    public static void markersAreUnlimitedByDefault(GameTestHelper helper) {
+        ServerPlayer p = player(helper, "chart_hoarder");
+        List<CustomPacketPayload> sent = ChartBackend.record(p.getUUID());
+        helper.assertValueEqual(ChartConfig.MAX_MARKERS.get(), 0, "max_markers defaults to 0 = no limit");
+        int count = 600;
+        for (int i = 0; i < count; i++) {
+            MarkerRules.Outcome o = ChartBackend.handleMarker(p, ChartMarkerPayload.add(i * 3, -i * 5, MarkerIcon.values()[i % 5], "m" + i));
+            if (!o.ok()) throw new AssertionError("marker " + i + " refused: " + o.refusal());
+        }
+        helper.assertValueEqual(ChartService.data(p).markers().size(), count, "every marker is on the chart");
+        List<ChartStatePayload> states = of(sent, ChartStatePayload.class);
+        helper.assertValueEqual(states.get(states.size() - 1).markers().orElseThrow().size(), count, "and the client gets them all");
+        // the hard limit (one payload) still holds
+        ChartData full = ChartService.data(p);
+        List<com.richardsenger.piratesnships.chart.data.ChartMarker> list = new java.util.ArrayList<>(full.markers());
+        for (int i = list.size(); i < MarkerRules.HARD_LIMIT; i++) list.add(new com.richardsenger.piratesnships.chart.data.ChartMarker(10_000 + i, i, i, MarkerIcon.X, ""));
+        ChartService.setData(p, full.withMarkers(list, 20_000));
+        helper.assertValueEqual(ChartBackend.handleMarker(p, ChartMarkerPayload.add(1, 1, MarkerIcon.X, "")).refusal(),
+                MarkerRules.Refusal.TOO_MANY, "beyond the hard limit is refused");
+        finish(helper, p);
+    }
+
+    // --- ships, structures and other players (CHART2) -----------------------------------------------------------
+
+    /** Far from every test and real structure: where the fake ports of these tests lie (the mock players are not in the level). */
+    private static final int FAR = 20_000_000;
+
+    private static Port fakePort(String name, PortKind kind, int x, int z) {
+        BoundingBox box = new BoundingBox(x - 20, 60, z - 20, x + 20, 80, z + 20);
+        return new Port(Constants.id(name), kind, Level.OVERWORLD, new BlockPos(x, 64, z), box, Climate.TEMPERATE, List.of());
+    }
+
+    /** Runs {@code body} with {@code port} registered, and removes it again however the body ends. */
+    private static void withPort(GameTestHelper helper, Port port, Runnable body) {
+        PortRegistry registry = PortRegistry.get(helper.getLevel().getServer());
+        registry.add(port);
+        try {
+            body.run();
+        } finally {
+            registry.remove(port.id());
+        }
+    }
+
+    /**
+     * Opening the chart sends the state with every registered port (its kind and its id as the label) and no ships; it
+     * carries nothing about another player standing right next to the viewer (the human, 2026-10-12: the chart shows
+     * only its owner).
+     */
+    @ModGameTest(batch = "pirates_n_ships_chart_structures")
+    public static void theStateCarriesPortsAndNeverOtherPlayers(GameTestHelper helper) {
+        Port port = fakePort("chart_test_village", PortKind.SEAFARER_VILLAGE, FAR + 5000, FAR);
+        withPort(helper, port, () -> stateWithPort(helper));
+    }
+
+    private static void stateWithPort(GameTestHelper helper) {
+        ServerPlayer viewer = player(helper, "chart_viewer");
+        ServerPlayer other = player(helper, "chart_neighbour");
+        viewer.setPos(FAR + 0.5, 64, FAR + 0.5);
+        other.setPos(FAR + 3.5, 64, FAR + 0.5);
+        List<CustomPacketPayload> sent = ChartBackend.record(viewer.getUUID());
+        viewer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ChartContent.CHART.get()));
+        helper.assertTrue(ChartBackend.open(viewer), "the chart opens");
+        ChartStatePayload state = of(sent, ChartStatePayload.class).get(0);
+        ChartStructure shown = state.structures().orElseThrow().stream().filter(st -> st.x() == FAR + 5000).findFirst()
+                .orElseThrow(() -> new AssertionError("the port is on the chart: " + state.structures()));
+        helper.assertValueEqual(shown.kind(), StructureKind.VILLAGE, "a village's icon");
+        helper.assertValueEqual(shown.label(), "chart_test_village", "named by its id while it has no name");
+        helper.assertTrue(state.ships().isEmpty(), "no ships: the viewer owns none and stands on none");
+        // the payload type has no field for other players at all; their names appear nowhere
+        String everything = state.toString();
+        helper.assertFalse(everything.contains("chart_neighbour"), "nothing of the other player is sent");
+        helper.assertFalse(ChartBackend.sendLive(viewer.getUUID()), "nothing changed: no update is sent");
+        ChartBackend.stopRecording(other.getUUID());
+        finish(helper, viewer);
+    }
+
+    /**
+     * Own batch: changes config. Without {@code ports_always_known} a port appears only once the player came within
+     * {@code structure_reveal_distance} of its bounds, and stays after they leave (saved per player).
+     */
+    @ModGameTest(batch = "pirates_n_ships_config_chart_reveal")
+    public static void portsAppearOnceRevealed(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ChartConfig.PORTS_ALWAYS_KNOWN, false);
+        ConfigOverrides.during(helper, ChartConfig.STRUCTURE_REVEAL_DISTANCE, 50);
+        Port port = fakePort("chart_test_island", PortKind.PIRATE_ISLAND, FAR, FAR + 7000);
+        withPort(helper, port, () -> revealPort(helper, port));
+    }
+
+    private static void revealPort(GameTestHelper helper, Port port) {
+        ServerPlayer p = player(helper, "chart_explorer");
+        p.setPos(FAR + 0.5, 64, FAR + 7000 - 20 - 51.5);
+        ChartStructures.reveal(p);
+        helper.assertTrue(ChartStructures.shown(p).stream().noneMatch(st -> st.label().equals("chart_test_island")), "51 blocks off: unknown");
+        p.setPos(FAR + 0.5, 64, FAR + 7000 - 20 - 49.5);
+        ChartStructures.reveal(p);
+        helper.assertTrue(ChartStructures.sightings(p).knowsPort(port.id()), "49 blocks off: revealed");
+        p.setPos(0.5, 64, 0.5);
+        helper.assertTrue(ChartStructures.shown(p).stream().anyMatch(st -> st.label().equals("chart_test_island") && st.kind() == StructureKind.ISLAND),
+                "still on the chart far away");
+        // with show_structures off nothing is drawn
+        ConfigOverrides.during(helper, ChartConfig.SHOW_STRUCTURES, false);
+        helper.assertTrue(ChartStructures.shown(p).isEmpty(), "show_structures off: no structures");
+        helper.succeed();
+    }
+
+    /**
+     * A wreck start in a loaded chunk is revealed when the player comes near it and then shown as a wreck; a vanilla
+     * structure there is not (the starts are put into the test's chunk by hand and restored afterwards).
+     */
+    @ModGameTest(batch = "pirates_n_ships_chart_structures", template = GameTestTemplates.EMPTY_24)
+    public static void aWreckNearbyIsRevealed(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Structure wreck = registry.getOrThrow(WreckKeys.WRECK);
+        Structure vanilla = registry.getOrThrow(BuiltinStructures.SHIPWRECK);
+        BlockPos corner = helper.absolutePos(new BlockPos(2, 1, 2));
+        LevelChunk chunk = level.getChunkAt(corner);
+        Map<Structure, StructureStart> oldStarts = new HashMap<>(chunk.getAllStarts());
+        Map<Structure, LongSet> oldRefs = new HashMap<>();
+        chunk.getAllReferences().forEach((k, v) -> oldRefs.put(k, new LongOpenHashSet(v)));
+        try {
+            revealWreck(helper, chunk, corner, wreck, vanilla);
+        } finally {
+            chunk.setAllStarts(oldStarts);
+            chunk.setAllReferences(oldRefs);
+        }
+    }
+
+    private static void revealWreck(GameTestHelper helper, LevelChunk chunk, BlockPos corner, Structure wreck, Structure vanilla) {
+        BoundingBox box = new BoundingBox(corner.getX(), corner.getY(), corner.getZ(), corner.getX() + 6, corner.getY() + 3, corner.getZ() + 4);
+        for (Structure st : List.of(wreck, vanilla)) {
+            chunk.setStartForStructure(st, new StructureStart(st, chunk.getPos(), 0, new PiecesContainer(List.of(new TestPiece(box)))));
+            chunk.addReferenceForStructure(st, chunk.getPos().toLong());
+        }
+        ServerPlayer p = player(helper, "chart_diver");
+        p.setPos(corner.getX() - 200, corner.getY(), corner.getZ());
+        ChartStructures.reveal(p);
+        helper.assertTrue(ChartStructures.sightings(p).structures().isEmpty(), "200 blocks off: nothing");
+        p.setPos(corner.getX() - 20, corner.getY(), corner.getZ() + 2);
+        ChartStructures.reveal(p);
+        List<KnownStructure> known = ChartStructures.sightings(p).structures();
+        helper.assertValueEqual(known.size(), 1, "the wreck only, never the vanilla shipwreck: " + known);
+        helper.assertValueEqual(known.get(0).structure(), WreckKeys.WRECK.location(), "the wreck");
+        helper.assertTrue(ChartStructures.shown(p).stream().anyMatch(st -> st.kind() == StructureKind.WRECK && st.x() == corner.getX() + 3),
+                "drawn as a wreck at its centre");
+        helper.succeed();
+    }
+
+    /** A piece that only has bounds: enough for a structure start the chart reads. */
+    private static final class TestPiece extends StructurePiece {
+        TestPiece(BoundingBox box) {
+            super(StructurePieceType.JIGSAW, 0, box);
+        }
+
+        @Override
+        protected void addAdditionalSaveData(net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext context, CompoundTag tag) {
+        }
+
+        @Override
+        public void postProcess(WorldGenLevel level, StructureManager structures, ChunkGenerator generator, RandomSource random,
+                                BoundingBox box, ChunkPos chunk, BlockPos pivot) {
+        }
+    }
+
+    /**
+     * Own batch: assembles a ship. The owner's chart shows the owner's loaded ship with a heading in [0, 360); another
+     * player's chart does not, even right beside it; with {@code show_ships} off nobody's does.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 100, batch = "pirates_n_ships_chart_ships")
+    public static void onlyTheOwnersChartShowsTheShip(GameTestHelper helper) {
+        for (int x = 0; x < 9; x++) {
+            for (int z = 0; z < 9; z++) helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        }
+        for (int x = 2; x <= 7; x++) {
+            for (int z = 2; z <= 7; z++) helper.setBlock(new BlockPos(x, 2, z), Blocks.OAK_PLANKS);
+        }
+        BlockPos helm = new BlockPos(5, 3, 5);
+        helper.setBlock(helm, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
+        AssemblyResult r = ShipTestCleanup.assemble(helper, helm);
+        if (r.shipId() == null) throw new AssertionError("assembly failed: " + r);
+        ServerPlayer owner = player(helper, "chart_captain");
+        ServerPlayer stranger = player(helper, "chart_stranger");
+        Vec3 near = Vec3.atCenterOf(helper.absolutePos(new BlockPos(0, 3, 0)));
+        owner.setPos(near);
+        stranger.setPos(near);
+        ShipRegistry ships = ShipRegistry.get(helper.getLevel().getServer());
+        ships.put(ships.find(r.shipId()).orElseThrow().withOwner(Optional.of(owner.getUUID())).withName("Chart Runner"));
+        List<ChartShip> mine = ChartShips.of(owner);
+        helper.assertValueEqual(mine.size(), 1, "the owner sees their ship");
+        ChartShip ship = mine.get(0);
+        helper.assertValueEqual(ship.name(), "Chart Runner", "with its name");
+        helper.assertFalse(ship.aboard(), "the owner stands beside it, not on it");
+        helper.assertTrue(ship.heading() >= 0 && ship.heading() < 360, "a compass heading: " + ship.heading());
+        BlockPos centre = helper.absolutePos(new BlockPos(4, 2, 4));
+        helper.assertTrue(Math.abs(ship.x() - centre.getX()) <= 2 && Math.abs(ship.z() - centre.getZ()) <= 2, "at the ship: " + ship);
+        helper.assertTrue(ChartShips.of(stranger).isEmpty(), "another player's chart never shows it");
+        ConfigOverrides.during(helper, ChartConfig.SHOW_SHIPS, false);
+        helper.assertTrue(ChartShips.of(owner).isEmpty(), "show_ships off: no ships");
+        helper.succeed();
+    }
+
     // --- the key and the settings -------------------------------------------------------------------------------
 
     /** Defaults: the settings say the key needs the item; the key opens nothing with empty hands, but does with a chart. */
@@ -304,13 +547,13 @@ public final class ChartGameTests {
         ChartBackend.onDatapackSync(p, true);
         ChartSettingsPayload settings = of(sent, ChartSettingsPayload.class).get(0);
         helper.assertFalse(settings.settings().openWithoutItem(), "open_without_item is off by default");
-        helper.assertFalse(settings.settings().showOtherPlayers(), "show_other_players is off by default");
+        helper.assertValueEqual(settings.settings().maxMarkers(), 0, "max_markers is 0 (no limit) by default");
+        helper.assertValueEqual(settings.settings().maxZoomOut(), 3, "max_zoom_out is 3 by default");
         helper.assertFalse(ChartBackend.handleRequestOpen(p), "the key does not open the chart without one in hand");
         helper.assertTrue(of(sent, ChartOpenPayload.class).isEmpty(), "nothing opened");
         p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ChartContent.CHART.get()));
         helper.assertTrue(ChartBackend.handleRequestOpen(p), "with a chart in hand the key opens it");
         helper.assertValueEqual(of(sent, ChartOpenPayload.class).size(), 1, "opened");
-        helper.assertTrue(ChartBackend.others(p).isEmpty(), "no other players without the option");
         finish(helper, p);
     }
 

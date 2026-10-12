@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.chart;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
+import com.richardsenger.piratesnships.chart.data.MarkerList;
+import com.richardsenger.piratesnships.chart.data.StructureKind;
 import com.richardsenger.piratesnships.chart.data.MarkerRules;
 import com.richardsenger.piratesnships.chart.net.ChartBackend;
 import com.richardsenger.piratesnships.chart.tile.MapTileRules;
@@ -33,7 +35,18 @@ public final class ChartText {
     public static final String SAVE = SCREEN + "save";
     public static final String DELETE = SCREEN + "delete";
     public static final String CANCEL = SCREEN + "cancel";
-    public static final String MARKER_COUNT = SCREEN + "marker_count";
+    // CHART2: the markers list, the player, ships and structures
+    public static final String LIST_BUTTON = SCREEN + "list_button";
+    public static final String LIST_TITLE = SCREEN + "list_title";
+    public static final String LIST_EMPTY = SCREEN + "list_empty";
+    public static final String LIST_UNNAMED = SCREEN + "list_unnamed";
+    public static final String LIST_BEARING = SCREEN + "list_bearing";
+    public static final String LIST_HERE = SCREEN + "list_here";
+    public static final String LIST_HINT = SCREEN + "list_hint";
+    public static final String YOU = SCREEN + "you";
+    public static final String SHIP_ABOARD = SCREEN + "ship_aboard";
+    public static final String SHIP_OWN = SCREEN + "ship_own";
+    public static final String SHIP_UNNAMED = SCREEN + "ship_unnamed";
 
     public static final String KEY_OPEN = "key." + Constants.MOD_ID + ".open_chart";
     public static final String KEY_CATEGORY = "key.categories." + Constants.MOD_ID;
@@ -95,6 +108,16 @@ public final class ChartText {
         return SCREEN + "icon." + icon.getSerializedName();
     }
 
+    /** CHART2: the legend name of a structure kind ("Seafarer village"). */
+    public static String structure(StructureKind kind) {
+        return SCREEN + "structure." + kind.key();
+    }
+
+    /** CHART2: a compass point's short name ("NW"). */
+    public static String point(MarkerList.Point point) {
+        return SCREEN + "point." + point.key();
+    }
+
     public static final Map<String, String> ENGLISH = english();
 
     private ChartText() {
@@ -117,7 +140,23 @@ public final class ChartText {
         m.put(SAVE, "Save");
         m.put(DELETE, "Delete");
         m.put(CANCEL, "Cancel");
-        m.put(MARKER_COUNT, "%s / %s markers");
+        m.put(LIST_BUTTON, "Markers (%s)");
+        m.put(LIST_TITLE, "Markers, nearest first");
+        m.put(LIST_EMPTY, "No markers yet: right-click the chart to place one");
+        m.put(LIST_UNNAMED, "Marker at %s, %s");
+        m.put(LIST_BEARING, "%s, %s blocks");
+        m.put(LIST_HERE, "here");
+        m.put(LIST_HINT, "Click a marker to find it on the chart");
+        m.put(YOU, "You");
+        m.put(SHIP_ABOARD, "Aboard: %s");
+        m.put(SHIP_OWN, "Your ship: %s");
+        m.put(SHIP_UNNAMED, "unnamed ship");
+        m.put(structure(StructureKind.VILLAGE), "Seafarer village");
+        m.put(structure(StructureKind.OUTPOST), "Navy outpost");
+        m.put(structure(StructureKind.ISLAND), "Pirate island");
+        m.put(structure(StructureKind.WRECK), "Wreck");
+        m.put(structure(StructureKind.OTHER), "Landmark");
+        for (MarkerList.Point pt : MarkerList.Point.values()) m.put(point(pt), pt.name());
         m.put(icon(MarkerIcon.X), "X marks the spot");
         m.put(icon(MarkerIcon.ANCHOR), "Anchorage");
         m.put(icon(MarkerIcon.SKULL), "Skull");

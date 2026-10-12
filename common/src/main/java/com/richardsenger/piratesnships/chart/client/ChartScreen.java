@@ -12,7 +12,11 @@ import com.richardsenger.piratesnships.chart.data.MarkerRules;
 import com.richardsenger.piratesnships.chart.net.ChartMarkerPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.ChartSimplePayloads;
-import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
+import com.richardsenger.piratesnships.chart.data.MarkerList;
+import com.richardsenger.piratesnships.chart.net.ChartShip;
+import com.richardsenger.piratesnships.chart.net.ChartStructure;
+import com.richardsenger.piratesnships.chart.render.ChartZoomOut;
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.chart.net.ChartViewPayload;
 import com.richardsenger.piratesnships.chart.net.ClearBoardPayload;
 import com.richardsenger.piratesnships.chart.net.DrawTilePayload;
@@ -37,6 +41,7 @@ import net.minecraft.world.level.Level;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,13 +49,19 @@ import java.util.Optional;
  * The chart screen (client only, work package MAP1). A wooden frame with a header plaque, the chart on a parchment
  * sheet: the regions in {@link ClientChart} drawn by {@link ChartTextures} (the pirate style of
  * {@link com.richardsenger.piratesnships.chart.render.ChartRaster}), sea monsters and small roses in open water
- * ({@code chart_visuals.doodles}), the player's markers, other players (server option), the player as a small ship
- * pointing along their heading, a compass rose in the corner and a scale bar. A footer of brass buttons (zoom out, zoom
- * in, centre) with the position under the cursor and the hint or the last refusal.
+ * ({@code chart_visuals.doodles}), the player's markers, a compass rose in the corner and a scale bar. A footer of
+ * brass buttons (zoom out, zoom in, centre) with the position under the cursor and the hint or the last refusal.
  *
- * <p>Input: drag pans, the wheel zooms around the cursor (three steps), right-click places a new marker (an editor
- * with the five icons, a name field, save and cancel), left-click on a marker edits it (rename, other icon, delete).
- * The viewport is remembered per player; it is sent to the server whenever it moves, so the regions in view stream in.
+ * <p>Input: drag pans, the wheel zooms around the cursor, right-click places a new marker (an editor with the five
+ * icons, a name field, save and cancel), left-click on a marker edits it (rename, other icon, delete). The viewport is
+ * remembered per player; it is sent to the server whenever it moves, so the regions in view stream in.
+ *
+ * <p>CHART2: zoom-out steps below one pixel per cell down to {@code -chart.max_zoom_out} (far tiles,
+ * {@link ChartTextures#farTexture}); the player as a compass needle pointing where they face; the ship they stand on
+ * and their own ships with their headings; ports, wrecks and other structures with icons, labels and a legend tooltip;
+ * other players never. The footer's "Markers (n)" button (where the marker count was) opens a scrollable list of the
+ * markers, nearest first, with distance and compass point; clicking a row centres the chart on that marker and rings
+ * it for a moment (the list stays open). The draw mode of a map board has the same button.
  */
 public final class ChartScreen extends Screen {
 
@@ -58,7 +69,9 @@ public final class ChartScreen extends Screen {
     private static final int EDITOR_W = 156;
     private static final int EDITOR_H = 62;
     private static final int MARKER_HIT = 6;
-    private static final int[] SCALE_STEPS = {10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000};
+    /** CHART2: structure labels are written from this zoom in (2 cells per pixel); wider, the legend tooltip names them. */
+    private static final int LABEL_ZOOM = -1;
+    private static final int[] SCALE_STEPS = {10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000};
 
     private ChartProjection view;
     private int left;
@@ -93,6 +106,17 @@ public final class ChartScreen extends Screen {
     private int statusTicks;
 
     private final Map<Long, CachedDoodle> doodles = new HashMap<>();
+
+    // the markers list (CHART2)
+    private static final int LIST_W = 180;
+    private static final int ROW_H = 12;
+    private static final int LIST_HEAD = 14;
+    private static final int FOCUS_TICKS = 60;
+    private boolean listOpen;
+    private int listScroll;
+    private BrassButton listButton;
+    private int focusId = -1;
+    private int focusTicks;
 
     // "draw on tile" mode (work package MAP2): null for the plain chart
     private final TileTarget target;
@@ -170,13 +194,13 @@ public final class ChartScreen extends Screen {
             // the whole selection in view at the widest zoom
             double cx = (selCx + selW() / 2.0) * cellBlocks();
             double cz = (selCz + selH() / 2.0) * cellBlocks();
-            view = new ChartProjection(cx, cz, 0, cellBlocks());
+            view = new ChartProjection(cx, cz, fittingZoom(selW(), selH()), cellBlocks());
             clampSelection();
         }
         if (view == null) {
             view = mc.player == null ? new ChartProjection(0, 0, ChartProjection.DEFAULT_ZOOM, cellBlocks())
                     : ClientChart.view(mc.player.getUUID())
-                            .map(v -> new ChartProjection(v.centerX(), v.centerZ(), v.zoom(), cellBlocks()))
+                            .map(v -> new ChartProjection(v.centerX(), v.centerZ(), ChartProjection.clampZoom(v.zoom(), minZoom()), cellBlocks()))
                             .orElseGet(() -> new ChartProjection(mc.player.getX(), mc.player.getZ(), ChartProjection.DEFAULT_ZOOM, cellBlocks()));
         }
 
@@ -202,11 +226,16 @@ public final class ChartScreen extends Screen {
         deleteButton = addRenderableWidget(new BrassButton(editorX + 54, buttonsY, 46, GuiKit.FIELD_H, Component.translatable(ChartText.DELETE), this::deleteMarker));
         cancelButton = addRenderableWidget(new BrassButton(editorX + 104, buttonsY, 46, GuiKit.FIELD_H, Component.translatable(ChartText.CANCEL), this::closeEditor));
         updateEditorWidgets();
+        int right = mapL + mapW;
+        if (target == null) {
+            listButton = addRenderableWidget(new BrassButton(right - LIST_BUTTON_W, by, LIST_BUTTON_W, GuiKit.FIELD_H, listLabel(), this::toggleList).selected(listOpen));
+        }
         if (target != null) {
-            int right = mapL + mapW;
             drawButton = addRenderableWidget(new BrassButton(right - 56, by, 56, GuiKit.FIELD_H, drawLabel(), this::drawPressed));
             markersButton = addRenderableWidget(new BrassButton(right - 56 - 4 - 62, by, 62, GuiKit.FIELD_H,
                     Component.translatable(ChartText.INCLUDE_MARKERS), this::toggleMarkers).selected(includeMarkers));
+            listButton = addRenderableWidget(new BrassButton(markersButton.getX() - 4 - LIST_BUTTON_W, by, LIST_BUTTON_W, GuiKit.FIELD_H,
+                    listLabel(), this::toggleList).selected(listOpen));
             // the board panel in the map's top-left corner
             int px = panelX();
             int py = panelY() + PANEL_H - GuiKit.FIELD_H - 4;
@@ -217,6 +246,120 @@ public final class ChartScreen extends Screen {
             updateBoardWidgets();
         }
         lastSentView = null;
+    }
+
+    /** CHART2: the closest zoom (at most 0, at least the server's widest) at which {@code w x h} cells fit the map. */
+    private int fittingZoom(int w, int h) {
+        for (int z = 0; z > minZoom(); z--) {
+            double sc = new ChartProjection(0, 0, z, 1).scale();
+            if (w * sc <= mapW - 16 && h * sc <= mapH - 16) return z;
+        }
+        return minZoom();
+    }
+
+    // ------------------------------------------------------------------ the markers list (CHART2)
+
+    private static final int LIST_BUTTON_W = 74;
+
+    private Component listLabel() {
+        return Component.translatable(ChartText.LIST_BUTTON, ClientChart.markers().size());
+    }
+
+    private void toggleList() {
+        listOpen = !listOpen;
+        listScroll = 0;
+        if (listButton != null) listButton.selected(listOpen);
+    }
+
+    private int listX() {
+        return mapL + mapW - LIST_W - 4;
+    }
+
+    private int listY() {
+        return mapT + 40;
+    }
+
+    private int listH() {
+        return Math.max(LIST_HEAD + ROW_H * 2 + 6, mapH - 40 - 18);
+    }
+
+    private int listRows() {
+        return Math.max(1, (listH() - LIST_HEAD - 4) / ROW_H);
+    }
+
+    private boolean inList(double mx, double my) {
+        return listOpen && mx >= listX() && mx < listX() + LIST_W && my >= listY() && my < listY() + listH();
+    }
+
+    private List<MarkerList.Entry> listEntries() {
+        Minecraft mc = Minecraft.getInstance();
+        double px = mc.player == null ? view.centerX() : mc.player.getX();
+        double pz = mc.player == null ? view.centerZ() : mc.player.getZ();
+        return MarkerList.entries(ClientChart.markers(), px, pz);
+    }
+
+    private int maxScroll(int count) {
+        return Math.max(0, count - listRows());
+    }
+
+    /** The list row under the mouse, or -1. */
+    private int listRowAt(double mx, double my, int count) {
+        if (!inList(mx, my)) return -1;
+        int top = listY() + LIST_HEAD;
+        if (my < top) return -1;
+        int row = (int) ((my - top) / ROW_H) + listScroll;
+        return row < count && row - listScroll < listRows() ? row : -1;
+    }
+
+    private void focus(ChartMarker m) {
+        view = view.centeredOn(m.x() + 0.5, m.z() + 0.5);
+        focusId = m.id();
+        focusTicks = FOCUS_TICKS;
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
+    }
+
+    private void renderList(GuiGraphics g, int mouseX, int mouseY) {
+        int x = listX();
+        int y = listY();
+        int h = listH();
+        GuiKit.parchment(g, x, y, LIST_W, h);
+        GuiKit.ink(g, font, Component.translatable(ChartText.LIST_TITLE), x + 6, y + 4, LIST_W - 12, GuiKit.INK);
+        List<MarkerList.Entry> entries = listEntries();
+        listScroll = Math.max(0, Math.min(listScroll, maxScroll(entries.size())));
+        if (entries.isEmpty()) {
+            g.drawWordWrap(font, Component.translatable(ChartText.LIST_EMPTY), x + 6, y + LIST_HEAD + 4, LIST_W - 12, GuiKit.INK_DIM);
+            return;
+        }
+        int hover = listRowAt(mouseX, mouseY, entries.size());
+        int rows = Math.min(listRows(), entries.size() - listScroll);
+        for (int i = 0; i < rows; i++) {
+            int index = listScroll + i;
+            MarkerList.Entry e = entries.get(index);
+            int ry = y + LIST_HEAD + i * ROW_H;
+            if (index == hover) g.fill(x + 3, ry, x + LIST_W - 3, ry + ROW_H, 0x30201810);
+            if (e.marker().id() == focusId) g.fill(x + 3, ry, x + 4, ry + ROW_H, GuiKit.INK_RED);
+            blitPart(g, ChartSheet.marker(e.marker().icon()), x + 5, ry + 1);
+            Component where = e.point() == null ? Component.translatable(ChartText.LIST_HERE)
+                    : Component.translatable(ChartText.LIST_BEARING, Component.translatable(ChartText.point(e.point())), Num.whole(e.distance()));
+            int ww = font.width(where);
+            g.drawString(font, where, x + LIST_W - 6 - ww, ry + 2, GuiKit.INK_DIM, false);
+            Component name = markerName(e.marker());
+            int nameW = LIST_W - 6 - ww - 4 - 17;
+            g.drawString(font, font.plainSubstrByWidth(name.getString(), nameW), x + 17, ry + 2, GuiKit.INK, false);
+        }
+        // a scroll bar when the list is longer than the panel
+        if (entries.size() > listRows()) {
+            int trackT = y + LIST_HEAD;
+            int trackH = listRows() * ROW_H;
+            int knobH = Math.max(6, trackH * listRows() / entries.size());
+            int knobT = trackT + (trackH - knobH) * listScroll / Math.max(1, maxScroll(entries.size()));
+            g.fill(x + LIST_W - 3, trackT, x + LIST_W - 2, trackT + trackH, 0x40201810);
+            g.fill(x + LIST_W - 4, knobT, x + LIST_W - 1, knobT + knobH, GuiKit.INK_DIM);
+        }
+    }
+
+    private static Component markerName(ChartMarker m) {
+        return m.name().isEmpty() ? Component.translatable(ChartText.LIST_UNNAMED, m.x(), m.z()) : Component.literal(m.name());
     }
 
     // ------------------------------------------------------------------ draw on a tile or board (MAP2, MAP3)
@@ -366,32 +509,32 @@ public final class ChartScreen extends Screen {
 
     private boolean inSelection(double mx, double my) {
         if (target == null) return false;
-        int px = view.pixelsPerCell();
-        double x0 = originX() + (double) selCx * px;
-        double y0 = originY() + (double) selCz * px;
-        return mx >= x0 && mx < x0 + (double) selW() * px && my >= y0 && my < y0 + (double) selH() * px;
+        double px = view.scale();
+        double x0 = originX() + selCx * px;
+        double y0 = originY() + selCz * px;
+        return mx >= x0 && mx < x0 + selW() * px && my >= y0 && my < y0 + selH() * px;
     }
 
     /** The selection as a parchment frame over the chart, the rest washed darker, thin lines where the tiles meet. */
     private void renderSelection(GuiGraphics g) {
-        int px = view.pixelsPerCell();
-        int l = clampScreen(originX() + (long) selCx * px, mapL, mapW);
-        int t = clampScreen(originY() + (long) selCz * px, mapT, mapH);
-        int r = clampScreen(originX() + ((long) selCx + selW()) * px, mapL, mapW);
-        int b = clampScreen(originY() + ((long) selCz + selH()) * px, mapT, mapH);
+        double px = view.scale();
+        int l = clampScreen(originX() + (long) Math.floor(selCx * px), mapL, mapW);
+        int t = clampScreen(originY() + (long) Math.floor(selCz * px), mapT, mapH);
+        int r = clampScreen(originX() + (long) Math.floor(((double) selCx + selW()) * px), mapL, mapW);
+        int b = clampScreen(originY() + (long) Math.floor(((double) selCz + selH()) * px), mapT, mapH);
         int wash = 0x60201810;
         g.fill(mapL, mapT, mapL + mapW, Math.max(mapT, t), wash);
         g.fill(mapL, Math.min(mapT + mapH, b), mapL + mapW, mapT + mapH, wash);
         g.fill(mapL, Math.max(t, mapT), Math.max(mapL, l), Math.min(b, mapT + mapH), wash);
         g.fill(Math.min(mapL + mapW, r), Math.max(t, mapT), mapL + mapW, Math.min(b, mapT + mapH), wash);
         // the seams between the tiles of a board
-        long tilePx = (long) target.tileCells() * boardZoom * px;
+        double tilePx = (double) target.tileCells() * boardZoom * px;
         for (int c = 1; c < target.columns(); c++) {
-            int x = clampScreen(originX() + (long) selCx * px + c * tilePx, mapL, mapW);
+            int x = clampScreen(originX() + (long) Math.floor(selCx * px + c * tilePx), mapL, mapW);
             g.fill(x, Math.max(t, mapT), x + 1, Math.min(b, mapT + mapH), 0x80201810);
         }
         for (int row = 1; row < target.rows(); row++) {
-            int y = clampScreen(originY() + (long) selCz * px + row * tilePx, mapT, mapH);
+            int y = clampScreen(originY() + (long) Math.floor(selCz * px + row * tilePx), mapT, mapH);
             g.fill(Math.max(l, mapL), y, Math.min(r, mapL + mapW), y + 1, 0x80201810);
         }
         // ink, two pixels of parchment, ink
@@ -466,9 +609,11 @@ public final class ChartScreen extends Screen {
             onClose();
             return;
         }
-        if (view.cellBlocks() != cellBlocks()) {
-            view = new ChartProjection(view.centerX(), view.centerZ(), view.zoom(), cellBlocks());
+        if (view.cellBlocks() != cellBlocks() || view.zoom() < minZoom()) {
+            view = new ChartProjection(view.centerX(), view.centerZ(), ChartProjection.clampZoom(view.zoom(), minZoom()), cellBlocks());
         }
+        if (focusTicks > 0 && --focusTicks == 0) focusId = -1;
+        if (listButton != null) listButton.setMessage(listLabel());
         Optional<String> refusal = ClientChart.takeRefusal();
         if (refusal.isPresent()) {
             showStatus(Component.translatable(refusal.get()), GuiKit.INK_RED);
@@ -482,8 +627,7 @@ public final class ChartScreen extends Screen {
     }
 
     private void sendView() {
-        int px = view.pixelsPerCell();
-        int radius = (int) Math.ceil(Math.max(mapW, mapH) / 2.0 / px) + ChartRegion.SIZE / 2;
+        int radius = (int) Math.ceil(Math.max(mapW, mapH) / 2.0 / view.scale()) + ChartRegion.SIZE / 2;
         int cx = (int) Math.floor(view.centerX() / cellBlocks());
         int cz = (int) Math.floor(view.centerZ() / cellBlocks());
         Services.NETWORK.sendToServer(new ChartViewPayload(cx, cz, radius));
@@ -523,9 +667,14 @@ public final class ChartScreen extends Screen {
     }
 
     private void zoomAt(int steps, double sx, double sy) {
-        int z = ChartProjection.clampZoom(view.zoom() + steps);
+        int z = ChartProjection.clampZoom(view.zoom() + steps, minZoom());
         if (z == view.zoom()) return;
         setView(view.zoomed(z, sx, sy, mapL, mapT, mapW, mapH));
+    }
+
+    /** The widest zoom the server allows ({@code chart.max_zoom_out}). */
+    private static int minZoom() {
+        return ChartProjection.minZoom(ClientChart.settings().maxZoomOut());
     }
 
     private void centreOnPlayer() {
@@ -570,7 +719,7 @@ public final class ChartScreen extends Screen {
             Services.NETWORK.sendToServer(ChartMarkerPayload.edit(editId, editX, editZ, editIcon, name));
         } else {
             ChartSettings s = ClientChart.settings();
-            if (ClientChart.markers().size() >= s.maxMarkers()) {
+            if (ClientChart.markers().size() >= MarkerRules.limit(s.maxMarkers())) {
                 showStatus(Component.translatable(com.richardsenger.piratesnships.chart.net.ChartBackend.MSG + "refused.too_many"), GuiKit.INK_RED);
                 return;
             }
@@ -633,6 +782,12 @@ public final class ChartScreen extends Screen {
             return true;
         }
         if (super.mouseClicked(mx, my, button)) return true;
+        if (inList(mx, my)) {
+            List<MarkerList.Entry> entries = listEntries();
+            int row = listRowAt(mx, my, entries.size());
+            if (row >= 0 && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) focus(entries.get(row).marker());
+            return true;
+        }
         if (!inMap(mx, my)) return false;
         if (target != null) {
             // draw mode: no marker editing; drag the selection (not while updating: the board's area is fixed) or pan the chart
@@ -676,7 +831,7 @@ public final class ChartScreen extends Screen {
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (draggingSelection && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            int px = view.pixelsPerCell();
+            double px = view.scale();
             selFracX += dx / px;
             selFracZ += dy / px;
             int stepX = (int) selFracX;
@@ -708,6 +863,10 @@ public final class ChartScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+        if (scrollY != 0 && inList(mx, my)) {
+            listScroll = Math.max(0, Math.min(maxScroll(ClientChart.markers().size()), listScroll - (int) Math.signum(scrollY)));
+            return true;
+        }
         if (scrollY != 0 && inMap(mx, my)) {
             zoomAt(scrollY > 0 ? 1 : -1, mx, my);
             return true;
@@ -727,6 +886,10 @@ public final class ChartScreen extends Screen {
                 return true;
             }
             if (nameField.isFocused()) return nameField.keyPressed(key, scan, modifiers) || nameField.canConsumeInput() || super.keyPressed(key, scan, modifiers);
+        }
+        if (listOpen && key == GLFW.GLFW_KEY_ESCAPE) {
+            toggleList();
+            return true;
         }
         if (ChartClient.OPEN_KEY.matches(key, scan)) {
             onClose();
@@ -749,6 +912,7 @@ public final class ChartScreen extends Screen {
         renderFooter(g, mouseX, mouseY);
         if (editing) renderEditor(g, mouseX, mouseY);
         if (target != null) renderBoardPanel(g);
+        if (listOpen) renderList(g, mouseX, mouseY);
     }
 
     @Override
@@ -769,11 +933,13 @@ public final class ChartScreen extends Screen {
         int maxRx = (int) Math.floorDiv(Math.floorDiv(mapL + mapW - originX, px), ChartRegion.SIZE);
         int minRz = (int) Math.floorDiv(Math.floorDiv(mapT - originY, px), ChartRegion.SIZE);
         int maxRz = (int) Math.floorDiv(Math.floorDiv(mapT + mapH - originY, px), ChartRegion.SIZE);
+        boolean far = view.zoom() < 0;
 
         g.enableScissor(mapL, mapT, mapL + mapW, mapT + mapH);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        for (int rz = minRz; rz <= maxRz; rz++) {
+        if (far) renderFarTiles(g, originX, originY);
+        else for (int rz = minRz; rz <= maxRz; rz++) {
             for (int rx = minRx; rx <= maxRx; rx++) {
                 if (ClientChart.region(ChartRegion.key(rx, rz)).isEmpty()) continue;
                 var tex = ChartTextures.texture(rx, rz, px);
@@ -783,7 +949,7 @@ public final class ChartScreen extends Screen {
                 g.blit(tex, x, y, 0, 0, regionPx, regionPx, regionPx, regionPx);
             }
         }
-        if (ChartConfig.DOODLES.get()) {
+        if (ChartConfig.DOODLES.get() && !far) {
             for (int rz = minRz; rz <= maxRz; rz++) {
                 for (int rx = minRx; rx <= maxRx; rx++) {
                     Optional<ChartDoodles.Doodle> d = doodle(rx, rz);
@@ -797,13 +963,28 @@ public final class ChartScreen extends Screen {
             }
         }
 
+        boolean charted = mc.level != null && mc.level.dimension() == Level.OVERWORLD;
+        // structures (CHART2), under the markers
+        if (charted) {
+            for (ChartStructure st : ClientChart.structures()) {
+                int sx = (int) Math.floor(originX + (st.x() + 0.5) / view.blocksPerPixel());
+                int sy = (int) Math.floor(originY + (st.z() + 0.5) / view.blocksPerPixel());
+                if (sx < mapL - 40 || sx > mapL + mapW + 40 || sy < mapT - 20 || sy > mapT + mapH + 20) continue;
+                blitPart(g, ChartSheet.structure(st.kind()), sx - 4, sy - 4);
+                if (!st.label().isEmpty() && view.zoom() >= LABEL_ZOOM) {
+                    int w = font.width(st.label());
+                    g.drawString(font, st.label(), sx - w / 2, sy + 6, GuiKit.INK_DIM, false);
+                }
+            }
+        }
+
         // markers
-        Optional<ChartMarker> hover = inMap(mouseX, mouseY) && !inEditor(mouseX, mouseY) ? markerAt(mouseX, mouseY) : Optional.empty();
+        Optional<ChartMarker> hover = inMap(mouseX, mouseY) && !inEditor(mouseX, mouseY) && !inList(mouseX, mouseY) ? markerAt(mouseX, mouseY) : Optional.empty();
         for (ChartMarker m : ClientChart.markers()) {
             int sx = (int) Math.floor(originX + (m.x() + 0.5) / view.blocksPerPixel());
             int sy = (int) Math.floor(originY + (m.z() + 0.5) / view.blocksPerPixel());
             boolean selected = editing && editId == m.id();
-            if (selected) blitPart(g, ChartSheet.RING, sx - 5, sy - 5);
+            if (selected || m.id() == focusId && (focusTicks / 8) % 2 == 0) blitPart(g, ChartSheet.RING, sx - 5, sy - 5);
             blitPart(g, ChartSheet.marker(selected ? editIcon : m.icon()), sx - 4, sy - 4);
             boolean showName = !m.name().isEmpty() && (view.zoom() >= ChartProjection.DEFAULT_ZOOM || hover.map(h -> h.id() == m.id()).orElse(false));
             if (showName) {
@@ -820,21 +1001,18 @@ public final class ChartScreen extends Screen {
 
         if (target != null) renderSelection(g);
 
-        boolean charted = mc.level != null && mc.level.dimension() == Level.OVERWORLD;
         if (charted) {
-            for (ChartStatePayload.OtherPlayer o : ClientChart.others()) {
-                int sx = (int) Math.floor(originX + (o.x() + 0.5) / view.blocksPerPixel());
-                int sy = (int) Math.floor(originY + (o.z() + 0.5) / view.blocksPerPixel());
-                ship(g, ChartSheet.OTHER_SHIP, sx, sy, o.yaw());
-                if (Math.abs(mouseX - sx) <= 5 && Math.abs(mouseY - sy) <= 5) {
-                    int w = font.width(o.name());
-                    g.drawString(font, o.name(), sx - w / 2, sy + 6, GuiKit.INK_NAVY, false);
-                }
+            // the ship under the player and their own ships (CHART2); never other players or their ships
+            for (ChartShip sh : ClientChart.ships()) {
+                int sx = (int) Math.floor(originX + (sh.x() + 0.5) / view.blocksPerPixel());
+                int sy = (int) Math.floor(originY + (sh.z() + 0.5) / view.blocksPerPixel());
+                rotated(g, sh.aboard() ? ChartSheet.OWN_SHIP : ChartSheet.OTHER_SHIP, sx, sy, sh.heading());
             }
             if (mc.player != null) {
                 int sx = (int) Math.floor(originX + mc.player.getX() / view.blocksPerPixel());
                 int sy = (int) Math.floor(originY + mc.player.getZ() / view.blocksPerPixel());
-                ship(g, ChartSheet.OWN_SHIP, sx, sy, mc.player.getYRot());
+                // the needle's tip points where the player faces: yaw 180 is north
+                rotated(g, ChartSheet.PLAYER, sx, sy, mc.player.getYRot() + 180f);
             }
         }
         if (ClientChart.regions().isEmpty()) {
@@ -871,11 +1049,34 @@ public final class ChartScreen extends Screen {
         g.blit(ChartSheet.TEXTURE, x, y, p.u(), p.v(), p.w(), p.h(), ChartSheet.WIDTH, ChartSheet.HEIGHT);
     }
 
-    /** A ship icon centred on {@code (x, y)}, bow along the Minecraft yaw (0 = south, 180 = north). */
-    private void ship(GuiGraphics g, ChartSheet.Part part, int x, int y, float yaw) {
+    /** Far tiles (CHART2): {@code c x c} regions per 64-pixel texture, only where a charted region lies. */
+    private void renderFarTiles(GuiGraphics g, long originX, long originY) {
+        int c = view.cellsPerPixel();
+        int tile = ChartZoomOut.TILE;
+        int minTx = (int) Math.floorDiv(mapL - originX, tile);
+        int maxTx = (int) Math.floorDiv(mapL + mapW - originX, tile);
+        int minTz = (int) Math.floorDiv(mapT - originY, tile);
+        int maxTz = (int) Math.floorDiv(mapT + mapH - originY, tile);
+        java.util.Set<Long> occupied = new java.util.HashSet<>();
+        for (long key : ClientChart.regions().keySet()) {
+            int tx = ChartZoomOut.tileOf(ChartRegion.keyX(key), c);
+            int tz = ChartZoomOut.tileOf(ChartRegion.keyZ(key), c);
+            if (tx >= minTx && tx <= maxTx && tz >= minTz && tz <= maxTz) occupied.add(ChartRegion.key(tx, tz));
+        }
+        for (long key : occupied) {
+            int tx = ChartRegion.keyX(key);
+            int tz = ChartRegion.keyZ(key);
+            var tex = ChartTextures.farTexture(tx, tz, c);
+            if (tex == null) continue;
+            g.blit(tex, (int) (originX + (long) tx * tile), (int) (originY + (long) tz * tile), 0, 0, tile, tile, tile, tile);
+        }
+    }
+
+    /** An icon centred on {@code (x, y)}, turned {@code degrees} clockwise from pointing north (up). */
+    private void rotated(GuiGraphics g, ChartSheet.Part part, int x, int y, float degrees) {
         g.pose().pushPose();
         g.pose().translate(x + 0.5f, y + 0.5f, 0);
-        g.pose().mulPose(Axis.ZP.rotationDegrees(yaw + 180f));
+        g.pose().mulPose(Axis.ZP.rotationDegrees(degrees));
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         g.blit(ChartSheet.TEXTURE, -part.w() / 2, -part.h() / 2, 0, part.u(), part.v(), part.w(), part.h(), ChartSheet.WIDTH, ChartSheet.HEIGHT);
@@ -906,7 +1107,6 @@ public final class ChartScreen extends Screen {
     private void renderFooter(GuiGraphics g, int mouseX, int mouseY) {
         int x = mapL + 92;
         int y = mapT + mapH + 7;
-        int right = mapL + mapW;
         Component text;
         int color;
         if (!status.getString().isEmpty()) {
@@ -926,14 +1126,50 @@ public final class ChartScreen extends Screen {
             text = Component.translatable(target != null ? ChartText.DRAW_HINT : ChartText.HINT);
             color = GuiKit.ON_WOOD_DIM;
         }
-        if (target != null) {
-            GuiKit.text(g, font, text, x, y, markersButton.getX() - 6 - x, color, true);
-            return;
+        // CHART2: the marker count is gone; its place holds the markers list button
+        GuiKit.text(g, font, text, x, y, Math.max(0, listButton.getX() - 6 - x), color, true);
+    }
+
+    /**
+     * CHART2: the legend under the mouse: a structure's kind and label, a ship ("Aboard: name", "Your ship: name") or
+     * "You"; the nearest within a few pixels wins, markers keep their own name drawing.
+     */
+    private void mapTooltip(GuiGraphics g, int mouseX, int mouseY) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.level.dimension() != Level.OVERWORLD) return;
+        double best = 6 * 6 + 0.01;
+        List<Component> lines = null;
+        if (mc.player != null) {
+            double d = dist2(mc.player.getX(), mc.player.getZ(), mouseX, mouseY);
+            if (d <= best) {
+                best = d;
+                lines = List.of(Component.translatable(ChartText.YOU));
+            }
         }
-        Component count = Component.translatable(ChartText.MARKER_COUNT, ClientChart.markers().size(), ClientChart.settings().maxMarkers());
-        int cw = font.width(count);
-        g.drawString(font, count, right - cw, y, GuiKit.ON_WOOD_DIM, true);
-        GuiKit.text(g, font, text, x, y, right - cw - 8 - x, color, true);
+        for (ChartShip sh : ClientChart.ships()) {
+            double d = dist2(sh.x() + 0.5, sh.z() + 0.5, mouseX, mouseY);
+            if (d < best) {
+                best = d;
+                Component name = sh.name().isEmpty() ? Component.translatable(ChartText.SHIP_UNNAMED) : Component.literal(sh.name());
+                lines = List.of(Component.translatable(sh.aboard() ? ChartText.SHIP_ABOARD : ChartText.SHIP_OWN, name));
+            }
+        }
+        for (ChartStructure st : ClientChart.structures()) {
+            double d = dist2(st.x() + 0.5, st.z() + 0.5, mouseX, mouseY);
+            if (d < best) {
+                best = d;
+                Component kind = Component.translatable(ChartText.structure(st.kind()));
+                lines = st.label().isEmpty() ? List.of(kind)
+                        : List.of(Component.literal(st.label()), kind.copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+            }
+        }
+        if (lines != null) g.renderComponentTooltip(font, lines, mouseX, mouseY);
+    }
+
+    private double dist2(double blockX, double blockZ, double mx, double my) {
+        double sx = view.screenX(blockX, mapL, mapW);
+        double sy = view.screenY(blockZ, mapT, mapH);
+        return (sx - mx) * (sx - mx) + (sy - my) * (sy - my);
     }
 
     private void renderEditor(GuiGraphics g, int mouseX, int mouseY) {
@@ -950,7 +1186,10 @@ public final class ChartScreen extends Screen {
     }
 
     private void renderTooltips(GuiGraphics g, int mouseX, int mouseY) {
-        if (!editing) return;
+        if (!editing) {
+            if (inMap(mouseX, mouseY) && !inList(mouseX, mouseY) && !(target != null && inPanel(mouseX, mouseY))) mapTooltip(g, mouseX, mouseY);
+            return;
+        }
         MarkerIcon[] icons = MarkerIcon.values();
         for (int i = 0; i < icons.length; i++) {
             if (mouseX >= iconX(i) - 1 && mouseX < iconX(i) + 12 && mouseY >= iconY() - 1 && mouseY < iconY() + 12) {

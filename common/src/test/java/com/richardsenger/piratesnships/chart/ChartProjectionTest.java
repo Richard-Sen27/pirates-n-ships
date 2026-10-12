@@ -49,8 +49,34 @@ class ChartProjectionTest {
 
     @Test
     void zoomIsClamped() {
-        assertEquals(0, new ChartProjection(0, 0, -3, 4).zoom());
+        assertEquals(-3, new ChartProjection(0, 0, -3, 4).zoom(), "CHART2: below 0 are the zoom-out steps");
+        assertEquals(ChartProjection.MIN_ZOOM, new ChartProjection(0, 0, -99, 4).zoom());
         assertEquals(ChartProjection.PIXELS_PER_CELL.length - 1, new ChartProjection(0, 0, 99, 4).zoom());
+        assertEquals(-3, ChartProjection.clampZoom(-7, ChartProjection.minZoom(3)), "the server's max_zoom_out");
+        assertEquals(0, ChartProjection.clampZoom(-1, ChartProjection.minZoom(0)), "max_zoom_out 0: MAP1's widest");
+        assertEquals(ChartProjection.MIN_ZOOM, ChartProjection.minZoom(99));
+        assertEquals(2, ChartProjection.clampZoom(2, ChartProjection.minZoom(3)));
+    }
+
+    /**
+     * CHART2: the zoom-out steps halve the scale each: at the default 4-block cells zoom 0 is 4 blocks per pixel, -1 8,
+     * -2 16, -3 (the default widest) 32, -5 (the most a server allows) 128; MAP1's steps are unchanged.
+     */
+    @Test
+    void zoomOutStepsHalveTheScale() {
+        double[] expected = {128, 64, 32, 16, 8, 4, 2, 1};
+        for (int zoom = ChartProjection.MIN_ZOOM; zoom <= 2; zoom++) {
+            assertEquals(expected[zoom - ChartProjection.MIN_ZOOM], ChartProjection.blocksPerPixel(zoom, 4), EPS, "zoom " + zoom);
+        }
+        ChartProjection p = new ChartProjection(100, -40, -3, 4);
+        assertEquals(8, p.cellsPerPixel());
+        assertEquals(1, p.pixelsPerCell());
+        assertEquals(0.125, p.scale(), EPS);
+        // 8 cells east is one pixel right
+        assertEquals(1.0, p.cellScreenX(8, L, W) - p.cellScreenX(0, L, W), EPS);
+        assertEquals(123.25, p.blockX(p.screenX(123.25, L, W), L, W), EPS);
+        // a 400-pixel map at the default widest zoom spans 12,800 blocks
+        assertEquals(12_800, 400 * p.blocksPerPixel(), EPS);
     }
 
     @Test
@@ -69,7 +95,7 @@ class ChartProjectionTest {
         double sy = T + 151;
         double bx = p.blockX(sx, L, W);
         double bz = p.blockZ(sy, T, H);
-        for (int z = 0; z < 3; z++) {
+        for (int z = ChartProjection.MIN_ZOOM; z < 3; z++) {
             ChartProjection q = p.zoomed(z, sx, sy, L, T, W, H);
             assertEquals(bx, q.blockX(sx, L, W), 1e-6);
             assertEquals(bz, q.blockZ(sy, T, H), 1e-6);

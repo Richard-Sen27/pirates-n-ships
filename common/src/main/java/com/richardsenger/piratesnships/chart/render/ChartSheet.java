@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.chart.render;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
+import com.richardsenger.piratesnships.chart.data.StructureKind;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -26,7 +27,10 @@ public final class ChartSheet {
     public static final Part SMALL_ROSE = new Part(0, 32, 16, 16);
     public static final Part RING = new Part(64, 10, 11, 11);
     public static final Part OWN_SHIP = new Part(76, 10, 9, 9);
+    /** CHART2: the player's own ships they are not aboard (MAP1: another player's ship). */
     public static final Part OTHER_SHIP = new Part(86, 10, 9, 9);
+    /** CHART2: the player, a compass needle whose red tip points where they face (tip up = north). */
+    public static final Part PLAYER = new Part(96, 10, 9, 9);
     public static final int ICON = 9;
 
     private ChartSheet() {
@@ -34,6 +38,11 @@ public final class ChartSheet {
 
     public static Part marker(MarkerIcon icon) {
         return new Part(64 + 10 * icon.ordinal(), 0, ICON, ICON);
+    }
+
+    /** CHART2: the icon of a structure on the chart. */
+    public static Part structure(StructureKind kind) {
+        return new Part(64 + 10 * kind.ordinal(), 22, ICON, ICON);
     }
 
     public static Part doodle(ChartDoodles.Kind kind) {

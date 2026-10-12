@@ -119,8 +119,8 @@ class VillageDataTest {
         assertEquals(Optional.of(VillageKeys.SEAFARER_VILLAGE), set.structures().get(0).structure().unwrapKey());
         ConfiguredSpreadPlacement placement = set.placement();
         assertEquals("seafarer_village", placement.config());
-        assertEquals(30, placement.spacing(), "WG5: a little denser than 36");
-        assertEquals(10, placement.separation());
+        assertEquals(20, placement.spacing(), "WG6: denser than WG5's 30");
+        assertEquals(7, placement.separation());
         assertTrue(placement.separation() < placement.spacing());
     }
 

@@ -4,8 +4,8 @@
     "config": "seafarer_village",
     "frequency": 1.0,
     "salt": 584103926,
-    "separation": 10,
-    "spacing": 30,
+    "separation": 7,
+    "spacing": 20,
     "spread_type": "linear"
   },
   "structures": [

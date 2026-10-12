@@ -13,8 +13,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  */
 public record ChartViewPayload(int centerCx, int centerCz, int radiusCells) implements CustomPacketPayload {
 
-    /** Largest viewport radius in cells the server honours (about 9 regions each way). */
-    public static final int MAX_RADIUS = 576;
+    /**
+     * Largest viewport radius in cells the server honours: 128 regions each way (CHART2: the widest zoom-out, 32 cells
+     * per pixel, shows up to about 7,000 cells either side of the centre). Streaming still sends only regions the
+     * player has charted, nearest first, a few per tick.
+     */
+    public static final int MAX_RADIUS = 8192;
 
     public static final Type<ChartViewPayload> TYPE = new Type<>(Constants.id("chart_view"));
     public static final StreamCodec<ByteBuf, ChartViewPayload> CODEC = StreamCodec.composite(

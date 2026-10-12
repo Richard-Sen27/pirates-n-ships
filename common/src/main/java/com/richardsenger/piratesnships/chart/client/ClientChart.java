@@ -5,6 +5,8 @@ import com.richardsenger.piratesnships.chart.data.ChartRegion;
 import com.richardsenger.piratesnships.chart.net.ChartOpenPayload;
 import com.richardsenger.piratesnships.chart.net.ChartRegionPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
+import com.richardsenger.piratesnships.chart.net.ChartShip;
+import com.richardsenger.piratesnships.chart.net.ChartStructure;
 import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
 import com.richardsenger.piratesnships.chart.net.TileTarget;
 import com.richardsenger.piratesnships.chart.render.ChartProjection;
@@ -20,8 +22,8 @@ import java.util.function.LongConsumer;
 
 /**
  * The client's copy of its own chart (work package MAP1): the server's settings, the regions received so far (kept
- * until the client leaves the server, like the server's record of what it sent), the markers, the other players and
- * the last refusal. Uses no client-only classes, so the payload handlers may reference it on both sides;
+ * until the client leaves the server, like the server's record of what it sent), the markers, the ships and structures
+ * on the chart (CHART2) and the last refusal. Uses no client-only classes, so the payload handlers may reference it on both sides;
  * {@link ChartClient} installs the screen opener and the region listener (texture invalidation). The viewport is
  * remembered per player for the whole game session.
  */
@@ -30,7 +32,8 @@ public final class ClientChart {
     private static volatile ChartSettings settings = ChartSettings.DEFAULT;
     private static final Map<Long, ChartRegion> REGIONS = new ConcurrentHashMap<>();
     private static volatile List<ChartMarker> markers = List.of();
-    private static volatile List<ChartStatePayload.OtherPlayer> others = List.of();
+    private static volatile List<ChartShip> ships = List.of();
+    private static volatile List<ChartStructure> structures = List.of();
     private static volatile Optional<String> refusal = Optional.empty();
     private static volatile long version;
     private static volatile Optional<TileTarget> drawTarget = Optional.empty();
@@ -73,8 +76,9 @@ public final class ClientChart {
     }
 
     public static void acceptState(ChartStatePayload p) {
-        markers = p.markers();
-        others = p.others();
+        p.markers().ifPresent(m -> markers = m);
+        ships = p.ships();
+        p.structures().ifPresent(s -> structures = s);
         if (p.refusal().isPresent()) refusal = p.refusal();
         version++;
     }
@@ -92,8 +96,14 @@ public final class ClientChart {
         return markers;
     }
 
-    public static List<ChartStatePayload.OtherPlayer> others() {
-        return others;
+    /** CHART2: the ship the player stands on and their own loaded ships. */
+    public static List<ChartShip> ships() {
+        return ships;
+    }
+
+    /** CHART2: the ports and structures the chart shows. */
+    public static List<ChartStructure> structures() {
+        return structures;
     }
 
     /** The last refusal not yet shown, cleared by reading it. */
@@ -151,7 +161,8 @@ public final class ClientChart {
         settings = ChartSettings.DEFAULT;
         REGIONS.clear();
         markers = List.of();
-        others = List.of();
+        ships = List.of();
+        structures = List.of();
         refusal = Optional.empty();
         drawTarget = Optional.empty();
         version++;

@@ -6,6 +6,9 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
 import com.richardsenger.piratesnships.combat.grapple.HookPose;
 import com.richardsenger.piratesnships.combat.grapple.RopeCurve;
+import com.richardsenger.piratesnships.combat.grapple.RopeLean;
+import com.richardsenger.piratesnships.combat.grapple.RopePose;
+import com.richardsenger.piratesnships.combat.grapple.client.anim.RopeSlidePoses;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -180,8 +183,15 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
                 .setLight(light).setNormal(p, n.x, n.y, n.z);
     }
 
-    /** Where the thrower holds the rope: the main hand, seen from the camera in first person, else from the body. */
+    /**
+     * Where the thrower holds the rope: hanging by the hands (GR8, {@link RopePose#hangs}) the grip above the head
+     * ({@link RopeLean#GRIP_HEIGHT}, where the lean keeps it); otherwise the main hand, seen from the camera in first
+     * person, else from the body.
+     */
     private Vec3 handPos(Player player, float partialTick) {
+        if (RopeSlidePoses.poseOf(player).hangs()) {
+            return player.getPosition(partialTick).add(0, RopeLean.GRIP_HEIGHT * player.getScale(), 0);
+        }
         int side = player.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
         Minecraft mc = Minecraft.getInstance();
         if (entityRenderDispatcher.options.getCameraType().isFirstPerson() && player == mc.player) {

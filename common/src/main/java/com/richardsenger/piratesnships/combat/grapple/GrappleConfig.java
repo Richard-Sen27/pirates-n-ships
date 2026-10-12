@@ -18,11 +18,15 @@ public final class GrappleConfig {
     public static final ConfigValue<Double> THROW_VELOCITY = S.doubleRange("throw_velocity", 3.0, 0.1, 5.0,
             "Base speed of a launched hook in blocks per tick: the musket fires it at launch.musket_speed times this. "
                     + "A hook thrown by hand flies at hand_throw_velocity instead (GR7)");
-    public static final ConfigValue<Double> HAND_THROW_VELOCITY = S.doubleRange("hand_throw_velocity", 0.7, 0.1, 5.0,
-            "Start speed of a hook thrown by hand in blocks per tick (GR7). With the default gravity a level throw from "
-                    + "standing height lands about 9.2 blocks away and the farthest lob (40 degrees up) about 20 blocks");
+    public static final ConfigValue<Double> HAND_THROW_VELOCITY = S.doubleRange("hand_throw_velocity", 0.65, 0.1, 5.0,
+            "Start speed of a hook thrown by hand in blocks per tick (GR7, GR8). With hand_throw_gravity a throw 45 degrees "
+                    + "up from standing height lands about 9 blocks away, a level throw about 5.5");
+    public static final ConfigValue<Double> HAND_THROW_GRAVITY = S.doubleRange("hand_throw_gravity", 0.05, 0.0, 1.0,
+            "Downward acceleration of a hook thrown by hand in blocks per tick squared (GR8; a trident's 0.05): one plain "
+                    + "arc from the first tick, like a thrown trident");
     public static final ConfigValue<Double> GRAVITY = S.doubleRange("gravity", 0.02, 0.0, 1.0,
-            "Downward acceleration of a flying hook in blocks per tick squared (a musket shot uses launch.musket_gravity_factor times this)");
+            "Downward acceleration of a flying hook fired from the musket, in blocks per tick squared, before "
+                    + "launch.musket_gravity_factor (a hook thrown by hand uses hand_throw_gravity)");
     public static final ConfigValue<Double> MAX_ROPE_LENGTH = S.doubleRange("max_rope_length", 32.0, 2.0, 128.0,
             "Rope length in blocks of a thrown hook: a flying hook stops there, and a thrower farther than this from a "
                     + "latched hook snaps the rope");
@@ -90,11 +94,18 @@ public final class GrappleConfig {
                     + "farther from the hook than the rope's length, gravity swings you below it and walking pushes the "
                     + "swing; each use pulls you up a step (rope_climb_step). Holding another item (or sneaking) lets go. Off = "
                     + "the rope never holds you, and using your own rope does not climb it");
-    public static final ConfigValue<Double> SWING_PUSH = S.doubleRange("swing_push", 0.015, 0.0, 0.2,
-            "Speed in blocks per tick that walking input adds every tick along the swing while you hang on the rope (GR7)");
-    public static final ConfigValue<Double> SWING_DAMPING = S.doubleRange("swing_damping", 0.03, 0.0, 1.0,
-            "Share of the swing's speed lost every tick while you hang on the rope (GR7): 0.03 lets a swing die out in "
-                    + "about 5 seconds, 0 swings on for a long time");
+    public static final ConfigValue<Double> SWING_PUSH = S.doubleRange("swing_push", 0.004, 0.0, 0.2,
+            "Thrust in blocks per tick that forward or backward input adds every tick along the swing while you hang on the "
+                    + "rope (GR8; gravity pulls with 0.08). Holding a key leans the swing a few degrees; pressing forward as you "
+                    + "swing forward and back as you swing back builds it up (about 20 degrees on a 4-block rope)");
+    public static final ConfigValue<Double> SWING_PUSH_SIDEWAYS = S.doubleRange("swing_push_sideways", 0.4, 0.0, 1.0,
+            "Share of swing_push that sideways input (strafing) adds along the swing (GR8): weaker than forward and back");
+    public static final ConfigValue<Double> SWING_MAX_SPEED = S.doubleRange("swing_max_speed", 0.8, 0.05, 4.0,
+            "Top speed of a swing on the rope in blocks per tick (GR8): thrust fades out toward it, and anything faster "
+                    + "(a long drop) is held at it");
+    public static final ConfigValue<Double> SWING_DAMPING = S.doubleRange("swing_damping", 0.02, 0.0, 1.0,
+            "Share of the swing's speed lost every tick while you hang on the rope (GR7, GR8): 0.02 lets a 30 degree swing "
+                    + "die out in about 8 seconds, 0 swings on for a long time");
 
     public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
             "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
@@ -174,9 +185,9 @@ public final class GrappleConfig {
         return GrappleLaunch.ropeLength(mode, MAX_ROPE_LENGTH.get(), MUSKET_ROPE_LENGTH.get());
     }
 
-    /** Gravity factor of a hook launched in {@code mode} ({@link GrappleLaunch#gravityFactor}). */
-    public static double gravityFactor(GrappleLaunch.Mode mode) {
-        return GrappleLaunch.gravityFactor(mode, MUSKET_GRAVITY_FACTOR.get());
+    /** Gravity [blocks per tick squared] of a hook launched in {@code mode} ({@link GrappleLaunch#gravity}). */
+    public static double gravity(GrappleLaunch.Mode mode) {
+        return GrappleLaunch.gravity(mode, HAND_THROW_GRAVITY.get(), GRAVITY.get(), MUSKET_GRAVITY_FACTOR.get());
     }
 
     /** The slide's speeds and distances ({@link RopeSlide}). */
@@ -185,9 +196,10 @@ public final class GrappleConfig {
                 DISMOUNT_DISTANCE.get());
     }
 
-    /** The swing's push, damping and climbing speed ({@link RopeSwing}, GR7). */
+    /** The swing's thrust, damping, top speed and climbing speed ({@link RopeSwing}, GR7, GR8). */
     public static RopeSwing.Params swingParams() {
-        return new RopeSwing.Params(SWING_PUSH.get(), SWING_DAMPING.get(), ROPE_CLIMB_SPEED.get());
+        return new RopeSwing.Params(SWING_PUSH.get(), SWING_PUSH_SIDEWAYS.get(), SWING_DAMPING.get(), SWING_MAX_SPEED.get(),
+                ROPE_CLIMB_SPEED.get());
     }
 
     /** Distance up to which the rope holds without pulling: {@code hold_distance + hold_slack}. */

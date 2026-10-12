@@ -1,4 +1,5 @@
-// 1.21.1	2026-10-09T22:03:16.036098	Tags for minecraft:entity_type mod id vanilla
+// 1.21.1	2026-10-12T06:59:42.008059	Tags for minecraft:entity_type mod id vanilla
+e40c405697a1a3ee354d2bd2d3fa4e23baadad88 data/pirates_n_ships/tags/entity_type/hunts_npcs.json
 95fce22b73631479b6f41cd0a28075f4924d0537 data/pirates_n_ships/tags/entity_type/law_enforcers.json
 533c36c4931aa6bcebd6fe3e115271832f2d10c0 data/pirates_n_ships/tags/entity_type/law_protected.json
 1e35b1ca37c20b709cfb79e0f4c07056623cfb25 data/pirates_n_ships/tags/entity_type/navy.json

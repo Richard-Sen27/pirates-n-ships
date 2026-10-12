@@ -23,6 +23,7 @@ import com.richardsenger.piratesnships.mob.MeleePosed;
 import com.richardsenger.piratesnships.mob.ai.Duelist;
 import com.richardsenger.piratesnships.mob.ai.DuelistAttackGoal;
 import com.richardsenger.piratesnships.mob.ai.VanillaSwordGoal;
+import com.richardsenger.piratesnships.mob.monsters.CrewDefence;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -78,7 +79,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced); WALK1 where it walks
  * to take its place ({@link #walk()}, saved). BRD3: it fights while it boards another ship or defends its deck
  * against boarders ({@link #isBoarding()}, {@code combat.boarding.order}): the duelist goals with a sword, vanilla melee
- * with its fists, against the foes {@code BoardingFight} names; otherwise it never attacks anyone. MEL3: its melee phase
+ * with its fists, against the foes {@code BoardingFight} names; MOB3: with a weapon in hand it also fights a monster
+ * that hunts or hit it, without one it runs ({@code mob.monsters.CrewDefence}); otherwise it never attacks anyone. MEL3: its melee phase
  * is synced as the M3 mobs' is ({@link #meleePose()}, {@link MeleePoseSync}) and wins over every other pose.
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
@@ -182,6 +184,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        // MOB3: without a weapon it runs from a monster after it (with one it fights it: CrewDefence's target goal)
+        goalSelector.addGoal(1, CrewDefence.fleeGoal(this));
+        targetSelector.addGoal(1, new CrewDefence.TargetGoalImpl(this));
         // BRD3: boarding or defending its deck it fights the foes BoardingFight names (a target only boarding sets)
         goalSelector.addGoal(2, new DuelistAttackGoal(this, 1.0));
         goalSelector.addGoal(3, new VanillaSwordGoal(this, 1.0));
@@ -472,10 +477,19 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
         this.boarding = boarding;
     }
 
-    /** BRD3: it keeps fighting a boarding foe ({@code BoardingFight}) and nobody else. */
+    /** BRD3: it keeps fighting a boarding foe ({@code BoardingFight}); MOB3: and a monster after it, with a weapon. */
     @Override
     public boolean keepsTarget(LivingEntity target) {
-        return target != this && target.isAlive() && !target.isRemoved() && BoardingFight.keepsTarget(this, target);
+        return target != this && target.isAlive() && !target.isRemoved()
+                && (BoardingFight.keepsTarget(this, target) || CrewDefence.keepsTarget(this, target)); // MOB3: monsters
+    }
+
+    /** MOB3: a monster's blow wakes a sleeper ({@link CrewDefence#onHurt}). */
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        boolean hurt = super.hurt(source, amount);
+        if (hurt) CrewDefence.onHurt(this, source);
+        return hurt;
     }
 
     /** The crew's sword skill ({@code boarding.crew_skill}). */

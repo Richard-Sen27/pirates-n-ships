@@ -66,15 +66,23 @@ class StructurePiecesTest {
     }
 
     /** The seafarer village (ST1; STR3's street network, building looks and decorations). */
+    /** STR7: the extension sections' pair, valid in every group (both pull from the empty pool). */
+    private static Map<String, List<String>> withExtension(Map<String, List<String>> convention) {
+        Map<String, List<String>> out = new HashMap<>(convention);
+        out.put(MOD + ":pier_end", List.of(MOD + ":pier_extension_in", EMPTY, "aligned"));
+        out.put(MOD + ":pier_extension_in", List.of(MOD + ":pier_end", EMPTY, "aligned"));
+        return Map.copyOf(out);
+    }
+
     private static final Group VILLAGE = new Group("village",
             List.of("chapel", "deco_barrels", "deco_bench_tree", "deco_cart", "deco_fish_rack", "deco_flowers",
                     "deco_lantern", "deco_laundry", "deco_nets", "deco_rowboat", "deco_woodpile", "dock_head",
                     "fish_market", "house_fisher", "house_garden", "house_small", "house_tall", "inn", "lighthouse",
-                    "net_loft", "pier", "shipwright", "slipway", "street", "street_bend_left", "street_bend_right",
+                    "net_loft", "pier", "pier_extension", "shipwright", "slipway", "street", "street_bend_left", "street_bend_right",
                     "street_crossroads", "street_end", "street_end_green", "street_end_loop", "street_fork_left",
                     "street_fork_right", "street_long", "street_square_market", "street_square_well", "tavern",
                     "warehouse", "well"),
-            Map.of(
+            withExtension(Map.of(
                     MOD + ":street_out", List.of(MOD + ":street_in", MOD + ":village/streets", "aligned"),
                     MOD + ":street_in", List.of(MOD + ":street_out", EMPTY, "aligned"),
                     MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":village/buildings", "rollable"),
@@ -83,7 +91,7 @@ class StructurePiecesTest {
                     MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned"),
                     MOD + ":streethead_out", List.of(MOD + ":street_in", MOD + ":village/streetheads", "aligned"),
                     MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":village/decorations", "rollable"),
-                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")));
+                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable"))));
     private static final Set<String> BUILDINGS = Set.of("chapel", "fish_market", "house_fisher", "house_garden",
             "house_small", "house_tall", "inn", "lighthouse", "net_loft", "shipwright", "slipway", "tavern", "warehouse", "well");
 
@@ -92,12 +100,12 @@ class StructurePiecesTest {
             List.of("camp_start", "captains_cabin", "captains_hut", "captains_lookout",
                     "deco_campfire", "deco_crates", "deco_fish_rack", "deco_hammock", "deco_jolly_roger", "deco_palm",
                     "deco_rocks", "deco_rum_cask", "deco_skull_post", "deco_washing_line",
-                    "hut_porch", "hut_stilts", "hut_thatch", "jetty", "longboat", "lookout_tower",
+                    "hut_porch", "hut_stilts", "hut_thatch", "jetty", "jetty_extension", "longboat", "lookout_tower",
                     "path", "path_bend_left", "path_bend_right", "path_clearing", "path_end", "path_end_palm",
                     "path_end_rocks", "path_fork_left", "path_fork_right", "path_junction", "path_long",
                     "powder_store", "smokehouse", "tavern_deck", "tavern_hut", "tavern_long",
                     "tent", "tent_large", "tent_lean", "tent_small", "treasure_cairn", "treasure_spot", "treasure_wreck"),
-            Map.of(
+            withExtension(Map.of(
                     MOD + ":path_out", List.of(MOD + ":path_in", MOD + ":pirate_island/paths", "aligned"),
                     MOD + ":path_in", List.of(MOD + ":path_out", EMPTY, "aligned"),
                     MOD + ":hut_out", List.of(MOD + ":hut_in", MOD + ":pirate_island/huts", "rollable"),
@@ -106,7 +114,7 @@ class StructurePiecesTest {
                     MOD + ":jetty_in", List.of(MOD + ":jetty_out", EMPTY, "aligned"),
                     MOD + ":trailhead_out", List.of(MOD + ":path_in", MOD + ":pirate_island/trailheads", "aligned"),
                     MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":pirate_island/decorations", "rollable"),
-                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")));
+                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable"))));
     /** The buildings of the huts pool (the treasure looks are checked on their own). */
     private static final Set<String> HUTS = Set.of("captains_cabin", "captains_hut", "captains_lookout", "hut_porch",
             "hut_stilts", "hut_thatch", "longboat", "lookout_tower", "powder_store", "smokehouse", "tavern_deck",
@@ -126,10 +134,10 @@ class StructurePiecesTest {
                     "flank_step_east", "flank_step_west", "flank_wall", "fort_gate", "gun_battery",
                     "lane", "lane_bend_left", "lane_bend_right", "lane_end_privy", "lane_end_store", "lane_end_woodpile",
                     "lane_fork_left", "lane_fork_right", "lane_junction", "lane_long", "officers_quarters", "parade_ground",
-                    "powder_magazine", "quay", "round_tower", "signal_tower", "store_house",
+                    "powder_magazine", "quay", "quay_extension", "round_tower", "signal_tower", "store_house",
                     "wall", "wall_angle_east", "wall_angle_west", "wall_bastion", "wall_long", "wall_sally_port", "wall_stair",
                     "wall_tower", "watchtower"),
-            Map.ofEntries(
+            withExtension(Map.ofEntries(
                     Map.entry(MOD + ":wall_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls", "aligned")),
                     Map.entry(MOD + ":wall_east_in", List.of(MOD + ":wall_east_out", EMPTY, "aligned")),
                     Map.entry(MOD + ":wall_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls", "aligned")),
@@ -150,7 +158,7 @@ class StructurePiecesTest {
                     Map.entry(MOD + ":lane_out", List.of(MOD + ":lane_in", MOD + ":navy_outpost/lanes", "aligned")),
                     Map.entry(MOD + ":lane_in", List.of(MOD + ":lane_out", EMPTY, "aligned")),
                     Map.entry(MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":navy_outpost/decorations", "rollable")),
-                    Map.entry(MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable"))));
+                    Map.entry(MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")))));
     /** The buildings of the outpost's buildings pool (ST3's three and STR4's). */
     private static final Set<String> NAVY_BUILDINGS = Set.of("barracks", "brig", "watchtower", "barracks_long", "barracks_mess",
             "brig_large", "signal_tower", "officers_quarters", "powder_magazine", "armoury", "gun_battery", "store_house", "chapel");
@@ -456,6 +464,45 @@ class StructurePiecesTest {
     @Test
     void quayBerthsSitAtSeaLevelBesideTheDeck() throws IOException {
         assertBerthsBesideTheDeck(piece(NAVY, "quay"), "quay_in");
+    }
+
+    /**
+     * STR7: each extension section has its landward {@code pier_extension_in} and seaward {@code pier_end} in the
+     * column of its parent's landward connector, on the deck row y 7 (two rows deeper than the parent's y 5, the deck
+     * level with it), and two berths at sea level (y 6) beside the deck, pointing north.
+     */
+    @Test
+    void extensionSectionsLineUpWithTheirParent() throws IOException {
+        record Pair(CompoundTag parent, String parentIn, CompoundTag section) {
+        }
+        for (Pair pair : List.of(new Pair(village("pier"), "pier_in", village("pier_extension")),
+                new Pair(island("jetty"), "jetty_in", island("jetty_extension")),
+                new Pair(piece(NAVY, "quay"), "quay_in", piece(NAVY, "quay_extension")))) {
+            assertEquals(Map.of("berth", 2, "pier_extension_in", 1, "pier_end", 1), countNames(jigsaws(pair.section())));
+            Jigsaw parentIn = jigsaws(pair.parent()).stream().filter(j -> j.name().endsWith(pair.parentIn())).findFirst().orElseThrow();
+            int[] size = size(pair.section());
+            assertEquals(size(pair.parent())[0], size[0], pair.parentIn() + ": as wide as its parent");
+            Set<Integer> sides = new HashSet<>();
+            for (Jigsaw j : jigsaws(pair.section())) {
+                if (j.name().endsWith("berth")) {
+                    assertEquals(6, j.pos().getY(), "berths at sea level");
+                    assertEquals("north", j.front());
+                    assertTrue(j.pos().getX() == 0 || j.pos().getX() == size[0] - 1, "berths beside the deck: " + j.pos());
+                    sides.add(j.pos().getX());
+                    continue;
+                }
+                assertEquals(7, j.pos().getY(), j.name() + " on the deck row");
+                assertEquals(parentIn.pos().getX(), j.pos().getX(), j.name() + " in line with " + pair.parentIn());
+                if (j.name().endsWith("pier_extension_in")) {
+                    assertEquals("south", j.front());
+                    assertEquals(size[2] - 1, j.pos().getZ());
+                } else {
+                    assertEquals("north", j.front());
+                    assertEquals(0, j.pos().getZ());
+                }
+            }
+            assertEquals(2, sides.size(), "one berth on each side");
+        }
     }
 
     private static void assertBerthsBesideTheDeck(CompoundTag pier, String inName) {

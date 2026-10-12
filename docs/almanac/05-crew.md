@@ -63,6 +63,8 @@ Hang a hammock between two supports at the same height, such as posts, walls or 
 {recipe:hammock}
 At nightfall every hand off station turns in to the nearest free hammock. A night in one cheers him; a night aboard without one does not.
 
+Monsters hunt your hands as they hunt villagers, but on deck only one that came aboard: a hand with a blade fights it, one without runs.
+
 ## Your own bunk
 Right-click a free hammock at night to sleep in it as in a bed, even under way. Your respawn point sails with the ship.
 

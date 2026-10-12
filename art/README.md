@@ -2915,6 +2915,8 @@ operations):
 | `pirates_n_ships:pier_out` | `pirates_n_ships:pier_in` | `pirates_n_ships:village/pier` | aligned | dock head (north edge) |
 | `pirates_n_ships:pier_in` | `pirates_n_ships:pier_out` | `minecraft:empty` | aligned | pier (south end, deck row) |
 | `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | pier (berth markers) |
+| `pirates_n_ships:pier_end` | `pirates_n_ships:pier_extension_in` | `minecraft:empty` | aligned | `pier_extension` (seaward end, deck row; STR7) |
+| `pirates_n_ships:pier_extension_in` | `pirates_n_ships:pier_end` | `minecraft:empty` | aligned | `pier_extension` (south end, deck row; STR7) |
 
 `*_out` jigsaws pull a piece from their pool. `*_in` jigsaws are where a piece attaches, and they spawn nothing.
 `final_state` is the block that belongs in that spot after generation: cobblestone for street ends and doorsteps,
@@ -2935,14 +2937,17 @@ side in the marker's column (the first water column beside the deck).
 **Sea level:** the dock head's paving (its y 0) sits one block above sea level. The pier hangs from it: its deck is
 row y 5 (level with the paving), the sea surface is its row y 4, and its piles (y 1..4) stand on cobblestone footings
 on its row y 0, five blocks below the paving. WG1 places the dock head with y 0 at sea level + 1. Where the seabed is
-deeper, the footings hang in the water.
+deeper, the footings hang in the water. Since STR7 the sea floor round the berths is carved six below the surface and
+footings standing on carved ground are carried down to the new floor; extension sections stand two rows deeper (see
+"Room for ships at ports (STR7)").
 
 **The seafarer village (`village`):**
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
 | `dock_head` (start) | 11×8×11 | 308 | stone quay (mossy towards the sea, cracked inland), harbor master's hut (desk facing the door, cargo, lectern): render on a cobblestone plinth between spruce corner posts, framed door under a hood, windows with sills (shutters where the box allows), spruce band in the gables, rafter ends; notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels, a bench at the hut's west wall, a barrel with a flower pot by the street; `pier_out` [5, 0, 0], `streethead_out` [2, 0, 10] (`street_out` before STR3) | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
-| `pier` | 7×9×20 | 240 | 5 wide plank deck (a few weathered dark oak boards) on spruce piles with mostly mossy footings, cross beams, stripped spruce wales at the waterline, a rail and two lantern posts at the seaward end, a ladder down; at the landward end (clear of the berths) a lantern post and rail on each edge and cargo (barrels, crates); `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `pier` | 7×9×20 | 238 | 5 wide plank deck (a few weathered dark oak boards) on spruce piles with mostly mossy footings, cross beams, stripped spruce wales at the waterline, two lantern posts at the seaward end with the deck open between them (STR7: the rail went, an extension carries on from there), a ladder down; at the landward end (clear of the berths) a lantern post and rail on each edge and cargo (barrels, crates); `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `pier_extension` (STR7) | 7×11×12 | 155 | the pier's deck carried 12 blocks on: stringers and planks, piles on cobblestone footings at y 0 (six below the surface, the carved floor), cross beams and wales at the waterline row y 6, deck y 7, two lantern posts and a ladder at the seaward end, a mooring ring and a cleat on each side; `pier_extension_in` [3, 7, 11], `pier_end` [3, 7, 0], berths [0, 6, 6] and [6, 6, 6] | `mooring_ring`, `cleat` |
 | `street` | 7×4×7 | 54 | cobbled crown with gravel and moss patches between stone brick kerbs (some mossy or cracked), dirt path verges with coarse patches, a lantern post, a barrel with a flower pot (both clear of the doors at z 3); `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
 | `street_end` (terminator) | 7×4×3 | 29 | cobbled turning place, the kerbs turning along the far edge, a lantern post between two benches, two barrels (one with a flower pot); `street_in` [3, 0, 0] | |
 | `house_small` | 7×9×9 | 261 | 7×7 cottage: mossy cobblestone plinth, white render between stripped spruce corner posts, framed door under a hood, windows with sills (outside on the front and back, set into the wall on the gables), shutters on the back, spruce wall plate and gable band, rafter ends under both eaves, render gables with attic lights, brick chimney on the east gable over a furnace hearth, red tile roof; bed, table and stool, chest, barrel with lantern, crafting table with flower pot, bookshelf, rug, a lantern on a tie beam; `building_in` [3, 0, 0] | |
@@ -3019,7 +3024,7 @@ left alone, the jigsaw just becomes sand.
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
 | `camp_start` (start) | 13×8×13 | 399 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with driftwood log seats and a roasting spit, a keg, the Jolly Roger, a loot heap (barrels, crates, a chest) under a striped sailcloth lean-to, the fence's lean-to shack (desk as the counter, stock, cobwebs; vertical dark and spruce boards with salvaged patches, palm front posts, sill beam, rafter ends, barred and shuttered windows) with the notice board on its south side under a striped awning, a crude palisade of uneven stakes on the inland sides with taller gate posts (a skull and a torch on the south gate), lantern posts, gravel and mossy skirts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `trailhead_out` [6, 0, 12] (a `hut_out` before STR2) | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
-| `jetty` | 5×9×16 | 117 | 3 wide patched plank deck (dark oak, a salvaged jungle board, sagging slabs) on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, palm bollards and a rope rail at the seaward end, a lantern post and a rail with a net, a ladder down, a crude crane (palm mast, fence jib on a stair brace, chain hook with a crate) and a rope rail at the landward end, barrels and a lantern post; columns x 0 and x 4 stay clear; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `jetty` | 5×9×16 | 115 | 3 wide patched plank deck (dark oak, a salvaged jungle board, sagging slabs) on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, palm bollards and a rope rail at the seaward end, a lantern post (STR7: the west end post went, so the deck runs on into an extension), a ladder down, a crude crane (palm mast, fence jib on a stair brace, chain hook with a crate) and a rope rail at the landward end, barrels and a lantern post; columns x 0 and x 4 stay clear; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
 | `path` | 7×4×7 | 36 | rebuilt in STR2 (see below): the 3 wide trail bed between driftwood edges, no sand rectangle; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
 | `path_end` | 7×4×3 | 42 | the trail ends at a row of uneven stakes with a palm warning post carrying a skull, a lantern, a crate and a dead bush; `path_in` [3, 0, 0] | `cargo_crate` |
 | `tent` | 7×6×7 | 125 | A-frame of stepped wool (vanilla has no wool stairs or slabs) in patched sailcloth (white, grey and brown patches, a red patch, brown hem) over a stripped log ridge that runs on over a fly on two poles, a hanging lantern at the front, a red pennant at the back, a guy stake and a crate, a bed roll, a chest, a barrel, lanterns, a rug; `hut_in` [3, 0, 0] | `cargo_crate` |
@@ -3639,6 +3644,49 @@ python3 tools/render_generated_structure.py /tmp/navy_outpost_smoke.schem --out 
 
 `tools/structure_check.py` gained `--prefix` (the dumps' file name prefix in a folder; default `layout-`, the island's)
 and lists the outpost's lanes and flank pieces among the trail pieces.
+
+### Room for ships at ports (STR7)
+The human (2026-10-12): "Enough space for ships after building, don't place on any sand or similar. Piers either
+longer, or/and the waters need to be deeper." Three parts, all in `world/structure` and `world/port`:
+
+**Extension sections.** Each group has one extension piece, hung by `PierExtensions` (not by vanilla's jigsaw) from
+the seaward end of the pier, jetty or quay: its landward jigsaw `pirates_n_ships:pier_extension_in` goes one block
+beyond the end's deck row, in line with the parent's `pier_in`/`jetty_in`/`quay_in`, and a second section hangs from
+the first's `pirates_n_ships:pier_end` (both jigsaws pull from `minecraft:empty`, so vanilla never fills them). The
+pier, jetty and quay carry no jigsaw of their own there: one more jigsaw block in their templates would change the
+jigsaw's random draws and so the layout of every port generated after the update (and the fixed layouts the tests
+pin).
+
+| piece | size (x×y×z) | blocks | contents |
+|---|---|---|---|
+| `village/pier_extension` | 7×11×12 | 160 | the pier's deck on taller piles (footings at y 0 = surface − 6), a ladder at the west of the end, two berths [0, 6, 6] and [6, 6, 6], `pier_extension_in` [3, 7, 11], `pier_end` [3, 7, 0] |
+| `pirate_island/jetty_extension` | 5×11×12 | 100 | the jetty's rough deck on crooked posts, a leaning post with a stair brace, palm bollards, a cleat and a ring, a ladder down the west post; berths [0, 6, 6] and [4, 6, 6], `pier_extension_in` [2, 7, 11], `pier_end` [2, 7, 0] |
+| `navy_outpost/quay_extension` | 7×11×12 | 500 | the quay's mole (stone bricks from y 0, mossy at the waterline, andesite kerbs, a chiseled end course), bollards, a ring and a cleat a side, lantern posts and a ladder at the end; berths [0, 6, 6] and [6, 6, 6], `pier_extension_in` [3, 7, 11], `pier_end` [3, 7, 0] |
+
+The deck row is y 7 and the sea surface row y 6, so the deck runs on level with the pier's (y 5 in a 9 high piece) and
+the footings reach two rows deeper. To make room at the joint, the pier's seaward rail (two fences) and the jetty's
+west end post (a fence and a cobweb) went; the quay is unchanged. The pools are
+`village/pier_extension`, `pirate_island/jetty_extension`, `navy_outpost/quay_extension`, named by the structures'
+`extension_pool` field.
+
+**When a section is added** (`PortStructure.plan`, after the jigsaw): the column just beyond the end's deck cell is
+read from the generation terrain (`getFirstFreeHeight` on `OCEAN_FLOOR_WG`, real blocks in GameTests); if it is sea
+and shallower than the depth rule (its first free block above `sea surface − (2 + world.ports.berth_depth)`), a
+section is hung there, rigid, unbearded, level with the end, and the check repeats at the new end, at most twice;
+a section that would overlap another piece is not placed. `world.ports.pier_extension` switches it off.
+
+**Carved berths.** `PortStructure.afterPlace` deepens the sea floor round every berth (`BerthBasins`): over every
+mooring a ship can take there (alongside on the side away from the pier, centred and slid seaward up to 16 blocks)
+for the largest shipped hull (9 by 29, draught 2), grown by `world.ports.ship_clearance` (so it reaches under the
+deck), every column whose surface row is not ground gets its ground and plants (sand, gravel, stone, kelp, seagrass)
+replaced by water from the surface down to 2 + `berth_depth` below it; structure blocks stay, and a footing or mole
+that stood on the carved ground is carried down with its own block to the new floor. The beach and anything at or
+above the surface stay. The structure's box is grown by the basin's reach (`adjustBoundingBox`) so worldgen places
+those chunks too. `world.ports.carve_berths` switches it off. Ports generated before STR7 keep their berths; the
+delivery spot search (`ShipSpots`) finds deep water farther out for them.
+
+Renders: `art/renders/structures/{village/pier_extension,pirate_island/jetty_extension,navy_outpost/quay_extension}.png`
+(the lab's coarse preview; not yet seen in a client).
 
 ### Wrecks (ST5)
 Wrecks (`wreck`, design.md §10.1) use the ST1 pipeline but are **single pieces**: no jigsaw blocks, no pools. A later

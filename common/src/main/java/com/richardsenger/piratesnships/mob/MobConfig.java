@@ -32,6 +32,19 @@ public final class MobConfig {
     public static final ConfigValue<Double> SAILOR_FLEE_RANGE = S.doubleRange("sailor_flee_range", 8.0, 1.0, 32.0,
             "Blocks within which sailors run from pirates, monsters and anyone targeting them");
 
+    // --- monsters and NPCs (MOB3) -------------------------------------------------------------------------------
+    public static final ConfigValue<Boolean> MONSTERS_ATTACK_NPCS = S.bool("monsters_attack_npcs", true,
+            "Zombies, husks, drowned, zombie villagers, illagers and ravagers (#pirates_n_ships:hunts_npcs) treat crew "
+                    + "members, sailors and harbor masters like villagers; a person aboard a ship only by a monster on the same ship");
+    public static final ConfigValue<Boolean> CREW_FIGHT_MONSTERS = S.bool("crew_fight_monsters", true,
+            "Crew members with a weapon in hand fight monsters that hunt or hit them; unarmed ones run (off = they stand)");
+    public static final ConfigValue<Double> CREW_DEFENCE_RANGE = S.doubleRange("crew_defence_range", 12.0, 1.0, 32.0,
+            "Blocks within which a crew member notices a monster hunting it (to fight it, or to run from it)");
+    public static final ConfigValue<Boolean> SHARKS_ATTACK_NPCS = S.bool("sharks_attack_npcs", true,
+            "Sharks hunt crew members, sailors, pirates, navy and villagers in the water (off = only players and animals)");
+    public static final ConfigValue<Boolean> KRAKEN_TAKES_CREW = S.bool("kraken_takes_crew", true,
+            "The kraken's deck swipes knock crew and other NPCs overboard and its tentacles grab them in the water like players");
+
     // --- duelists -----------------------------------------------------------------------------------------------
     public static final ConfigValue<DuelistSkill> PIRATE_SKILL = S.enumValue("pirate_skill", DuelistSkill.PIRATE,
             "Sword skill of pirates (parry chance, reaction time); scaled by melee.npc_skill_multiplier");

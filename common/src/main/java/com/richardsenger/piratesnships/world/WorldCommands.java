@@ -26,7 +26,8 @@ import java.util.stream.Collectors;
 /**
  * {@code /pirates world ports} lists the port registry; {@code /pirates world port nearest} shows the nearest port with
  * its berths and treasure sites, {@code /pirates world port <id or "name">} any one port (NAME3); {@code /pirates world treasure give [port]} gives a bound treasure map (TM1,
- * {@link TreasureMapCommands}) (operators only, permission 2).
+ * {@link TreasureMapCommands}); {@code /pirates port spot <template>} shows where a ship would appear at the nearest
+ * port (STR7, {@code ShipSpotCommands}) (operators only, permission 2).
  */
 public final class WorldCommands {
 
@@ -44,6 +45,7 @@ public final class WorldCommands {
                 .then(Commands.literal("ports").executes(WorldCommands::list))
                 .then(port)
                 .then(TreasureMapCommands.node())));
+        dispatcher.register(Commands.literal("pirates").then(com.richardsenger.piratesnships.world.port.ShipSpotCommands.node()));
     }
 
     private static int list(CommandContext<CommandSourceStack> c) {
@@ -102,5 +104,6 @@ public final class WorldCommands {
                 .add(KEY + "treasure.buried", "buried")
                 .add(KEY + "treasure.looted", "looted")
                 .add(KEY + "none", "No port known in this dimension");
+        com.richardsenger.piratesnships.world.port.ShipSpotCommands.lang(lang);
     }
 }

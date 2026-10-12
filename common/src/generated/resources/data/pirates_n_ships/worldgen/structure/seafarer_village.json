@@ -1,6 +1,7 @@
 {
   "type": "pirates_n_ships:port_village",
   "biomes": "#pirates_n_ships:has_structure/seafarer_village",
+  "extension_pool": "pirates_n_ships:village/pier_extension",
   "land_pieces_on_land": true,
   "max_distance_from_center": 64,
   "port_kind": "seafarer_village",

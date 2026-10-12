@@ -394,7 +394,7 @@ public class Kraken extends WaterAnimal implements GeoEntity {
 
     /** Whether a tentacle may grab {@code e} out of the water ({@link KrakenRules#grabs}). */
     boolean grabbable(LivingEntity e) {
-        if (e == this || !e.isAlive()) return false;
+        if (e == this || !e.isAlive() || !KrakenShips.takes(e)) return false;
         boolean inWater = e.isInWater() || e.isUnderWater();
         boolean onShip = inWater && ShipEntities.standingOrRiding(e) != null;
         return KrakenRules.grabs(new KrakenRules.Swimmer(e instanceof Kraken, e instanceof WaterAnimal, KrakenShips.exempt(e),

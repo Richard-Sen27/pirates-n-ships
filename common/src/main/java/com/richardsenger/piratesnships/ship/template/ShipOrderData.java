@@ -31,6 +31,7 @@ public final class ShipOrderData {
                     .add(ShipOrders.KEY_NOT_ASSEMBLED, "Your %s lies at berth %s, but could not be assembled: use its helm")
                     .add(ShipOrders.KEY_NOT_READY, "Not ready: %s days to go")
                     .add(ShipOrders.KEY_NO_BERTH, "No berth is free; come back later")
+                    .add(ShipOrders.KEY_NO_DEEP_WATER, "No deep water near the pier for her")
                     .add(ShipOrders.KEY_LOST, "This order was lost")
                     .add(ShipOrders.KEY_WRONG_PORT, "This receipt belongs to the shipwright at %s");
             ShipOrderCommands.lang(lang);

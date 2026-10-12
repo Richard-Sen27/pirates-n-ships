@@ -172,7 +172,7 @@ Seafarer villages build ships to order. The **Orders** tab of the harbour master
 
 1. Bring the doubloons and materials and press **Order** for a {item:pirates_n_ships:ship_receipt}**ship receipt** that counts the days.
 2. When it reads "Ready for pickup", use the desk with the receipt in hand.
-3. She waits at a berth by the pier.
+3. She waits at a berth by the pier, or in the nearest deep water off it when the berth is shallow or taken. Never on the sand: with no deep water near, the harbour master says so and keeps your receipt.
 
 Armed sloops are never for sale: earn one by rank or take one at sea ([[pirates_n_ships:law|Law]], [[pirates_n_ships:combat|Weapons and combat]]).
 

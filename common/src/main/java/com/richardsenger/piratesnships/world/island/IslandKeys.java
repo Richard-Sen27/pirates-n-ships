@@ -31,6 +31,18 @@ public final class IslandKeys {
     /** STR2: the trails' processors (the connections plus {@code BoardwalkProcessor}: a trail over water becomes boards). */
     public static final ResourceKey<StructureProcessorList> TRAIL_PROCESSORS =
             ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("pirate_island_trail"));
+    /**
+     * STR8: the trails' processors since STR8 (the connections, {@code TrailBedProcessor}: level on a cut and filled bed,
+     * the boardwalk). {@link #TRAIL_PROCESSORS} stays for the trails of islands planned before.
+     */
+    public static final ResourceKey<StructureProcessorList> TRAIL_LEVEL_PROCESSORS =
+            ResourceKey.create(Registries.PROCESSOR_LIST, Constants.id("pirate_island_trail_level"));
+    /** STR8: what a bend's, a fork's and the junction's ways on draw (straights only). */
+    public static final ResourceKey<StructureTemplatePool> PATHS_STRAIGHT = pool("paths_straight");
+    /** STR8: the camp on a snowy or frozen shore (its own structure set, {@code cold_frequency}). */
+    public static final ResourceKey<Structure> PIRATE_ISLAND_COLD = ResourceKey.create(Registries.STRUCTURE, Constants.id("pirate_island_cold"));
+    public static final ResourceKey<StructureSet> PIRATE_ISLANDS_COLD = ResourceKey.create(Registries.STRUCTURE_SET,
+            Constants.id("pirate_islands_cold"));
 
     private IslandKeys() {
     }

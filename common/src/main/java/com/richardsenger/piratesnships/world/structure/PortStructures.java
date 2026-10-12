@@ -54,6 +54,13 @@ public final class PortStructures {
             Services.REGISTRY.register(Registries.LOOT_NUMBER_PROVIDER_TYPE, "configured_rolls",
                     () -> new LootNumberProviderType(ConfiguredRolls.CODEC));
 
+    /**
+     * The processor type {@code pirates_n_ships:trail_bed} ({@link TrailBedProcessor}, STR8): the streets', trails' and
+     * lanes' processor lists lay each piece level on a cut and filled bed.
+     */
+    public static final RegistryEntry<StructureProcessorType<?>, StructureProcessorType<TrailBedProcessor>> TRAIL_BED =
+            Services.REGISTRY.register(Registries.STRUCTURE_PROCESSOR, "trail_bed", () -> () -> TrailBedProcessor.CODEC);
+
     private PortStructures() {
     }
 

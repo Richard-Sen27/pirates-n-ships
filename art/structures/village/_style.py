@@ -220,6 +220,9 @@ POOL = f"{buildspec.MOD}:village"
 # ends and bends, so every village climbs inland; streets and squares hang decorations on deco_out.
 buildspec.CONNECTORS.update({
     "streethead_out": ("street_in", f"{POOL}/streetheads", "aligned"),
+    # STR8: a bend's, a fork's and the crossroads' ways on draw from the straights only, so two turns never follow
+    # each other and a street does not curl
+    "street_straight_out": ("street_in", f"{POOL}/streets_straight", "aligned"),
     "deco_out": ("deco_in", f"{POOL}/decorations", "rollable"),
     "deco_in": ("deco_out", buildspec.EMPTY_POOL, "rollable"),
 })
@@ -228,7 +231,7 @@ buildspec.CONNECTORS.update({
 # does it the other way round): a building placed first claims the corner a bend, a fork or a square needs, and only
 # the narrow straight still fits, so the streets ran on in a line; placed after the streets, a building that does not
 # fit gives way to a smaller one of the pool.
-buildspec.SELECTION_PRIORITY.update({"streethead_out": 3, "street_out": 2, "building_out": 1})
+buildspec.SELECTION_PRIORITY.update({"streethead_out": 3, "street_out": 2, "street_straight_out": 2, "building_out": 1})
 
 PALETTE.update({
     "andesite": "minecraft:andesite",

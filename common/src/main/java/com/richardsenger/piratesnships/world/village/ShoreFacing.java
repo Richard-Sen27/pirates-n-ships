@@ -39,8 +39,18 @@ public final class ShoreFacing {
     }
 
     public static Optional<Shore> choose(Probe probe, int probeBlocks, int maxDistance) {
-        if (probe.water(0, 0)) return Optional.empty();
-        Shore best = null;
+        List<Shore> ranked = ranked(probe, probeBlocks, maxDistance);
+        return ranked.isEmpty() ? Optional.empty() : Optional.of(ranked.get(0));
+    }
+
+    /**
+     * Every qualifying direction, best first ({@link #choose}'s order: most water, then the nearest shore, then
+     * {@link #ORDER}). STR8: a site whose best direction cannot take the pier (a spit, a sandbar, a bay's far shore)
+     * tries the next one ({@code PortStructure.plan}).
+     */
+    public static List<Shore> ranked(Probe probe, int probeBlocks, int maxDistance) {
+        if (probe.water(0, 0)) return List.of();
+        List<Shore> out = new java.util.ArrayList<>();
         for (Direction d : ORDER) {
             int first = -1;
             int count = 0;
@@ -51,13 +61,11 @@ public final class ShoreFacing {
                 }
             }
             if (first < 0 || first > maxDistance) continue;
-            Shore s = new Shore(d, first, count);
-            if (best == null || s.waterColumns() > best.waterColumns()
-                    || s.waterColumns() == best.waterColumns() && s.distance() < best.distance()) {
-                best = s;
-            }
+            out.add(new Shore(d, first, count));
         }
-        return Optional.ofNullable(best);
+        // a stable sort: equal shores keep the ORDER of their directions
+        out.sort(java.util.Comparator.comparingInt(Shore::waterColumns).reversed().thenComparingInt(Shore::distance));
+        return List.copyOf(out);
     }
 
     /**

@@ -161,7 +161,7 @@ def bend(left: bool):
         footpath(p, radial(cx, cz, mx(hx), hz, r + VERGE - 0.5), salt=304)
     lantern_post(p, mx(1), 1, 3)
     p.connector(mx(3), 0, 0, "street_in", "north", "minecraft:cobblestone")
-    p.connector(mx(10), 0, 7, "street_out", flip("east", left), "minecraft:cobblestone")
+    p.connector(mx(10), 0, 7, "street_straight_out", flip("east", left), "minecraft:cobblestone")
     p.connector(mx(house_w[0]), 0, house_w[1], "building_out", flip("west", left), "minecraft:dirt_path")
     p.connector(mx(house_s[0]), 0, house_s[1], "building_out", "south", "minecraft:dirt_path")
     out = flip("east", left)
@@ -194,8 +194,8 @@ def fork(left: bool):
             lantern_post(p, mx(7), 1, z)
             break
     p.connector(mx(3), 0, 0, "street_in", "north", "minecraft:cobblestone")
-    p.connector(mx(3), 0, L - 1, "street_out", "south", "minecraft:cobblestone")
-    p.connector(mx(10), 0, 9, "street_out", flip("east", left), "minecraft:cobblestone")
+    p.connector(mx(3), 0, L - 1, "street_straight_out", "south", "minecraft:cobblestone")
+    p.connector(mx(10), 0, 9, "street_straight_out", flip("east", left), "minecraft:cobblestone")
     p.connector(mx(0), 0, 4, "building_out", flip("west", left), "minecraft:dirt_path")
     p.connector(mx(0), 0, 10, "deco_out", flip("west", left), "minecraft:dirt_path")
     p.emit(f"a fork of the cobbled street ({side}): on south, and a branch sweeping off to the {flip('east', left)}",

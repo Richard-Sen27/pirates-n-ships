@@ -98,6 +98,40 @@ public final class PierExtensions {
         return added;
     }
 
+    /** STR8: how far beyond the end of the pier, jetty or quay the sea must reach. */
+    public static final int SEA_BEYOND_END = 4;
+
+    /**
+     * STR8 (the human: "piers need to end in water, not on land"): whether the pier, jetty or quay among {@code pieces}
+     * stands over the sea along its whole run (the line of its landward connector, from that connector to its seaward
+     * end) and {@value #SEA_BEYOND_END} blocks beyond, by the plan's terrain (sea: the first free block at most the sea
+     * surface). True when the pieces hold none.
+     */
+    public static boolean endsInWater(List<StructurePiece> pieces, StructureTemplateManager templates, PortStructure.Terrain terrain,
+                                      int seaSurface) {
+        for (StructurePiece piece : pieces) {
+            if (!(piece instanceof PoolElementStructurePiece p) || isExtension(piece)) continue;
+            for (ResourceLocation name : PIER_INS) {
+                Optional<Connector> in = connector(p.getElement(), templates, p.getPosition(), p.getRotation(), name);
+                if (in.isEmpty()) continue;
+                Direction sea = in.get().facing().getOpposite();
+                BoundingBox box = p.getBoundingBox();
+                int span = sea.getAxis() == Direction.Axis.X ? box.getXSpan() : box.getZSpan();
+                if (!runInWater(in.get().pos(), sea, span + SEA_BEYOND_END, terrain, seaSurface)) return false;
+            }
+        }
+        return true;
+    }
+
+    /** Whether the {@code length} columns from {@code from} toward {@code sea} are all sea (pure). */
+    public static boolean runInWater(BlockPos from, Direction sea, int length, PortStructure.Terrain terrain, int seaSurface) {
+        for (int k = 0; k < length; k++) {
+            BlockPos cell = from.relative(sea, k);
+            if (terrain.firstFree(cell.getX(), cell.getZ()) > seaSurface) return false;
+        }
+        return true;
+    }
+
     /** The landward connectors of the pier, the jetty and the quay (ST1–ST3), which lie in line with their seaward end. */
     public static final List<ResourceLocation> PIER_INS = List.of(Constants.id("pier_in"), Constants.id("jetty_in"), Constants.id("quay_in"));
 

@@ -17,7 +17,11 @@ import com.richardsenger.piratesnships.world.village.VillageLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
@@ -92,7 +96,9 @@ public final class PortStructure extends Structure {
             PortKind.CODEC.optionalFieldOf("port_kind", PortKind.SEAFARER_VILLAGE).forGetter(s -> s.portKind),
             Codec.BOOL.optionalFieldOf("land_pieces_on_land", false).forGetter(s -> s.landPiecesOnLand),
             Codec.BOOL.optionalFieldOf("unbearded_start", false).forGetter(s -> s.unbeardedStart),
-            StructureTemplatePool.CODEC.optionalFieldOf("extension_pool").forGetter(s -> s.extensionPool)
+            StructureTemplatePool.CODEC.optionalFieldOf("extension_pool").forGetter(s -> s.extensionPool),
+            TagKey.hashedCodec(Registries.BIOME).optionalFieldOf("cold_biomes").forGetter(s -> s.coldBiomes),
+            Codec.BOOL.optionalFieldOf("cold", false).forGetter(s -> s.cold)
     ).apply(i, PortStructure::new));
 
     /** Salt of the frequency roll (independent of the layout random); the port kind is mixed in. */
@@ -107,6 +113,8 @@ public final class PortStructure extends Structure {
     private final boolean landPiecesOnLand;
     private final boolean unbeardedStart;
     private final Optional<Holder<StructureTemplatePool>> extensionPool;
+    private final Optional<TagKey<Biome>> coldBiomes;
+    private final boolean cold;
     private volatile boolean warnedUnconfigured;
 
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
@@ -124,7 +132,17 @@ public final class PortStructure extends Structure {
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
                          int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand,
                          boolean unbeardedStart, Optional<Holder<StructureTemplatePool>> extensionPool) {
+        this(settings, startPool, maxDepth, startHeight, maxDistanceFromCenter, shoreAnchor, portKind, landPiecesOnLand, unbeardedStart,
+                extensionPool, Optional.empty(), false);
+    }
+
+    public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
+                         int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand,
+                         boolean unbeardedStart, Optional<Holder<StructureTemplatePool>> extensionPool,
+                         Optional<TagKey<Biome>> coldBiomes, boolean cold) {
         super(settings);
+        this.coldBiomes = coldBiomes;
+        this.cold = cold;
         this.extensionPool = extensionPool;
         this.startPool = startPool;
         this.maxDepth = maxDepth;
@@ -185,10 +203,36 @@ public final class PortStructure extends Structure {
         return extensionPool;
     }
 
+    /** STR8: the biomes that make a site cold (the start's, or the sea's in front of it); empty: no biome rule. */
+    public Optional<TagKey<Biome>> coldBiomes() {
+        return coldBiomes;
+    }
+
+    /**
+     * STR8: whether this is a kind's cold-shore structure (its own structure set, {@code cold_frequency}): it generates
+     * only where {@link #coldBiomes} says the site is cold, the kind's other structure only where it is not.
+     */
+    public boolean cold() {
+        return cold;
+    }
+
     /** The salt of this kind's frequency roll; the village's is WG1's, so existing village worlds roll the same. */
     static long frequencySalt(PortKind kind) {
         return FREQUENCY_SALT ^ ((long) kind.ordinal() << 40);
     }
+
+    /** STR8: the cold structure's roll is independent of the kind's other one (they share the grid). */
+    static long frequencySalt(PortKind kind, boolean cold) {
+        return cold ? frequencySalt(kind) ^ COLD_SALT : frequencySalt(kind);
+    }
+
+    private static final long COLD_SALT = 0xC01DC0A57L;
+
+    /** How far out to sea from the shore edge the cold rule reads the sea's biome. */
+    static final int COLD_SEA_PROBE = 16;
+
+    /** STR8: sites the pier rule turned down (each chunk counted once), for the smoke test's log. */
+    private static final java.util.Set<Long> REJECTED_SITES = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /** This kind's enabled placement config, or empty: toggled off, or a kind without config yet (logged once). */
     private Optional<WorldConfig.PortPlacement> activePlacement() {
@@ -204,10 +248,10 @@ public final class PortStructure extends Structure {
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
         Optional<WorldConfig.PortPlacement> placement = activePlacement();
         if (placement.isEmpty()) return Optional.empty();
-        double frequency = placement.get().frequency().get();
+        double frequency = cold ? placement.get().coldFrequency().get() : placement.get().frequency().get();
         if (frequency < 1.0) {
             WorldgenRandom roll = new WorldgenRandom(new LegacyRandomSource(0L));
-            roll.setLargeFeatureSeed(context.seed() ^ frequencySalt(portKind), context.chunkPos().x, context.chunkPos().z);
+            roll.setLargeFeatureSeed(context.seed() ^ frequencySalt(portKind, cold), context.chunkPos().x, context.chunkPos().z);
             if (roll.nextDouble() >= frequency) return Optional.empty();
         }
         ChunkGenerator generator = context.chunkGenerator();
@@ -229,15 +273,39 @@ public final class PortStructure extends Structure {
         WorldConfig.PortPlacement config = placement.get();
         int cx = candidate.getX();
         int cz = candidate.getZ();
-        Optional<ShoreFacing.Shore> shore = ShoreFacing.choose((dx, dz) -> terrain.firstFree(cx + dx, cz + dz) <= seaSurface,
+        List<ShoreFacing.Shore> shores = ShoreFacing.ranked((dx, dz) -> terrain.firstFree(cx + dx, cz + dz) <= seaSurface,
                 config.shoreProbeBlocks().get(), config.maxDistanceFromWater().get());
-        if (shore.isEmpty()) return Optional.empty();
-        Direction sea = shore.get().sea();
+        if (shores.isEmpty()) return Optional.empty();
+        boolean piersInWater = WorldConfig.STRUCTURE_PIERS_END_IN_WATER.get();
+        boolean pierRejected = false;
+        // STR8: the best side first (WG1's choice); a side whose pier would not stand in the sea gives way to the next
+        for (ShoreFacing.Shore shore : piersInWater ? shores : shores.subList(0, 1)) {
+            Facing result = planFacing(context, candidate, seaSurface, terrain, depth, config, shore, piersInWater);
+            if (result.stub() != null) {
+                return Optional.of(result.stub());
+            }
+            pierRejected |= result.pierRejected();
+            if (result.stop()) break;
+        }
+        if (pierRejected && REJECTED_SITES.add(context.chunkPos().toLong() * 8 + portKind.ordinal() * 2L + (cold ? 1 : 0))) {
+            Constants.LOG.info("STR8: {}{} site at {} {} rejected: no side puts its pier over the sea ({} sites rejected so far)",
+                    portKind.getSerializedName(), cold ? " (cold)" : "", cx, cz, REJECTED_SITES.size());
+        }
+        return Optional.empty();
+    }
+
+    /** The outcome of planning one side: the stub, or why not (the pier on land; {@code stop}: no other side is tried). */
+    private record Facing(@org.jetbrains.annotations.Nullable GenerationStub stub, boolean pierRejected, boolean stop) {
+    }
+
+    private Facing planFacing(GenerationContext context, BlockPos candidate, int seaSurface, Terrain terrain, int depth,
+                              WorldConfig.PortPlacement config, ShoreFacing.Shore shore, boolean piersInWater) {
+        Direction sea = shore.sea();
         Rotation rotation = ShoreFacing.rotationFacing(sea);
-        BlockPos edge = VillageLayout.seaEdge(candidate, sea, shore.get().distance());
+        BlockPos edge = VillageLayout.seaEdge(candidate, sea, shore.distance());
         BlockPos probe = shoreAnchor.groundProbe(edge, sea);
         int ground = terrain.firstFree(probe.getX(), probe.getZ()) - 1;
-        if (ground - seaSurface > config.maxShoreHeight().get()) return Optional.empty();
+        if (ground - seaSurface > config.maxShoreHeight().get()) return new Facing(null, false, false);
 
         BlockPos origin = shoreAnchor.startOrigin(edge, rotation);
         // addPieces puts the start piece's y 0 at pos.y - groundLevelDelta (1 for single pool elements)
@@ -248,32 +316,135 @@ public final class PortStructure extends Structure {
                 context.seed(), context.chunkPos(), context.heightAccessor(), context.validBiome());
         Optional<GenerationStub> stub = JigsawPlacement.addPieces(rotated, startPool, Optional.empty(), depth, start, false,
                 Optional.empty(), maxDistanceFromCenter, PoolAliasLookup.EMPTY, DimensionPadding.ZERO, LiquidSettings.APPLY_WATERLOGGING);
-        return stub.map(s -> new GenerationStub(s.position(), builder -> {
-            List<StructurePiece> pieces = s.getPiecesBuilder().build().pieces();
-            List<LandFilter.Node> nodes = landNodes(pieces);
-            boolean[] keep = landPiecesOnLand
-                    ? LandFilter.keep(nodes, (x, z) -> terrain.firstFree(x, z) <= seaSurface)
-                    : null;
-            boolean[] chain = rigidChain(pieces, nodes);
-            List<StructurePiece> placed = new java.util.ArrayList<>(pieces.size());
-            for (int i = 0; i < pieces.size(); i++) {
-                StructurePiece piece = pieces.get(i);
-                if (keep != null && !keep[i]) continue;
-                if (i > 0 && sinksIntoTerrain(piece)) piece.move(0, -1, 0);
-                // the rigid chain from the start (STR4: quay, walls, towers; jetty; pier) and, with unbearded_start
-                // (STR3), the start itself; unbearded_start also drops the rigid junctions' beard
-                if ((chain[i] || (i == 0 && unbeardedStart)) && piece instanceof PoolElementStructurePiece p) {
-                    piece = unbearded(p, context.structureTemplateManager(), !unbeardedStart);
+        if (stub.isEmpty()) return new Facing(null, false, false);
+        // STR8: the cold shores have their own structure; the biome is read where vanilla reads it (the stub's position)
+        // and out at sea in front of the shore, before the jigsaw runs
+        if (coldBiomes.isPresent() && isCold(context, stub.get().position(), edge.relative(sea, COLD_SEA_PROBE), seaSurface) != cold) {
+            return new Facing(null, false, true);
+        }
+        List<StructurePiece> pieces = new java.util.ArrayList<>(stub.get().getPiecesBuilder().build().pieces());
+        StructureTemplateManager templates = context.structureTemplateManager();
+        if (piersInWater && !PierExtensions.endsInWater(pieces, templates, terrain, seaSurface)) return new Facing(null, true, false);
+        List<StructurePiece> placed = arrange(context, pieces, seaSurface, terrain);
+        BlockPos at = stub.get().position();
+        return new Facing(new GenerationStub(at, builder -> placed.forEach(builder::addPiece)), false, false);
+    }
+
+    /**
+     * STR8: whether the site is cold: the biome at the stub's position (where vanilla checks the structure's biomes) or
+     * out at sea in front of the shore is in {@link #coldBiomes}.
+     */
+    private boolean isCold(GenerationContext context, BlockPos at, BlockPos seaward, int seaSurface) {
+        TagKey<Biome> tag = coldBiomes.orElseThrow();
+        var sampler = context.randomState().sampler();
+        var source = context.chunkGenerator().getBiomeSource();
+        Holder<Biome> here = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(at.getX()),
+                net.minecraft.core.QuartPos.fromBlock(at.getY()), net.minecraft.core.QuartPos.fromBlock(at.getZ()), sampler);
+        Holder<Biome> sea = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(seaward.getX()),
+                net.minecraft.core.QuartPos.fromBlock(seaSurface), net.minecraft.core.QuartPos.fromBlock(seaward.getZ()), sampler);
+        return here.is(tag) || sea.is(tag);
+    }
+
+    /**
+     * The jigsaw's pieces made into the port (in order): land pieces off the water ({@link LandFilter}), wall runs ended
+     * on land ({@link WallRuns}), buildings sunk onto the surface row, trails levelled ({@link TrailLevels}), the rigid
+     * chain out of the beard's reach, the pier extended (STR7).
+     */
+    private List<StructurePiece> arrange(GenerationContext context, List<StructurePiece> pieces, int seaSurface, Terrain terrain) {
+        StructureTemplateManager templates = context.structureTemplateManager();
+        List<LandFilter.Node> nodes = landNodes(pieces);
+        LandFilter.Water water = (x, z) -> terrain.firstFree(x, z) <= seaSurface;
+        boolean[] keep = landPiecesOnLand ? LandFilter.keep(nodes, water) : filled(pieces.size());
+        boolean[] chain = rigidChain(pieces, nodes);
+        if (landPiecesOnLand) {
+            WallRuns.closeOnLand(pieces, nodes, keep, chain, water, templates,
+                    context.registryAccess().lookupOrThrow(Registries.TEMPLATE_POOL));
+        }
+        for (int i = 1; i < pieces.size(); i++) {
+            if (keep[i] && sinksIntoTerrain(pieces.get(i))) pieces.get(i).move(0, -1, 0);
+        }
+        if (WorldConfig.STRUCTURE_LEVEL_TRAILS.get()) level(context, pieces, nodes, keep);
+        List<StructurePiece> placed = new java.util.ArrayList<>(pieces.size());
+        for (int i = 0; i < pieces.size(); i++) {
+            StructurePiece piece = pieces.get(i);
+            if (!keep[i]) continue;
+            // the rigid chain from the start (STR4: quay, walls, towers; jetty; pier) and, with unbearded_start
+            // (STR3), the start itself; unbearded_start also drops the rigid junctions' beard
+            if ((chain[i] || (i == 0 && unbeardedStart)) && piece instanceof PoolElementStructurePiece p
+                    && p.getGroundLevelDelta() != UNBEARDED_GROUND_LEVEL_DELTA) {
+                piece = unbearded(p, templates, !unbeardedStart);
+            }
+            placed.add(piece);
+        }
+        // STR7: the pier, jetty or quay grows where the water at its end is shallow
+        if (extensionPool.isPresent() && WorldConfig.PORTS_PIER_EXTENSION.get()) {
+            placed.addAll(PierExtensions.extend(templates, extensionPool.get(), placed, terrain, seaSurface, BerthBasins.depth()));
+        }
+        return placed;
+    }
+
+    private static boolean[] filled(int n) {
+        boolean[] out = new boolean[n];
+        java.util.Arrays.fill(out, true);
+        return out;
+    }
+
+    /**
+     * STR8: lays the trails level ({@link TrailLevels}) from the generator's surface (the heights vanilla's jigsaw read
+     * for them): a trail's natural row under its centre, a building's connector row at its joint. Moves the pieces and
+     * their junctions; a dropped trail drops what hangs from it ({@code keep}).
+     */
+    private static void level(GenerationContext context, List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep) {
+        ChunkGenerator generator = context.chunkGenerator();
+        List<TrailLevels.Node> levels = new java.util.ArrayList<>(pieces.size());
+        for (int i = 0; i < pieces.size(); i++) {
+            StructurePiece piece = pieces.get(i);
+            BoundingBox box = piece.getBoundingBox();
+            int parent = keep[i] ? nodes.get(i).parent() : -1;
+            if (i == 0) {
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.START, -1, box.minY(), box.minY()));
+            } else if (piece instanceof PoolElementStructurePiece p
+                    && p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING) {
+                int natural = generator.getFirstFreeHeight((box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2,
+                        Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState()) - 1;
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.TRAIL, parent, box.minY() - 1, natural));
+            } else {
+                int row = box.minY();
+                if (piece instanceof PoolElementStructurePiece p && !p.getJunctions().isEmpty() && parent >= 0
+                        && levelsKind(pieces.get(parent)) == TrailLevels.Kind.TRAIL) {
+                    JigsawJunction up = p.getJunctions().get(0);
+                    row = generator.getFirstFreeHeight(up.getSourceX(), up.getSourceZ(), Heightmap.Types.WORLD_SURFACE_WG,
+                            context.heightAccessor(), context.randomState()) - 1;
                 }
-                placed.add(piece);
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.OTHER, parent, row, row));
             }
-            // STR7: the pier, jetty or quay grows where the water at its end is shallow
-            if (extensionPool.isPresent() && WorldConfig.PORTS_PIER_EXTENSION.get()) {
-                placed.addAll(PierExtensions.extend(context.structureTemplateManager(), extensionPool.get(), placed, terrain, seaSurface,
-                        BerthBasins.depth()));
+        }
+        TrailLevels.Result result = TrailLevels.solve(levels);
+        for (int i = 0; i < pieces.size(); i++) {
+            if (!keep[i]) continue;
+            if (result.dropped()[i]) {
+                keep[i] = false;
+                continue;
             }
-            placed.forEach(builder::addPiece);
-        }));
+            int delta = result.delta()[i];
+            if (delta == 0) continue;
+            StructurePiece piece = pieces.get(i);
+            piece.move(0, delta, 0);
+            if (piece instanceof PoolElementStructurePiece p) {
+                List<JigsawJunction> junctions = p.getJunctions();
+                for (int j = 0; j < junctions.size(); j++) {
+                    JigsawJunction old = junctions.get(j);
+                    junctions.set(j, new JigsawJunction(old.getSourceX(), old.getSourceGroundY() + delta, old.getSourceZ(),
+                            old.getDeltaY(), old.getDestProjection()));
+                }
+            }
+        }
+    }
+
+    private static TrailLevels.Kind levelsKind(StructurePiece piece) {
+        return piece instanceof PoolElementStructurePiece p
+                && p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING
+                ? TrailLevels.Kind.TRAIL : TrailLevels.Kind.OTHER;
     }
 
     /**
@@ -354,7 +525,8 @@ public final class PortStructure extends Structure {
                 }
                 land = p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING || sinksIntoTerrain(piece);
             }
-            out.add(new LandFilter.Node(piece.getBoundingBox(), i == 0 ? -1 : Math.max(parent, 0), land));
+            // STR8: a rigid land piece (a building or decoration on a trail) needs its corners on land as well
+            out.add(new LandFilter.Node(piece.getBoundingBox(), i == 0 ? -1 : Math.max(parent, 0), land, i > 0 && sinksIntoTerrain(piece)));
         }
         return out;
     }
@@ -399,6 +571,8 @@ public final class PortStructure extends Structure {
         com.richardsenger.piratesnships.mob.harbor.HarborMasters.place(level, chunkBox, pieces, port);
         // LIFE1: the village's people, each in its building
         com.richardsenger.piratesnships.mob.village.Residents.place(level, chunkBox, pieces, port);
+        // STR8: last, so the beard's fill, the surface and every piece of this chunk are in place
+        if (WorldConfig.STRUCTURE_CLEAR_DOORS.get()) DoorClearing.clear(level, chunkBox, pieces.pieces(), server.getStructureManager());
     }
 
     @Override

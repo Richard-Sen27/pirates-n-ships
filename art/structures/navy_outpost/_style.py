@@ -49,6 +49,8 @@ CONNECTORS = {
     # STR4: the court's lanes (terrain matching) from the land gate, the buildings and decorations on their sides
     "lanehead_out": ("lane_in", f"{MOD}:{GROUP}/laneheads", "aligned"),
     "lane_out": ("lane_in", f"{MOD}:{GROUP}/lanes", "aligned"),
+    # STR8: a bend's, a fork's and the junction's ways on draw from the straights only (two turns never follow each other)
+    "lane_straight_out": ("lane_in", f"{MOD}:{GROUP}/lanes_straight", "aligned"),
     "lane_in": ("lane_out", EMPTY_POOL, "aligned"),
     "deco_out": ("deco_in", f"{MOD}:{GROUP}/decorations", "rollable"),
     "deco_in": ("deco_out", EMPTY_POOL, "rollable"),

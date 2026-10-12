@@ -156,7 +156,7 @@ Map.entry(OutpostKeys.TERMINATORS, OutpostData.TERMINATORS),
     @Test
     void biomeTagHasTheBeaches() throws IOException {
         JsonObject json = StandAloneOps.generated("tags/worldgen/biome/has_structure/navy_outpost").getAsJsonObject();
-        assertEquals("#minecraft:is_beach", json.getAsJsonArray("values").get(0).getAsString());
+        assertEquals("#pirates_n_ships:port_shores", json.getAsJsonArray("values").get(0).getAsString(), "STR8");
     }
 
     @Test

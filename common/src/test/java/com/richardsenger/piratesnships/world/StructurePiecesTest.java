@@ -85,6 +85,7 @@ class StructurePiecesTest {
             withExtension(Map.of(
                     MOD + ":street_out", List.of(MOD + ":street_in", MOD + ":village/streets", "aligned"),
                     MOD + ":street_in", List.of(MOD + ":street_out", EMPTY, "aligned"),
+                    MOD + ":street_straight_out", List.of(MOD + ":street_in", MOD + ":village/streets_straight", "aligned"),
                     MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":village/buildings", "rollable"),
                     MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable"),
                     MOD + ":pier_out", List.of(MOD + ":pier_in", MOD + ":village/pier", "aligned"),
@@ -108,6 +109,7 @@ class StructurePiecesTest {
             withExtension(Map.of(
                     MOD + ":path_out", List.of(MOD + ":path_in", MOD + ":pirate_island/paths", "aligned"),
                     MOD + ":path_in", List.of(MOD + ":path_out", EMPTY, "aligned"),
+                    MOD + ":path_straight_out", List.of(MOD + ":path_in", MOD + ":pirate_island/paths_straight", "aligned"),
                     MOD + ":hut_out", List.of(MOD + ":hut_in", MOD + ":pirate_island/huts", "rollable"),
                     MOD + ":hut_in", List.of(MOD + ":hut_out", EMPTY, "rollable"),
                     MOD + ":jetty_out", List.of(MOD + ":jetty_in", MOD + ":pirate_island/jetty", "aligned"),
@@ -157,6 +159,7 @@ class StructurePiecesTest {
                     Map.entry(MOD + ":lanehead_out", List.of(MOD + ":lane_in", MOD + ":navy_outpost/laneheads", "aligned")),
                     Map.entry(MOD + ":lane_out", List.of(MOD + ":lane_in", MOD + ":navy_outpost/lanes", "aligned")),
                     Map.entry(MOD + ":lane_in", List.of(MOD + ":lane_out", EMPTY, "aligned")),
+                    Map.entry(MOD + ":lane_straight_out", List.of(MOD + ":lane_in", MOD + ":navy_outpost/lanes_straight", "aligned")),
                     Map.entry(MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":navy_outpost/decorations", "rollable")),
                     Map.entry(MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")))));
     /** The buildings of the outpost's buildings pool (ST3's three and STR4's). */
@@ -417,14 +420,14 @@ class StructurePiecesTest {
         // three times, the market square never (a dead end of buildings); buildings and decorations on the sides
         assertEquals(Map.of("building_out", 2, "deco_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village("street_long"))));
         for (String bend : List.of("street_bend_left", "street_bend_right")) {
-            assertEquals(Map.of("building_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village(bend))), bend);
-            Jigsaw out = jigsaws(village(bend)).stream().filter(j -> j.name().endsWith("street_out")).findFirst().orElseThrow();
+            assertEquals(Map.of("building_out", 2, "street_in", 1, "street_straight_out", 1), countNames(jigsaws(village(bend))), bend);
+            Jigsaw out = jigsaws(village(bend)).stream().filter(j -> j.name().endsWith("street_straight_out")).findFirst().orElseThrow();
             assertEquals(bend.endsWith("left") ? "east" : "west", out.front(), bend + " turns");
         }
         for (String fork : List.of("street_fork_left", "street_fork_right")) {
-            assertEquals(Map.of("building_out", 1, "deco_out", 1, "street_in", 1, "street_out", 2), countNames(jigsaws(village(fork))), fork);
+            assertEquals(Map.of("building_out", 1, "deco_out", 1, "street_in", 1, "street_straight_out", 2), countNames(jigsaws(village(fork))), fork);
         }
-        assertEquals(Map.of("street_in", 1, "street_out", 3), countNames(jigsaws(village("street_crossroads"))));
+        assertEquals(Map.of("street_in", 1, "street_straight_out", 3), countNames(jigsaws(village("street_crossroads"))));
         assertEquals(Map.of("building_out", 2, "deco_out", 2, "street_in", 1, "street_out", 1),
                 countNames(jigsaws(village("street_square_well"))));
         assertEquals(Map.of("building_out", 3, "deco_out", 2, "street_in", 1), countNames(jigsaws(village("street_square_market"))));
@@ -535,19 +538,19 @@ class StructurePiecesTest {
         assertEquals(Map.of("hut_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island("path"))));
         assertEquals(Map.of("hut_out", 2, "deco_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island("path_long"))));
         for (String bend : List.of("path_bend_left", "path_bend_right")) {
-            assertEquals(Map.of("hut_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island(bend))), bend);
+            assertEquals(Map.of("hut_out", 2, "path_in", 1, "path_straight_out", 1), countNames(jigsaws(island(bend))), bend);
         }
         for (String fork : List.of("path_fork_left", "path_fork_right")) {
-            assertEquals(Map.of("deco_out", 1, "hut_out", 1, "path_in", 1, "path_out", 2), countNames(jigsaws(island(fork))), fork);
+            assertEquals(Map.of("deco_out", 1, "hut_out", 1, "path_in", 1, "path_straight_out", 2), countNames(jigsaws(island(fork))), fork);
         }
-        assertEquals(Map.of("hut_out", 1, "path_in", 1, "path_out", 2), countNames(jigsaws(island("path_junction"))));
+        assertEquals(Map.of("hut_out", 1, "path_in", 1, "path_straight_out", 2), countNames(jigsaws(island("path_junction"))));
         assertEquals(Map.of("hut_out", 2, "deco_out", 1, "path_in", 1), countNames(jigsaws(island("path_clearing"))));
         for (String end : List.of("path_end", "path_end_rocks", "path_end_palm")) {
             assertEquals(Map.of("path_in", 1), countNames(jigsaws(island(end))), end);
         }
         // a bend turns: its path_out points sideways, not on along the path_in's line
         for (String bend : List.of("path_bend_left", "path_bend_right")) {
-            Jigsaw out = jigsaws(island(bend)).stream().filter(j -> j.name().endsWith("path_out")).findFirst().orElseThrow();
+            Jigsaw out = jigsaws(island(bend)).stream().filter(j -> j.name().endsWith("path_straight_out")).findFirst().orElseThrow();
             assertEquals(bend.endsWith("left") ? "east" : "west", out.front(), bend);
         }
         for (String treasure : TREASURES) {

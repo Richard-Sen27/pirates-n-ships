@@ -170,6 +170,31 @@ shape.
   jigsaw draws and the layout of a port generated after the update are the same as before for the same seed, apart
   from the extension sections). Already generated piers keep their blocks.
 
+## Ports generated before STR8 (after 0.1.0)
+
+STR8 (second structure polish: piers in the sea, level trails, doors, no pieces over water, cold shores) changes how
+new ports are planned and placed; nothing saved changes shape and old ports keep their blocks.
+
+- **Placed chunks stay as they are.** Every rule works when a port is planned (`PortStructure.plan`) or its chunks are
+  placed; chunks that exist are never placed again.
+- **A port planned before the update but not yet fully placed** (its start saved, some chunks not generated yet) keeps
+  its plan: its pieces, their heights and its streets' processor lists (`village_street`, `pirate_island_trail`, the
+  lanes' `connections`; all still shipped). So its remaining chunks place exactly as before STR8: no levelled bed, no
+  straight pools, no land or wall rules. Only the door clearing (`world.structures.clear_doors`, in `afterPlace`) runs
+  on its remaining chunks too; it only takes ground, plants, snow and wayside decorations out of a door's way.
+- **New structures and structure sets** `pirates_n_ships:{seafarer_village,pirate_island,navy_outpost}_cold` and
+  `{seafarer_villages,pirate_islands,navy_outposts}_cold` are added; the old ids are unchanged (the old structures gained
+  the optional codec fields `cold_biomes` and `cold`, which old datapacks without them read as before).
+- **Placement of new ports moves at the edge of the explored world:** the new exclusion zones against vanilla's
+  `minecraft:villages` (6 chunks) and `minecraft:woodland_mansions` (10) and the cold-shore rule change which grid
+  chunks start a port; the salts and grids are unchanged, so ports already placed stay where they are and new chunks
+  next to them may start a port where none would have been (or none where one would).
+- **New config keys** `world.structures.level_trails` (true), `clear_doors` (true), `piers_end_in_water` (true) and
+  `world.structures.<kind>.cold_frequency` (0.1) are added to an existing server file with their defaults.
+- **Template pieces changed:** the bends, forks, junctions and the crossroads point their ways on at the new straights
+  pools (`village/streets_straight`, `pirate_island/paths_straight`, `navy_outpost/lanes_straight`); the jigsaw count
+  is the same, but the draws differ, so the same seed lays out a different port than before the update.
+
 ## Known risks found while writing this
 
 - **Enum names in saved data:** several codecs read an enum by name with `valueOf` inside an `xmap` (`FactionState`, `Voyage.faction`, `ReleaseRecord`, `ShipAnchor`), which throws on an unknown name instead of returning a codec error. Renaming or removing one of those enum constants after 0.1.0 would make the whole file fail to read, and vanilla then starts that saved data empty and overwrites it on the next save. Treat these enum constants like ids.

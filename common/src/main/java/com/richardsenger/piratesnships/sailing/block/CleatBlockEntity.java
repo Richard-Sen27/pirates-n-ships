@@ -119,7 +119,7 @@ public class CleatBlockEntity extends RopeAnchorBlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         if (cloth != null) {
-            tag.putIntArray(CLOTH, new int[] {cloth.tackX(), cloth.tackY(), cloth.tackZ(), cloth.drop()});
+            tag.putIntArray(CLOTH, new int[] {cloth.tackX(), cloth.tackY(), cloth.tackZ(), cloth.drop(), cloth.boomed() ? 1 : 0});
         }
         if (dye != null) {
             tag.putString(DYE, dye.getSerializedName());
@@ -133,7 +133,7 @@ public class CleatBlockEntity extends RopeAnchorBlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         int[] c = tag.getIntArray(CLOTH);
-        cloth = c.length == 4 ? new TriangleCloth(c[0], c[1], c[2], c[3]) : null;
+        cloth = c.length >= 4 ? new TriangleCloth(c[0], c[1], c[2], c[3], c.length > 4 && c[4] != 0) : null; // SAIL5: boomed
         dye = tag.contains(DYE, CompoundTag.TAG_STRING) ? DyeColor.byName(tag.getString(DYE), null) : null;
         syncedTint = tag.contains(TINT, CompoundTag.TAG_INT) ? tag.getInt(TINT) : SailTint.NONE;
     }

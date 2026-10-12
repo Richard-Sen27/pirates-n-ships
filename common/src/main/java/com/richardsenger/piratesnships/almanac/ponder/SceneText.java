@@ -35,6 +35,7 @@ public record SceneText(String scene, String title, List<SceneLine> lines) {
             of(ShipSceneText.SHIP_ASSEMBLY, ShipSceneText.Assembly.TITLE, ShipSceneText.Assembly.values()),
             of(ShipSceneText.STEERING, ShipSceneText.Steering.TITLE, ShipSceneText.Steering.values()),
             of(ShipSceneText.SAILS_AND_WINCH, ShipSceneText.Sails.TITLE, ShipSceneText.Sails.values()),
+            of(ShipSceneText.TRIANGULAR_SAILS, ShipSceneText.Triangular.TITLE, ShipSceneText.Triangular.values()),
             of(ShipSceneText.ANCHOR_AND_CAPSTAN, ShipSceneText.Anchor.TITLE, ShipSceneText.Anchor.values()),
             of(ShipSceneText.PUMPS_AND_FLOODING, ShipSceneText.Pumps.TITLE, ShipSceneText.Pumps.values()),
             of(ShipSceneText.HULL_REPAIR, ShipSceneText.Repair.TITLE, ShipSceneText.Repair.values()),

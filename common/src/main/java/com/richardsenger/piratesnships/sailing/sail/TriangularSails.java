@@ -41,6 +41,9 @@ public final class TriangularSails {
         if (s.getBlock() instanceof YardBlock) {
             return CleatLookup.Cell.YARD;
         }
+        if (s.getBlock() instanceof com.richardsenger.piratesnships.sailing.block.BoomBlock) {
+            return CleatLookup.Cell.BOOM; // SAIL5: a boom in the clew's place
+        }
         return s.is(SailingBlocks.MASTS) ? CleatLookup.Cell.MAST : CleatLookup.Cell.OTHER;
     }
 
@@ -92,11 +95,18 @@ public final class TriangularSails {
         return partner != null && partner.getY() < pos.getY();
     }
 
-    /** Writes the cloth of the cleat at {@code pos}: its sail's if it heads one, else none. */
+    /**
+     * Writes the cloth of the cleat at {@code pos}: its sail's if it heads one, else none. A boomed sail (SAIL5) also
+     * gives its boom the arm out to the tack.
+     */
     public static void refresh(Level level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof CleatBlockEntity be) {
             TriangularSail s = sailHeadedAt(level, pos, SailingConfig.stayRules());
             be.setCloth(s == null ? null : s.geometry());
+            if (s != null && s.boomed()
+                    && level.getBlockEntity(pos(s.clew())) instanceof com.richardsenger.piratesnships.sailing.block.BoomBlockEntity boom) {
+                boom.setArm(new int[] {s.tack().x() - s.clew().x(), s.tack().z() - s.clew().z()});
+            }
         }
     }
 

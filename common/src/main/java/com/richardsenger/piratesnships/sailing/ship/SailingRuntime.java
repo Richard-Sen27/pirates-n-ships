@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.force.ShipForceModel;
 import com.richardsenger.piratesnships.sailing.force.ShipState;
 import com.richardsenger.piratesnships.sailing.force.SailTypes;
+import com.richardsenger.piratesnships.sailing.sail.BoomRules;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
 import com.richardsenger.piratesnships.sailing.sail.YardLinker;
@@ -60,9 +61,17 @@ public final class SailingRuntime {
 
     /**
      * One sail, keyed by its plot position: a square sail's head (its upper yard's middle block, with {@code square}
-     * set) or a triangular sail's head cleat (with {@code triangle} set).
+     * set) or a triangular sail's head cleat (with {@code triangle} set). {@code sheet} is the step of a boomed sail's
+     * boom (SAIL5, {@link BoomRules}), {@link BoomRules#CENTRE} for every other sail.
      */
-    record Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square, @Nullable TriangularSail triangle) { }
+    record Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square, @Nullable TriangularSail triangle, int sheet) {
+        Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square, @Nullable TriangularSail triangle) {
+            this(type, trim, area, square, triangle, BoomRules.CENTRE);
+        }
+    }
+
+    /** A boomed sail (SAIL5): its head cleat, the sail (its clew is the boom) and the boom's sheet step. */
+    public record Boomed(BlockPos head, TriangularSail sail, int sheet) { }
 
     private final UUID id;
     private final BowFrame bow;
@@ -93,6 +102,10 @@ public final class SailingRuntime {
     private long windTime = Long.MIN_VALUE;
     private WindSample wind = WindSample.CALM;
     private SailingParams params = SailingParams.DEFAULTS;
+    // SAIL5: booms on (sailing.booms), their closest angle to the wind, and a gybe's heel impulse waiting for the substep
+    private boolean boomsEnabled = true;
+    private double boomMinWind = BoomRules.DEFAULT_MIN_WIND;
+    private double pendingRoll;
     private double rudderAngle;
     private boolean anchorEnabled = true;
 
@@ -257,9 +270,60 @@ public final class SailingRuntime {
             return false;
         }
         if (s.trim() != trim) {
-            put(plotPos, new Sail(s.type(), trim, s.area(), s.square(), s.triangle()));
+            put(plotPos, new Sail(s.type(), trim, s.area(), s.square(), s.triangle(), s.sheet()));
         }
         return true;
+    }
+
+    // ------------------------------------------------------------------ booms (SAIL5)
+
+    /** Changes the sheet of the boomed sail whose boom stands at {@code boomPos}; false if there is none. */
+    boolean setSheet(BlockPos boomPos, int sheet) {
+        for (Map.Entry<BlockPos, Sail> e : sails.entrySet()) {
+            Sail s = e.getValue();
+            TriangularSail t = s.triangle();
+            if (t != null && t.boomed() && t.clew().x() == boomPos.getX() && t.clew().y() == boomPos.getY()
+                    && t.clew().z() == boomPos.getZ()) {
+                if (s.sheet() != sheet) {
+                    e.setValue(new Sail(s.type(), s.trim(), s.area(), s.square(), t, sheet));
+                    instancesDirty = true;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Every boomed sail of the ship, in head order. */
+    public List<Boomed> boomedSails() {
+        List<Boomed> out = new ArrayList<>();
+        sails.forEach((head, s) -> {
+            if (s.triangle() != null && s.triangle().boomed()) out.add(new Boomed(head, s.triangle(), s.sheet()));
+        });
+        return out;
+    }
+
+    /** The sheet step of the sail headed at {@code plotPos} ({@link BoomRules#CENTRE} without a boom), or −1 without a sail. */
+    public int sheetAt(BlockPos plotPos) {
+        Sail s = sails.get(plotPos);
+        return s == null ? -1 : s.sheet();
+    }
+
+    /** Whether booms are on this tick ({@code sailing.booms}) and the closest angle off the wind a boomed sail draws at. */
+    void setBoomInputs(boolean enabled, double minWind) {
+        if (enabled != boomsEnabled || minWind != boomMinWind) {
+            boomsEnabled = enabled;
+            boomMinWind = minWind;
+            instancesDirty = true;
+        }
+    }
+
+    /**
+     * A gybe's heel: an angular impulse about the ship's fore-and-aft axis (ship frame z) [kpg·blocks²/s], applied once
+     * in the next physics substep.
+     */
+    void addGybeImpulse(double roll) {
+        pendingRoll += roll;
     }
 
     // ------------------------------------------------------------------ square sails (yards, rule F5a)
@@ -346,12 +410,18 @@ public final class SailingRuntime {
      * Replaces all triangular sails. {@code trims} reads the trim of a head (its block state); {@code columns} are the
      * cells {x, z, minY, maxY} below every stay's head where a block change may make or break a sail.
      */
-    void replaceTriangularSails(List<TriangularSail> triangles, Function<BlockPos, SailTrim> trims, List<int[]> columns) {
+    void replaceTriangularSails(List<TriangularSail> triangles, Function<BlockPos, SailTrim> trims,
+                                java.util.function.ToIntFunction<BlockPos> sheets, List<int[]> columns) {
         sails.entrySet().removeIf(e -> e.getValue().triangle() != null);
         recountUnfurled();
         for (TriangularSail t : triangles) {
             BlockPos head = new BlockPos(t.head().x(), t.head().y(), t.head().z());
-            put(head, new Sail(SailTypes.FORE_AND_AFT, trims.apply(head), t.area(), null, t));
+            if (t.boomed()) { // SAIL5: the boom's sheet from its block state
+                BlockPos boom = new BlockPos(t.clew().x(), t.clew().y(), t.clew().z());
+                put(head, new Sail(SailTypes.BOOMED, trims.apply(head), t.area(), null, t, sheets.applyAsInt(boom)));
+            } else {
+                put(head, new Sail(SailTypes.FORE_AND_AFT, trims.apply(head), t.area(), null, t));
+            }
         }
         watchedColumns = List.copyOf(columns);
         instancesDirty = true;
@@ -425,6 +495,7 @@ public final class SailingRuntime {
         boolean right = stability.enabled() && submerged > 0.0 && gravity > 0.0;
         if (idle && !damp && !right) {
             lastBreakdown = null;
+            pendingRoll = 0.0; // a gybe on a ship that is not afloat heels nothing
             return false;
         }
 
@@ -489,6 +560,11 @@ public final class SailingRuntime {
             tz += own.torque().z();
         }
         Vector3d angular = bow.toPlot(tmp2.set(tx, ty, tz), tmp2).mul(timeStep);
+        if (pendingRoll != 0.0) {
+            // SAIL5: a gybe's heel, once, as an impulse about the fore-and-aft axis (not a torque over the step)
+            angular.add(bow.toPlot(new Vector3d(0.0, 0.0, pendingRoll), new Vector3d()));
+            pendingRoll = 0.0;
+        }
         ship.applySailingImpulse(impulse, angular);
         lastBreakdown = f;
         lastEvaluation = gameTime;
@@ -512,8 +588,24 @@ public final class SailingRuntime {
                     double[] c = s.square().centroid(s.trim());
                     rel.add(s.square().upper().alongX() ? c[0] : 0.0, -c[1], s.square().upper().alongX() ? 0.0 : c[0]);
                 } else if (s.triangle() != null) {
-                    double[] c = s.triangle().centroid(s.trim());
+                    TriangularSail t = s.triangle();
+                    if (t.boomed() && boomsEnabled) {
+                        // SAIL5: the cloth swings out with the boom; the force follows the boom's angle to the wind
+                        double sheet = BoomRules.angle(s.sheet());
+                        double[] c = t.centroid(s.trim(), sheet);
+                        rel.add(c[0], c[1], c[2]);
+                        double[] end = t.boomEnd(sheet);
+                        Vector3d b = bow.toShip(new Vector3d(end[0], 0.0, end[2]), new Vector3d());
+                        out.add(new SailInstance(SailTypes.BOOMED, s.area(), s.trim(), bow.toShip(rel, new Vector3d()),
+                                new SailInstance.Boom(b.x, b.z, boomMinWind)));
+                        continue;
+                    }
+                    double[] c = t.centroid(s.trim());
                     rel.add(c[0], c[1], c[2]);
+                    if (t.boomed()) { // booms off: a boom is a plain clew, the sail draws like a jib
+                        out.add(new SailInstance(SailTypes.FORE_AND_AFT, s.area(), s.trim(), bow.toShip(rel, new Vector3d())));
+                        continue;
+                    }
                 }
                 out.add(new SailInstance(s.type(), s.area(), s.trim(), bow.toShip(rel, new Vector3d())));
             }

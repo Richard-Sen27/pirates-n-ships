@@ -21,6 +21,10 @@ public final class SailingClient {
         ClientEvents.registerBlockEntityRenderer(SailingBlocks.YARD_BLOCK_ENTITY, YardClothRenderer::new);
         // The stay and the cloth of triangular sails, drawn from the head cleat's block entity (F5b)
         ClientEvents.registerBlockEntityRenderer(TriangularSailContent.CLEAT_BLOCK_ENTITY, StayClothRenderer::new);
+        // The boom's arm out to the sail's foot, in the boom's wood (SAIL5)
+        com.richardsenger.piratesnships.ship.decor.wood.client.WoodModels.register(SailingBlocks.BOOMS,
+                com.richardsenger.piratesnships.sailing.block.BoomData.ARM_MODEL);
+        ClientEvents.registerBlockEntityRenderer(SailingBlocks.BOOM_BLOCK_ENTITY, BoomRenderer::new);
         // Wind streaks in the air and foam on the water (WD1)
         SeaEffectsClient.init();
     }

@@ -314,10 +314,38 @@ no cleat sits between its two yards. The starter and armed sloops are rigged thi
 of the mast at z 13, the jib's head cleat at [4, 17, 12], its clew at [4, 9, 12] and the tack on the bowsprit at
 [4, 7, 1] (a jib of 44 blocks²).
 
+**The boom (SAIL5).** A **boom** in the clew cleat's place makes a triangular sail a boomed sail that serves from
+close-hauled to a dead run on either tack. How to rig one: put the head cleat high on the mast's side, one block forward
+or aft of the mast (the yard rule's column), place the boom on the same face of the mast lower down, straight below the
+head (it sits on a mast block or a sturdy face behind it, like a wall cleat), put the tack cleat on the deck, a bowsprit
+or a boomkin at or below the boom's height, and rope the head to the tack. The sail's foot now runs along the boom: the
+boom's arm is drawn from its pivot out as far as the tack lies horizontally, the cloth hangs from the head to the boom's
+end, and a sheet rope runs from the boom's end to the tack. A mainsail has its boom pointing aft to a tack on the stern;
+pointing forward to a bowsprit it is a club-footed jib. The area is the same as with a clew cleat.
+- **Sheeting.** The boom swings to port or starboard in 9 steps of 15°, up to 60° each way (block state `sheet`, 4 is
+  centred). Its sail draws by the boom's angle to the wind: centred close-hauled (no closer than 45° off the wind,
+  `sailing.boom_min_wind_angle`), 45° out on a beam reach, all the way out (60°) from a broad reach to a run, so the
+  ship takes the wind from close-hauled round to dead astern. A boom sheeted off its best angle draws less
+  (`1 − (off / 60°)²`), a boom out on the windward side is **aback** and draws nothing, and a boom sheeted so far out
+  that the wind runs along the cloth luffs. Downwind a boomed sail drives 0.75 of its best (a jib 0.45).
+- **Auto-trim** (`sailing.boom_auto_trim`, on): the crew sheets every boom of an assembled ship one step toward its best
+  angle for the wind it feels, one step per `crew_stations.ticks_per_trim_step` (the winch's rate), with or without a
+  crew member at the winch.
+- **Tacking and gybing.** A boom that is aback swings across to the same angle on the other side by itself (with
+  auto-trim on or off): quietly when the wind comes from forward of the beam (she tacked), with a bang and a small heel
+  toward the new leeward side when the wind crossed the stern (a **gybe**, `sailing.gybe_force`). Running up to 10° by
+  the lee does not gybe her.
+- **By hand.** Use a boom with an empty hand to sheet it one step toward the side of its centre line you click; sneak-use
+  centres it. The action bar shows the angle. The crew leaves a boom sheeted by hand alone for
+  `sailing.boom_hand_hold_ticks` (600, half a minute). The winch and the whistle's sail orders set or furl a boomed sail
+  like any other.
+- `sailing.booms` off: a boom is a plain clew and its sail draws like a jib.
+
 | Sail | Area | Good at |
 |---|---|---|
 | Square sail (two yards) | yard length × distance | Wind from astern. Useless close to the wind. |
 | Triangular sail (a stay and three cleats) | half of head-to-tack × head-to-clew | Wind from the side. Still drives at 45° to the wind. |
+| Boomed sail (a stay, two cleats and a boom) | the same | From 45° off the wind round to a run, on either tack, sheeted by the crew. |
 
 **Rope lines.** A rope used on two cleats (or a cleat and a mooring ring, or two rings) on the same ship, or both on
 land, up to 16 blocks apart, makes a rope line when it is no stay: a decorative rope that sags in the middle. Each
@@ -330,7 +358,7 @@ Server config `sailing.sails.rope_lines`, `rope_sag`.
   go faster than the wind.
 - **No-go zone:** within 30° of the wind no sail drives the ship forward.
 - Sails only work on a ship that is afloat.
-- Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
+- Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally, except a boom's, whose angle counts (above).
 
 **Dyeing sails and banners.** Use a **dye** on the upper yard of a square sail (any of its blocks) or on the head cleat
 of a triangular sail: the whole cloth takes the colour, hanging, reefed or furled, and one dye is used up. A white dye
@@ -1704,6 +1732,7 @@ on by default; vanilla weapons are untouched):
 | Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
 | Yard | 3 logs in a row (gives 3) | A spar. Two rows on one mast make a square sail; the cloth is drawn between them. See [Sails](#sails). |
 | Cleat | 1 iron ingot between 2 planks (gives 2) | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
+| Boom | 2 stripped logs and 1 iron ingot in a row (gives 2), in every wood | Goes on a mast in a triangular sail's clew place; its sail swings with the wind. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
 | Harbor Master's Desk | book, gold nugget, 5 planks | Opens a port's market screen when bound to the port. See [Harbor master's desk](#harbor-masters-desk). |
@@ -1899,7 +1928,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
 | `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together; boarding nets along the rail on/off (`boarding_nets`), their longest length, how long they hold a boarder and the cutlass hits that cut one. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
-| `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
+| `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; the boom (`booms`, `boom_min_wind_angle`, `boom_auto_trim`, `boom_hand_hold_ticks`, `gybe_force`); `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |
 | `stability` | Righting and heel: on/off, righting factor and damping, the heel at which sails spill, pitch righting, the auto-ballast (`auto_ballast`, on by default) and its cap. |
 | `helm` | `wheel`: steering by turning the wheel (`drag_steering`), mouse and key rates, turns lock to lock, view lock, reach. |

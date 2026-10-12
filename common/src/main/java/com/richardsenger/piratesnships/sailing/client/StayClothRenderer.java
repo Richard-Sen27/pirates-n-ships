@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.sailing.sail.StayRules;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
 import java.util.ArrayList;
 import java.util.List;
+import com.richardsenger.piratesnships.sailing.block.BoomBlockEntity;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
@@ -110,7 +111,15 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             double now = level.getGameTime() + (double) partialTick;
             SailTrim trim = state.getValue(CleatBlock.TRIM);
             float shown = animate(be, (float) TriangularSail.drawnFraction(trim), now);
-            Vector3f normal = new Vector3f(g.tackZ(), 0f, -g.tackX());
+            // SAIL5: a boomed sail's foot runs along the boom, swung out by its (eased) sheet
+            float sheet = g.boomed() ? boomSheet(level, p.below(g.drop()), now) : 0f;
+            float[] c = g.corner(sheet);
+            Vector3f corner = new Vector3f(c[0], c[1], c[2]);
+            if (g.boomed()) { // the sheet: a rope from the boom's end to the tack
+                beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(corner),
+                        new Vector3f(g.tackX(), g.tackY(), g.tackZ()), ROPE_HALF, light, overlay);
+            }
+            Vector3f normal = new Vector3f(corner.z, 0f, -corner.x);
             if (normal.lengthSquared() > 1.0e-6f) {
                 normal.normalize();
                 SailShape.Look look = null;
@@ -118,12 +127,17 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
                     // without the ship's synced bow (VIS1c): a stay runs along the ship with its tack forward
                     look = air.look(be, be.side, 1);
                     float hx = (float) Math.hypot(g.tackX(), g.tackZ());
-                    be.side = air.update(look, level, Vec3.atCenterOf(p), partialTick, now, SailTypes.FORE_AND_AFT_CURVE, trim,
-                            g.tackX() / hx, g.tackZ() / hx, normal.x, normal.z, g.drop(), be.side);
+                    be.side = air.update(look, level, Vec3.atCenterOf(p), partialTick, now,
+                            g.boomed() ? SailTypes.BOOMED_CURVE : SailTypes.FORE_AND_AFT_CURVE, trim,
+                            g.tackX() / hx, g.tackZ() / hx, normal.x, normal.z, g.drop(), be.side, heldSide(g, sheet));
                 } else {
                     updateSide(be, normal, level, now, partialTick);
+                    int held = heldSide(g, sheet);
+                    if (held != 0) {
+                        be.side = held;
+                    }
                 }
-                Vector3f gTack = new Vector3f(g.tackX(), g.tackY(), g.tackZ());
+                Vector3f gTack = corner;
                 if (shown * g.drop() > 0.05f) {
                     float bottom = shown * g.drop();
                     int n = grid(gTack, bottom, normal, g, be, look, now);
@@ -136,8 +150,10 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
                 if (shown < 0.999f) {
                     float r = 0.04f + 0.1f * (1f - shown) * Math.min(1f, g.drop() / 4f);
                     Vector3f off = normal.mul(be.side * 0.05f, new Vector3f());
-                    beam(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, new Vector3f(off),
-                            new Vector3f(gTack).add(off), r, tint, light, overlay);
+                    // furled along the stay, or on a boomed sail along the boom (SAIL5)
+                    Vector3f from = g.boomed() ? new Vector3f(0f, -g.drop() + 0.12f, 0f).add(off) : new Vector3f(off);
+                    Vector3f to = g.boomed() ? new Vector3f(gTack).add(0f, 0.12f, 0f).add(off) : new Vector3f(gTack).add(off);
+                    beam(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, from, to, r, tint, light, overlay);
                 }
             }
         }
@@ -168,6 +184,20 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             }
         }
         return out;
+    }
+
+    /**
+     * SAIL5: the side the cloth of a boomed sail bellies to while its boom is sheeted out: the wind holds the boom out,
+     * so the cloth bellies the way the boom swung; clockwise (a positive sheet) is along −normal, the normal being
+     * {@code (corner.z, 0, −corner.x)}. 0 (the wind decides) without a boom or with the boom centred.
+     */
+    static int heldSide(TriangleCloth g, float sheet) {
+        return !g.boomed() || Math.abs(sheet) <= 0.5f ? 0 : sheet > 0f ? -1 : 1;
+    }
+
+    /** The drawn sheet of the boom at {@code boom} (eased by its block entity, as the arm draws it), 0 without one. */
+    private static float boomSheet(Level level, BlockPos boom, double now) {
+        return level.getBlockEntity(boom) instanceof BoomBlockEntity b ? b.shownSheet(now) : 0f;
     }
 
     /** Moves the shown fraction toward {@code target} at {@link #HOIST_PER_SECOND}. */
@@ -385,6 +415,9 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         BlockPos t = p.offset(g.tackX(), g.tackY(), g.tackZ());
         int drop = g.drop();
         double m = Math.max(MAX_BELLY, YardClothRenderer.bellyReach());
+        if (g.boomed()) { // SAIL5: the boom swings the foot out to either side, as far as the tack lies
+            m += Math.hypot(g.tackX(), g.tackZ());
+        }
         return box.minmax(new AABB(Math.min(p.getX(), t.getX()) - m, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - m,
                 Math.min(p.getZ(), t.getZ()) - m, Math.max(p.getX(), t.getX()) + 1 + m,
                 Math.max(p.getY(), t.getY()) + 1 + m, Math.max(p.getZ(), t.getZ()) + 1 + m));

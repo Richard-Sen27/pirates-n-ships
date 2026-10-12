@@ -3,10 +3,12 @@ package com.richardsenger.piratesnships.sailing.ship;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
+import com.richardsenger.piratesnships.sailing.block.BoomBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.BoomRules;
 import com.richardsenger.piratesnships.sailing.sail.StayRules;
 import com.richardsenger.piratesnships.sailing.rope.RopeLines;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
@@ -282,12 +284,18 @@ public final class SailingRuntimes {
         boolean wheel = HelmConfig.DRAG_STEERING.get();
         double lock = HelmConfig.lockAngle();
         boolean anchors = SailingConfig.ANCHOR_ENABLED.get();
+        boolean booms = SailingConfig.BOOMS.get();
+        double minWind = SailingConfig.BOOM_MIN_WIND_ANGLE.get();
         for (SailingRuntime rt : List.copyOf(m.values())) {
             ShipBody ship = SableShips.byId(level, rt.id());
             if (ship != null) {
                 followSteeringHelm(level, ship, rt);
                 WindSample w = WindService.sample(level, ship.worldBounds().getCenter());
                 rt.setTickInputs(now, w, params);
+                rt.setBoomInputs(booms, minWind);
+                if (booms) {
+                    BoomTrim.tick(level, ship, rt, now, w); // SAIL5: the wind swings the booms over, the crew sheets them
+                }
                 // HELM1: with wheel steering the rudder follows the helm wheel, else the click steps of the block state
                 double rudder = !steering ? 0.0 : wheel ? WheelMath.rudderAngle(rt.wheelAngle(), lock, params.maxRudderAngleDeg())
                         : RudderSteps.angle(rt.rudderStep(), steps, params.maxRudderAngleDeg());
@@ -345,9 +353,11 @@ public final class SailingRuntimes {
         boolean newCleat = newState.getBlock() instanceof CleatBlock;
         boolean oldYard = oldState.getBlock() instanceof YardBlock;
         boolean newYard = newState.getBlock() instanceof YardBlock;
+        boolean oldBoom = oldState.getBlock() instanceof BoomBlock;
+        boolean newBoom = newState.getBlock() instanceof BoomBlock;
         boolean capstanGone = oldState.getBlock() instanceof CapstanBlock && !(newState.getBlock() instanceof CapstanBlock);
         boolean mastChanged = oldState.is(SailingBlocks.MASTS) != newState.is(SailingBlocks.MASTS);
-        if (!oldCleat && !newCleat && !oldYard && !newYard && !helm && !capstanGone && !mastChanged
+        if (!oldCleat && !newCleat && !oldYard && !newYard && !oldBoom && !newBoom && !helm && !capstanGone && !mastChanged
                 && oldState.isAir() == newState.isAir()) {
             // only cleats, yards, the helm, a removed capstan, masts, and cells that were filled (the plot box may grow)
             // or cleared (a square sail's gap may open) matter
@@ -388,6 +398,10 @@ public final class SailingRuntimes {
         }
         if (oldCleat && newCleat) {
             rt.setTrim(pos, newState.getValue(CleatBlock.TRIM)); // a trim change; only a sail's head counts
+            return;
+        }
+        if (oldBoom && newBoom) {
+            rt.setSheet(pos, newState.getValue(BoomBlock.SHEET)); // SAIL5: the boom was sheeted
             return;
         }
         if (!newState.isAir()) {
@@ -483,6 +497,9 @@ public final class SailingRuntimes {
         rt.replaceTriangularSails(sails, head -> {
             BlockState s = level.getBlockState(head);
             return s.getBlock() instanceof CleatBlock ? s.getValue(CleatBlock.TRIM) : SailTrim.FURLED;
+        }, boom -> { // SAIL5: a boomed sail's sheet is its boom's block state
+            BlockState s = level.getBlockState(boom);
+            return s.getBlock() instanceof BoomBlock ? s.getValue(BoomBlock.SHEET) : BoomRules.CENTRE;
         }, columns);
     }
 

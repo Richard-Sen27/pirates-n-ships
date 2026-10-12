@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_pine_log",
+    "log_top": "regions_unexplored:block/stripped_pine_log_top",
+    "particle": "regions_unexplored:block/stripped_pine_log",
+    "planks": "regions_unexplored:block/pine_planks"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/boom_item",
+  "textures": {
+    "log": "biomeswevegone:block/palm/stripped_log",
+    "log_top": "biomeswevegone:block/palm/stripped_log_top",
+    "particle": "biomeswevegone:block/palm/stripped_log",
+    "planks": "biomeswevegone:block/palm/planks"
+  }
+}

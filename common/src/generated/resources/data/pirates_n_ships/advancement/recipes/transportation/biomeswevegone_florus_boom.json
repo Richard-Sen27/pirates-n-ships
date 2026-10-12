@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomeswevegone"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:stripped_florus_stem"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_log": {
+      "conditions": {
+        "items": [
+          {
+            "items": "biomeswevegone:stripped_florus_stem"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:biomeswevegone_florus_boom"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomeswevegone"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomeswevegone:stripped_florus_stem"
+      ]
+    }
+  ],
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_log"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "pirates_n_ships:biomeswevegone_florus_boom"
+    ]
+  }
+}

@@ -3995,3 +3995,35 @@ Grapple and anchor poses (GR4):
   scene in Blockbench's `risky_eval`, no project opened, flat-coloured boxes from the hook's model JSON and the
   anchor's `addBox` calls (parsed from `AnchorRenderer`), posed with a JavaScript copy of the two pose classes,
   written with `fs`.
+
+## The boom and the triangular-sail scene (SAIL5)
+
+**Model `art/models/boom.bbmodel`** (Blockbench, `java_block`, one group per exported model, all at the same
+position, textures from the vanilla jar: stripped spruce log and its top as `#log` / `#log_top`, the anvil as `#2`):
+- `gooseneck` -> `models/block/boom.json` (5 elements): built for `facing=north`, the mast to the south. An iron strap
+  plate on the mast face (4..12 px, z 15..16), a wooden jaw (5.5..10.5, z 11..15, its south face left out: it sits on the
+  strap), two iron cheeks above and below the arm (y 5..6 and 10..11, z 6.5..12) and a vertical iron pivot pin through
+  the block's centre (7.5..8.5, y 4..12). The block state turns it by the facing; the sheet is not in the model.
+- `arm` -> `models/block/boom_arm.json` (1 element): one block of spar, 4 x 4 px (x and y 6..10) along z 0..16, the log's
+  grain along z, the log's end on both ends. `sailing.client.BoomRenderer` draws the wood's child of it
+  (`block/<wood>_boom_arm`, `WoodModels`) piece by piece from the pivot (the block's centre, between the cheeks) out to
+  the sail's foot, the last piece shortened, turned about the vertical to the boom's direction: the arm toward the tack
+  turned clockwise seen from above by the sheet. `BoomRenderer.placeArm`/`placePiece` hold the transforms and
+  `BoomArmRigTest` composes them for every facing and sheet step (the arm starts at the pivot and ends at the cloth's
+  foot corner; a positive sheet turns clockwise; the cloth bellies the way the boom swung). No GeckoLib bone.
+- `item` -> `models/block/boom_item.json` (6 elements): the gooseneck with half a block of spar forward.
+- Exported with `Codecs.java_block.compile({raw: true})` and the other groups' cubes `export = false`, `parent
+  minecraft:block/block`, the particle the stripped log, texture ids with the `minecraft:` namespace. Lint clean
+  (`tools/lint_models.py`: no fights, no hidden faces). Datagen writes the wood children (`#log`, `#log_top`, particle
+  log), the item models and the block states (facing only).
+
+**Ponder scene `triangular_sails`** (`almanac/ponder/TriangularSailsScene`, about 36 s): the schematic comes from
+`art/structures/ponder/triangular_sails.py` like every scene's, built through the lab
+(`python3 tools/build_structures.py ponder/triangular_sails --port <yours>`; `.schem`, render and `.nbt` committed). A
+9 x 9 x 9 deck, bow north, an oak mast at x 4, z 6; by the yard rule the head cleat [4, 7, 5] and the clew cleat
+[4, 2, 5] stand on its north face one block forward of it, the tack cleat [4, 1, 1] on the deck forward (drop 5, the tack
+4 forward: 10 blocks of sail). The scene writes the rope ends into both cleats and the head's cloth from the real rule,
+then replaces the clew cleat by a boom facing north (a forward, club-footed boom) and steps its `sheet` as the crew
+would for each wind (white arrows): port beam 45 to starboard, starboard beam across to port, starboard quarter 60,
+the gybe to 60 to starboard on the port quarter, one hand click and a sneak click. Component the cleat; subjects the
+rope, the boom and the winch.

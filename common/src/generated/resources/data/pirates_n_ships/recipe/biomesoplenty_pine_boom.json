@@ -1,0 +1,45 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomesoplenty"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomesoplenty:stripped_pine_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomesoplenty"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomesoplenty:stripped_pine_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:boom",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "biomesoplenty:stripped_pine_log"
+    }
+  },
+  "pattern": [
+    "LLI"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:biomesoplenty_pine_boom"
+  }
+}

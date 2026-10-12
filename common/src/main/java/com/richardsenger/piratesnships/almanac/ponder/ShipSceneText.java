@@ -19,6 +19,8 @@ public final class ShipSceneText {
     public static final String RATLINE_NETS = "ratline_nets";
     public static final String RAILINGS = "railings";
     public static final String SHIP_IDENTITY = "ship_identity";
+    /** SAIL5: the triangular sails and the boom. */
+    public static final String TRIANGULAR_SAILS = "triangular_sails";
 
     private ShipSceneText() {
     }
@@ -78,6 +80,41 @@ public final class ShipSceneText {
         @Override
         public String scene() {
             return SAILS_AND_WINCH;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link TriangularSailsScene} (sailing/sail stays and booms, SAIL5, design.md §5.2). */
+    public enum Triangular implements SceneLine {
+        RIG("A triangular sail is three cleats and a rope, rigged one block forward of the mast"),
+        HEAD("The head cleat goes high on the mast, the clew cleat straight below it"),
+        TACK("The tack cleat goes forward and lower, on the deck or a bowsprit"),
+        ROPE("Use a rope on the head cleat, then on the tack: the stay runs between them"),
+        CLOTH("The cloth fills the triangle of head, tack and clew: 5 × 4 / 2 = 10 blocks of sail here"),
+        TRIM("Use the head cleat or the sail winch to set it furled, half or full"),
+        REACH("Without a boom it sails like a jib: best with the wind on the beam, and never within 30° of it"),
+        BOOM("Put a boom in the clew's place and the sail's foot runs along it, out to the tack"),
+        SHEET("The crew sheets the boom to leeward: 45° out with the wind on the beam"),
+        OTHER_TACK("Bring the wind to the other side and the boom swings across"),
+        RUN("With the wind on the quarter the boom goes all the way out to 60°"),
+        GYBE("When the wind crosses the stern the boom slams across: a gybe, and she heels a little"),
+        HAND("Use the boom to sheet it a step toward the side you click; sneak-use centres it"),
+        RANGE("A boomed sail draws from 45° off the wind round to a dead run, on either tack");
+
+        static final String TITLE = "Triangular Sails and the Boom";
+        private final String english;
+
+        Triangular(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return TRIANGULAR_SAILS;
         }
 
         @Override

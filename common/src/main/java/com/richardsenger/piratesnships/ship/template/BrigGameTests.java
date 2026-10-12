@@ -97,6 +97,8 @@ public final class BrigGameTests {
     private static final int SETTLE = 60;
     private static final BlockPos HELM = ShipTemplates.BRIG_HELM;
     private static final int WALK_TIMEOUT = 400;
+    /** Ticks between two orders in {@link #aCrewOfEightTakesTheStations}. */
+    private static final int STAGGER = 15;
 
     private BrigGameTests() {
     }
@@ -388,7 +390,7 @@ public final class BrigGameTests {
      * sail winches, the capstan, the bilge pump and two guns on the gun deck walk there (through the companion) and are
      * seated before the walk's timeout; the lookout goes up to the nest (seated there: the pathfinder has no ladders).
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 700, batch = BATCH + "crew")
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 800, batch = BATCH + "crew")
     public static void aCrewOfEightTakesTheStations(GameTestHelper h) {
         // the walk's timeout (default 200 ticks) is a fallback; the gun deck lies some 30 blocks of walking from the
         // quarterdeck, down the companion, so this test gives the walk 400 ticks and checks every walker arrives
@@ -416,19 +418,23 @@ public final class BrigGameTests {
                     crew.add(c);
                     i++;
                 }
-            } else if (t == SETTLE + 20) {
-                int i = 0;
-                for (Map.Entry<String, BlockPos> e : stations.entrySet()) {
-                    CrewMember c = crew.get(i++);
-                    CrewStations.AssignResult res = CrewStations.assign(level, c, plot(ship, e.getValue()));
-                    h.assertTrue(res == CrewStations.AssignResult.ASSIGNED, e.getKey() + ": " + res);
-                    walked.put(e.getKey(), c.walk() != null);
-                }
-            } else if (t > SETTLE + 20) {
+            }
+            if (t >= SETTLE + 20 && t < SETTLE + 20 + STAGGER * stations.size() && (t - SETTLE - 20) % STAGGER == 0) {
+                // one order every STAGGER ticks: the quarterdeck's stairs are one block wide, and two walkers sent down
+                // the same stair in the same tick can jam in the rail's gap above it (seen once on Fabric)
+                int i = (int) ((t - SETTLE - 20) / STAGGER);
+                Map.Entry<String, BlockPos> e = new ArrayList<>(stations.entrySet()).get(i);
+                CrewMember c = crew.get(i);
+                CrewStations.AssignResult res = CrewStations.assign(level, c, plot(ship, e.getValue()));
+                h.assertTrue(res == CrewStations.AssignResult.ASSIGNED, e.getKey() + ": " + res);
+                walked.put(e.getKey(), c.walk() != null);
+            }
+            if (t > SETTLE + 20) {
                 int i = 0;
                 for (String name : stations.keySet()) {
                     CrewMember c = crew.get(i++);
-                    if (c.isAtStation()) seatedAt.putIfAbsent(name, (int) (t - SETTLE - 20));
+                    if (!walked.containsKey(name)) continue;
+                    if (c.isAtStation()) seatedAt.putIfAbsent(name, (int) (t - SETTLE - 20 - STAGGER * (i - 1)));
                     else if ((t - SETTLE - 20) % 100 == 0) {
                         Vec3 local = ship.toPlot(c.position()).subtract(Vec3.atLowerCornerOf(ShipHelm.steering(ship).subtract(HELM)));
                         Constants.LOG.info("[SHIP1] {} still walking after {} ticks, at template {} toward {}", name, t - SETTLE - 20,

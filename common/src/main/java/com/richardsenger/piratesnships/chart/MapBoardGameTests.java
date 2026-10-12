@@ -214,6 +214,38 @@ public final class MapBoardGameTests {
         finish(helper, p);
     }
 
+    /**
+     * CHART4: map boards stay in ink. A board drawn from a chart whose cells carry map colours is exactly the board
+     * drawn from the same chart without them, at zoom 1 and zoom 2 (the tile palette has no block colours).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aBoardFromAColouredChartIsDrawnInInk(GameTestHelper helper) {
+        List<BlockPos> tiles = floorBoard(helper, 2, 2, 2, 1);
+        int bx = base(tiles.get(0).getX());
+        int bz = base(tiles.get(0).getZ());
+        int w = 2 * size();
+        int h = size();
+        SampleGrid grid = SampleGrid.empty(bx, bz, w, h);
+        int wood = net.minecraft.world.level.material.MapColor.WOOD.getPackedId(net.minecraft.world.level.material.MapColor.Brightness.NORMAL) & 0xFF;
+        int water = net.minecraft.world.level.material.MapColor.WATER.getPackedId(net.minecraft.world.level.material.MapColor.Brightness.LOW) & 0xFF;
+        for (int cz = bz; cz < bz + h; cz++) {
+            for (int cx = bx; cx < bx + w; cx++) {
+                boolean land = cx < bx + size();
+                grid.set(cx, cz, land ? CellClass.LAND : CellClass.DEEP_WATER, land ? wood : water);
+            }
+        }
+        ChartData coloured = ChartMerge.merge(ChartData.EMPTY.resetCells(cb()), grid, 0, ChartConfig.MAX_CELLS.get()).data();
+        ChartData plain = chart(cb(), bx, bz, w, h, bx + size());
+        helper.assertTrue(coloured.regions().values().stream().anyMatch(r -> r.hasColours()), "the chart carries colours");
+        ServerPlayer p = drawer(helper, "board_coloured", tiles.get(0), coloured, 10);
+        for (int zoom : new int[]{1, 2}) {
+            MapTileService.Outcome out = MapTileService.draw(p, new DrawTilePayload(tiles.get(0), bx, bz, zoom, false, false));
+            helper.assertTrue(out.ok(), "drawn at zoom " + zoom + ", got " + out.refusal());
+            assertBoard(helper, tiles, 2, 1, bx, bz, zoom, CellLookup.of(plain));
+        }
+        finish(helper, p);
+    }
+
     /** A wall board of one column and three rows: the top tile is row 0, slices go south down the wall. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aWallBoardDrawsTopDown(GameTestHelper helper) {

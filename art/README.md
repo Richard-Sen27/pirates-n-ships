@@ -1647,6 +1647,23 @@ players"):
   the same chain as above in JS; the script is not committed.
 - Not drawn: the player's own chart terrain on the face (a baked item model cannot carry a per-player texture; it
   would need a custom item renderer per loader); the face is a fixed painted chart.
+- **Smoother (CHART4, the human, 2026-10-12: "is it possible to make the open/close animation smoother?"):** 14 frames
+  instead of five and an eased motion. The progress still runs linearly over the 10 ticks (the property is
+  interpolated over the partial tick); what it shows follows `ease(p) = 3p² - 2p³` (smoothstep, ease-in-out): the PAL
+  keys sample CHART3's linear motion at `ease(t / 0.5) * 0.5` every 25 ms (plus every frame's own time and its mirror,
+  so `chart_stow`, the same keys backwards, keys the same instants and the close rolls up along the same curve).
+  `chart_unroll_0` (rolled) covers the raise up to its end (progress 0.364, when the fists meet); twelve frames
+  `chart_unroll_1..12` split the rest evenly in progress (thresholds 0.3633 + k × 0.0531), each solved for the pose at
+  the middle of its span; `chart_open` at 1. Roller half distances 1.3, 5.96, 6.97, 8.05, 9.11, 10.19, 11.23, 12.16,
+  13.03, 13.75, 14.35, 14.75, 14.97, 15 (no step above 1.1 px after the first; the last ones small, the ease-out).
+  The script now writes the Blockbench projects too (`art/models/chart*.bbmodel`, settings and textures from
+  `chart_open.bbmodel`, element uuids derived from the model and element names). `ChartHeldModelTest` checks the 14
+  frames, the even split, the ease and the rig for every frame.
+  Render `renders/chart_held.png` (CHART4, replacing CHART3's): the closed item and seven of the frames held as others
+  see them (front three-quarter view, each at its own PAL time), drawn by `tools/render_chart_held.js` in Blockbench's
+  `risky_eval` (`globalThis.CHART_ROOT = '<repository root>'; eval(require('fs').readFileSync(CHART_ROOT + '/tools/render_chart_held.js', 'utf8'))`, optionally `CHART_OUT` for another output file; the
+  real model JSON and palette textures, the box player posed from `chart_read.json`, the item placed through vanilla's
+  chain as above).
 
 Mooring ring and sail foot (ART5):
 - **Mooring ring** (`mooring_ring.bbmodel`, `block/mooring_ring.json`, 21 elements, textures vanilla `anvil` and

@@ -67,6 +67,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -204,6 +205,136 @@ public final class ChartGameTests {
     }
 
     // --- sampling -----------------------------------------------------------------------------------------------
+
+    // --- colours (CHART4) ------------------------------------------------------------------------------------------
+
+    /** A village patch: whole cells of oak planks, a dirt path beside them, grass around; one roof two blocks up. */
+    private record Village(int cb, int cx0, int cz0) {
+        int planks() {
+            return cx0 + 1;
+        }
+
+        int path() {
+            return cx0 + 2;
+        }
+
+        int grass() {
+            return cx0 + 3;
+        }
+
+        /** The row whose planks lie two blocks above the planks row to its north. */
+        int raisedRow() {
+            return cz0 + 3;
+        }
+    }
+
+    /**
+     * Grass at y 0 everywhere; in the cell rows {@code cz0 + 1 .. cz0 + 3}: oak planks on cell column {@code cx0 + 1}
+     * (at y 2 on the last row, a raised roof), a dirt path on {@code cx0 + 2}. The barrier ceiling is removed.
+     */
+    private static Village buildVillage(GameTestHelper helper) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
+                BlockPos p = new BlockPos(x, 13, z);
+                if (helper.getBlockState(p).is(Blocks.BARRIER)) helper.setBlock(p, Blocks.AIR);
+            }
+        }
+        int cb = ChartConfig.CELL_BLOCKS.get();
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        Village v = new Village(cb, Math.floorDiv(origin.getX() + cb - 1, cb), Math.floorDiv(origin.getZ() + cb - 1, cb));
+        for (int x = 0; x < SIZE; x++) {
+            int cx = Math.floorDiv(origin.getX() + x, cb);
+            for (int z = 0; z < SIZE; z++) {
+                int cz = Math.floorDiv(origin.getZ() + z, cb);
+                boolean row = cz >= v.cz0() + 1 && cz <= v.raisedRow();
+                if (row && cx == v.planks()) {
+                    helper.setBlock(new BlockPos(x, 0, z), Blocks.GRASS_BLOCK);
+                    helper.setBlock(new BlockPos(x, cz == v.raisedRow() ? 2 : 0, z), Blocks.OAK_PLANKS);
+                } else if (row && cx == v.path()) {
+                    helper.setBlock(new BlockPos(x, 0, z), Blocks.DIRT_PATH);
+                } else {
+                    helper.setBlock(new BlockPos(x, 0, z), Blocks.GRASS_BLOCK);
+                }
+            }
+        }
+        return v;
+    }
+
+    private static int packed(net.minecraft.world.level.material.MapColor colour, net.minecraft.world.level.material.MapColor.Brightness step) {
+        return colour.getPackedId(step) & 0xFF;
+    }
+
+    /**
+     * CHART4: a sample gives each cell vanilla's map colour: the planks' wood, the path's dirt, the grass; a roof two
+     * blocks above the planks to its north is one step brighter. The ink style draws the chart as if it had no
+     * colours; the coloured style paints the planks cell with the softened wood colour.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24)
+    public static void aSampledVillageCellCarriesThePlanksColour(GameTestHelper helper) {
+        Village v = buildVillage(helper);
+        ServerPlayer p = player(helper, "chart_villager");
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        p.setPos(new Vec3(origin.getX() + SIZE / 2.0, origin.getY() + 1, origin.getZ() + SIZE / 2.0));
+        helper.runAfterDelay(2, () -> {
+            ChartData data = ChartService.sampleNow(p).orElseThrow().data();
+            var NORMAL = net.minecraft.world.level.material.MapColor.Brightness.NORMAL;
+            int planksCell = data.wide(v.planks(), v.cz0() + 1);
+            helper.assertValueEqual(ChartCells.cellClass(planksCell), CellClass.LAND, "planks are land");
+            helper.assertValueEqual(ChartCells.colour(planksCell), packed(net.minecraft.world.level.material.MapColor.WOOD, NORMAL),
+                    "the planks' colour, flat against the grass to the north");
+            helper.assertValueEqual(ChartCells.colour(data.wide(v.path(), v.cz0() + 1)), packed(net.minecraft.world.level.material.MapColor.DIRT, NORMAL),
+                    "the path's colour");
+            helper.assertValueEqual(ChartCells.colour(data.wide(v.grass(), v.cz0() + 1)), packed(net.minecraft.world.level.material.MapColor.GRASS, NORMAL),
+                    "the grass's colour");
+            helper.assertValueEqual(ChartCells.colour(data.wide(v.planks(), v.raisedRow())),
+                    packed(net.minecraft.world.level.material.MapColor.WOOD, net.minecraft.world.level.material.MapColor.Brightness.HIGH),
+                    "a roof two blocks above its northern neighbour is brighter");
+            // the ink style ignores the colours, the coloured style draws them
+            int minCx = v.cx0();
+            int minCz = v.cz0();
+            com.richardsenger.piratesnships.chart.render.CellLookup wide = data::wide;
+            com.richardsenger.piratesnships.chart.render.CellLookup narrow = (cx, cz) -> data.cell(cx, cz) & 0xFF;
+            int[] ink = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 4, 4, 1,
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+            helper.assertTrue(Arrays.equals(ink, com.richardsenger.piratesnships.chart.render.ChartRaster.render(narrow, minCx, minCz, 4, 4, 1)),
+                    "the ink style draws the chart as if it had no colours");
+            int[] coloured = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 4, 4, 1,
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED);
+            int at = 1 * 4 + (v.planks() - minCx);
+            int wood = com.richardsenger.piratesnships.chart.render.ChartRaster.softened(packed(net.minecraft.world.level.material.MapColor.WOOD, NORMAL));
+            int c = coloured[at];
+            helper.assertTrue(c != ink[at], "the coloured style paints the planks cell");
+            helper.assertTrue(c >>> 24 == wood >>> 24 && ((c >> 16) & 0xFF) > ((c >> 8) & 0xFF) && ((c >> 8) & 0xFF) > (c & 0xFF),
+                    "with the softened wood colour (brown): " + Integer.toHexString(c));
+            // the region the client gets carries the colours
+            ChartRegion region = data.regions().get(ChartRegion.keyOfCell(v.planks(), v.cz0() + 1));
+            helper.assertTrue(ChartRegionPayload.of(region).region().sameCells(region), "the payload carries cells and colours");
+            finish(helper, p);
+        });
+    }
+
+    /** CHART4, own batch: changes config. The style reaches the client with the settings and follows a change at runtime. */
+    @ModGameTest(batch = "pirates_n_ships_config_chart_style")
+    public static void theStyleSwitchesAtRuntime(GameTestHelper helper) {
+        helper.assertValueEqual(ChartConfig.STYLE.get(), com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED, "coloured by default");
+        ConfigOverrides.during(helper, ChartConfig.STYLE, com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+        ServerPlayer p = player(helper, "chart_stylist");
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ChartContent.CHART.get()));
+        List<CustomPacketPayload> sent = ChartBackend.record(p.getUUID());
+        ChartBackend.onDatapackSync(p, true);
+        helper.assertValueEqual(of(sent, ChartSettingsPayload.class).get(0).settings().style(),
+                com.richardsenger.piratesnships.chart.render.ChartStyle.INK, "the synced settings carry the ink style");
+        helper.assertTrue(ChartBackend.open(p), "opens");
+        helper.assertValueEqual(of(sent, ChartOpenPayload.class).get(0).settings().style(),
+                com.richardsenger.piratesnships.chart.render.ChartStyle.INK, "and so does the open payload");
+        ChartBackend.close(p);
+        ConfigOverrides.during(helper, ChartConfig.STYLE, com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED);
+        helper.assertTrue(ChartBackend.open(p), "opens again");
+        helper.assertValueEqual(of(sent, ChartOpenPayload.class).get(1).settings().style(),
+                com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED, "the next opening carries the new style");
+        ChartBackend.close(p);
+        finish(helper, p);
+    }
 
     /** One sample interval of player ticks charts the built coast: land, beach (coast), shallow, deep. */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)

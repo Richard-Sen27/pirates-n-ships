@@ -15,6 +15,10 @@ import java.util.Set;
  * recomputed for every sampled cell and the ring around it: a land cell (beach, land, snow/ice) with water on one of
  * its four sides. Finally the cap: when more than {@code maxCells} cells are stored (whole regions), the least
  * recently touched regions are dropped until it fits; the regions of this sample go last.
+ *
+ * <p>CHART4: a sampled cell also takes its sampled colour (0 included: what the world shows now); unsampled cells keep
+ * theirs. A region gets a colour array on its first sampled cell with a colour; regions from before CHART4 stay
+ * without one until then. A region whose colours changed counts as changed (a new version, sent again).
  */
 public final class ChartMerge {
 
@@ -43,6 +47,7 @@ public final class ChartMerge {
                 int old = work.read(cx, cz);
                 int now = (old & ~ChartCells.CLASS_MASK) | cls;
                 if (now != old) work.write(cx, cz, now);
+                work.writeColour(cx, cz, grid.colours()[z * grid.w() + x] & 0xFF);
             }
         }
         if (!sampled.isEmpty()) {
@@ -61,16 +66,19 @@ public final class ChartMerge {
 
         Map<Long, ChartRegion> regions = new HashMap<>(data.regions());
         List<Long> changed = new ArrayList<>();
-        for (Map.Entry<Long, byte[]> e : work.copies.entrySet()) {
-            ChartRegion old = data.regions().get(e.getKey());
-            if (old == null || !Arrays.equals(old.cellsUnsafe(), e.getValue())) changed.add(e.getKey());
+        Set<Long> touchedKeys = new HashSet<>(work.copies.keySet());
+        touchedKeys.addAll(work.colourCopies.keySet());
+        for (long key : touchedKeys) {
+            ChartRegion old = data.regions().get(key);
+            if (old == null || !Arrays.equals(old.cellsUnsafe(), work.cells(key)) || !Arrays.equals(old.coloursUnsafe(), work.colours(key))) {
+                changed.add(key);
+            }
         }
         long version = data.version() + 1;
         for (long key : changed) {
-            byte[] cells = work.copies.get(key);
             ChartRegion old = data.regions().get(key);
             long touched = sampled.contains(key) ? gameTime : old == null ? gameTime : old.touched();
-            regions.put(key, ChartRegion.adopt(ChartRegion.keyX(key), ChartRegion.keyZ(key), cells, version, touched));
+            regions.put(key, ChartRegion.adopt(ChartRegion.keyX(key), ChartRegion.keyZ(key), work.cells(key), work.colours(key), version, touched));
         }
         for (long key : sampled) {
             ChartRegion r = regions.get(key);
@@ -100,11 +108,42 @@ public final class ChartMerge {
         return ChartCells.cellClass(cell).isWater();
     }
 
-    /** Copy-on-write view: a region is copied on its first write. */
+    /** Copy-on-write view: a region's cells (and apart from them its colours) are copied on their first write. */
     private static final class Work {
         final ChartData data;
         final Map<Long, byte[]> copies = new HashMap<>();
+        final Map<Long, byte[]> colourCopies = new HashMap<>();
         int changedCells;
+
+        /** The region's cells after the merge: the copy, else the stored array (never changed), else blank. */
+        byte[] cells(long key) {
+            byte[] copy = copies.get(key);
+            if (copy != null) return copy;
+            ChartRegion r = data.regions().get(key);
+            return r == null ? new byte[ChartRegion.CELLS] : r.cellsUnsafe();
+        }
+
+        /** The region's colours after the merge, null when it has none. */
+        byte[] colours(long key) {
+            byte[] copy = colourCopies.get(key);
+            if (copy != null) return copy;
+            ChartRegion r = data.regions().get(key);
+            return r == null ? null : r.coloursUnsafe();
+        }
+
+        void writeColour(int cx, int cz, int colour) {
+            long key = ChartRegion.keyOfCell(cx, cz);
+            int i = ChartRegion.index(cx & ChartRegion.MASK, cz & ChartRegion.MASK);
+            byte[] copy = colourCopies.get(key);
+            if (copy == null) {
+                ChartRegion r = data.regions().get(key);
+                byte[] stored = r == null ? null : r.coloursUnsafe();
+                if (stored == null ? colour == 0 : (stored[i] & 0xFF) == colour) return;
+                copy = stored == null ? new byte[ChartRegion.CELLS] : stored.clone();
+                colourCopies.put(key, copy);
+            }
+            copy[i] = (byte) colour;
+        }
 
         Work(ChartData data) {
             this.data = data;

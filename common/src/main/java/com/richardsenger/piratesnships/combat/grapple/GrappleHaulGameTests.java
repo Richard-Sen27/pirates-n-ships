@@ -27,7 +27,8 @@ import java.util.Collection;
 
 /**
  * Hauling a hooked ship by hand and pulling oneself along the rope (GR5, docs/design.md §8.3 "Hauling" and "No floating
- * near end"; GR6 "Climb only": the pull is only a climb, the climbing tests build their own ground and wall) in a real server. A stone quay fills x 0..3 (top at y 8, standing height 9) west of a water basin
+ * near end"; GR6 "Climb only": the pull is only a climb, the climbing tests build their own ground and wall; GR7: a pull
+ * is one step per use, so the pulling tests use a player in the level, which the server moves) in a real server. A stone quay fills x 0..3 (top at y 8, standing height 9) west of a water basin
  * (x 4..23, walls at x 4 and 23); one closed 5×4×5 plank hull of {@link DryHullGameTests} floats free at x 10..14,
  * z 9..13. The mock player stands on the quay at (3.5, 9, 11.5) and its hook bites into the hull's west wall at deck
  * height, about 6.7 blocks from the hand. Mock players are not in the level, so the test sets their position, sneak
@@ -326,20 +327,29 @@ public final class GrappleHaulGameTests {
     }
 
     /**
-     * GR5's playtest, now with {@code climb_min_rise} 0 (GR6: that restores GR5's pull): using the rope with its near end
-     * in hand leaves no rope end floating where the player stood. The hook is about level with the quay, no climb, yet
-     * the player is pulled hand over hand toward it, the rope running from the hook to their hand, and lands on the
-     * hull's deck above the hook. Someone else cannot mount that rope.
+     * GR5's playtest, now with {@code climb_min_rise} 0 (GR6: that restores GR5's pull) and GR7's pulls: using the rope
+     * with its near end in hand leaves no rope end floating where the player stood. The hook is about level with the
+     * quay, no climb, yet each use (one per {@code pull_cooldown_ticks}) shortens the rope by {@code rope_climb_step} and
+     * draws the player toward it, the rope running from the hook to their hand, until they land on the hull's deck above
+     * the hook. Someone else cannot mount that rope. The player is in the level, so the server moves them.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "pull_along")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = BATCH + "pull_along")
     public static void withNoClimbRiseAHandHeldRopePullsThePlayerToTheHook(GameTestHelper h) {
         Fixture f = quay(h, MAX_FORCE);
         ConfigOverrides.during(h, GrappleConfig.CLIMB_MIN_RISE, 0.0);
         ServerLevel level = h.getLevel();
-        Player player = onQuay(h, 3.5);
+        Player player = RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(3.5, 9, 11.5)), -90f);
         Player other = onQuay(h, 3.5);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         double[] start = {0};
+        int every = GrappleConfig.PULL_COOLDOWN_TICKS.get() + 1;
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t > grabAt() && (t - grabAt()) % every == 0 && hook[0] != null && !hook[0].isRemoved()) {
+                RopeSlideService.tryBoard(level, player, hook[0], 0.0); // one use per cooldown, as holding the button does
+            }
+        });
         h.runAfterDelay(20, () -> hook[0] = hookShip(level, player, f));
         h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
@@ -350,23 +360,21 @@ public final class GrappleHaulGameTests {
             RopeSlideService.Board refused = RopeSlideService.tryBoard(level, other, g, 0.0);
             h.assertTrue(refused == RopeSlideService.Board.NOT_FIXED, "someone else mounted a hand-held rope: " + refused);
             lookAt(player, point);
+            start[0] = player.position().distanceTo(g.ropeFarEnd(level));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.OK, "using the rope was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && r.pulling(), "the player is not pulled along the rope");
+            h.assertTrue(RopeSwing.holding(g.swingLength()), "the pull did not take the rope in");
+            h.assertTrue(!player.isPassenger(), "the pull mounted the player on something");
             h.assertTrue(!g.nearEndFixed() && g.tiedRing() == null, "the near end was fixed");
-            start[0] = player.position().distanceTo(g.ropeFarEnd(level));
         });
-        h.runAfterDelay(grabAt() + 10, () -> {
+        h.runAfterDelay(grabAt() + 8, () -> {
             GrapplingHookEntity g = hook[0];
-            h.assertTrue(player.isPassenger(), "the pull stopped early");
             h.assertTrue(g.ropeNearEnd(level).distanceTo(hand(player)) < 1.0e-6, "the rope does not run to the player's hand");
             h.assertTrue(!g.nearEndFixed(), "a rope end was left floating");
             double closer = start[0] - player.position().distanceTo(g.ropeFarEnd(level));
-            double expected = 10 * GrappleConfig.SLIDE_MIN_SPEED.get();
-            h.assertTrue(closer > 0.6 * expected, "the player came only " + closer + " blocks closer in ten ticks");
+            h.assertTrue(closer > 1.0, "the player came only " + closer + " blocks closer after one pull");
         });
-        h.runAfterDelay(grabAt() + 11, () -> h.succeedWhen(() -> {
-            h.assertTrue(!player.isPassenger(), "still pulling");
+        h.runAfterDelay(grabAt() + 9, () -> h.succeedWhen(() -> {
             Vec3 spot = f.ship().toWorld(Vec3.atBottomCenterOf(westDeckEdge(f).above()));
             double d = player.position().distanceTo(spot);
             h.assertTrue(d < 1.0, "the player landed " + d + " blocks from the deck spot above the hook: " + player.position());
@@ -379,9 +387,9 @@ public final class GrappleHaulGameTests {
 
     /**
      * Hauling (sneak) and pulling (use) do not interfere: while sneaking the use does not pull and the rope stays
-     * frozen; a pull unfreezes it (the player rides the rope); sneaking during the pull lets go of it, and sneaking
-     * again freezes the rope where the player is. GR6: the player swims in the basin below the hull (the hook well
-     * above their feet), so the use is a climb.
+     * frozen; without sneak a pull takes the rope in (GR7: the rope then holds the player at that length) and unfreezes
+     * nothing; sneaking lets go of the held rope and freezes it for hauling again. GR6: the player swims in the basin
+     * below the hull (the hook well above their feet), so the use is a climb.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "both")
     public static void haulingAndPullingDoNotInterfere(GameTestHelper h) {
@@ -398,6 +406,7 @@ public final class GrappleHaulGameTests {
         h.runAfterDelay(grabAt() + 1, () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.haul().frozen(), "sneaking did not freeze the rope");
+            h.assertTrue(!RopeSwing.holding(g.swingLength()), "the rope holds a sneaking player");
             lookAt(player, hand(player).lerp(g.ropeFarEnd(level), 0.25));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.BUSY, "a use while hauling pulled the player: " + b);
@@ -410,18 +419,17 @@ public final class GrappleHaulGameTests {
             lookAt(player, hand(player).lerp(g.ropeFarEnd(level), 0.25));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.OK, "the pull was refused: " + b);
+            h.assertTrue(RopeSwing.holding(g.swingLength()), "the pull did not take the rope in");
         });
         h.runAfterDelay(grabAt() + 5, () -> {
-            h.assertTrue(player.isPassenger(), "the pull stopped early");
-            h.assertTrue(!hook[0].haul().frozen(), "the rope froze during a pull");
-            player.setShiftKeyDown(true); // let go of the pull
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(RopeSwing.holding(g.swingLength()), "the rope let go of the player after the pull");
+            h.assertTrue(!g.haul().frozen(), "the rope froze during a pull");
+            player.setShiftKeyDown(true); // let go of the rope
         });
         h.runAfterDelay(grabAt() + 8, () -> {
-            h.assertTrue(!player.isPassenger(), "sneaking did not let go of the pull");
-            player.setShiftKeyDown(true); // vanilla clears the sneak key on a dismount; the player still holds it
-        });
-        h.runAfterDelay(grabAt() + 10, () -> {
             GrapplingHookEntity g = hook[0];
+            h.assertTrue(!RopeSwing.holding(g.swingLength()), "sneaking did not let go of the rope");
             h.assertTrue(g.haul().frozen(), "the rope did not freeze for the sneaking player after the pull");
             h.assertTrue(!g.isRemoved() && !g.nearEndFixed(), "the rope let go or its end was fixed");
             finish(g, f);
@@ -521,17 +529,25 @@ public final class GrappleHaulGameTests {
     }
 
     /**
-     * GR6: a hook four blocks up a wall is a climb. The player is pulled hand over hand to it, up the face where the
-     * straight way runs into the wall's lip, and lands on top of the wall; the rope runs to their hand all the way.
+     * GR6: a hook four blocks up a wall is a climb. GR7: each use (one per {@code pull_cooldown_ticks}) takes the rope in
+     * by {@code rope_climb_step} and draws the player up the face, hanging on the rope in between; within reach of the
+     * hook the pull puts them on top of the wall. The rope runs to their hand all the way.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "climb_wall")
     public static void aHookFourBlocksUpAWallIsClimbed(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        Player player = groundAndWall(h, 8, 6, false);
-        Vec3 foot = h.absoluteVec(new Vec3(5.5, 1, 11.5));
-        player.setPos(foot.x, foot.y, foot.z);
+        groundAndWall(h, 8, 6, false); // its mock player stays out of the level
+        Player player = RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(5.5, 1, 11.5)), -90f);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         double[] start = {0};
+        int every = GrappleConfig.PULL_COOLDOWN_TICKS.get() + 1;
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t > grabAt() && (t - grabAt()) % every == 0 && hook[0] != null && !hook[0].isRemoved()) {
+                RopeSlideService.tryBoard(level, player, hook[0], 0.0);
+            }
+        });
         h.runAfterDelay(20, () -> hook[0] = hookWall(h, player, new Vec3(6.0, 5.0, 11.5)));
         h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
@@ -539,21 +555,20 @@ public final class GrappleHaulGameTests {
             double rise = g.ropeFarEnd(level).y - player.getY();
             h.assertTrue(rise > 3.8 && rise < 4.2, "the hook is not four blocks above the feet: " + rise);
             lookAlongRope(player, g.ropeFarEnd(level));
+            start[0] = player.position().distanceTo(g.ropeFarEnd(level));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.OK, "the climb was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && r.pulling(), "the player is not pulled up the rope");
+            h.assertTrue(RopeSwing.holding(g.swingLength()), "the pull did not take the rope in");
             h.assertTrue(RopeSlideService.lastHint(player) == Long.MIN_VALUE, "a climb hinted to tie off");
-            start[0] = player.position().distanceTo(g.ropeFarEnd(level));
         });
-        h.runAfterDelay(grabAt() + 10, () -> {
+        h.runAfterDelay(grabAt() + 8, () -> {
             GrapplingHookEntity g = hook[0];
-            h.assertTrue(player.isPassenger(), "the climb stopped early");
             h.assertTrue(g.ropeNearEnd(level).distanceTo(hand(player)) < 1.0e-6, "the rope does not run to the player's hand");
             double closer = start[0] - player.position().distanceTo(g.ropeFarEnd(level));
-            h.assertTrue(closer > 0.5, "the player came only " + closer + " blocks closer in ten ticks");
+            h.assertTrue(closer > 0.5, "the player came only " + closer + " blocks closer after one pull");
+            h.assertTrue(!player.onGround(), "the pull did not lift the player off the ground");
         });
-        h.runAfterDelay(grabAt() + 11, () -> h.succeedWhen(() -> {
-            h.assertTrue(!player.isPassenger(), "still climbing");
+        h.runAfterDelay(grabAt() + 9, () -> h.succeedWhen(() -> {
             Vec3 top = h.absoluteVec(new Vec3(8.5, 7, 11.5));
             h.assertTrue(player.position().distanceTo(top) < 1.0, "the player did not land on top of the wall: " + player.position() + " vs " + top);
             h.assertTrue(player.getY() >= top.y - 0.1, "the player is below the wall's top: " + player.getY());
@@ -566,15 +581,23 @@ public final class GrappleHaulGameTests {
     }
 
     /**
-     * GR6: a player swimming below the hull hooks its deck edge, well above their feet: a climb. They are pulled out of
-     * the water up the hull side and land on the deck above the hook.
+     * GR6: a player swimming below the hull hooks its deck edge, well above their feet: a climb. GR7: pulls, one per
+     * {@code pull_cooldown_ticks}, draw them out of the water up the hull side and put them on the deck above the hook.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "climb_hull")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 260, batch = BATCH + "climb_hull")
     public static void aSwimmerBelowTheHullClimbsToTheDeck(GameTestHelper h) {
         Fixture f = quay(h, MAX_FORCE);
         ServerLevel level = h.getLevel();
-        Player player = swimming(h);
+        Player player = RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(7.5, 4, 11.5)), -90f);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        int every = GrappleConfig.PULL_COOLDOWN_TICKS.get() + 1;
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t > grabAt() && (t - grabAt()) % every == 0 && hook[0] != null && !hook[0].isRemoved()) {
+                RopeSlideService.tryBoard(level, player, hook[0], 0.0);
+            }
+        });
         h.runAfterDelay(20, () -> hook[0] = hookShip(level, player, f));
         h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
@@ -584,10 +607,9 @@ public final class GrappleHaulGameTests {
             lookAlongRope(player, g.ropeFarEnd(level));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
             h.assertTrue(b == RopeSlideService.Board.OK, "the climb was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && r.pulling(), "the swimmer is not pulled up the rope");
+            h.assertTrue(RopeSwing.holding(g.swingLength()), "the pull did not take the rope in");
         });
         h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
-            h.assertTrue(!player.isPassenger(), "still climbing");
             Vec3 spot = f.ship().toWorld(Vec3.atBottomCenterOf(westDeckEdge(f).above()));
             double d = player.position().distanceTo(spot);
             h.assertTrue(d < 1.0, "the player landed " + d + " blocks from the deck spot above the hook: " + player.position());

@@ -73,9 +73,48 @@ class ChartHeldModelTest {
     void framesFollowTheProgress() {
         assertEquals("chart", ChartHeldMotion.frame(0f));
         assertEquals("chart_unroll_0", ChartHeldMotion.frame(0.1f));
-        assertEquals("chart_unroll_1", ChartHeldMotion.frame(0.3f));
-        assertEquals("chart_unroll_3", ChartHeldMotion.frame(0.99f));
+        assertEquals("chart_unroll_0", ChartHeldMotion.frame(0.3f), "CHART4: rolled while the fists come together");
+        assertEquals("chart_unroll_1", ChartHeldMotion.frame(0.37f));
+        assertEquals("chart_unroll_6", ChartHeldMotion.frame(0.65f));
+        assertEquals("chart_unroll_12", ChartHeldMotion.frame(0.99f));
         assertEquals("chart_open", ChartHeldMotion.frame(1f));
+    }
+
+    /** CHART4: fourteen frames; each unroll frame is drawn for the middle of its span, the first for the end of the raise. */
+    @Test
+    void framesSplitTheEasedUnroll() {
+        List<ChartHeldMotion.Frame> frames = ChartHeldMotion.FRAMES;
+        assertEquals(14, frames.size(), "frames from rolled to open");
+        assertEquals("chart_open", frames.get(frames.size() - 1).model());
+        assertEquals(0.3f, ChartHeldMotion.ease(frames.get(0).at()), 0.002f, "the first frame: the fists together (0.15 s of the linear 0.5 s)");
+        assertEquals(frames.get(1).from(), frames.get(0).at(), 0.002f, "and the unroll starts there");
+        float span = frames.get(2).from() - frames.get(1).from();
+        for (int i = 1; i < frames.size() - 1; i++) {
+            ChartHeldMotion.Frame f = frames.get(i);
+            float next = frames.get(i + 1).from();
+            assertEquals(span, next - f.from(), 0.0005f, f.model() + ": the unroll is split evenly in progress");
+            assertEquals((f.from() + next) / 2, f.at(), 0.002f, f.model() + ": drawn for the middle of its span");
+        }
+        assertEquals(0f, ChartHeldMotion.ease(0f));
+        assertEquals(1f, ChartHeldMotion.ease(1f));
+        assertEquals(0.5f, ChartHeldMotion.ease(0.5f), 1e-6f);
+        assertTrue(ChartHeldMotion.ease(0.1f) < 0.05f && ChartHeldMotion.ease(0.9f) > 0.95f, "slow at both ends");
+    }
+
+    /** CHART4: the rollers move apart along the eased curve: fast in the middle, gently into the open chart. */
+    @Test
+    void theRollersEaseIntoTheOpenChart() throws IOException {
+        List<ChartHeldMotion.Frame> frames = ChartHeldMotion.FRAMES;
+        float first = rollerHalf(frames.get(2).model()) - rollerHalf(frames.get(1).model());
+        float middle = rollerHalf(frames.get(6).model()) - rollerHalf(frames.get(5).model());
+        float last = rollerHalf(frames.get(12).model()) - rollerHalf(frames.get(11).model());
+        assertTrue(last < middle / 3, "the last steps are small: " + last + " vs " + middle);
+        assertTrue(first < middle * 1.5f, "no burst at the start: " + first + " vs " + middle);
+        float biggest = 0f;
+        for (int i = 2; i < frames.size(); i++) {
+            biggest = Math.max(biggest, rollerHalf(frames.get(i).model()) - rollerHalf(frames.get(i - 1).model()));
+        }
+        assertTrue(biggest < 1.5f, "no step between unroll frames above 1.5 px (CHART3 had about 4): " + biggest);
     }
 
     @Test
@@ -162,9 +201,10 @@ class ChartHeldModelTest {
 
     // --- the rig ---------------------------------------------------------------------------------------------------
 
-    /** The PAL time each frame's pose is solved for (tools/gen_chart_held_models.py FRAMES). */
-    static final Map<String, Float> SOLVED_AT = Map.of("chart_unroll_0", 0.15f, "chart_unroll_1", 0.2f,
-            "chart_unroll_2", 0.3f, "chart_unroll_3", 0.42f, "chart_open", 0.5f);
+    /** The PAL time (seconds) each frame's pose is solved for: its {@link ChartHeldMotion.Frame#at} of the half second. */
+    static float solvedAt(ChartHeldMotion.Frame f) {
+        return f.at() * ChartHeldMotion.UNROLL_TICKS / 20f;
+    }
     static final Vector3f EYES = new Vector3f(0, -2, -4);
 
     /** A bone's rotation (degrees) in a PAL file at time t, linear between keys. */
@@ -236,7 +276,7 @@ class ChartHeldModelTest {
     void rollersSitInTheFistsAndTheMapFacesTheReader() throws IOException {
         JsonObject read = anim(ChartHeldMotion.READ);
         for (ChartHeldMotion.Frame f : ChartHeldMotion.FRAMES) {
-            float t = SOLVED_AT.get(f.model());
+            float t = solvedAt(f);
             ModelPart right = arm(-5, key(read, "right_arm", t));
             ModelPart left = arm(5, key(read, "left_arm", t));
             Vector3f rightFist = onArm(right, -1, 9), leftFist = onArm(left, 1, 9);
@@ -321,5 +361,15 @@ class ChartHeldModelTest {
         // vanilla angles: both arms forward (negative x), the fists turned in towards each other while the chart is rolled
         assertTrue(key(read, "right_arm", 0.5f).x < -50 && key(read, "left_arm", 0.5f).x < -50);
         assertTrue(key(read, "right_arm", 0.15f).y < -10 && key(read, "left_arm", 0.15f).y > 10);
+        // CHART4: keys at least every 25 ms, and the raise eases in: the first 25 ms move the arm less than the next 50
+        float lastKey = -1f;
+        for (String k : read.getAsJsonObject("bones").getAsJsonObject("right_arm").getAsJsonObject("rotation").keySet()) {
+            float kt = Float.parseFloat(k);
+            if (lastKey >= 0) assertTrue(kt - lastKey <= 0.0251f, "keys " + lastKey + " .. " + kt);
+            lastKey = kt;
+        }
+        float early = Math.abs(key(read, "right_arm", 0.025f).x - key(read, "right_arm", 0f).x);
+        float later = Math.abs(key(read, "right_arm", 0.1f).x - key(read, "right_arm", 0.075f).x);
+        assertTrue(early < later / 2, "eases in: " + early + " vs " + later);
     }
 }

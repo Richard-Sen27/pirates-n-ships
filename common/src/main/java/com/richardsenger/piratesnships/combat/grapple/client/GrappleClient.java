@@ -8,11 +8,16 @@ import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookItem;
 import com.richardsenger.piratesnships.combat.grapple.RopeSlide;
+import com.richardsenger.piratesnships.combat.grapple.RopeSwingService;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
 import com.richardsenger.piratesnships.combat.grapple.ReleaseHookPayload;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.combat.grapple.client.anim.RopeSlidePoses;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.combat.content.CombatContent;
+import net.minecraft.world.item.Item;
+import org.jetbrains.annotations.Nullable;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -39,6 +44,8 @@ public final class GrappleClient {
         ClientEvents.CLIENT_SETUP.register(GrappleLaunchClient::registerItemProperties);
         ClientEvents.CLIENT_SETUP.register(RopeSlidePoses::onClientSetup);
         ClientEvents.CLIENT_TICK_END.register(RopeSlidePoses::onClientTickEnd);
+        // GR7: the local player hangs and swings on their own hand-held rope (the client moves its own player)
+        CommonEvents.PLAYER_TICK_END.register(ClientRopeSwing::onPlayerTick);
     }
 
     /**
@@ -55,7 +62,55 @@ public final class GrappleClient {
             }
             return ClientEvents.InteractionKeyResult.PASS;
         }
+        ClientEvents.InteractionKeyResult own = pullOwnRope(mc);
+        if (own != null) {
+            return own;
+        }
         return grabRope(mc) ? ClientEvents.InteractionKeyResult.CANCEL : ClientEvents.InteractionKeyResult.PASS;
+    }
+
+    /**
+     * GR7: use (not sneaking) with the own latched rope in hand (an empty main hand or a hook in it): one pull, sent to
+     * the server ({@link BoardRopePayload}, which pulls without a pick, {@code RopeSwingService#pull}) and predicted at
+     * once ({@link ClientRopeSwing#predictPull}), when the player hangs on the rope, looks at it, or looks at nothing
+     * with the hook high enough above to climb to. During the hook item's cooldown ({@code pull_cooldown_ticks}) the use
+     * is swallowed, so a click or a held button cannot pull faster nor throw another hook. A use aimed at a block or an
+     * entity on the ground is left to vanilla. Null when the player has no such rope (the tied-rope grab follows).
+     */
+    private static ClientEvents.@Nullable InteractionKeyResult pullOwnRope(Minecraft mc) {
+        LocalPlayer player = mc.player;
+        if (player.isPassenger() || player.isSpectator() || !GrappleConfig.ENABLED.get() || !GrappleConfig.SWING.get()) {
+            return null;
+        }
+        GrapplingHookEntity hook = ClientRopeSwing.ownHook(player);
+        GrappleLaunch.Held main = GrapplingHookItem.heldOf(player.getMainHandItem());
+        if (hook == null || RopeSlide.grab(main, hook.tickCount, GrappleConfig.GRAB_COOLDOWN_TICKS.get()) != RopeSlide.Grab.OK) {
+            return null;
+        }
+        Item item = CombatContent.GRAPPLING_HOOK.get();
+        if (player.getCooldowns().isOnCooldown(item)) {
+            return ClientEvents.InteractionKeyResult.CANCEL;
+        }
+        Vec3 eye = player.getEyePosition(1.0f);
+        ClientRopes.RopeHit hit = ClientRopes.pick(mc.level, eye, player.getViewVector(1.0f), player);
+        boolean looksAtRope = hit != null && hit.hook() == hook && !inFront(mc, eye, hit.pick().eyeDistance());
+        double hookY = ClientRopes.hookPos(hook, 1.0f).y;
+        boolean hanging = ClientRopeSwing.hanging(hook) && hookY > RopeSwingService.hand(player).y;
+        // GR6's climb rule, as the server checks it: the hook high enough above the feet, or above a hanging player
+        boolean climb = hanging || hookY - player.getY() >= GrappleConfig.CLIMB_MIN_RISE.get();
+        boolean intoTheAir = (mc.hitResult == null || mc.hitResult.getType() == HitResult.Type.MISS) && climb;
+        if (!hanging && !looksAtRope && !intoTheAir) {
+            return null;
+        }
+        Services.NETWORK.sendToServer(new BoardRopePayload(hook.getId())); // no climb: the server shows the tie-off hint
+        if (climb) {
+            ClientRopeSwing.predictPull(hook, player);
+            int cooldown = GrappleConfig.PULL_COOLDOWN_TICKS.get();
+            if (cooldown > 0) {
+                player.getCooldowns().addCooldown(item, cooldown); // the server's own cooldown follows by packet
+            }
+        }
+        return ClientEvents.InteractionKeyResult.CANCEL;
     }
 
     /**

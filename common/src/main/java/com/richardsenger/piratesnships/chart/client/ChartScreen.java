@@ -228,14 +228,14 @@ public final class ChartScreen extends Screen {
         updateEditorWidgets();
         int right = mapL + mapW;
         if (target == null) {
-            listButton = addRenderableWidget(new BrassButton(right - LIST_BUTTON_W, by, LIST_BUTTON_W, GuiKit.FIELD_H, listLabel(), this::toggleList));
+            listButton = addRenderableWidget(new BrassButton(right - LIST_BUTTON_W, by, LIST_BUTTON_W, GuiKit.FIELD_H, listLabel(), this::toggleList).selected(listOpen));
         }
         if (target != null) {
             drawButton = addRenderableWidget(new BrassButton(right - 56, by, 56, GuiKit.FIELD_H, drawLabel(), this::drawPressed));
             markersButton = addRenderableWidget(new BrassButton(right - 56 - 4 - 62, by, 62, GuiKit.FIELD_H,
                     Component.translatable(ChartText.INCLUDE_MARKERS), this::toggleMarkers).selected(includeMarkers));
             listButton = addRenderableWidget(new BrassButton(markersButton.getX() - 4 - LIST_BUTTON_W, by, LIST_BUTTON_W, GuiKit.FIELD_H,
-                    listLabel(), this::toggleList));
+                    listLabel(), this::toggleList).selected(listOpen));
             // the board panel in the map's top-left corner
             int px = panelX();
             int py = panelY() + PANEL_H - GuiKit.FIELD_H - 4;
@@ -1127,7 +1127,7 @@ public final class ChartScreen extends Screen {
             color = GuiKit.ON_WOOD_DIM;
         }
         // CHART2: the marker count is gone; its place holds the markers list button
-        GuiKit.text(g, font, text, x, y, listButton.getX() - 6 - x, color, true);
+        GuiKit.text(g, font, text, x, y, Math.max(0, listButton.getX() - 6 - x), color, true);
     }
 
     /**

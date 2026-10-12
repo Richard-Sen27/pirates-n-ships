@@ -165,7 +165,7 @@ class ChartHeldModelTest {
     /** The PAL time each frame's pose is solved for (tools/gen_chart_held_models.py FRAMES). */
     static final Map<String, Float> SOLVED_AT = Map.of("chart_unroll_0", 0.15f, "chart_unroll_1", 0.2f,
             "chart_unroll_2", 0.3f, "chart_unroll_3", 0.42f, "chart_open", 0.5f);
-    static final Vector3f EYES = new Vector3f(0, -3, -4);
+    static final Vector3f EYES = new Vector3f(0, -2, -4);
 
     /** A bone's rotation (degrees) in a PAL file at time t, linear between keys. */
     static Vector3f key(JsonObject anim, String bone, float t) {
@@ -256,7 +256,9 @@ class ChartHeldModelTest {
                 }
                 Vector3f face = dir(m, 0, 0, 1);
                 Vector3f toEyes = new Vector3f(EYES).sub(centre).normalize();
-                assertTrue(face.dot(toEyes) > 0.95f, what + ": the map faces the eyes (" + face + ")");
+                assertTrue(face.dot(toEyes) > 0.9f, what + ": the map faces the eyes (" + face + ")");
+                float elevation = (float) Math.toDegrees(Math.asin(-face.y));
+                assertEquals(30f, elevation, 1f, what + ": tilted 30 degrees up, so others see it unroll");
                 assertTrue(dir(m, 1, 0, 0).dot(new Vector3f(-1, 0, 0)) > 0.95f, what + ": the map reads left to right for its reader");
                 assertTrue(dir(m, 0, 1, 0).y < -0.3f, what + ": the map's top is up");
             }

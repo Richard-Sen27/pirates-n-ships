@@ -11,7 +11,7 @@ through overrides on `chart`), and rolls up again when the screen closes. The ar
 Frames: the progress p goes 0 -> 1 in ChartHeldMotion.UNROLL_TICKS (10) ticks. The PAL time is p * 0.5 s. Frame k is
 shown from its threshold on (overrides, the last match wins). Each frame's third-person display is solved for the arm
 pose at its middle time, so the chart stays level and centred between the hands while the right (holding) arm turns:
-the rollers sit in both fists and the face is turned to the reader's eyes. The left-hand entries are solved through
+the rollers sit in both fists and the face is turned to the reader, tilted up towards the eyes. The left-hand entries are solved through
 the left-hand chain the same way (they come out as ART17's rule says: the right-hand values, the game mirrors them).
 
 The geometry is built facing south (+z, the map face) around x = z = 8, the rollers along y. Closed, the elements are
@@ -262,10 +262,12 @@ RIGHT_PIVOT = (-5.0, 2.0, 0.0)
 LEFT_PIVOT = (5.0, 2.0, 0.0)
 RIGHT_HAND = (-1.0, 9.0, 0.0)
 LEFT_HAND = (1.0, 9.0, 0.0)
-EYES = (0.0, -3.0, -4.0)        # between the eyes, on the face
+EYES = (0.0, -2.0, -4.0)        # between the eyes, on the face (1.62 blocks up, the neck is at 1.5)
+FACE_ELEVATION = 30.0           # degrees the map face is turned up from facing the reader level: readable from the
+                                # eyes above it, and upright enough that others see the chart and its unroll
 
-READ_PITCH = -65.0               # both arms forward and down, the hands in front of the chest
-TOGETHER_YAW = 27.0              # the inward turn that brings the fists together (4.4 px apart: the arms touch) round the rolled chart
+READ_PITCH = -78.0               # both arms forward and down, the hands in front of the chest
+TOGETHER_YAW = 25.0              # the inward turn that brings the fists together (4.4 px apart: the arms touch) round the rolled chart
 RAISE_TIME = 0.15                # s: arms up with the fists together
 LENGTH = 0.5                     # s: the whole unroll (ChartHeldMotion.UNROLL_TICKS = 10 ticks)
 REST_RIGHT = (-18.0, 0.0, 0.0)   # vanilla's holding-an-item arm; PAL hands over to it
@@ -305,15 +307,13 @@ def solve_display(t, left, half_model):
     """The third-person display entry of a frame shown at PAL time t, for the right or the left hand.
 
     The chart's centre goes to the midpoint of the fists, its model +x to the reader's right (the player's right, -x),
-    its face (+z) to the eyes. Scale: the chart is as wide as the open fists are apart (fixed for every frame)."""
+    its face (+z) towards the reader, tilted FACE_ELEVATION up. Scale: the chart is as wide as the open fists are apart (fixed for every frame)."""
     right, leftArm = arm_angles(t)
     hr, hl = hand(RIGHT_PIVOT, RIGHT_HAND, right), hand(LEFT_PIVOT, LEFT_HAND, leftArm)
     centre = [(a + b) / 2 for a, b in zip(hr, hl)]
-    eyes = [c / 16 for c in EYES]
-    face = norm([e - c for e, c in zip(eyes, centre)])
-    xdir = norm([-1.0, 0.0, 0.0])
-    # make the face orthogonal to x (the reader's right stays horizontal)
-    face = norm([f - xdir[i] * sum(a * b for a, b in zip(face, xdir)) for i, f in enumerate(face)])
+    elevation = math.radians(FACE_ELEVATION)
+    face = [0.0, -math.sin(elevation), math.cos(elevation)]     # towards the reader (+z) and up (-y)
+    xdir = [-1.0, 0.0, 0.0]
     ydir = cross(face, xdir)
     want = [[xdir[i], ydir[i], face[i]] for i in range(3)]          # columns = model axes in the model frame
     holder = item_frame(LEFT_PIVOT if left else RIGHT_PIVOT, leftArm if left else right, left)
@@ -354,7 +354,7 @@ FRAMES = [
 
 # first person: the open chart low in the view and tilted away like vanilla's map (ItemInHandRenderer's
 # applyItemArmTransform puts the item origin at (+-0.56, -0.52, -0.72); the translation takes it to the middle)
-FIRST_PERSON = {'rotation': [-45, 0, 0], 'translation': [-8.96, 2.24, -0.48], 'scale': [0.42, 0.42, 0.42]}
+FIRST_PERSON = {'rotation': [-45, 0, 0], 'translation': [-8.96, 3.2, -0.48], 'scale': [0.46, 0.46, 0.46]}
 
 CLOSED_DISPLAY = {
     'thirdperson_righthand': {'rotation': [0, 0, 0], 'translation': [0, 3, 1], 'scale': [0.34, 0.34, 0.34]},

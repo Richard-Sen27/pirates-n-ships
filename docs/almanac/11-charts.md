@@ -22,6 +22,8 @@ Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in t
 - Drag to pan; scroll to zoom, far enough out to see a whole sea.
 - Right-click to place a named marker; click one to change it.
 
+While you read it, you hold the chart unrolled between both hands, and every hand on deck sees you unroll it.
+
 ## Markers and landmarks
 Mark as many places as you like. The **Markers** button lists them, nearest first, with their bearing; click one and the chart finds it.
 

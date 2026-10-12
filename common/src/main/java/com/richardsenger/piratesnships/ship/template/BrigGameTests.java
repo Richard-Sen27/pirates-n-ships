@@ -682,6 +682,51 @@ public final class BrigGameTests {
     }
 
     /**
+     * A navy patrol voyage on the armed brig materialises in the basin (the world simulation's own placement): eight
+     * guns, all loaded, four shot lockers stocked, the crow's nest manned by a lookout, the helm manned.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "patrol")
+    public static void aNavyPatrolSailsTheArmedBrig(GameTestHelper h) {
+        basin(h);
+        net.minecraft.server.MinecraftServer server = h.getLevel().getServer();
+        BlockPos m = h.absolutePos(new BlockPos(24, SURFACE, 24));
+        List<com.richardsenger.piratesnships.worldsim.lane.Lane.Point> route = List.of(
+                new com.richardsenger.piratesnships.worldsim.lane.Lane.Point(m.getX(), m.getZ() + 100),
+                new com.richardsenger.piratesnships.worldsim.lane.Lane.Point(m.getX(), m.getZ() - 100));
+        ResourceLocation from = Constants.id("gametest/ship1_" + UUID.randomUUID().toString().substring(0, 8));
+        com.richardsenger.piratesnships.worldsim.voyage.Voyage v = com.richardsenger.piratesnships.worldsim.voyage.Voyage.depart(
+                UUID.randomUUID(), com.richardsenger.piratesnships.worldsim.voyage.VoyageKind.PATROL,
+                com.richardsenger.piratesnships.law.flag.Faction.NAVY, ShipTemplates.NAVY_BRIG_ARMED_ID, from, from, route, Map.of(),
+                h.getLevel().getGameTime()).withProgress(100);
+        com.richardsenger.piratesnships.worldsim.voyage.VoyageData.get(server).put(v);
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> {
+            com.richardsenger.piratesnships.worldsim.materialize.Materializer.Outcome o =
+                    com.richardsenger.piratesnships.worldsim.materialize.Materializer.materialize(server, v.id());
+            com.richardsenger.piratesnships.worldsim.voyage.Voyage now =
+                    com.richardsenger.piratesnships.worldsim.voyage.Voyages.get(server, v.id()).orElseThrow();
+            now.shipId().ifPresent(id -> ShipTestCleanup.track(h, id));
+            h.assertTrue(o == com.richardsenger.piratesnships.worldsim.materialize.Materializer.Outcome.SPAWNED, "materialize: " + o);
+            ship[0] = SableShips.byId(h.getLevel(), now.shipId().orElseThrow());
+        });
+        h.runAtTickTime(30, () -> {
+            ServerLevel level = h.getLevel();
+            List<BlockPos> guns = com.richardsenger.piratesnships.worldsim.materialize.VoyageGuns.guns(level, ship[0]);
+            List<BlockPos> lockers = com.richardsenger.piratesnships.worldsim.materialize.VoyageGuns.lockers(level, ship[0]);
+            h.assertTrue(guns.size() == 8, "guns " + guns.size());
+            h.assertTrue(lockers.size() == 4, "lockers " + lockers.size());
+            h.assertTrue(guns.stream().allMatch(g -> level.getBlockState(g).getValue(CannonBlock.LOAD) == CannonLoad.LOADED), "a gun is not loaded");
+            for (BlockPos l : lockers) {
+                h.assertTrue(level.getBlockEntity(l) instanceof net.minecraft.world.Container c && !c.isEmpty(), "an empty locker at " + l);
+            }
+            h.assertTrue(Lookouts.isManned(level, ship[0]), "no lookout in the nest");
+            com.richardsenger.piratesnships.worldsim.voyage.Voyages.end(server, v.id(), com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd.CANCELLED);
+            com.richardsenger.piratesnships.worldsim.materialize.VoyageCrew.discard(level, v.id());
+            h.succeed();
+        });
+    }
+
+    /**
      * The world's records of the assembled armed brig after a reload: the ship registry's saved data reads back with
      * her, and fresh sailing and hull runtimes (as after an unload) find her four square sails and three or more
      * compartments again; her nets still hang between their fittings (block entity links survive, they are relative).

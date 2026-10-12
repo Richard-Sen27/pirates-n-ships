@@ -1,0 +1,49 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "twilightforest"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:sorting_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "twilightforest"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "twilightforest:sorting_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:market_notice_board",
+  "key": {
+    "B": {
+      "item": "pirates_n_ships:twilightforest_sorting_notice_board"
+    },
+    "L": {
+      "item": "twilightforest:sorting_log"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "L L"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:twilightforest_sorting_market_notice_board"
+  }
+}

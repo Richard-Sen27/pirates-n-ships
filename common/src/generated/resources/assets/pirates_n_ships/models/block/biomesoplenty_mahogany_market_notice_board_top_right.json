@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_top_right",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_mahogany_log",
+    "log_top": "biomesoplenty:block/stripped_mahogany_log_top",
+    "particle": "biomesoplenty:block/mahogany_planks",
+    "planks": "biomesoplenty:block/mahogany_planks"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/market_notice_board_bottom_right",
+  "textures": {
+    "log": "biomeswevegone:block/zelkova/stripped_log",
+    "log_top": "biomeswevegone:block/zelkova/stripped_log_top",
+    "particle": "biomeswevegone:block/zelkova/planks",
+    "planks": "biomeswevegone:block/zelkova/planks"
+  }
+}

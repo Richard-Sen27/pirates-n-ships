@@ -95,6 +95,31 @@
           "key": "pirates_n_ships.almanac.law.p5.heading"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p5.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p5.text2"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.law.p5.text3"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:market_notice_board"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.law.p6.heading"
+        },
+        {
           "type": "illustration",
           "h": 0.35,
           "texture": "pirates_n_ships:textures/almanac/shackles.png",
@@ -104,7 +129,7 @@
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.law.p5.text1"
+          "key": "pirates_n_ships.almanac.law.p6.text1"
         },
         {
           "type": "recipe",
@@ -116,35 +141,19 @@
       "elements": [
         {
           "type": "heading",
-          "key": "pirates_n_ships.almanac.law.p6.heading"
+          "key": "pirates_n_ships.almanac.law.p7.heading"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.law.p6.list1_1",
-            "pirates_n_ships.almanac.law.p6.list1_2",
-            "pirates_n_ships.almanac.law.p6.list1_3"
+            "pirates_n_ships.almanac.law.p7.list1_1",
+            "pirates_n_ships.almanac.law.p7.list1_2",
+            "pirates_n_ships.almanac.law.p7.list1_3"
           ]
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.law.p6.text1"
-        }
-      ]
-    },
-    {
-      "elements": [
-        {
-          "type": "heading",
-          "key": "pirates_n_ships.almanac.law.p7.heading"
-        },
-        {
-          "type": "text",
           "key": "pirates_n_ships.almanac.law.p7.text1"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.law.p7.text2"
         }
       ]
     },
@@ -153,6 +162,22 @@
         {
           "type": "heading",
           "key": "pirates_n_ships.almanac.law.p8.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p8.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p8.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.law.p9.heading"
         },
         {
           "type": "illustration",
@@ -164,42 +189,17 @@
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.law.p8.text1"
+          "key": "pirates_n_ships.almanac.law.p9.text1"
         },
         {
           "type": "spotlight3d",
-          "caption": "pirates_n_ships.almanac.law.p8.spotlight3d1",
+          "caption": "pirates_n_ships.almanac.law.p9.spotlight3d1",
           "id": "pirates_n_ships:brig_door",
           "subject": "block"
         },
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:brig_door"
-        }
-      ]
-    },
-    {
-      "elements": [
-        {
-          "type": "heading",
-          "key": "pirates_n_ships.almanac.law.p9.heading"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.law.p9.text1"
-        },
-        {
-          "type": "recipe",
-          "recipe": "pirates_n_ships:brig_bars"
-        },
-        {
-          "type": "recipe",
-          "recipe": "pirates_n_ships:brig_key"
-        },
-        {
-          "type": "text",
-          "color": "#9a1c14",
-          "key": "pirates_n_ships.almanac.law.p9.text2"
         }
       ]
     },
@@ -214,12 +214,17 @@
           "key": "pirates_n_ships.almanac.law.p10.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.law.p10.list1_1",
-            "pirates_n_ships.almanac.law.p10.list1_2",
-            "pirates_n_ships.almanac.law.p10.list1_3"
-          ]
+          "type": "recipe",
+          "recipe": "pirates_n_ships:brig_bars"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:brig_key"
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.law.p10.text2"
         }
       ]
     },
@@ -234,8 +239,12 @@
           "key": "pirates_n_ships.almanac.law.p11.text1"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.law.p11.text2"
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.law.p11.list1_1",
+            "pirates_n_ships.almanac.law.p11.list1_2",
+            "pirates_n_ships.almanac.law.p11.list1_3"
+          ]
         }
       ]
     },
@@ -250,12 +259,8 @@
           "key": "pirates_n_ships.almanac.law.p12.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.law.p12.list1_1",
-            "pirates_n_ships.almanac.law.p12.list1_2",
-            "pirates_n_ships.almanac.law.p12.list1_3"
-          ]
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p12.text2"
         }
       ]
     },
@@ -266,16 +271,36 @@
           "key": "pirates_n_ships.almanac.law.p13.heading"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.law.p13.text1"
+        },
+        {
           "type": "list",
           "items": [
             "pirates_n_ships.almanac.law.p13.list1_1",
             "pirates_n_ships.almanac.law.p13.list1_2",
             "pirates_n_ships.almanac.law.p13.list1_3"
           ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.law.p14.heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.law.p14.list1_1",
+            "pirates_n_ships.almanac.law.p14.list1_2",
+            "pirates_n_ships.almanac.law.p14.list1_3"
+          ]
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.law.p13.text1"
+          "key": "pirates_n_ships.almanac.law.p14.text1"
         }
       ]
     }

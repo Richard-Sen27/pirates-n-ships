@@ -1,0 +1,49 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "aether"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "aether:skyroot_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "aether"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "aether:skyroot_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:market_notice_board",
+  "key": {
+    "B": {
+      "item": "pirates_n_ships:aether_skyroot_notice_board"
+    },
+    "L": {
+      "item": "aether:skyroot_log"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "L L"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:aether_skyroot_market_notice_board"
+  }
+}

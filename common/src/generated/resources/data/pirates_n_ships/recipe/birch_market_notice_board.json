@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:market_notice_board",
+  "key": {
+    "B": {
+      "item": "pirates_n_ships:birch_notice_board"
+    },
+    "L": {
+      "item": "minecraft:birch_log"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "L L"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:birch_market_notice_board"
+  }
+}

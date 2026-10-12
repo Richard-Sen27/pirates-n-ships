@@ -317,7 +317,7 @@ public final class MarketNoticeBoardGameTests {
         MinecraftServer server = h.getLevel().getServer();
         BlockPos anchor = board(h, ShipWood.DARK_OAK, ANCHOR);
         BlockPos min = h.absolutePos(BlockPos.ZERO), max = h.absolutePos(new BlockPos(8, 5, 8));
-        Port port = new Port(Constants.id("gametest/market_board_" + UUID.randomUUID().toString().substring(0, 8)), PortKind.VILLAGE,
+        Port port = new Port(Constants.id("gametest/market_board_" + UUID.randomUUID().toString().substring(0, 8)), PortKind.SEAFARER_VILLAGE,
                 h.getLevel().dimension(), h.absolutePos(new BlockPos(4, 1, 4)), BoundingBox.fromCorners(min, max), Climate.TEMPERATE, List.of());
         PortService.register(server, port);
         Quests.refresh(server, port.id()); // today's generated offers first, so they don't replace ours

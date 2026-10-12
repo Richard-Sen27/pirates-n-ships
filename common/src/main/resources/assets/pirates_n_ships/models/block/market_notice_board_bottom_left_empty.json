@@ -1,0 +1,156 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"pin": "minecraft:block/red_concrete",
+		"particle": "#pin"
+	},
+	"elements": [
+		{
+			"name": "pin3",
+			"from": [
+				8,
+				15,
+				6.4
+			],
+			"to": [
+				9,
+				16,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						8,
+						0,
+						9,
+						1
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.4,
+						0,
+						7,
+						1
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.4,
+						0,
+						7,
+						1
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						8,
+						6.4,
+						9,
+						7
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						8,
+						6.4,
+						9,
+						7
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "pin5",
+			"from": [
+				1,
+				11,
+				6.4
+			],
+			"to": [
+				2,
+				12,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						1,
+						4,
+						2,
+						5
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.4,
+						4,
+						7,
+						5
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.4,
+						4,
+						7,
+						5
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						1,
+						6.4,
+						2,
+						7
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						1,
+						6.4,
+						2,
+						7
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "scrap1",
+			"from": [
+				7.5,
+				13.6,
+				6.8
+			],
+			"to": [
+				9.5,
+				15.2,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						0.8,
+						9.5,
+						2.4
+					],
+					"texture": "#parchment"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

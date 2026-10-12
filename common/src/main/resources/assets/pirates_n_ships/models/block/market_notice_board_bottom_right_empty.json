@@ -1,0 +1,71 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"pin": "minecraft:block/red_concrete",
+		"particle": "#pin"
+	},
+	"elements": [
+		{
+			"name": "pin4",
+			"from": [
+				9,
+				10.5,
+				6.4
+			],
+			"to": [
+				10,
+				11.5,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						9,
+						4.5,
+						10,
+						5.5
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.4,
+						4.5,
+						7,
+						5.5
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.4,
+						4.5,
+						7,
+						5.5
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						9,
+						6.4,
+						10,
+						7
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						9,
+						6.4,
+						10,
+						7
+					],
+					"texture": "#pin"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

@@ -1,0 +1,214 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"paper": "minecraft:block/white_terracotta",
+		"ink": "minecraft:block/black_terracotta",
+		"pin": "minecraft:block/red_concrete",
+		"particle": "#paper"
+	},
+	"elements": [
+		{
+			"name": "notice1",
+			"from": [
+				7.5,
+				1,
+				6.8
+			],
+			"to": [
+				12.5,
+				7,
+				7
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					10,
+					4,
+					6.8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						9,
+						12.5,
+						15
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "notice1_ink0",
+			"from": [
+				8.5,
+				5,
+				6.72
+			],
+			"to": [
+				11.5,
+				5.4,
+				6.72
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					10,
+					4,
+					6.8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						8.5,
+						10.6,
+						11.5,
+						11
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "notice1_ink1",
+			"from": [
+				8.5,
+				3.8,
+				6.72
+			],
+			"to": [
+				10.5,
+				4.2,
+				6.72
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					10,
+					4,
+					6.8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						8.5,
+						11.8,
+						10.5,
+						12.2
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "notice1_ink2",
+			"from": [
+				8.5,
+				2.6,
+				6.72
+			],
+			"to": [
+				11.5,
+				3,
+				6.72
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					10,
+					4,
+					6.8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						8.5,
+						13,
+						11.5,
+						13.4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "notice1_pin",
+			"from": [
+				9.5,
+				5.8,
+				6.2
+			],
+			"to": [
+				10.5,
+				6.8,
+				6.8
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					10,
+					4,
+					6.8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						9.5,
+						9.2,
+						10.5,
+						10.2
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						9.2,
+						6.8,
+						10.2
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						9.2,
+						6.8,
+						10.2
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						9.5,
+						6.2,
+						10.5,
+						6.8
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						9.5,
+						6.2,
+						10.5,
+						6.8
+					],
+					"texture": "#pin"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

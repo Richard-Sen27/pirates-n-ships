@@ -81,6 +81,14 @@ public final class LawConfig {
     public static final ConfigValue<Double> NOTICE_BOARD_REACH = BOUNTY.doubleRange("notice_board_reach", 8.0, 2.0, 64.0,
             "Blocks from a notice board within which its screen stays open");
 
+    private static final ConfigSection NOTICE_BOARD = LAW.section("notice_board",
+            "The market notice board's look (NB2): empty, some or busy by the open postings it shows");
+    public static final ConfigValue<Integer> NOTICE_BOARD_BUSY_THRESHOLD = NOTICE_BOARD.intRange("busy_threshold", 5, 1, 1000,
+            "Open postings (bounties listed plus the port's quest offers) from which a market notice board looks busy; "
+                    + "one or more looks like some");
+    public static final ConfigValue<Integer> NOTICE_BOARD_REFRESH_TICKS = NOTICE_BOARD.intRange("refresh_ticks", 200, 20, 72000,
+            "Ticks between two counts of a market notice board's postings (a bounty placed at a board recounts at once)");
+
     private static final ConfigSection SEVERITY = LAW.section("severity", "Criminal score points per crime");
     private static final ConfigSection COOLDOWN = LAW.section("repeat_cooldown_seconds",
             "The same crime against the same victim within this many seconds is not counted again");

@@ -328,6 +328,33 @@ Workflow notes (notice board, N1):
   committed; rebuild it from these notes.
 - Render: `renders/notice_board.png` (placed three-quarter from the front, front, GUI).
 
+Market notice board (NB2):
+- **Market notice board** (`market_notice_board`, a wood family, legacy id for dark oak): the village square's 2 wide
+  × 2 high board on two posts, four blocks (`part` bottom_left/bottom_right/top_left/top_right as the viewer in front of
+  the notices sees them; the bottom left is the anchor). Source: `tools/gen_market_notice_board_models.py` (a part list
+  in board space x 0..32, y 0..32, notices north; the viewer's left column is x 16..32). Each part's model is the board
+  clipped to its cell (faces on a cut are left out; the roof slabs, turned 22.5 degrees about x, are cut along x; a
+  turned notice goes whole to the cell of its centre), so every part is lit at its own block.
+- Frame (`market_notice_board_<part>`, drawn in every load): `#planks` feet and roof slabs, `#log` posts (x 1.5..4.5 and
+  27.5..30.5, z 6.5..9.5, up to y 30) with `#log_top` ends, `#log` rails above and below the board (grain along x),
+  a `#log` ridge beam, a fixed `spruce_planks` board x 4.5..27.5, y 7..27 (front z 7), six `gold_block` nails. The
+  roof slabs stop 0.1 and 0.2 px short of the ridge's ends so no end faces share a plane.
+- Notices (`market_notice_board_<part>_<load>`, no wood, ambient occlusion off): parchment `sandstone_top` and
+  `white_terracotta` papers in layers 0.2 px apart from the board, `black_terracotta` ink 0.08 px proud, `red_concrete`
+  pin heads, `nether_wart_block` seals. `empty`: six lone pins and two torn scraps; `some`: three notices, one turned;
+  `busy`: eight notices in two layers (two turned) and a wanted poster on top (`red_terracotta` header,
+  `brown_terracotta` portrait, two reward lines, a seal).
+- Item (`market_notice_board_item`): the frame and the "some" notices at half size in one block; display like the
+  small board's.
+- Block state (datagen, `MarketNoticeBoardData`): multipart, the part's frame (the wood's child) plus the part's
+  notices for its load, turned by facing.
+- Blockbench: `art/models/market_notice_board.bbmodel` is the board assembled in board space (groups frame, empty,
+  some, busy, item; textures embedded when `tools/extract_vanilla_textures.py` has put them in `art/vanilla/`). It is
+  written by the script, not edited by hand. Lint: `python3 tools/gen_market_notice_board_models.py --combined DIR`
+  writes the frame and each load as one model for `tools/lint_models.py` across models; no fights.
+- Render: `renders/market_notice_board.png`, the three loads side by side from the front (empty, some, busy), from
+  `--render-project` loaded in Blockbench.
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

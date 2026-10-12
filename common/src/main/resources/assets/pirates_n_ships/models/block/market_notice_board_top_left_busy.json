@@ -1,0 +1,553 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"paper": "minecraft:block/white_terracotta",
+		"ink": "minecraft:block/black_terracotta",
+		"pin": "minecraft:block/red_concrete",
+		"header": "minecraft:block/red_terracotta",
+		"portrait": "minecraft:block/brown_terracotta",
+		"particle": "#paper"
+	},
+	"elements": [
+		{
+			"name": "n1",
+			"from": [
+				4.5,
+				3,
+				6.8
+			],
+			"to": [
+				11,
+				10,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						4.5,
+						6,
+						11,
+						13
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "n1_ink0",
+			"from": [
+				5.5,
+				8,
+				6.72
+			],
+			"to": [
+				10,
+				8.4,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						7.6,
+						10,
+						8
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n1_ink1",
+			"from": [
+				5.5,
+				6.8,
+				6.72
+			],
+			"to": [
+				9,
+				7.2,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						8.8,
+						9,
+						9.2
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n1_ink2",
+			"from": [
+				5.5,
+				5.6,
+				6.72
+			],
+			"to": [
+				10,
+				6,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						10,
+						10,
+						10.4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n1_ink3",
+			"from": [
+				5.5,
+				4.4,
+				6.72
+			],
+			"to": [
+				9,
+				4.8,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						11.2,
+						9,
+						11.6
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n1_pin",
+			"from": [
+				7.25,
+				8.8,
+				6.2
+			],
+			"to": [
+				8.25,
+				9.8,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.25,
+						6.2,
+						8.25,
+						7.2
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						6.2,
+						6.8,
+						7.2
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						6.2,
+						6.8,
+						7.2
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						7.25,
+						6.2,
+						8.25,
+						6.8
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						7.25,
+						6.2,
+						8.25,
+						6.8
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "n6_ink0",
+			"from": [
+				4.5,
+				0,
+				6.52
+			],
+			"to": [
+				7.5,
+				0.4,
+				6.52
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					6,
+					-0.75,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						4.5,
+						15.6,
+						7.5,
+						16
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n6_pin",
+			"from": [
+				5.5,
+				0.8,
+				6
+			],
+			"to": [
+				6.5,
+				1.8,
+				6.6
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "z",
+				"origin": [
+					6,
+					-0.75,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						14.2,
+						6.5,
+						15.2
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6,
+						14.2,
+						6.6,
+						15.2
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6,
+						14.2,
+						6.6,
+						15.2
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						5.5,
+						6,
+						6.5,
+						6.6
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						5.5,
+						6,
+						6.5,
+						6.6
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "n7",
+			"from": [
+				0,
+				5.5,
+				6.6
+			],
+			"to": [
+				3,
+				10.5,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						5.5,
+						3,
+						10.5
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "n7_ink0",
+			"from": [
+				0,
+				8.5,
+				6.52
+			],
+			"to": [
+				2,
+				8.9,
+				6.52
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						7.1,
+						2,
+						7.5
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n7_ink1",
+			"from": [
+				0,
+				7.3,
+				6.52
+			],
+			"to": [
+				1,
+				7.7,
+				6.52
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						8.3,
+						1,
+						8.7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n7_pin",
+			"from": [
+				0,
+				9.3,
+				6
+			],
+			"to": [
+				0.5,
+				10.3,
+				6.6
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						5.7,
+						0.5,
+						6.7
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6,
+						5.7,
+						6.6,
+						6.7
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						0,
+						6,
+						0.5,
+						6.6
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						0,
+						6,
+						0.5,
+						6.6
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "wanted",
+			"from": [
+				0,
+				0,
+				6.4
+			],
+			"to": [
+				4,
+				5,
+				6.6
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						11,
+						4,
+						16
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "wanted_header",
+			"from": [
+				0,
+				2.8,
+				6.32
+			],
+			"to": [
+				3.2,
+				4.2,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						11.8,
+						3.2,
+						13.2
+					],
+					"texture": "#header"
+				}
+			}
+		},
+		{
+			"name": "wanted_portrait",
+			"from": [
+				0,
+				0,
+				6.32
+			],
+			"to": [
+				2,
+				2.2,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						13.8,
+						2,
+						16
+					],
+					"texture": "#portrait"
+				}
+			}
+		},
+		{
+			"name": "wanted_pin1",
+			"from": [
+				2.6,
+				4.1,
+				5.8
+			],
+			"to": [
+				3.6,
+				5.1,
+				6.4
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2.6,
+						10.9,
+						3.6,
+						11.9
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						5.8,
+						10.9,
+						6.4,
+						11.9
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						5.8,
+						10.9,
+						6.4,
+						11.9
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						2.6,
+						5.8,
+						3.6,
+						6.4
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						2.6,
+						5.8,
+						3.6,
+						6.4
+					],
+					"texture": "#pin"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

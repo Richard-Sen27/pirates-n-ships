@@ -56,6 +56,22 @@ public final class LawContent {
     /** The dark oak notice board, legacy id {@code notice_board}. */
     public static final RegistryEntry<Block, NoticeBoardBlock> NOTICE_BOARD = NOTICE_BOARDS.entry(ShipWood.DARK_OAK);
 
+    /**
+     * The 2×2 market notice board in every wood (NB2); the dark oak member keeps the id {@code market_notice_board}.
+     * Pistons can't move it (a part pushed away would split the board).
+     */
+    public static final WoodFamily<MarketNoticeBoardBlock> MARKET_NOTICE_BOARDS = WoodFamily.register("market_notice_board", ShipWood.DARK_OAK,
+            wood -> new MarketNoticeBoardBlock(wood, WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.BLOCK)));
+    /** The dark oak market notice board, id {@code market_notice_board}. */
+    public static final RegistryEntry<Block, MarketNoticeBoardBlock> MARKET_NOTICE_BOARD = MARKET_NOTICE_BOARDS.entry(ShipWood.DARK_OAK);
+    /** The anchor's block entity: counts the postings and sets the board's load. */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<MarketNoticeBoardBlockEntity>> MARKET_NOTICE_BOARD_ENTITY =
+            MARKET_NOTICE_BOARDS.blockEntity("market_notice_board", MarketNoticeBoardBlockEntity::new);
+    /** The other three parts' empty block entity (FIX3, {@link PartBlockEntity}). */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PartBlockEntity>> MARKET_NOTICE_BOARD_PART_ENTITY =
+            MARKET_NOTICE_BOARDS.blockEntity("market_notice_board_part",
+                    (pos, state) -> new PartBlockEntity(LawContent.MARKET_NOTICE_BOARD_PART_ENTITY.get(), pos, state));
+
     /** Owner of a brig door (lower half). */
     @SuppressWarnings("unchecked")
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<BrigDoorBlockEntity>> BRIG_DOOR_ENTITY =

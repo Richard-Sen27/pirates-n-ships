@@ -1,0 +1,206 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"ink": "minecraft:block/black_terracotta",
+		"pin": "minecraft:block/red_concrete",
+		"seal": "minecraft:block/nether_wart_block",
+		"particle": "#parchment"
+	},
+	"elements": [
+		{
+			"name": "notice2",
+			"from": [
+				10,
+				8.5,
+				6.8
+			],
+			"to": [
+				15,
+				13.5,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						10,
+						2.5,
+						15,
+						7.5
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "notice2_ink0",
+			"from": [
+				11,
+				11.5,
+				6.72
+			],
+			"to": [
+				14,
+				11.9,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						11,
+						4.1,
+						14,
+						4.5
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "notice2_ink1",
+			"from": [
+				11,
+				10.3,
+				6.72
+			],
+			"to": [
+				13,
+				10.7,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						11,
+						5.3,
+						13,
+						5.7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "notice2_pin",
+			"from": [
+				12,
+				12.3,
+				6.2
+			],
+			"to": [
+				13,
+				13.3,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						12,
+						2.7,
+						13,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						2.7,
+						6.8,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						2.7,
+						6.8,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						12,
+						6.2,
+						13,
+						6.8
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						12,
+						6.2,
+						13,
+						6.8
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "notice2_seal",
+			"from": [
+				12.8,
+				9.1,
+				6.5
+			],
+			"to": [
+				14.2,
+				10.5,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						12.8,
+						5.5,
+						14.2,
+						6.9
+					],
+					"texture": "#seal"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						5.5,
+						6.8,
+						6.9
+					],
+					"texture": "#seal"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						5.5,
+						6.8,
+						6.9
+					],
+					"texture": "#seal"
+				},
+				"up": {
+					"uv": [
+						12.8,
+						6.5,
+						14.2,
+						6.8
+					],
+					"texture": "#seal"
+				},
+				"down": {
+					"uv": [
+						12.8,
+						6.5,
+						14.2,
+						6.8
+					],
+					"texture": "#seal"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

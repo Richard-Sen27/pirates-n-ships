@@ -1,0 +1,484 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/dark_oak_planks",
+		"log": "minecraft:block/stripped_dark_oak_log",
+		"log_top": "minecraft:block/stripped_dark_oak_log_top",
+		"board": "minecraft:block/spruce_planks",
+		"nail": "minecraft:block/gold_block",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "post_left",
+			"from": [
+				11.5,
+				0,
+				6.5
+			],
+			"to": [
+				14.5,
+				14,
+				9.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						11.5,
+						2,
+						14.5,
+						16
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						11.5,
+						2,
+						14.5,
+						16
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						2,
+						9.5,
+						16
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						2,
+						9.5,
+						16
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						11.5,
+						6.5,
+						14.5,
+						9.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "board",
+			"from": [
+				0,
+				0,
+				7
+			],
+			"to": [
+				11.5,
+				11,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						5,
+						11.5,
+						16
+					],
+					"texture": "#board"
+				},
+				"south": {
+					"uv": [
+						0,
+						5,
+						11.5,
+						16
+					],
+					"texture": "#board"
+				}
+			}
+		},
+		{
+			"name": "rail_top",
+			"from": [
+				0,
+				11,
+				6.5
+			],
+			"to": [
+				11.5,
+				13,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						3,
+						0,
+						5,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						3,
+						9,
+						5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3,
+						0,
+						5,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6.5,
+						0,
+						9,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						6.5,
+						0,
+						9,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "roof_north",
+			"from": [
+				0,
+				14.5,
+				2
+			],
+			"to": [
+				15.9,
+				15.5,
+				8
+			],
+			"rotation": {
+				"angle": -22.5,
+				"axis": "x",
+				"origin": [
+					0,
+					15,
+					8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0.5,
+						15.9,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						2,
+						0.5,
+						8,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						0,
+						0.5,
+						15.9,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						0,
+						2,
+						15.9,
+						8
+					],
+					"texture": "#planks"
+				},
+				"down": {
+					"uv": [
+						0,
+						2,
+						15.9,
+						8
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "roof_south",
+			"from": [
+				0,
+				14.5,
+				8
+			],
+			"to": [
+				15.8,
+				15.5,
+				14
+			],
+			"rotation": {
+				"angle": 22.5,
+				"axis": "x",
+				"origin": [
+					0,
+					15,
+					8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0.5,
+						15.8,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						8,
+						0.5,
+						14,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						0,
+						0.5,
+						15.8,
+						1.5
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						0,
+						8,
+						15.8,
+						14
+					],
+					"texture": "#planks"
+				},
+				"down": {
+					"uv": [
+						0,
+						8,
+						15.8,
+						14
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "ridge",
+			"from": [
+				0,
+				15,
+				7.25
+			],
+			"to": [
+				16,
+				16,
+				8.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						1,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						1,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						1
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "nail_t1",
+			"from": [
+				0,
+				11.7,
+				6.2
+			],
+			"to": [
+				0.3,
+				12.3,
+				6.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						3.7,
+						0.3,
+						4.3
+					],
+					"texture": "#nail"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						3.7,
+						6.5,
+						4.3
+					],
+					"texture": "#nail"
+				},
+				"up": {
+					"uv": [
+						0,
+						6.2,
+						0.3,
+						6.5
+					],
+					"texture": "#nail"
+				},
+				"down": {
+					"uv": [
+						0,
+						6.2,
+						0.3,
+						6.5
+					],
+					"texture": "#nail"
+				}
+			}
+		},
+		{
+			"name": "nail_t2",
+			"from": [
+				9.4,
+				11.7,
+				6.2
+			],
+			"to": [
+				10,
+				12.3,
+				6.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						9.4,
+						3.7,
+						10,
+						4.3
+					],
+					"texture": "#nail"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						3.7,
+						6.5,
+						4.3
+					],
+					"texture": "#nail"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						3.7,
+						6.5,
+						4.3
+					],
+					"texture": "#nail"
+				},
+				"up": {
+					"uv": [
+						9.4,
+						6.2,
+						10,
+						6.5
+					],
+					"texture": "#nail"
+				},
+				"down": {
+					"uv": [
+						9.4,
+						6.2,
+						10,
+						6.5
+					],
+					"texture": "#nail"
+				}
+			}
+		}
+	]
+}

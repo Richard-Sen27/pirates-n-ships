@@ -1,0 +1,351 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/dark_oak_planks",
+		"log": "minecraft:block/stripped_dark_oak_log",
+		"log_top": "minecraft:block/stripped_dark_oak_log_top",
+		"board": "minecraft:block/spruce_planks",
+		"nail": "minecraft:block/gold_block",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "foot_left",
+			"from": [
+				10.5,
+				0,
+				5.5
+			],
+			"to": [
+				15.5,
+				1.5,
+				10.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						10.5,
+						14.5,
+						15.5,
+						16
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						5.5,
+						14.5,
+						10.5,
+						16
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						10.5,
+						14.5,
+						15.5,
+						16
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						5.5,
+						14.5,
+						10.5,
+						16
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						10.5,
+						5.5,
+						15.5,
+						10.5
+					],
+					"texture": "#planks"
+				},
+				"down": {
+					"uv": [
+						10.5,
+						5.5,
+						15.5,
+						10.5
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "post_left",
+			"from": [
+				11.5,
+				1.5,
+				6.5
+			],
+			"to": [
+				14.5,
+				16,
+				9.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						11.5,
+						0,
+						14.5,
+						14.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						11.5,
+						0,
+						14.5,
+						14.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						14.5
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						14.5
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						11.5,
+						6.5,
+						14.5,
+						9.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "board",
+			"from": [
+				0,
+				7,
+				7
+			],
+			"to": [
+				11.5,
+				16,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						11.5,
+						9
+					],
+					"texture": "#board"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						11.5,
+						9
+					],
+					"texture": "#board"
+				}
+			}
+		},
+		{
+			"name": "rail_bottom",
+			"from": [
+				0,
+				5,
+				6.5
+			],
+			"to": [
+				11.5,
+				7,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						9,
+						0,
+						11,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						9,
+						9,
+						11
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						9,
+						0,
+						11,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6.5,
+						0,
+						9,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						6.5,
+						0,
+						9,
+						11.5
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "nail_b1",
+			"from": [
+				0,
+				5.7,
+				6.2
+			],
+			"to": [
+				0.3,
+				6.3,
+				6.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						9.7,
+						0.3,
+						10.3
+					],
+					"texture": "#nail"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						9.7,
+						6.5,
+						10.3
+					],
+					"texture": "#nail"
+				},
+				"up": {
+					"uv": [
+						0,
+						6.2,
+						0.3,
+						6.5
+					],
+					"texture": "#nail"
+				},
+				"down": {
+					"uv": [
+						0,
+						6.2,
+						0.3,
+						6.5
+					],
+					"texture": "#nail"
+				}
+			}
+		},
+		{
+			"name": "nail_b2",
+			"from": [
+				9.4,
+				5.7,
+				6.2
+			],
+			"to": [
+				10,
+				6.3,
+				6.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						9.4,
+						9.7,
+						10,
+						10.3
+					],
+					"texture": "#nail"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						9.7,
+						6.5,
+						10.3
+					],
+					"texture": "#nail"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						9.7,
+						6.5,
+						10.3
+					],
+					"texture": "#nail"
+				},
+				"up": {
+					"uv": [
+						9.4,
+						6.2,
+						10,
+						6.5
+					],
+					"texture": "#nail"
+				},
+				"down": {
+					"uv": [
+						9.4,
+						6.2,
+						10,
+						6.5
+					],
+					"texture": "#nail"
+				}
+			}
+		}
+	]
+}

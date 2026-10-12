@@ -60,6 +60,7 @@ public final class LawContentModule implements ModModule {
     @Override
     public void gatherData(DataContributions data) {
         NoticeBoardData.gather(data);
+        MarketNoticeBoardData.gather(data);
         data.lang(lang -> lang
                 .item(LawContent.SHACKLES, "Shackles")
                 .item(LawContent.BRIG_KEY, "Brig Key")

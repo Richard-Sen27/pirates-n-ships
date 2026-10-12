@@ -1,0 +1,414 @@
+{
+	"credit": "Made with Blockbench, source tools/gen_market_notice_board_models.py",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"parchment": "minecraft:block/sandstone_top",
+		"paper": "minecraft:block/white_terracotta",
+		"ink": "minecraft:block/black_terracotta",
+		"pin": "minecraft:block/red_concrete",
+		"portrait": "minecraft:block/brown_terracotta",
+		"particle": "#paper"
+	},
+	"elements": [
+		{
+			"name": "n2",
+			"from": [
+				5.5,
+				8,
+				6.8
+			],
+			"to": [
+				10.5,
+				13.5,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5.5,
+						2.5,
+						10.5,
+						8
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "n2_ink0",
+			"from": [
+				6.5,
+				11.5,
+				6.72
+			],
+			"to": [
+				9.5,
+				11.9,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.5,
+						4.1,
+						9.5,
+						4.5
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n2_ink1",
+			"from": [
+				6.5,
+				10.3,
+				6.72
+			],
+			"to": [
+				8.5,
+				10.7,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.5,
+						5.3,
+						8.5,
+						5.7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n2_ink2",
+			"from": [
+				6.5,
+				9.1,
+				6.72
+			],
+			"to": [
+				9.5,
+				9.5,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.5,
+						6.5,
+						9.5,
+						6.9
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n2_pin",
+			"from": [
+				7.5,
+				12.3,
+				6.2
+			],
+			"to": [
+				8.5,
+				13.3,
+				6.8
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						2.7,
+						8.5,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"east": {
+					"uv": [
+						6.2,
+						2.7,
+						6.8,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"west": {
+					"uv": [
+						6.2,
+						2.7,
+						6.8,
+						3.7
+					],
+					"texture": "#pin"
+				},
+				"up": {
+					"uv": [
+						7.5,
+						6.2,
+						8.5,
+						6.8
+					],
+					"texture": "#pin"
+				},
+				"down": {
+					"uv": [
+						7.5,
+						6.2,
+						8.5,
+						6.8
+					],
+					"texture": "#pin"
+				}
+			}
+		},
+		{
+			"name": "n4",
+			"from": [
+				13.5,
+				7.5,
+				6.8
+			],
+			"to": [
+				16,
+				11,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						13.5,
+						5,
+						16,
+						8.5
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "n4_ink0",
+			"from": [
+				14.5,
+				9,
+				6.72
+			],
+			"to": [
+				16,
+				9.4,
+				6.72
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14.5,
+						6.6,
+						16,
+						7
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n5",
+			"from": [
+				9,
+				12,
+				6.6
+			],
+			"to": [
+				14,
+				18,
+				6.8
+			],
+			"rotation": {
+				"angle": -22.5,
+				"axis": "z",
+				"origin": [
+					11.5,
+					15,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						9,
+						10,
+						14,
+						16
+					],
+					"texture": "#paper"
+				}
+			}
+		},
+		{
+			"name": "n5_ink1",
+			"from": [
+				10,
+				14.8,
+				6.52
+			],
+			"to": [
+				12,
+				15.2,
+				6.52
+			],
+			"rotation": {
+				"angle": -22.5,
+				"axis": "z",
+				"origin": [
+					11.5,
+					15,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						10,
+						0.8,
+						12,
+						1.2
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "n5_ink2",
+			"from": [
+				10,
+				13.6,
+				6.52
+			],
+			"to": [
+				13,
+				14,
+				6.52
+			],
+			"rotation": {
+				"angle": -22.5,
+				"axis": "z",
+				"origin": [
+					11.5,
+					15,
+					6.6
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						10,
+						2,
+						13,
+						2.4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "wanted",
+			"from": [
+				12,
+				9.5,
+				6.4
+			],
+			"to": [
+				16,
+				16,
+				6.6
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						12,
+						0,
+						16,
+						6.5
+					],
+					"texture": "#parchment"
+				}
+			}
+		},
+		{
+			"name": "wanted_portrait",
+			"from": [
+				14,
+				13.1,
+				6.32
+			],
+			"to": [
+				16,
+				16,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14,
+						0,
+						16,
+						2.9
+					],
+					"texture": "#portrait"
+				}
+			}
+		},
+		{
+			"name": "wanted_ink0",
+			"from": [
+				13,
+				12,
+				6.32
+			],
+			"to": [
+				16,
+				12.4,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						13,
+						3.6,
+						16,
+						4
+					],
+					"texture": "#ink"
+				}
+			}
+		},
+		{
+			"name": "wanted_ink1",
+			"from": [
+				13.8,
+				10.9,
+				6.32
+			],
+			"to": [
+				16,
+				11.3,
+				6.32
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						13.8,
+						4.7,
+						16,
+						5.1
+					],
+					"texture": "#ink"
+				}
+			}
+		}
+	],
+	"ambientocclusion": false
+}

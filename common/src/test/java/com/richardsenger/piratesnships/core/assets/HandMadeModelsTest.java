@@ -60,7 +60,7 @@ class HandMadeModelsTest {
             "bulwark_port_lid", "bulwark_port_lid_open", "cannon",
             "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
             "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chainplate", "chart_table", "cleat", "crows_nest", "crows_nest_pole", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mast_hoop", "mooring_ring",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "market_notice_board_bottom_left", "market_notice_board_bottom_left_busy", "market_notice_board_bottom_left_empty", "market_notice_board_bottom_left_some", "market_notice_board_bottom_right", "market_notice_board_bottom_right_busy", "market_notice_board_bottom_right_empty", "market_notice_board_bottom_right_some", "market_notice_board_item", "market_notice_board_top_left", "market_notice_board_top_left_busy", "market_notice_board_top_left_empty", "market_notice_board_top_left_some", "market_notice_board_top_right", "market_notice_board_top_right_busy", "market_notice_board_top_right_empty", "market_notice_board_top_right_some", "mast_hoop", "mooring_ring",
             "name_board", "name_board_cap_left", "name_board_cap_right", "name_board_item", "notice_board", "oar_bench", "pantry", "railing_baluster_east", "railing_baluster_west", "railing_edge", "railing_gate_item", "railing_gate_left", "railing_gate_left_meet", "railing_gate_left_meet_open", "railing_gate_left_open", "railing_gate_right",
             "railing_gate_right_meet", "railing_gate_right_meet_open", "railing_gate_right_open", "railing_item", "railing_latch", "railing_port", "railing_port_sill", "railing_post", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "rope_railing_edge", "rope_railing_item", "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_foot_left", "sea_cot_foot_left_joined", "sea_cot_foot_right",
@@ -410,6 +410,11 @@ class HandMadeModelsTest {
             for (String side : List.of("_left", "_right", "_left_joined", "_right_joined")) keys.put(half + side, List.of("planks", "log"));
         }
         keys.put("notice_board", List.of("planks", "log", "log_top"));
+        // NB2: the market notice board's frames and item (tools/gen_market_notice_board_models.py); the notices have no wood
+        for (String n : List.of("market_notice_board_bottom_left", "market_notice_board_bottom_right", "market_notice_board_top_left",
+                "market_notice_board_top_right", "market_notice_board_item")) {
+            keys.put(n, List.of("planks", "log", "log_top"));
+        }
         for (String n : List.of("flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top")) keys.put(n, List.of("log"));
         for (String n : List.of("flag_pedestal", "flag_pedestal_pole", "yard", "cleat")) keys.put(n, List.of("log", "log_top"));
         for (String n : List.of("crows_nest", "crows_nest_pole")) keys.put(n, List.of("planks", "log"));

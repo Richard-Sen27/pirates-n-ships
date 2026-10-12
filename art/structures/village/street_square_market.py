@@ -3,7 +3,8 @@
 The street comes in from the north and opens into a paved square with rounded corners; it leads nowhere else, so
 buildings stand round it on the west, east and south sides. In the middle a market stall: four posts under a striped
 awning of red and white wool, a counter of barrels and crates with produce (melons, pumpkins, hay, a basket of
-apples, a cask of fish on ice). Lantern posts at the corners, benches."""
+apples, a cask of fish on ice). Lantern posts at the corners, benches. At the back of the square, behind the stall and
+facing it and the street, the 2x2 market notice board on its posts (NB2; anchor, the viewer's bottom left, at x 8)."""
 from _streets import corner_lanterns, lay, line, square_paving, square_verge
 from _style import PALETTE, bench
 from buildspec import Piece
@@ -36,6 +37,14 @@ p.put(7, 1, Z1, "minecraft:composter[level=0]")
 p.put(6, 1, 9, "minecraft:spruce_stairs[facing=south,half=bottom]")
 p.put(7, 3, 8, "lantern_hanging")
 
+# NB2: the market notice board at the centre-back, notices north towards the stall and the street; the viewer's left is
+# east, so the anchor (bottom left) is at x 8 and the board runs west to x 7 and up to y 2
+BOARD = "pirates_n_ships:market_notice_board[facing=north,part=%s]"
+p.put(8, 1, 12, BOARD % "bottom_left")
+p.put(7, 1, 12, BOARD % "bottom_right")
+p.put(8, 2, 12, BOARD % "top_left")
+p.put(7, 2, 12, BOARD % "top_right")
+
 corner_lanterns(p, 2, 4, S - 3, S - 3)
 bench(p, 2, 1, 8, "east")
 bench(p, S - 3, 1, 8, "west")
@@ -49,6 +58,7 @@ p.connector(C, 0, S - 1, "building_out", "south", "minecraft:dirt_path")
 p.connector(0, 0, 12, "deco_out", "west", "minecraft:dirt_path")
 p.connector(S - 1, 0, 12, "deco_out", "east", "minecraft:dirt_path")
 
-p.emit("a small paved market square with a striped stall in the middle, a dead end ringed by buildings",
+p.emit("a small paved market square with a striped stall in the middle and the market notice board at the back, "
+       "a dead end ringed by buildings",
        ["street_in at [7, 0, 0] (north); building_out at [0, 0, 8] (west), [14, 0, 8] (east) and [7, 0, 14] "
         "(south); deco_out at [0, 0, 12] (west) and [14, 0, 12] (east)."])

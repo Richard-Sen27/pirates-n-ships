@@ -66,6 +66,7 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 | `flag_pedestal` | `flag_pedestal` (spruce) | `#log`, `#log_top` | `ShipDecor.FLAG_PEDESTALS` | `ShipDecorModule` |
 | `stern_window`, `chart_table`, `sea_cot` | dark oak | `#planks`, `#log` | `ShipDecor.STERN_WINDOWS`, `CHART_TABLES`, `SEA_COTS` | `DecorData` |
 | `notice_board` | `notice_board` (dark oak) | `#planks`, `#log`, `#log_top` | `law/content/LawContent.NOTICE_BOARDS` | `NoticeBoardData` |
+| `market_notice_board` (NB2) | `market_notice_board` (dark oak) | `#planks`, `#log`, `#log_top` (four frame parents `market_notice_board_<part>` and `_item`; the notices per part and load have no wood and no children) | `LawContent.MARKET_NOTICE_BOARDS` | `MarketNoticeBoardData` |
 | `crows_nest` | `crows_nest` (spruce) | `#planks`, `#log` | `station/lookout/LookoutContent.CROWS_NESTS` | `LookoutModule` |
 | `yard` | `yard` (spruce) | `#log`, `#log_top` | `sailing/block/SailingBlocks.YARDS` | `sailing/block/YardData` |
 | `cleat` | `cleat` (dark oak) | `#log`, `#log_top` | `sailing/sail/TriangularSailContent.CLEATS` | `TriangularSailData` |
@@ -104,7 +105,8 @@ yard" asks `instanceof YardBlock` (or the family's tag) instead, never `is(YARD)
 `WoodBlock.codec(factory)` for a block class whose vanilla parent demands one. Recipes per wood: name board two planks
 and a gold nugget (3); flagpole the stripped log over two sticks (2); flag pedestal the stripped log over a plank (2);
 stern window from the wood's planks (2, dark oak's before); chart table, sea cot (any wool, `WoodRecipe.tag`), notice
-board, crow's nest and cleat from the wood's planks; yard three stripped logs (3, any log before). Tags: the yards and
+board, crow's nest and cleat from the wood's planks; yard three stripped logs (3, any log before); the market notice
+board (NB2) two of the wood's notice boards (`WoodRecipe.member`) with a paper between them over two of its logs. Tags: the yards and
 crow's nests of every wood are `ratlines_anchors`; `pirates_n_ships:yards` and `:cleats` hold every member.
 
 **Sable physics of a family:** the yard and the cleat had a per-id `physics_block_properties` file. A selector naming a

@@ -80,4 +80,39 @@ public final class ChartHeldGameTests {
         }
         helper.succeed();
     }
+
+    /**
+     * CHART4: drawn every tenth of a tick, the unroll shows each of the fourteen frames in order and the close rolls up
+     * through them backwards; every frame's model ships with the mod.
+     */
+    @ModGameTest
+    public static void theUnrollShowsEveryFrameInOrder(GameTestHelper helper) {
+        java.util.List<String> expected = new java.util.ArrayList<>(java.util.List.of("chart"));
+        ChartHeldMotion.FRAMES.forEach(f -> expected.add(f.model()));
+        helper.assertValueEqual(expected.size(), 15, "the closed chart and fourteen frames");
+        for (String model : expected) {
+            helper.assertTrue(ChartHeldGameTests.class.getResource("/assets/pirates_n_ships/models/item/" + model + ".json") != null,
+                    model + " ships with the mod");
+        }
+        helper.assertValueEqual(shown(true), expected, "unrolling");
+        java.util.List<String> back = new java.util.ArrayList<>(expected);
+        java.util.Collections.reverse(back);
+        helper.assertValueEqual(shown(false), back, "rolling up");
+        helper.succeed();
+    }
+
+    /** The frames a client shows, in order, while the chart opens (or, from open, closes), sampled every tenth of a tick. */
+    private static java.util.List<String> shown(boolean open) {
+        java.util.List<String> seen = new java.util.ArrayList<>();
+        float previous = open ? 0f : 1f;
+        for (int tick = 0; tick <= ChartHeldMotion.UNROLL_TICKS + 1; tick++) {
+            float current = ChartHeldMotion.step(previous, open);
+            for (int k = 0; k < 10; k++) {
+                String frame = ChartHeldMotion.frame(ChartHeldMotion.lerp(previous, current, k / 10f));
+                if (seen.isEmpty() || !seen.get(seen.size() - 1).equals(frame)) seen.add(frame);
+            }
+            previous = current;
+        }
+        return seen;
+    }
 }

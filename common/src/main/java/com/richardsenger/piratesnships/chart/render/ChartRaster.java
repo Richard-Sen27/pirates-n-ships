@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.chart.render;
 import com.richardsenger.piratesnships.chart.data.CellClass;
 import com.richardsenger.piratesnships.chart.data.ChartCells;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
+import com.richardsenger.piratesnships.chart.sample.MapColours;
 
 /**
  * Draws chart cells as ARGB pixels in the pirate style (work package MAP1), pure: no client classes, so the screen
@@ -19,6 +20,13 @@ import com.richardsenger.piratesnships.chart.data.ChartRegion;
  *
  * Patterns use world pixel coordinates ({@code cell * pxPerCell + offset}), so neighbouring regions or tiles join
  * seamlessly. Everything is deterministic.
+ *
+ * <p>CHART4, {@link ChartStyle#COLOURED}: a land cell (beach, land, snow and ice) with a colour (the cells are wide
+ * cells, {@link ChartCells#wide}) is filled with vanilla's map colour of the cell, its saturation cut to
+ * {@link #SATURATION} percent, mixed {@link #PAPER_MIX} percent towards the parchment and laid on at alpha
+ * {@link #COLOURED_ALPHA}, stippled like the ink land; so a village's roofs, paths and fields show while the ink
+ * marks, labels and icons still stand out. Water keeps the chart's wash, coasts their ink stroke; a land cell without
+ * a colour (sampled before CHART4) draws in ink. {@link ChartStyle#INK} ignores the colours.
  */
 public final class ChartRaster {
 
@@ -34,13 +42,24 @@ public final class ChartRaster {
     static final int LAND_DOT = 0xC0857C52;
     static final int SNOW = 0xE0F0F0E8;
     static final int SNOW_DOT = 0xE0C8D2D8;
+    /** CHART4: percent of a block colour's saturation kept in the coloured style. */
+    static final int SATURATION = 60;
+    /** CHART4: percent a block colour is mixed towards the parchment in the coloured style. */
+    static final int PAPER_MIX = 22;
+    static final int COLOURED_ALPHA = 0xD8;
+    static final int PAPER = 0xE6D3A6;
 
     private ChartRaster() {
     }
 
     /** The pixels of region {@code (rx, rz)} at {@code px} pixels per cell: {@code (64 * px)^2}, row-major. */
     public static int[] renderRegion(CellLookup cells, int rx, int rz, int px) {
-        return render(cells, rx << ChartRegion.SHIFT, rz << ChartRegion.SHIFT, ChartRegion.SIZE, ChartRegion.SIZE, px);
+        return renderRegion(cells, rx, rz, px, ChartStyle.INK);
+    }
+
+    /** CHART4: {@link #renderRegion(CellLookup, int, int, int)} in {@code style}. */
+    public static int[] renderRegion(CellLookup cells, int rx, int rz, int px, ChartStyle style) {
+        return render(cells, rx << ChartRegion.SHIFT, rz << ChartRegion.SHIFT, ChartRegion.SIZE, ChartRegion.SIZE, px, style);
     }
 
     /**
@@ -49,6 +68,12 @@ public final class ChartRaster {
      * Neighbours outside the rectangle are read too (coast strokes).
      */
     public static int[] render(CellLookup cells, int minCx, int minCz, int w, int h, int px) {
+        return render(cells, minCx, minCz, w, h, px, ChartStyle.INK);
+    }
+
+    /** CHART4: {@link #render(CellLookup, int, int, int, int, int)} in {@code style} (the cells may be wide cells). */
+    public static int[] render(CellLookup cells, int minCx, int minCz, int w, int h, int px, ChartStyle style) {
+        boolean coloured = style == ChartStyle.COLOURED;
         if (px < 1) throw new IllegalArgumentException("pixels per cell " + px);
         int width = w * px;
         int[] out = new int[width * h * px];
@@ -65,6 +90,8 @@ public final class ChartRaster {
                 int e = cells.cell(cx + 1, cz);
                 boolean land = cls.isLand();
                 boolean coast = land && ChartCells.coast(cell);
+                int tint = coloured && land ? ChartCells.colour(cell) : 0;
+                int paint = tint == 0 ? 0 : softened(tint);
                 for (int j = 0; j < px; j++) {
                     for (int i = 0; i < px; i++) {
                         int gx = cx * px + i;
@@ -74,6 +101,8 @@ public final class ChartRaster {
                             c = INK;
                         } else if (!land && px >= 4 && ripplePixel(i, j, px, n, s, wv, e)) {
                             c = RIPPLE;
+                        } else if (paint != 0) {
+                            c = noise(gx, gz) < 28 ? darker(paint) : paint;
                         } else {
                             c = fill(cls, gx, gz, px);
                         }
@@ -119,6 +148,36 @@ public final class ChartRaster {
             case SNOW_ICE -> noise(gx, gz) < 20 ? SNOW_DOT : SNOW;
             case UNKNOWN -> 0;
         };
+    }
+
+    /**
+     * CHART4: the coloured style's fill for packed map colour {@code packed}: vanilla's colour with its saturation cut
+     * to {@link #SATURATION} percent, mixed {@link #PAPER_MIX} percent towards the parchment, at alpha
+     * {@link #COLOURED_ALPHA}; 0 for no colour.
+     */
+    public static int softened(int packed) {
+        int argb = MapColours.argb(packed);
+        if (argb == 0) return 0;
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        int luma = (r * 77 + g * 150 + b * 29) >> 8;
+        r = paper(luma + (r - luma) * SATURATION / 100, (PAPER >> 16) & 0xFF);
+        g = paper(luma + (g - luma) * SATURATION / 100, (PAPER >> 8) & 0xFF);
+        b = paper(luma + (b - luma) * SATURATION / 100, PAPER & 0xFF);
+        return COLOURED_ALPHA << 24 | r << 16 | g << 8 | b;
+    }
+
+    private static int paper(int c, int p) {
+        return Math.max(0, Math.min(255, (c * (100 - PAPER_MIX) + p * PAPER_MIX + 50) / 100));
+    }
+
+    /** The stipple of the coloured style: the same colour 15 percent darker. */
+    static int darker(int argb) {
+        int r = ((argb >> 16) & 0xFF) * 85 / 100;
+        int g = ((argb >> 8) & 0xFF) * 85 / 100;
+        int b = (argb & 0xFF) * 85 / 100;
+        return (argb & 0xFF000000) | r << 16 | g << 8 | b;
     }
 
     /** A small wave tick "^" (three pixels) at one hashed spot in every 16 x 12 pixel tile. */

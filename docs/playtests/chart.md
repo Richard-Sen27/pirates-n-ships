@@ -238,3 +238,41 @@ Preparation: two clients (a second account, or a LAN world joined by a second in
    rolled in the hand for you and for B.
 9. **Without PAL** (if you can remove the Player Animation Library jar): the chart still unrolls, held in vanilla's
    one-armed pose (the chart then floats to the side of the hand; expected).
+
+## CHART4: block colours on the chart, the smoother unroll
+
+What changed: every sampled cell keeps, beside its class, vanilla's map colour of its columns (the most common colour
+of the cell's 4 x 4 columns, a brightness step from the height against the cell to the north, like a vanilla map at
+4 blocks per pixel). The chart draws the land in those colours, desaturated and laid onto the parchment
+(`chart.style` `COLOURED`, the default; `INK` is the old look); the sea keeps its wash, the coasts their ink. Far zoom
+tiles take the most common colour of their land cells. Map tiles and boards stay in ink. The held chart now has 14
+frames (`chart_unroll_0..12`, `chart_open`) and its arm animations are keyed every 25 ms along an ease-in-out curve,
+so unrolling and rolling up start and stop gently.
+
+Covered headlessly: `MapColoursTest` (vanilla's ids for grass, sand, planks, water, stone, the path, waterlogged
+slabs and kelp; brightness steps from height and depth; the dominant colour), `ChartColoursTest` (merge, save and
+old saves, the region payload's size, far-tile downsampling, ink vs coloured, the client's redraw on a new style),
+`ChartHeldModelTest` (14 frames, eased roller spacing, keys every 25 ms, the rig for every frame), and the GameTests
+`aSampledVillageCellCarriesThePlanksColour`, `theStyleSwitchesAtRuntime`, `aBoardFromAColouredChartIsDrawnInInk`,
+`theUnrollShowsEveryFrameInOrder`. Render of both styles: `art/renders/chart_styles.png`; held frames:
+`art/renders/chart_held.png`.
+
+1. **A village on the chart:** sail or walk past a vanilla village (or one of the mod's ports) and open the chart at
+   the closest zoom. Expected: the houses' roofs and walls show as brown and grey patches, the paths as a lighter
+   brown-ochre, fields and grass in a muted green, sand in pale yellow, snow white; slopes facing south look lighter,
+   north faces darker. The colours are softer than a vanilla map's and the ink markers, labels and icons stay
+   readable on top. Water is the old blue wash; the coastline is still a black ink line.
+2. **Zoomed out:** scroll out to the widest step: the village is still a small coloured spot; forests, plains and
+   deserts read as green, light green and yellow areas.
+3. **Old charts:** in a world from before this version, open the chart: the parts charted earlier are in the old
+   inks; walk past one of them again and it turns coloured within two seconds.
+4. **Style switch:** set `chart.style = "INK"` in the server config (the config screen or the file, then `/reload`)
+   and open the chart again: the land is the old parchment inks, everything else unchanged. Back to `COLOURED`: the
+   colours come back on the next opening.
+5. **Map board:** draw a board over the village: the board is in the old ink look (by design).
+6. **Smoother unroll:** open and close the chart in third person (F5) and watch another player do it: the rollers
+   spread in many small steps (no visible jumps), slow at the start and when they reach the shoulders; rolling up
+   follows the same curve backwards. Closing half way through the unroll rolls it up from where it was.
+7. **Performance:** with a few players flying over new land (elytra), the server's tick time (F3 or `/neoforge tps`)
+   stays where it was before this version; the chart sampling reads about 16 columns per cell every 40 ticks
+   (`chart.colour_columns` 2 reads 4).

@@ -83,6 +83,11 @@ public final class WorldConfig {
     public static final ConfigValue<Boolean> STRUCTURE_CLEAR_DOORS = STRUCTURES.bool("clear_doors", true,
             "When a port structure generates, the ground, plants, snow and decorations standing in the two cells in front of "
                     + "each door (on both sides) are cleared away (off = only what the pieces clear themselves)");
+    /** PIER1: read by {@code world.structure.PileFootings} in {@code PortStructure.afterPlace}. */
+    public static final ConfigValue<Boolean> STRUCTURE_PILES_TO_FLOOR = STRUCTURES.bool("piles_to_floor", true,
+            "When a pier, jetty, quay or one of their extension sections generates, every pile and pillar that ends in open water "
+                    + "is carried straight down to the sea floor and stands on its cobblestone footing there (off = they end where the "
+                    + "template ends, hanging in the water over deep sea)");
     /** STR8: read by {@code world.structure.PortStructure.plan}. */
     public static final ConfigValue<Boolean> STRUCTURE_PIERS_END_IN_WATER = STRUCTURES.bool("piers_end_in_water", true,
             "A port only generates where its pier, jetty or quay and four blocks beyond its end lie over the sea (another side "

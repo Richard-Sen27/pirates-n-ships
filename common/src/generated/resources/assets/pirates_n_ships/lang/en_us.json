@@ -7554,6 +7554,8 @@
   "pirates_n_ships.configuration.world.structures.navy_outpost.spacing.tooltip": "Average distance between two navy outposts (the side of the grid cell in which at most one starts). In chunks (16 blocks); a change applies to chunks generated afterwards, structures already generated stay where they are",
   "pirates_n_ships.configuration.world.structures.piers_end_in_water": "Piers End In Water",
   "pirates_n_ships.configuration.world.structures.piers_end_in_water.tooltip": "A port only generates where its pier, jetty or quay and four blocks beyond its end lie over the sea (another side of the site is tried first); off = the side with the most sea is taken whatever lies under the pier",
+  "pirates_n_ships.configuration.world.structures.piles_to_floor": "Piles To Floor",
+  "pirates_n_ships.configuration.world.structures.piles_to_floor.tooltip": "When a pier, jetty, quay or one of their extension sections generates, every pile and pillar that ends in open water is carried straight down to the sea floor and stands on its cobblestone footing there (off = they end where the template ends, hanging in the water over deep sea)",
   "pirates_n_ships.configuration.world.structures.pirate_island": "Pirate Island",
   "pirates_n_ships.configuration.world.structures.pirate_island.buried_treasure": "Buried Treasure",
   "pirates_n_ships.configuration.world.structures.pirate_island.buried_treasure.tooltip": "The treasure spot of a new camp gets a buried chest (loot table pirates_n_ships:chests/buried_treasure), recorded on the port as a treasure site; off = the marker stays plain sand",

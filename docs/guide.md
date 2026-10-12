@@ -815,7 +815,7 @@ piece that would need more than four blocks of cutting or filling is left out wi
 junctions always lead on straight, so two turns never follow each other. Huts, houses and decorations stand with their
 four corners on land, trails with their centre and four of five sample points. The fort's wall runs end with a tower
 on land where the coast turns away. The two cells in front of every door, on both sides, are cleared of ground, plants,
-snow and decorations when the port generates (`world.structures.clear_doors`). Ports keep off snowy and frozen shores
+snow and decorations when the port generates (`world.structures.clear_doors`). Pier piles, jetty posts and quay pillars stand on the sea floor however deep the water is, and the navy quay is a deck on stone pillars with open water under it (`world.structures.piles_to_floor`). Ports keep off snowy and frozen shores
 (the biome tag `pirates_n_ships:cold_shores`: snowy beaches, frozen seas): each kind has a second structure for those
 shores (`seafarer_village_cold`, `pirate_island_cold`, `navy_outpost_cold`) on the same grid, which generates at only
 `cold_frequency` (0.1) of its sites.

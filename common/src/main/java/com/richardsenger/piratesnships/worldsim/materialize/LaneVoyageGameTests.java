@@ -89,15 +89,21 @@ public final class LaneVoyageGameTests {
     // ------------------------------------------------------------------ fixtures
 
     private static void basin(GameTestHelper h) {
+        basin(h, 0, 0);
+    }
+
+    /** The basin with the coast, the islands and the berths moved {@code sx}, {@code sz} blocks (LANE3: the lane cells' alignment). */
+    private static void basin(GameTestHelper h, int sx, int sz) {
         ServerLevel level = h.getLevel();
         BlockState stone = Blocks.STONE.defaultBlockState();
         BlockState water = Blocks.WATER.defaultBlockState();
         BlockState air = Blocks.AIR.defaultBlockState();
         for (int x = 0; x < SIZE; x++) {
             for (int z = 0; z < SIZE; z++) {
-                boolean land = x == 0 || x == SIZE - 1 || z == 0 || z == SIZE - 1 || x <= COAST
-                        || (x >= ISLE_X0 && x <= ISLE_X1 && z >= ISLE_Z0 && z <= ISLE_Z1)
-                        || (x >= FAR_X0 && x <= FAR_X1 && z >= FAR_Z0 && z <= FAR_Z1);
+                int fx = x - sx, fz = z - sz;
+                boolean land = x == 0 || x == SIZE - 1 || z == 0 || z == SIZE - 1 || fx <= COAST
+                        || (fx >= ISLE_X0 && fx <= ISLE_X1 && fz >= ISLE_Z0 && fz <= ISLE_Z1)
+                        || (fx >= FAR_X0 && fx <= FAR_X1 && fz >= FAR_Z0 && fz <= FAR_Z1);
                 level.setBlock(h.absolutePos(new BlockPos(x, 1, z)), stone, Block.UPDATE_CLIENTS);
                 for (int y = 2; y <= SEA_TOP + 1; y++) {
                     level.setBlock(h.absolutePos(new BlockPos(x, y, z)), land ? stone : y <= SEA_TOP ? water : air, Block.UPDATE_CLIENTS);
@@ -171,6 +177,61 @@ public final class LaneVoyageGameTests {
         }
     }
 
+    /**
+     * LANE3: what else stands in the test area above the basin or near the ship: blocks above the water (the area is
+     * cleared when the test starts and the basin fills it only up to the surface), other ships, entities near the ship.
+     */
+    static String intruders(GameTestHelper h, ShipBody own) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO);
+        Map<String, Integer> blocks = new java.util.TreeMap<>();
+        BlockPos first = null;
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
+                for (int y = SEA_TOP + 2; y < 40; y++) {
+                    BlockPos p = o.offset(x, y, z);
+                    BlockState st = level.getBlockState(p);
+                    if (st.isAir() || st.is(Blocks.BARRIER)) continue;
+                    blocks.merge(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(st.getBlock()).getPath(), 1, Integer::sum);
+                    if (first == null) first = p.subtract(o);
+                }
+            }
+        }
+        List<String> ships = new java.util.ArrayList<>();
+        net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(o.getX() - 40, o.getY() - 10, o.getZ() - 40,
+                o.getX() + SIZE + 40, o.getY() + 60, o.getZ() + SIZE + 40);
+        for (ShipBody b : SableShips.all(level)) {
+            if (own != null && b.id().equals(own.id())) continue;
+            if (b.worldBounds().intersects(area)) ships.add(b.id().toString().substring(0, 8) + " " + b.worldBounds().getCenter().subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(o)));
+        }
+        Map<String, Integer> entities = new java.util.TreeMap<>();
+        if (own != null && !own.isRemoved()) {
+            for (net.minecraft.world.entity.Entity e : level.getEntities((net.minecraft.world.entity.Entity) null, own.worldBounds().inflate(8), e -> true)) {
+                entities.merge(net.minecraft.world.entity.EntityType.getKey(e.getType()).getPath(), 1, Integer::sum);
+            }
+        }
+        // land touching the ship: stone in the water rows (the basin's coast and islands) within a block of its bounds
+        Map<String, Integer> land = new java.util.TreeMap<>();
+        if (own != null && !own.isRemoved()) {
+            net.minecraft.world.phys.AABB b = own.worldBounds().inflate(1);
+            for (int x = (int) Math.floor(b.minX); x <= (int) Math.floor(b.maxX); x++) {
+                for (int z = (int) Math.floor(b.minZ); z <= (int) Math.floor(b.maxZ); z++) {
+                    for (int y = o.getY() + 2; y <= o.getY() + SEA_TOP + 1; y++) {
+                        if (level.getBlockState(new BlockPos(x, y, z)).is(Blocks.STONE)) {
+                            land.merge((x - o.getX()) + " " + (z - o.getZ()), 1, Integer::sum);
+                        }
+                    }
+                }
+            }
+        }
+        return "origin mod " + CELL + " (" + Math.floorMod(o.getX(), CELL) + ", " + Math.floorMod(o.getZ(), CELL) + "), land at the ship "
+                + (land.size() > 12 ? land.size() + " columns, e.g. " + land.keySet().stream().limit(12).toList() : land.keySet())
+                + ", ship bounds " + (own == null || own.isRemoved() ? "-" : own.worldBounds().move(-o.getX(), -o.getY(), -o.getZ()))
+                + ", blocks above the water " + blocks + (first == null ? "" : " (first at " + first.toShortString() + ")")
+                + ", other ships near " + ships + ", entities near the ship " + entities
+                + (own == null || own.isRemoved() ? "" : ", ship centre " + Materializer.centre(own).subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(o)));
+    }
+
     // ------------------------------------------------------------------ tests
 
     /**
@@ -198,25 +259,47 @@ public final class LaneVoyageGameTests {
         laneConvoy(h, 600, 8.0);
     }
 
+    /**
+     * LANE3: the layout's world alignment to the lane cells, the same in every run. The lane is searched on 8-block
+     * cells fixed to world coordinates, so where the test grid put this test decided which way round the island the
+     * lane went: at alignment (2, 1) (the full suite's position once LIFE1 and NB2 had grown the grid) it went north,
+     * its corner waypoint 2 blocks off the island's corner, and the 29-block sloop, turning there under full sail, ran
+     * her bow into the island's side and stopped dead. Pinned to (0, 0), where it goes south with room.
+     */
+    private static final int[] ALIGN = {0, 0};
+
     private static void laneConvoy(GameTestHelper h, int checkAt, double minSailed) {
+        laneConvoy(h, checkAt, minSailed, ALIGN);
+    }
+
+    /**
+     * {@code align}: the world alignment (x, z modulo the lane cell) the layout's origin is moved to, or null to leave
+     * it where the test grid put the test.
+     */
+    private static void laneConvoy(GameTestHelper h, int checkAt, double minSailed, int[] align) {
         ConfigOverrides.during(h, MaterializeConfig.LINGER_TICKS, 2_000); // no player near: keep the ship real for the test
-        basin(h);
+        BlockPos origin0 = h.absolutePos(BlockPos.ZERO);
+        int sx = align == null ? 0 : Math.floorMod(align[0] - origin0.getX(), CELL);
+        int sz = align == null ? 0 : Math.floorMod(align[1] - origin0.getZ(), CELL);
+        basin(h, sx, sz);
         MinecraftServer server = h.getLevel().getServer();
-        Port village = port(h, "village", PortKind.SEAFARER_VILLAGE, VILLAGE_X, VILLAGE_Z);
-        Port island = port(h, "island", PortKind.PIRATE_ISLAND, ISLAND_X, ISLAND_Z);
+        Port village = port(h, "village", PortKind.SEAFARER_VILLAGE, VILLAGE_X + sx, VILLAGE_Z + sz);
+        Port island = port(h, "island", PortKind.PIRATE_ISLAND, ISLAND_X + sx, ISLAND_Z + sz);
         PortRegistry.get(server).add(village);
         PortRegistry.get(server).add(island);
         TradeService.openMarket(server, village.id(), () -> profile(PortKind.SEAFARER_VILLAGE, TradeGoods.SUGAR, TradeGoods.IRON));
         TradeService.openMarket(server, island.id(), () -> profile(PortKind.PIRATE_ISLAND, TradeGoods.IRON, TradeGoods.SUGAR));
         Runnable clean = () -> cleanUp(server, village, island);
         Voyage v = guarded(clean, () -> {
-            List<Lane.Point> pts = checkLane(h, server, village, island);
+            List<Lane.Point> pts = checkLane(h, server, village, island, sz);
             Voyage departed = Voyages.spawnConvoy(server, village.id(), island.id(), RandomSource.create(11)).orElseThrow();
             h.assertTrue(departed.waypoints().equals(pts), "the convoy does not sail the cached lane: " + departed.waypoints());
             h.assertTrue(departed.cargo().containsKey(TradeGoods.SUGAR), "cargo " + departed.cargo());
             return departed;
         });
         List<Lane.Point> pts = v.waypoints();
+        BlockPos o0 = h.absolutePos(BlockPos.ZERO);
+        Constants.LOG.info("[LANE3] lane (relative): {}", pts.stream().map(p -> (p.x() - o0.getX()) + " " + (p.z() - o0.getZ())).toList());
         // the middle of the longest leg, where the ship has room
         int leg = 0;
         double best = -1, at = 0, sum = 0;
@@ -249,8 +332,18 @@ public final class LaneVoyageGameTests {
             h.assertTrue(HelmCourses.course(ship[0].id()) != null, "no course along the lane");
             start[0] = m.progress();
         }));
+        boolean[] reported = {false};
         h.onEachTick(() -> {
             if (ship[0] != null && h.getTick() > 5 && h.getTick() % 10 == 0) Materializer.update(server, v.id());
+            if (ship[0] != null && !reported[0] && h.getTick() > 150 && !ship[0].isRemoved()) {
+                SailingRuntime r = SailingRuntimes.getOrCreate(ship[0]);
+                if (r != null && Math.abs(r.shipFrameVelocity(ship[0], new org.joml.Vector3d()).z) < 0.02) {
+                    reported[0] = true;
+                    Constants.LOG.info("[LANE3] {} stopped dead at tick {}: {}", v.template().getPath(), h.getTick(), intruders(h, ship[0]));
+                    Constants.LOG.info("[LANE3] day time {}, anchor down {}, anchor {}, rudder {}, helm {}, linear velocity {}", h.getLevel().getDayTime() % 24000L,
+                            r.anchorDown(), r.anchor(), r.rudderAngle(), r.helm(), ship[0].linearVelocity());
+                }
+            }
             if (ship[0] != null && h.getTick() % 50 == 0) {
                 Voyage m = Voyages.get(server, v.id()).orElse(null);
                 SailingRuntime rt = ship[0].isRemoved() ? null : SailingRuntimes.getOrCreate(ship[0]);
@@ -304,7 +397,7 @@ public final class LaneVoyageGameTests {
     }
 
     /** Searches the lane on the basin's blocks and checks its start, its course around the island and its end. */
-    private static List<Lane.Point> checkLane(GameTestHelper h, MinecraftServer server, Port village, Port island) {
+    private static List<Lane.Point> checkLane(GameTestHelper h, MinecraftServer server, Port village, Port island, int sz) {
         SeaGrid sea = grid(h);
         BlockPos vb = village.berths().get(0).pos();
         h.assertFalse(sea.isSea(sea.cellOf(vb.getX()), sea.cellOf(vb.getZ())), "the village berth's cell should be land");
@@ -318,7 +411,7 @@ public final class LaneVoyageGameTests {
                 "start cell " + start + " " + startCells + " cells from the berth");
         assertAtSea(h, pts);
         BlockPos origin = h.absolutePos(BlockPos.ZERO);
-        boolean around = pts.stream().anyMatch(p -> p.z() - origin.getZ() < ISLE_Z0 || p.z() - origin.getZ() > ISLE_Z1);
+        boolean around = pts.stream().anyMatch(p -> p.z() - origin.getZ() < ISLE_Z0 + sz || p.z() - origin.getZ() > ISLE_Z1 + sz);
         h.assertTrue(around && pts.size() > 2, "the lane does not bend around the island in the way: " + pts);
         Lane.Point last = pts.get(pts.size() - 1);
         BlockPos ib = island.berths().get(0).pos();

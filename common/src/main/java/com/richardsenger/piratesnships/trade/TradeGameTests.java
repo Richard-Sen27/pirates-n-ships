@@ -148,6 +148,48 @@ public final class TradeGameTests {
         }
     }
 
+    /**
+     * NAME3: a delivery contract's destination reads as the port's proper name (the contract line, the market screen's
+     * contracts and the delivery messages all go through {@code MarketLines.portName}); the contract still keys on the id.
+     */
+    @ModGameTest
+    public static void contractsNameTheirDestinationByName(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        var origin = new com.richardsenger.piratesnships.world.port.Port(testPort("name3_origin"), PortKind.SEAFARER_VILLAGE,
+                helper.getLevel().dimension(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO),
+                new net.minecraft.world.level.levelgen.structure.BoundingBox(helper.absolutePos(net.minecraft.core.BlockPos.ZERO)),
+                Climate.TROPICAL, List.of());
+        var destination = new com.richardsenger.piratesnships.world.port.Port(testPort("name3_destination"), PortKind.NAVY_OUTPOST,
+                helper.getLevel().dimension(), helper.absolutePos(net.minecraft.core.BlockPos.ZERO),
+                new net.minecraft.world.level.levelgen.structure.BoundingBox(helper.absolutePos(net.minecraft.core.BlockPos.ZERO)),
+                Climate.TROPICAL, List.of());
+        var registry = com.richardsenger.piratesnships.world.port.PortRegistry.get(server);
+        try {
+            TradeService.openMarket(server, origin.id(), () -> sugarProfile(PortKind.SEAFARER_VILLAGE, GoodRole.PRODUCES));
+            Market dest = TradeService.openMarket(server, destination.id(), () -> sugarProfile(PortKind.NAVY_OUTPOST, GoodRole.DEMANDS));
+            registry.add(origin);
+            registry.add(destination);
+            String name = registry.index().byId(destination.id()).orElseThrow().name();
+            helper.assertTrue(name.startsWith("Fort ") || name.endsWith(" Battery"), "an outpost's name: " + name);
+            List<DeliveryContract> offers = TradeService.offers(server, origin.id(),
+                    List.of(new ContractGenerator.Destination(destination.id(), dest.profile(), 2000, 0.5)));
+            helper.assertFalse(offers.isEmpty(), "origin should offer contracts");
+            helper.assertValueEqual(offers.get(0).destination(), destination.id(), "the contract keys on the id");
+            helper.assertValueEqual(com.richardsenger.piratesnships.trade.client.MarketLines.portName(offers.get(0).destination()), name,
+                    "and names the port");
+            helper.succeed();
+        } finally {
+            registry.remove(origin.id());
+            registry.remove(destination.id());
+            TradeData data = TradeData.get(server);
+            data.removeMarket(origin.id());
+            data.removeMarket(destination.id());
+            for (DeliveryContract c : data.contracts()) {
+                if (c.origin().equals(origin.id())) data.removeContract(c.id());
+            }
+        }
+    }
+
     /** Own batch: changes config. */
     @ModGameTest(batch = CONFIG_CONTRACTS_BATCH)
     public static void contractsCanBeDisabled(GameTestHelper helper) {

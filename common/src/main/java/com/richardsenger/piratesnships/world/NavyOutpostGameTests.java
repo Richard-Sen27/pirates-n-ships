@@ -238,6 +238,7 @@ public final class NavyOutpostGameTests {
         helper.assertTrue(port != null, "the port is registered");
         helper.assertTrue(port.id().getPath().startsWith("navy_outpost_"), "port id " + port.id());
         helper.assertValueEqual(port.kind(), PortKind.NAVY_OUTPOST, "port kind");
+        com.richardsenger.piratesnships.world.port.PortNameGameTests.assertNamed(helper, port); // NAME3
         helper.assertValueEqual(port.berths().size(), 2, "two berths");
         for (Berth berth : port.berths()) {
             helper.assertValueEqual(berth.bow(), sea, "bow points out to sea");

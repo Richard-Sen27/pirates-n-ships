@@ -144,6 +144,29 @@ public final class HarborDeskGameTests {
     }
 
     /**
+     * NAME3: the desk screen's title is the port's proper name: the view names the port by id, and the id reads as the
+     * registered name (on the server here; the client reads the same name from the synced copy, see PortNameGameTests).
+     */
+    @ModGameTest
+    public static void theDeskTitleIsThePortsName(GameTestHelper helper) {
+        ResourceLocation port = port(helper, PortKind.PIRATE_ISLAND);
+        var registry = com.richardsenger.piratesnships.world.port.PortRegistry.get(helper.getLevel().getServer());
+        registry.add(new com.richardsenger.piratesnships.world.port.Port(port, PortKind.PIRATE_ISLAND, helper.getLevel().dimension(),
+                helper.absolutePos(DESK), new net.minecraft.world.level.levelgen.structure.BoundingBox(helper.absolutePos(DESK)),
+                Climate.TROPICAL, List.of()));
+        String name = registry.index().byId(port).orElseThrow().name();
+        desk(helper, Optional.of(port));
+        ServerPlayer p = player(helper, 5);
+        List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
+        helper.assertValueEqual(use(helper, p), InteractionResult.CONSUME, "use result");
+        MarketView view = lastState(helper, sent).view().orElseThrow(() -> new AssertionError("no market view"));
+        helper.assertValueEqual(com.richardsenger.piratesnships.trade.client.MarketLines.portName(view.port()), name, "the title");
+        helper.assertTrue(!name.startsWith("Desk "), "a proper name, not the id: " + name);
+        registry.remove(port);
+        finish(helper, p);
+    }
+
+    /**
      * WOOD2: a mangrove desk (not the legacy dark oak one) is bound by the port's structure binding
      * ({@code PortService.bindDesks}, an {@code instanceof} check now) and opens its port's market.
      */

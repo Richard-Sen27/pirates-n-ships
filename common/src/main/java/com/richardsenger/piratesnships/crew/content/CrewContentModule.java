@@ -294,7 +294,8 @@ public final class CrewContentModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class,
-                PlayerSleepGameTests.class, CrewWalkGameTests.class, StationFacingGameTests.class, RailLeanGameTests.class);
+                PlayerSleepGameTests.class, CrewWalkGameTests.class, StationFacingGameTests.class, RailLeanGameTests.class,
+                com.richardsenger.piratesnships.crew.walk.CrewWalkAvoidGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

@@ -1184,8 +1184,11 @@ an invisible seat that travels with the ship, so it stays at its post while the 
 Crew **walk** to their place: a sailor on deck who is sent to a station, to a meal or to a hammock walks across the
 deck (even while the ship sails) and takes the place when he gets there; the station starts its work only once he has
 arrived. A place he cannot reach (behind a wall, up the mast to the crow's nest) or has not reached after 10 seconds
-puts him there anyway, as does an order to a sailor who is not on that ship. Server config `crew.walk` (`enabled` off:
-crew take their place at once).
+puts him there anyway, as does an order to a sailor who is not on that ship. On the way he steps round crew, villagers
+and players in his path, keeping to his right; where there is no room past a seated hand or a player he waits a
+moment, and two sailors meeting in a narrow gangway let the one back off until the other has passed. Server config
+`crew.walk` (`enabled` off: crew take their place at once; `avoids_crew` off: they walk straight into people;
+`wait_ticks`: how long they wait before looking again).
 
 Idle crew **lean on the rail**: a sailor with no order, no station, no meal and no hammock looks for a railing within 6
 blocks on his ship, walks to it, steps up to the rail, turns to face the sea and leans on it, forearms on the top rail,

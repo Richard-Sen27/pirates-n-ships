@@ -478,6 +478,34 @@ hold), three or more crew spawned on the deck with `/pirates crew spawn`, the ca
    forever doing nothing.
 7. **Crow's nest.** Order a crew member to the crow's nest up the mast. Expected: it walks toward the mast and is put
    up into the nest after about 10 seconds (the pathfinder does not climb ratlines or ladders); report if it climbs.
+
+## WALK2: crew walk round people
+Covered by 13 JUnit tests (`WalkAvoidTest`: occupied cells, the look two cells ahead, the sidestep on the right, the
+yield rule, the refuge, the wait and timeout accounting) and 5 GameTests (`crew/walk/CrewWalkAvoidGameTests`: past a
+seated hand in a two-wide walkway without stopping, waiting in a one-wide corridor until the hand leaves, the timeout
+when he stays, two walkers head-on in a one-wide gangway, `avoids_crew` off). The brig's crew-of-eight test arrives
+as fast as before. What the tests cannot show: how the sidestep and the backing off look, and whether crowds on a
+real deck jam.
+
+Setup: the ordered brig (or any ship with a narrow gangway) afloat, six or more crew on deck, the captain's whistle.
+Default config (`crew.walk.avoids_crew = true`, `wait_ticks = 20`).
+
+1. **Past a seated hand.** Seat a hand at the brig's fore winch, then order another from the quarterdeck to the
+   capstan. Expected: the walker steps round the seated hand into the free side of the deck and walks on without
+   stopping or shoving him; it never walks into him or gets stuck behind him.
+2. **Two crossing on the gangway.** Stand one hand by the capstan and one on the quarterdeck, then order the first to
+   the helm and the second to the capstan in the same moment, so they meet on the narrow weather deck. Expected: one
+   of them steps aside (or backs up to where the deck is wider), the other walks past, then the first goes on; both
+   reach their stations within about 10 seconds. Neither stands still for good, and they never walk through each
+   other.
+3. **Blocked corridor.** Seat a hand in a one-block-wide passage and order a walker through it. Expected: the walker
+   stops a block short and waits (no pushing); when the hand is released (whistle) it goes on; if he stays, the walker
+   is put at its station after about 10 seconds.
+4. **A crowd.** Spawn five crew standing close together on the quarterdeck and order one standing among them to the
+   helm. Expected: it walks round them where it can, else squeezes through, nudging them aside, as before; it is not
+   held up.
+5. **Off.** Set `crew.walk.avoids_crew = false` and repeat step 1. Expected: the walker walks straight into the
+   seated hand as before WALK2 (and may stand behind him until the fallback).
 8. **Order during a walk.** While a crew member walks to one station, assign it to another. Expected: it turns round
    and walks to the new one; the first station is free again.
 9. **Walking off.** Set `crew.walk.enabled = false` in the server config. Expected: crew are put at their station,

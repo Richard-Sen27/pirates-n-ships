@@ -97,7 +97,7 @@ public final class ShipSceneText {
         CLOTH("The cloth fills the triangle of head, tack and clew: 5 × 4 / 2 = 10 blocks of sail here"),
         TRIM("Use the head cleat or the sail winch to set it furled, half or full"),
         REACH("Without a boom it sails like a jib: best with the wind on the beam, and never within 30° of it"),
-        BOOM("Put a boom in the clew's place and the sail's foot runs along it, out to the tack"),
+        BOOM("Put a boom in the clew's place: the stay now ends at the boom's tip and a sheet rope ties the tip to the tack"),
         SHEET("The crew sheets the boom to leeward: 45° out with the wind on the beam"),
         OTHER_TACK("Bring the wind to the other side and the boom swings across"),
         RUN("With the wind on the quarter the boom goes all the way out to 60°"),

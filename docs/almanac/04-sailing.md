@@ -50,7 +50,7 @@ A triangular sail is rigged with {item:pirates_n_ships:rope}**rope** and three {
 > A rope between two cleats or mooring rings that is no stay becomes a sagging rope line, for a rail or rigging.
 
 ## The boom
-A {item:pirates_n_ships:boom}**boom** turns a triangular sail into a mainsail that serves from close-hauled to a dead run. Put it on the side of the mast in the clew cleat's place, straight below the head: the sail's foot then runs along the boom, out as far as the tack lies.
+A {item:pirates_n_ships:boom}**boom** turns a triangular sail into a mainsail that serves from close-hauled to a dead run. Put it on the side of the mast in the clew cleat's place, straight below the head: the sail's foot then runs along the boom, out as far as the tack lies. The stay rope runs from the head to the boom's tip, the cloth fills the triangle of that rope, the boom and the mast, and a sheet rope ties the tip to the tack.
 {recipe:boom}
 
 The boom swings to port or starboard in steps of 15°, up to 60° each way. The crew sheets it to leeward for the wind: centred close-hauled at 45° off the wind, 45° out on a beam reach, all the way out on a run. A boom on the windward side is aback and gives nothing, and when the wind crosses the stern it slams across in a gybe.

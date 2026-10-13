@@ -1,4 +1,4 @@
-# Playtest: structure polish (work packages STR6, STR8)
+# Playtest: structure polish (work packages STR6, STR8, PIER1)
 
 The human, 2026-10-12: "Remove blocks in front of doors at generated structures (EVERY single structure has that
 problem). Replace half slabs at Leuchtturm with full blocks. Add loot. navy_post directly next to mansion, should not
@@ -102,6 +102,27 @@ world.
 7. **No port beside vanilla villages and mansions.**
    - **Expected:** no port starts within about 6 chunks (96 blocks) of a vanilla village or 10 chunks of a woodland
      mansion.
+
+## PIER1
+
+The human, 2026-10-13: "the pier at navy posts is COMPLETELY solid from top to bottom, which just doesn't fit. also, the
+poles at other piers could go completely down to the ground." His screenshot from under water showed the village pier's
+piles ending in cobblestone footings hanging in open water.
+
+Headless coverage: `PileFootingsGameTests` (on a built sea with the floor 8 blocks under the surface, every pier, jetty and
+quay piece and each extension: every footing column reaches the floor with no water in it; the navy quay has open water
+under its deck between the pillars and under the middle; on a shallow sea the pass changes nothing), plus the layout tests
+(`BerthDepthGameTests`: the pier's piles reach the carved floor). Use a **new** world.
+
+1. **Piles to the floor.** Dive beside a village pier and a pirate jetty where the sea is deeper than three or four blocks.
+   - **Expected:** every pile or post runs straight down to the sea floor and ends in a cobblestone footing standing on it;
+     no pile ends in open water. Also check the extension sections (where the shore is shallow).
+2. **The quay on pillars.** Swim under the navy outpost's quay and its extension.
+   - **Expected:** a one-block deck on stone pillars every four blocks along both edges, an edge course under the kerbs, open
+     water between the pillars and under the middle, pillars reaching the floor; mooring rings, cleats, bollards, the crane and
+     the ladder as before, ships still lie alongside the berths.
+3. **Off switch.** `world.structures.piles_to_floor = false`, new chunks.
+   - **Expected:** piles end at their template's footings as before (the quay still stands on its pillars).
 
 ## Open problems to watch
 

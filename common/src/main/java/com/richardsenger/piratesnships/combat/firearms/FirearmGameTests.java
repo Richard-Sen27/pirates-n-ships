@@ -11,6 +11,7 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -344,6 +345,175 @@ public final class FirearmGameTests {
         helper.assertFalse(player.isUsingItem(), "letting go stops loading");
         helper.assertFalse(FirearmContent.isLoaded(gun), "the gun stays unloaded");
         helper.assertFalse(gun.isBarVisible(), "no bar after a cancelled load");
+        helper.succeed();
+    }
+
+    // ---- reload time with a ticked server player (FA2) -------------------------------------------------------
+
+    /**
+     * A real server player with a mock connection, not added to the level (the career tests' pattern): unlike the
+     * mock player it can be ticked ({@link ServerPlayer#doTick}, what the connection does every server tick), so its
+     * use time counts down through vanilla's {@code LivingEntity#updatingUsingItem} and the gun's {@code onUseTick}
+     * sees what it sees in a game.
+     */
+    private static ServerPlayer tickedShooter(GameTestHelper helper, Vec3 relative) {
+        var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "fa2_test");
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), profile, cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
+        Vec3 at = helper.absoluteVec(relative);
+        player.moveTo(at.x, at.y, at.z, 0, 0);
+        player.getInventory().clearContent();
+        player.setGameMode(GameType.SURVIVAL);
+        return player;
+    }
+
+    /** Presses use with the server's own handler of the use packet ({@code ServerPlayerGameMode#useItem}). */
+    private static InteractionResult pressUse(GameTestHelper helper, ServerPlayer player) {
+        return player.gameMode.useItem(player, helper.getLevel(), player.getMainHandItem(), InteractionHand.MAIN_HAND);
+    }
+
+    /** Bar width the local player would see for {@code gun} while it is {@code player}'s use item. */
+    private static int barWidthSeenBy(ServerPlayer player, ItemStack gun) {
+        com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState before =
+                com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState.get();
+        // the client's view of its own session, read from this player the way LocalFirearmClientState reads the local one
+        com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState.set(stack -> {
+            if (!player.isUsingItem() || (player.getUseItem() != stack && player.getMainHandItem() != stack)) return -1;
+            int remaining = player.getUseItemRemainingTicks();
+            return FirearmRules.isAimSession(remaining) ? -1 : FirearmRules.heldTicks(remaining);
+        });
+        try {
+            return gun.getBarWidth();
+        } finally {
+            com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState.set(before);
+        }
+    }
+
+    /**
+     * FA2: holding use on an unloaded musket for a quarter of its reload time, ticked like a game, neither loads it
+     * nor takes the ammunition; the bar shows a quarter; letting go leaves it unloaded.
+     */
+    @ModGameTest
+    public static void aQuarterOfTheReloadTimeDoesNotLoad(GameTestHelper helper) {
+        ServerPlayer player = tickedShooter(helper, new Vec3(1.5, 1, 1.5));
+        ItemStack gun = hold(player, CombatContent.MUSKET.get(), false);
+        giveAmmo(player, 2, 2);
+        int reload = FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
+        helper.assertTrue(reload >= 8, "the musket's reload time should be a real wait, was " + reload);
+
+        helper.assertValueEqual(pressUse(helper, player), InteractionResult.CONSUME, "use of an unloaded musket with ammo");
+        helper.assertTrue(player.isUsingItem(), "loading holds the gun");
+        int quarter = reload / 4;
+        for (int i = 0; i < quarter; i++) {
+            player.doTick();
+            ItemStack held = player.getMainHandItem();
+            helper.assertTrue(player.isUsingItem(), "still loading after " + (i + 1) + " ticks");
+            helper.assertFalse(FirearmContent.isLoaded(held), "loaded after only " + (i + 1) + " of " + reload + " ticks");
+        }
+        ItemStack held = player.getMainHandItem();
+        helper.assertValueEqual(FirearmRules.heldTicks(player.getUseItemRemainingTicks()), quarter, "held ticks after a quarter");
+        helper.assertValueEqual(barWidthSeenBy(player, held), FirearmBar.loadingWidth(quarter, reload), "bar width after a quarter");
+        helper.assertTrue(barWidthSeenBy(player, held) < FirearmBar.MAX_WIDTH / 2, "the bar is far from full after a quarter");
+
+        player.releaseUsingItem();
+        player.doTick();
+        held = player.getMainHandItem();
+        helper.assertFalse(player.isUsingItem(), "letting go stops loading");
+        helper.assertFalse(FirearmContent.isLoaded(held), "letting go after a quarter leaves the musket unloaded");
+        helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 2, "no lead shot taken");
+        helper.assertValueEqual(count(player, Items.GUNPOWDER), 2, "no gunpowder taken");
+        helper.succeed();
+    }
+
+    /** FA2: the same in creative mode (no ammunition): a quarter of the reload time does not load. */
+    @ModGameTest
+    public static void aQuarterOfTheReloadTimeDoesNotLoadInCreative(GameTestHelper helper) {
+        ServerPlayer player = tickedShooter(helper, new Vec3(1.5, 1, 1.5));
+        player.setGameMode(GameType.CREATIVE);
+        hold(player, CombatContent.PISTOL.get(), false);
+        int reload = FirearmsConfig.type(FirearmKind.PISTOL).reloadTicks();
+        helper.assertValueEqual(pressUse(helper, player), InteractionResult.CONSUME, "creative use of an unloaded pistol");
+        for (int i = 0; i < reload / 4; i++) {
+            player.doTick();
+            helper.assertFalse(FirearmContent.isLoaded(player.getMainHandItem()), "loaded after only " + (i + 1) + " of " + reload + " ticks");
+        }
+        player.releaseUsingItem();
+        helper.assertFalse(FirearmContent.isLoaded(player.getMainHandItem()), "letting go early leaves the pistol unloaded");
+        helper.succeed();
+    }
+
+    /** FA2: the full reload time, ticked like a game, loads the musket exactly at its end. */
+    @ModGameTest(timeoutTicks = 200)
+    public static void theFullReloadTimeLoads(GameTestHelper helper) {
+        ServerPlayer player = tickedShooter(helper, new Vec3(1.5, 1, 1.5));
+        hold(player, CombatContent.MUSKET.get(), false);
+        giveAmmo(player, 2, 2);
+        int reload = FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
+        pressUse(helper, player);
+        for (int i = 1; i <= reload; i++) {
+            player.doTick();
+            boolean loaded = FirearmContent.isLoaded(player.getMainHandItem());
+            if (i < reload) {
+                helper.assertFalse(loaded, "loaded after " + i + " of " + reload + " ticks");
+                helper.assertValueEqual(barWidthSeenBy(player, player.getMainHandItem()), FirearmBar.loadingWidth(i, reload),
+                        "bar width after " + i + " ticks");
+            }
+        }
+        // the tick that counts the last reload tick runs onUseTick with that many ticks held
+        player.doTick();
+        helper.assertTrue(FirearmContent.isLoaded(player.getMainHandItem()), "loaded after the full reload time");
+        helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 1, "one lead shot taken");
+        player.releaseUsingItem();
+        helper.assertTrue(FirearmContent.isLoaded(player.getMainHandItem()), "letting go keeps it loaded");
+        helper.assertTrue(balls(helper).isEmpty(), "letting go of a loading session never fires");
+        helper.succeed();
+    }
+
+    /**
+     * FA2: a press that reaches the server while it still runs a loading session (the client ended its own session
+     * without a release reaching the server) starts the session over, so the load takes the full reload time from the
+     * new press and not from the old one.
+     */
+    @ModGameTest(timeoutTicks = 300)
+    public static void aNewPressRestartsAStaleLoadingSession(GameTestHelper helper) {
+        ServerPlayer player = tickedShooter(helper, new Vec3(1.5, 1, 1.5));
+        hold(player, CombatContent.MUSKET.get(), false);
+        giveAmmo(player, 2, 2);
+        int reload = FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
+        pressUse(helper, player);
+        int stale = reload * 3 / 4;
+        for (int i = 0; i < stale; i++) player.doTick();
+        helper.assertFalse(FirearmContent.isLoaded(player.getMainHandItem()), "not loaded after three quarters");
+
+        helper.assertValueEqual(pressUse(helper, player), InteractionResult.CONSUME, "the new press");
+        helper.assertTrue(player.isUsingItem(), "the new press holds the gun");
+        helper.assertValueEqual(FirearmRules.heldTicks(player.getUseItemRemainingTicks()), 0, "the new press starts from 0");
+        for (int i = 0; i < reload / 2; i++) {
+            player.doTick();
+            helper.assertFalse(FirearmContent.isLoaded(player.getMainHandItem()),
+                    "loaded " + (i + 1) + " ticks after the new press (the old press counted)");
+        }
+        for (int i = reload / 2; i <= reload; i++) player.doTick();
+        helper.assertTrue(FirearmContent.isLoaded(player.getMainHandItem()), "loaded a full reload time after the new press");
+        helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 1, "one lead shot taken");
+        helper.succeed();
+    }
+
+    /** FA2: the same press on a loaded gun during an aim session starts a new aim, never fires. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aNewPressDuringAnAimNeverFires(GameTestHelper helper) {
+        ServerPlayer player = tickedShooter(helper, new Vec3(4.5, 1, 1.5));
+        hold(player, CombatContent.MUSKET.get(), true);
+        pressUse(helper, player);
+        for (int i = 0; i < 30; i++) player.doTick();
+        helper.assertValueEqual(pressUse(helper, player), InteractionResult.CONSUME, "the new press on a loaded gun");
+        helper.assertTrue(FirearmRules.isAimSession(player.getUseItemRemainingTicks()), "a new aim session");
+        helper.assertValueEqual(FirearmRules.heldTicks(player.getUseItemRemainingTicks()), 0, "the new aim starts from 0");
+        helper.assertTrue(balls(helper).isEmpty(), "restarting an aim never fires");
+        helper.assertTrue(FirearmContent.isLoaded(player.getMainHandItem()), "the gun stays loaded");
         helper.succeed();
     }
 

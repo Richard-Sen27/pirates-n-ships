@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.firearms.client.anim;
 
+import com.richardsenger.piratesnships.combat.firearms.FirearmContent;
 import com.richardsenger.piratesnships.combat.firearms.FirearmItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -37,7 +38,7 @@ public final class FirearmAnimationDriver {
             return;
         }
         HumanoidArm arm = player.getUsedItemHand() == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
-        animations.update(player, FirearmAnimationMapping.forUse(gun.kind(), player.getUseItemRemainingTicks()),
+        animations.update(player, FirearmAnimationMapping.forUse(gun.kind(), player.getUseItemRemainingTicks(), FirearmContent.isLoaded(stack)),
                 arm == HumanoidArm.LEFT, gun.type().reloadTicks());
     }
 }

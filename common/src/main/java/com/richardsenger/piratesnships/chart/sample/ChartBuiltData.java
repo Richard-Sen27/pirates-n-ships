@@ -42,11 +42,11 @@ public final class ChartBuiltData {
                     BuiltInRegistries.BLOCK.get(ResourceLocation.withDefaultNamespace(colour.getName() + "_concrete_powder")));
             if (!NATURAL_TERRACOTTA.contains(colour)) t.add(BuiltInRegistries.BLOCK.get(ResourceLocation.withDefaultNamespace(colour.getName() + "_terracotta")));
         }
-        // every block of this mod is man-made: decks, railings, cleats, helms, boards, desks, stalls, cots, name boards
+        // every block of this mod is man-made (optional entries: the wood-compat blocks only exist beside their mod): decks, railings, cleats, helms, boards, desks, stalls, cots, name boards
         BuiltInRegistries.BLOCK.keySet().stream()
                 .filter(id -> Constants.MOD_ID.equals(id.getNamespace()))
                 .sorted()
-                .forEach(id -> t.add(BuiltInRegistries.BLOCK.get(id)));
+                .forEach(id -> tags.addOptional(ChartBuilt.TAG, id));
     }
 
     /** The terracotta colours that badlands generate on their own. */

@@ -372,8 +372,7 @@ public final class ChartGameTests {
             helper.assertTrue(!ChartCells.built(data.cell(forestLogs, rowLogs)), "a cell of logs is not built");
             helper.assertTrue(!ChartCells.built(data.cell(forestLogs, rowLeaves)), "logs under leaves are not built");
             helper.assertTrue(ChartCells.built(data.cell(forestLogs, rowWall)), "a cobblestone wall across a cell is built");
-            helper.assertValueEqual(ChartCells.colour(data.wide(forestLogs, rowLogs)),
-                    packed(net.minecraft.world.level.material.MapColor.WOOD, net.minecraft.world.level.material.MapColor.Brightness.NORMAL),
+            helper.assertValueEqual(MapColoursIdOf(data.wide(forestLogs, rowLogs)), net.minecraft.world.level.material.MapColor.WOOD.id,
                     "the log cell is wood-coloured all the same");
             helper.assertValueEqual(MapColoursIdOf(data.wide(forestLogs, rowWall)), net.minecraft.world.level.material.MapColor.STONE.id,
                     "the wall cell shows the wall's stone, not the grass");

@@ -2,13 +2,14 @@
 
 A two-masted brig, 9 wide and 32 long over all (hull 27, bowsprit 4, the name boards one more), dark oak and spruce
 like the starter sloop. Decks from the keel up: the keel (y 0), the bottom (y 1), the hold (y 2..4, three watertight
-compartments between two bulkheads, a course of ballast stones on its floor), the lower gun deck (floor y 5, headroom
-y 6..7, four guns a side), the weather deck (y 8) and, aft, the cabin (y 9..10) under the raised quarterdeck (y 11).
+compartments between two bulkheads), the lower gun deck (floor y 5, headroom y 6..7, four guns a side, the great cabin
+aft of z 26), the weather deck (y 8) and, aft, the quarterdeck (y 9) one row over it. Ballast stones lie in the bottom
+(y 1) and beside the keel log (y 0).
 The design and the mass budget are written down in art/README.md, "The brig (SHIP1)" and "The brig (SHIP2)".
 
 SHIP2 (the human's first sail, 2026-10-13: "missing cannons (at least when ordered) ... looks very bulky ... not enough
 of the ship under water ... gets strongly tilted to one side"): the hull is rounder below the water (the bottom and the
-bilge narrower than the sides) with ballast stones on the hold floor and in the bottom, so she floats deeper and with
+bilge narrower than the sides) with ballast stones in the bottom and beside the keel, so she floats deeper and with
 her centre of mass low enough to stand upright; the topsides tumble home one block above the gun deck (the weather deck
 and everything on it one block in from the hull side); the stripes and the rail rise toward the bow and the stern (the
 sheer), the stem is a log from the forefoot to the knighthead with the bowsprit stepped on its head, the counter stern
@@ -591,18 +592,19 @@ def spec(cells, pal, spec_id, name, style, notes):
     }
 
 
-NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 12, 27], facing south.",
-         "Decks: hold y=2..4 (ballast stones on its floor, bulkheads at z=14 and 23), lower gun deck floor y=5, "
-         "weather deck y=8 (tumbled home to x=1..7 in the waist), cabin y=9..10, quarterdeck y=11.",
+NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 10, 27], facing south.",
+         "Decks: ballast stones at y=0..1 beside the keel and in the bottom, hold y=2..4 (bulkheads at z=14 and 23), "
+         "lower gun deck floor y=5 (great cabin aft of z=26), weather deck y=8 (tumbled home to x=1..7 in the waist), "
+         "quarterdeck y=9 from z=25.",
          "Guns: four a side on the lower gun deck at z=13, 17, 21, 25, muzzles at x=1 (west) and x=7 (east) behind open "
          "gun ports; shot lockers (barrels) at [1|7, 6, 15] and [1|7, 6, 23].",
          "Fore mast z=11 (top y=23), yards at z=10, y=12/17/21; main mast z=19 (top y=25), yards at z=18, y=12/18/23.",
          "Jib: rope on the head cleat [4, 22, 10], then on the bowsprit cleat [4, 10, 1]; clew cleat [4, 11, 10]."]
 ARMED_NOTES = NOTES + [
     "Crow's nest on the main mast top at [4, 26, 19]; mast hoops at [3|5, 25, 19]; railing latches at "
-    "[1|7, 13, 26..28] on the quarterdeck rails: the template strings a net from every latch to its side's hoop when "
+    "[1|7, 11, 26..28] on the quarterdeck rails: the template strings a net from every latch to its side's hoop when "
     "it is placed.",
-    "Swivel guns on the quarterdeck rails at [1|7, 13, 29]."]
+    "Swivel guns on the quarterdeck rails at [1|7, 11, 29]."]
 
 
 def brig_cells(armed_variant):

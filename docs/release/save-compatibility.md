@@ -191,6 +191,11 @@ new ports are planned and placed; nothing saved changes shape and old ports keep
   next to them may start a port where none would have been (or none where one would).
 - **New config keys** `world.structures.level_trails` (true), `clear_doors` (true), `piers_end_in_water` (true) and
   `world.structures.<kind>.cold_frequency` (0.1) are added to an existing server file with their defaults.
+- **PIER1 (piles to the floor).** Piers, jetties and quays already placed keep their blocks (hanging footings, the solid
+  quay mole): chunks are never placed again. New chunks of a port planned before the update place the new
+  `navy_outpost/quay` and `quay_extension` templates (pillars instead of a solid mole; same size, connectors and berths) and
+  run the pile pass (`world.structures.piles_to_floor`, default true, added to an existing server file with its default).
+  Nothing saved changes shape.
 - **Template pieces changed:** the bends, forks, junctions and the crossroads point their ways on at the new straights
   pools (`village/streets_straight`, `pirate_island/paths_straight`, `navy_outpost/lanes_straight`); the jigsaw count
   is the same, but the draws differ, so the same seed lays out a different port than before the update.

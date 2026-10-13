@@ -124,3 +124,19 @@ target 10 to 20 blocks away; F3 off, subtitles on. Send `latest.log` if anything
 12. **Multiplayer** (LAN if possible): the other player sees the shot, smoke and the aim pose; on a dedicated server
     with the toggle off, the client follows the server's value (it is a synced server option).
 13. **Melee untouched.** Switch to a rapier: slashes, thrusts and guards work as before.
+
+
+## FA2: the reload takes its full time
+Survival and creative, a pistol (60 ticks, 3 s) and a musket (100 ticks, 5 s), lead shot and gunpowder; once with a
+grappling hook in the off hand on the musket. Send `logs/debug.log` afterwards: every load writes
+`FA2: Dev loaded after N ticks of holding (reload_ticks R)`, and a press the server had to restart writes
+`FA2: Dev pressed use during a running firearm session`; say which lines appeared.
+1. **Bar.** Hold right-click on an empty gun: the white bar fills evenly over the whole reload (3 s / 5 s), not full
+   after a moment; the reload animation runs to its end (the cock) as the bar reaches full and turns gold, and the
+   hammer model cocks at that moment. The log line says N = R.
+2. **Release early.** Let go at about a quarter, then at about three quarters: the bar disappears, the gun stays
+   unloaded (no gold bar, uncocked hammer, tooltip "Not loaded"), no ammunition used; left-click only clicks.
+3. **Again right away.** Fire, let go, and press and hold right-click again at once (also within the half-second
+   cooldown, and as a quick double press): the next reload again takes the full time from the press that started it.
+4. **Animation in step.** If the bar ever turns gold before the animation ends, the animation now stops at that moment
+   instead of playing on; say if you see that, and what you did just before (teleport, ship, inventory screen, swap).

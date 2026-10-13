@@ -319,8 +319,9 @@ close-hauled to a dead run on either tack. How to rig one: put the head cleat hi
 or aft of the mast (the yard rule's column), place the boom on the same face of the mast lower down, straight below the
 head (it sits on a mast block or a sturdy face behind it, like a wall cleat), put the tack cleat on the deck, a bowsprit
 or a boomkin at or below the boom's height, and rope the head to the tack. The sail's foot now runs along the boom: the
-boom's arm is drawn from its pivot out as far as the tack lies horizontally, the cloth hangs from the head to the boom's
-end, and a sheet rope runs from the boom's end to the tack. A mainsail has its boom pointing aft to a tack on the stern;
+boom's arm is drawn from its pivot out as far as the tack lies horizontally, the stay rope is drawn from the head to the boom's end (SAIL6; it still
+links the head to the tack cleat), the cloth fills the triangle of that rope, the boom and the mast side (no rope there),
+and a sheet rope runs from the boom's end to the tack. A mainsail has its boom pointing aft to a tack on the stern;
 pointing forward to a bowsprit it is a club-footed jib. The area is the same as with a clew cleat.
 - **Sheeting.** The boom swings to port or starboard in 9 steps of 15°, up to 60° each way (block state `sheet`, 4 is
   centred). Its sail draws by the boom's angle to the wind: centred close-hauled (no closer than 45° off the wind,
@@ -815,7 +816,7 @@ piece that would need more than four blocks of cutting or filling is left out wi
 junctions always lead on straight, so two turns never follow each other. Huts, houses and decorations stand with their
 four corners on land, trails with their centre and four of five sample points. The fort's wall runs end with a tower
 on land where the coast turns away. The two cells in front of every door, on both sides, are cleared of ground, plants,
-snow and decorations when the port generates (`world.structures.clear_doors`). Ports keep off snowy and frozen shores
+snow and decorations when the port generates (`world.structures.clear_doors`). Pier piles, jetty posts and quay pillars stand on the sea floor however deep the water is, and the navy quay is a deck on stone pillars with open water under it (`world.structures.piles_to_floor`). Ports keep off snowy and frozen shores
 (the biome tag `pirates_n_ships:cold_shores`: snowy beaches, frozen seas): each kind has a second structure for those
 shores (`seafarer_village_cold`, `pirate_island_cold`, `navy_outpost_cold`) on the same grid, which generates at only
 `cold_frequency` (0.1) of its sites.

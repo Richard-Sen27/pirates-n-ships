@@ -46,8 +46,9 @@ import java.util.UUID;
  * hangs on and the rope's ends live here on the server; the client only renders from the synched data.
  *
  * <ul>
- *   <li><b>Flying</b>: a thrown projectile with {@code grapple.gravity} (times {@code launch.musket_gravity_factor}
- *       for a musket shot, GR4, synched so the client flies the same arc). It stops and drops when the rope runs out
+ *   <li><b>Flying</b>: a thrown projectile on one plain ballistic arc from its first tick (vanilla's drag of 0.99 per
+ *       tick and the launch's gravity: {@code hand_throw_gravity} by hand, GR8, {@code grapple.gravity} times
+ *       {@code launch.musket_gravity_factor} from the musket, GR4; synched so the client flies the same arc). It stops and drops when the rope runs out
  *       ({@link #ropeLength()} from the rope's near end: {@code max_rope_length} for a throw, longer from the musket)
  *       or when it falls into water. Passing within {@code ring_catch_radius} of a mooring ring or a cleat (any
  *       {@link RopeAnchor} the grapple uses, RP1) on another ship, it latches onto its tie point.</li>
@@ -89,14 +90,19 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Vector3f> PLOT_OFFSET = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.VECTOR3);
     /** Mooring ring the rope's near end is tied to (plot position on a ship, else world), or empty (GR1). */
     private static final EntityDataAccessor<Optional<BlockPos>> TIED_RING = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
-    /** Multiple of {@code grapple.gravity} of this flight (GR4: lower for a musket shot). */
-    private static final EntityDataAccessor<Float> GRAVITY_FACTOR = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.FLOAT);
+    /**
+     * Gravity of this flight [blocks per tick squared] (GR4: lower for a musket shot; GR8: a hand throw has its own),
+     * NaN for {@code grapple.gravity}.
+     */
+    private static final EntityDataAccessor<Float> FLIGHT_GRAVITY = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.FLOAT);
     /** GR4: the latched pose's {@link HookPose.Kind} (ordinal), meaningful only while {@link State#LATCHED}. */
     private static final EntityDataAccessor<Byte> LATCH_KIND = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.BYTE);
     /** GR4: the latched pose, in the frame of the block it bit (the ship's plot, or the world). */
     private static final EntityDataAccessor<Quaternionf> LATCH_ROT = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.QUATERNION);
     /** GR7: the hand-held rope's length while it holds its thrower ({@link RopeSwing}); negative while it pays out freely. */
     private static final EntityDataAccessor<Float> SWING_LENGTH = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.FLOAT);
+    /** GR8: how many pulls the thrower has made on the hand-held rope (each one shows a hand-over-hand, {@link RopePose}). */
+    private static final EntityDataAccessor<Integer> PULLS = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.INT);
 
     /** How far below the eyes the thrower holds the rope [blocks] (the renderer's third-person hand height). */
     public static final double HAND_BELOW_EYES = 0.45;
@@ -143,6 +149,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private final GrappleRules.Holding holding = new GrappleRules.Holding();
     /** Client: {@link #tickCount} when the hook was last seen latching, for the settle (GR4); -1 before. */
     private int latchedAtTick = -1;
+    /** GR8, both sides: {@link #tickCount} of the last pull on the hand-held rope; -1 before any. */
+    private int pulledAtTick = -1;
 
     public GrapplingHookEntity(EntityType<? extends GrapplingHookEntity> type, Level level) {
         super(type, level);
@@ -177,10 +185,11 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         builder.define(PLOT_BLOCK, BlockPos.ZERO);
         builder.define(PLOT_OFFSET, new Vector3f());
         builder.define(TIED_RING, Optional.empty());
-        builder.define(GRAVITY_FACTOR, 1.0f);
+        builder.define(FLIGHT_GRAVITY, Float.NaN);
         builder.define(LATCH_KIND, (byte) HookPose.Kind.HANGING.ordinal());
         builder.define(LATCH_ROT, new Quaternionf());
         builder.define(SWING_LENGTH, -1.0f);
+        builder.define(PULLS, 0);
     }
 
     @Override
@@ -190,18 +199,22 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
 
     @Override
     protected double getDefaultGravity() {
-        // server config is synced, and so is the factor, so client and server simulate the same arc
-        return GrappleConfig.GRAVITY.get() * entityData.get(GRAVITY_FACTOR);
+        // the flight's gravity is synced with the spawn, so client and server simulate the same arc
+        return flightGravity();
     }
 
-    /** Sets this flight's gravity as a multiple of {@code grapple.gravity} (GR4); call before the hook is added. */
-    void setGravityFactor(double factor) {
-        entityData.set(GRAVITY_FACTOR, (float) Math.max(0.0, factor));
+    /**
+     * Sets this flight's gravity [blocks per tick squared] (GR4, GR8: {@link GrappleConfig#gravity} of the launch's
+     * mode); call before the hook is added.
+     */
+    void setFlightGravity(double gravity) {
+        entityData.set(FLIGHT_GRAVITY, (float) Math.max(0.0, gravity));
     }
 
-    /** This flight's gravity as a multiple of {@code grapple.gravity}. */
-    public double gravityFactor() {
-        return entityData.get(GRAVITY_FACTOR);
+    /** This flight's gravity [blocks per tick squared]; {@code grapple.gravity} unless the launch set its own. */
+    public double flightGravity() {
+        float g = entityData.get(FLIGHT_GRAVITY);
+        return Float.isNaN(g) ? GrappleConfig.GRAVITY.get() : g;
     }
 
     @Override
@@ -264,6 +277,9 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         if (level().isClientSide && (STATE.equals(key) || LATCH_ROT.equals(key)) && state() == State.LATCHED) {
             latchedAtTick = tickCount;
         }
+        if (level().isClientSide && PULLS.equals(key) && tickCount > 0) {
+            pulledAtTick = tickCount; // not for the count a newly seen hook arrives with
+        }
     }
 
     /**
@@ -304,6 +320,22 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     /** GR7: the hand-held rope's length while it holds its thrower (server), NaN while it pays out freely. */
     public double swingLength() {
         return swingLength;
+    }
+
+    /** GR8: the number of pulls on the hand-held rope so far (both sides, synced). */
+    public int pulls() {
+        return entityData.get(PULLS);
+    }
+
+    /** GR8: ticks since the last pull on the hand-held rope was made (server) or seen (client); negative before any. */
+    public int ticksSincePull() {
+        return pulledAtTick < 0 ? -1 : tickCount - pulledAtTick;
+    }
+
+    /** GR8: counts a pull on the hand-held rope (server), so every client shows the hand-over-hand. */
+    void countPull() {
+        entityData.set(PULLS, entityData.get(PULLS) + 1);
+        pulledAtTick = tickCount;
     }
 
     /** GR7: sets the hand-held rope's length (NaN: free) and syncs it. */

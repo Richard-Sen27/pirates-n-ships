@@ -240,3 +240,44 @@ only" now climb in pulls).
 
 Tell us: is 9 blocks the right hand range, is 1.5 blocks per pull and half a second right, and does the swing feel
 like a liana (enough push, enough damping)?
+
+## GR8 (2026-10-13): a natural throw, the musket's hook stays out, a swing driven by gravity, rope poses
+
+A hook thrown by hand now flies one plain arc with its own gravity (`grapple.hand_throw_velocity` 0.65,
+`hand_throw_gravity` 0.05, a trident's): a 45° throw lands about 9 blocks away in about a second, a level throw about
+5.5. The musket keeps its fast, flat shot (`throw_velocity` 3.0 × `launch.musket_speed` 1.6, `gravity` 0.02 ×
+`launch.musket_gravity_factor` 0.5). On the rope gravity dominates: forward and back give `swing_push` 0.004 of thrust
+along the swing, strafing `swing_push_sideways` 0.4 of that, nothing goes faster than `swing_max_speed` 0.8 blocks per
+tick, and `swing_damping` 0.02 lets a swing die out in about 8 s. Vanilla's own air steering (which made GR7's swing
+feel like flying) is taken out while the rope holds you. Rope poses need the Player Animation Library.
+
+1. **Throw arc.** On flat ground throw the hook 45° up, then level, then straight up a little in front of you. Watch
+   from the side (F5, or a second player).
+   - **Expected:** the hook rises, slows, turns over at one top point and falls, one smooth curve with no sudden drop;
+     45° lands about 9 blocks away, level about 5–6. No long floating hang.
+2. **Aim at a rail.** From alongside another ship (her rail 2 up, 4–6 away), aim a little above the rail and throw.
+   - **Expected:** the hook drops onto the rail and hangs from it.
+3. **Musket hook.** Hook in the off hand, musket in the main hand: hold use to load (one gunpowder), aim, fire at a
+   wall or hull 15–40 blocks away; then fire one into open sky.
+   - **Expected:** the hook flies visibly (point first) to the wall and bites there, the rope from the musket to it;
+     into open sky it flies until the 64-block rope runs out, drops and comes back after two seconds. In no case is it
+     gone right after the shot. Check in survival (the hook leaves the off hand) and in creative.
+4. **Swing, W/S strong and A/D weak.** Hang under a beam or branch with 4–6 blocks of rope.
+   - Hold W for 3 seconds: you lean out a little (a block at most) and stay there, no flying off.
+   - Pump: W as you swing forward, S as you swing back: the swing grows over 5–10 seconds to about 20° and stops
+     growing there.
+   - Pump with A/D instead: it grows less than half as much.
+   - Let go of the keys: the swing dies out in about 8 seconds.
+5. **No runaway speed.** Step off a high ledge on a long rope (10+ blocks) and pump hard.
+   - **Expected:** a fast swing, but never faster than the drop gave you; holding a key never keeps accelerating you.
+6. **Poses (F5, and seen by a second player).**
+   - Hanging still: both hands on the rope above your head, legs pressed together and crossed.
+   - Right-click to pull while hanging: one hand-over-hand climb per pull (right hand and right knee up, then left);
+     holding the button climbs steadily, one per half second.
+   - Swinging: legs trail, the whole body leans along the rope toward the hook, the hands stay on the rope's end.
+   - A pull while still standing (hook 2+ blocks above): a hand-over-hand pull on the rope ahead, leaning back, then
+     the climb once you leave the ground.
+   - First person: both raised arms visible while hanging, the view does not tip.
+   - **Tell us:** do the hands meet the rope's end in all poses, and does the lean look right on a fast swing?
+7. **Config.** `grapple.swing_push = 0.015`, `swing_damping = 0.03` gives back roughly GR7's push without vanilla's air
+   steering; `swing_max_speed = 0.3` caps the swing hard.

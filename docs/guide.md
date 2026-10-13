@@ -776,7 +776,7 @@ water. Server config `world.ports` (`ship_clearance`, `berth_depth`, `ship_spot_
 `carve_berths`).
 
 The shipwright offers the starter sloop (400 doubloons), the basic sloop (300) and the **brig** (1250: her hull at the
-sloop's price per block, 1219 hull blocks against the sloop's 685, plus her eight cannons at their recipe's cost; she
+sloop's price per block, 1217 hull blocks against the sloop's 685, plus her eight cannons at their recipe's cost; she
 takes longer to build and wants more logs and wool). The brig is a two-masted ship 32 blocks long and 9 wide: two
 square sails on each mast (set at the sail winch abaft each mast) and a jib (rig a rope from the head cleat high on
 the fore mast to the bowsprit cleat), ballast stones in her bottom, a hold in three watertight compartments under the

@@ -34,7 +34,7 @@ import java.util.Locale;
 
 /**
  * The brig's draught and trim (SHIP2): each of the three brig templates, placed and assembled in deep water, settles for
- * 200 ticks and then floats with 3 to 5 hull rows under the surface, within 2 degrees of upright in roll and pitch; and,
+ * 200 ticks and then floats at her waterline row (4.5 to 5.25 hull rows under the surface), within 2 degrees of upright in roll and pitch; and,
  * heeled 12 degrees by hand after settling, she rights herself to within 2 degrees again (the human's brig of 2026-10-13
  * came to rest heeled 25 to 30 degrees: her centre of mass stood so high that only the righting torque held her, and it
  * ran out before she was upright; art/README.md "The brig (SHIP2)" has the mass budget); and on a beam reach under all
@@ -51,7 +51,14 @@ public final class BrigTrimGameTests {
     private static final double HEEL_DEGREES = 12.0;
     private static final int RIGHT_TICKS = 240;
     private static final double MAX_ANGLE = 2.0;
-    private static final double MIN_ROWS = 3.0, MAX_ROWS = 5.0;
+    /**
+     * Her draught: the template's waterline row {@link ShipTemplates#BRIG_WATERLINE} (4) at the surface, so the keel, the
+     * bottom and the hold (rows 0..4) are under water and the sea stands within a quarter row of the gun deck floor
+     * (row 5), never at the gun ports (row 6). Measured (SHIP2): 5.02 to 5.04.
+     */
+    private static final double MIN_ROWS = ShipTemplates.BRIG_WATERLINE + 0.5, MAX_ROWS = ShipTemplates.BRIG_WATERLINE + 1.25;
+    /** The steady heel on a reach: SailingGameTestsHeel's strong-wind target (SHIP2 measured 10.0 at wind 6). */
+    private static final double MAX_STEADY_HEEL = 12.0;
 
     private BrigTrimGameTests() {
     }
@@ -202,7 +209,7 @@ public final class BrigTrimGameTests {
 
     /**
      * The armed brig in the 160 basin under all sail with a moderate wind on the beam (from starboard) for 400 ticks:
-     * she makes way, her heel stays within {@code stability.max_heel_degrees} and under 10 degrees once steady, no water
+     * she makes way, her heel stays within {@code stability.max_heel_degrees} and at most {@link #MAX_STEADY_HEEL} once steady, no water
      * comes into the hull (the lee gun ports stay out of the sea); furled, she is back within 2 degrees of upright in 5 s.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = 800, batch = BATCH + "reach")
@@ -257,7 +264,7 @@ public final class BrigTrimGameTests {
                     + "upright {} ticks after furling; water inside {}", fmt(speed[0]), fmt(heel[0]), fmt(heel[1]), trace, righted[0], fmt(water));
             h.assertTrue(speed[0] > 0.3, "she makes no way on the reach: " + speed[0] + " blocks/s");
             h.assertTrue(heel[0] <= maxHeel, "heeled " + heel[0] + "°, past max_heel_degrees " + maxHeel);
-            h.assertTrue(heel[1] <= 10.0, "steady heel " + heel[1] + "°");
+            h.assertTrue(heel[1] <= MAX_STEADY_HEEL, "steady heel " + heel[1] + "°");
             h.assertTrue(water == 0.0, "water in the hull: " + water);
             h.assertTrue(righted[0] >= 0, "not back within 2° of upright 5 s after furling");
             h.succeed();

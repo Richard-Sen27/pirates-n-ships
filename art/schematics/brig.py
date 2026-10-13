@@ -271,6 +271,9 @@ def railing_cells():
     # gaps over the stair landings in the quarterdeck front
     for x in STAIR_XS:
         out.pop((x, QD_FLOOR + 1, QD))
+    # and over the after companion's head (SHIP2: with the quarterdeck one row over the weather deck the companion's
+    # top stair at z 24 lies right under the break, between the break lanterns; it is entered from the quarterdeck)
+    out.pop((CX, QD_FLOOR + 1, QD))
     # no rope railing round the companion openings: the crew's pathfinder takes a rope railing's edge for open floor
     # (SHIP1: a walker stuck pushing against it beside the after companion)
     # a wide port (two ports side by side) and a gate on each side of the waist
@@ -334,8 +337,10 @@ fit(1, 6, 12, "pantry")
 fit(7, 6, 12, "water")
 
 # hammocks: four in the fore berth (two fore and aft beside the hull at x 2 and 6 with a post at z 11, two across the
-# bow at z 7 and 8 from the hull to a post), two across the gun deck forward of the after guns (hull and a post, z 24),
-# two fore and aft in the great cabin (from its bulkhead to the crates at z 29): eight
+# bow at z 7 and 8 from the hull to a post), one across the gun deck forward of the after guns on the port side (hull
+# and a post, z 24; the starboard side stays open: the after companion's foot closes x 4 at z 23, so z 24..25, the
+# cabin door and the aft hatch are reached by x 5), three fore and aft in the great cabin (from its bulkhead to the
+# crates and the barrel at z 29, the lane x 3..4 to the chest left free): eight
 for x in (2, 6):
     fit(x, 6, 9, "ham_foot_s")
     fit(x, 6, 10, "ham_head_s")
@@ -347,10 +352,7 @@ for zs in (7, 8):
 fit(1, 6, 24, "ham_foot_e")
 fit(2, 6, 24, "ham_head_e")
 fit(3, 6, 24, "post")
-fit(5, 6, 24, "post")
-fit(6, 6, 24, "ham_foot_e")
-fit(7, 6, 24, "ham_head_e")
-for x in (2, 6):
+for x in (2, 5, 6):
     fit(x, 6, 27, "ham_foot_s")
     fit(x, 6, 28, "ham_head_s")
 

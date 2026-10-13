@@ -2894,8 +2894,8 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
 | `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
-| `brig` | `brig.py` | two-masted brig (SHIP1): hold three rows deep in three compartments, a lower gun deck pierced for eight guns (lids shut), weather deck, cabin under a raised quarterdeck, 1235 blocks | shipwright (725), merchant convoys |
-| `navy_brig_armed` | `navy_brig_armed.py` | the brig with eight carriage guns behind open ports, four shot lockers, a crow's nest, mast hoops and railing latches (six ratline nets strung on placement) and two swivel guns, 1266 blocks | navy patrols (not sold) |
+| `brig` | `brig.py` | two-masted brig (SHIP1, reworked in SHIP2): ballast stones in the bottom, hold three rows deep in three compartments, a lower gun deck with eight guns and four shot lockers, the great cabin aft, weather deck, quarterdeck one row over it, 1233 blocks | shipwright (1250), merchant convoys |
+| `navy_brig_armed` | `navy_brig_armed.py` | the brig (her guns and lockers included) with a crow's nest, mast hoops and railing latches on the quarterdeck rails (six ratline nets strung on placement) and two swivel guns, 1244 blocks | navy patrols (not sold) |
 | `pirate_brig_armed` | `pirate_brig_armed.py` | the same blocks and nets as `navy_brig_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
@@ -3025,6 +3025,50 @@ up by one row; see the comment there).
   `brig_quarter.png` (the starboard quarter) and `brig_cutaway.png` (the port half seen from the centre line: hold,
   bulkheads, gun deck, both companions, cabin), all of the armed brig, drawn by a scratch script from
   `tools/iso_render.py`'s shapes and colours (the railing family is drawn as cubes).
+
+**The brig (SHIP2).** The human's first sail in her (2026-10-13): "missing cannons (at least when ordered) and could
+really need a polish in its design, cause it looks very bulky right now … not enough of the ship under water, and …
+gets strongly tilted to one side." She came to rest heeled 25 to 30 degrees: her centre of mass stood so high that only
+the righting torque held her up, and it ran out before she was upright. Where SHIP2 changed what the SHIP1 notes above
+say, this section holds; the generator's docstring and `NOTES` are the short form.
+
+- **Hull:** 9 × 28 × 32. The underwater body is fuller toward the ends (`LOW_HW`) and rounder in the bilge (`BODY`: the
+  bottom two in from the sides, the keel row three wide amidships), the stem a log from the forefoot to the
+  knighthead with the bowsprit stepped on its head, the run rising into a counter stern. Above the gun deck the
+  topsides **tumble home**: the weather deck and everything on it stand one block in from the hull side (x 1..7 in the
+  waist, `TOP_HW`), the step outboard covered by dark oak stairs (x 0 and 8, y 8). The wale and the rail rise toward
+  bow and stern (`sheer`). The quarterdeck is one row over the weather deck (floor y 9 from z 25, helm [4, 10, 27]),
+  the great cabin under it on the gun deck (z 27..29 behind a bulkhead and door at z 26: three hammocks, the chart
+  table and the sea chest), the brig cell in the aft hold (bars and a brig door across z 26, y 2..3).
+- **Ballast:** 114 cobbled deepslate stones, in the bottom (y 1) inside its outer planking and beside the keel log
+  (y 0), mirrored across the centre line (`BrigLayoutTest.theBallastLiesLowAndEven`: every block has its twin at
+  8 − x, a few light fittings excepted). Cobbled deepslate because Sable gives it the default mass 1.0 against wood's
+  0.5 (`refs/sable/.../physics_block_properties/light.json` for planks, logs, slabs and stairs; `normal.json`).
+- **Mass budget** (Sable masses, kpg): wood (planks, logs, stairs: 880 blocks × 0.5) 440, ballast 114, cannons
+  (16 blocks × 2.0, `physics_block_properties/cannon.json`) 32, yards (42 × 0.1) 4, the rest (railings, bars,
+  hammocks, ladders, fittings) about 170: **758** measured for the orderable brig (`BrigTrimGameTests`: 758.35), 760
+  for the armed ones; SHIP1's brig was 546. Centre of mass 4.76 rows over the keel's bottom (on the centre line, 0.36
+  forward of z 19), centre of buoyancy 2.94.
+- **Afloat (measured, NeoForge, `BrigTrimGameTests`):** 5.02 to 5.04 rows under water amidships, so the surface lies
+  at the template's waterline row 4 (`BRIG_WATERLINE`: keel, bottom and hold under water; `ShipSpots.LARGEST_DRAUGHT`
+  4 unchanged) and the gun port sills stand 0.98 over it; roll 0.00° and pitch 0.07 to 0.08° at rest (the human saw
+  25 to 30° of roll); heeled 12° by hand she is back under 1° in 8 to 10 s (|roll| at most 0.75 to 1.02° over the last
+  2 s); on a beam reach in wind 6 under all sail she makes 0.32 blocks/s with a steady heel of 10.0° (the sloop's
+  target there is 6°: she is tenderer under sail than the sloop), dry, and stands up within 5 s of furling.
+- **Guns on the ordered brig:** eight carriage cannons behind open gun ports (z 13, 17, 21, 25) and four shot lockers,
+  as on the armed brigs since SHIP1; the armed brigs now differ from her only by the nest, the ratline fittings and
+  the swivels. The ratline latches moved to the quarterdeck's side rails [1|7, 11, 26..28] (the weather deck's rail
+  stands over the tumblehome), the swivels to [1|7, 11, 29].
+- **Getting about:** the after companion is entered from the quarterdeck (a gap in the break's rope railing at x 4:
+  its top stair at z 24 lies right under the break, between the break lanterns); the port hammock across the gun deck
+  at z 24 leaves x 5..7 open, because the companion's foot closes x 4 at z 23, so the after guns, the aft hatch and the
+  cabin door are reached by x 5.
+- **Price:** `ShipOrderMath.templatePrice`: the hull blocks (all but the guns' 16) at the starter sloop's price per
+  block (400 / 685) plus each gun at its recipe's cost (eleven iron ingots at the trade price 6 and three wood blocks at
+  the hull's rate: 67.75), rounded to 25: **1250** (711 + 542). `BrigLayoutTest.thePriceCountsTheStructuresBlocksAndGuns`
+  ties `BRIG_BLOCKS` (1233) to the structure.
+- **Built** through the lab (`build_structures.Lab` on an agent's own port, then `schem_to_structure.py`), as the
+  sloop; the iso renders are drawn by `tools/iso_render.py`.
 
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never

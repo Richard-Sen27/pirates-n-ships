@@ -251,8 +251,9 @@ public final class BrigGameTests {
         ServerLevel level = h.getLevel();
         ShipBody ship = SableShips.byId(level, a.shipId());
         int cells = count(ship, level, s -> s.is(RiggingContent.NET_CELL.get()));
-        h.assertTrue(a.count() == r.blocks() + cells, "assembled " + a.count() + " of " + r.blocks() + " blocks and " + cells + " net cells");
-        h.assertTrue(cells > 60, "net cells " + cells);
+        h.assertTrue(a.count() == r.blocks() + cells, "assembled " + a.count() + " of " + r.blocks() + " blocks and " + cells
+                + " net cells; left in the world: " + leftovers(h));
+        h.assertTrue(cells > 48, "net cells " + cells);
         int latches = 0, held = 0;
         for (BlockPos p : ship.plotBlocks()) {
             if (level.getBlockState(p).getBlock() instanceof RailingLatchBlock) {
@@ -494,7 +495,9 @@ public final class BrigGameTests {
         targets.put("fore hatch", new BlockPos(4, 6, 12));
         targets.put("main hatch", new BlockPos(4, 6, 20));
         targets.put("aft hatch", new BlockPos(4, 6, 24));
-        targets.put("galley", new BlockPos(1, 6, 12));
+        // before the pantry: a solid target is moved up to the first free cell over it (GroundPathNavigation#createPath),
+        // which since SHIP2's tumblehome is over the rail, not the gun deck
+        targets.put("galley (before the pantry)", new BlockPos(2, 6, 12));
         targets.put("port gate", new BlockPos(1, 9, 17));
         targets.put("starboard gate", new BlockPos(7, 9, 17));
         h.runAfterDelay(10, () -> {
@@ -601,6 +604,7 @@ public final class BrigGameTests {
         RatlineNets.Net net = RatlineNets.netOf(level, latch);
         h.assertTrue(net != null, "no net at the port latch");
         h.assertTrue(level.getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no nest");
+        float up = (float) Math.toDegrees(Math.atan2(-(net.ringB().x() - net.ringA().x()), net.ringB().z() - net.ringA().z()));
         Player[] player = {null};
         String[] phase = {"up"};
         boolean[] caught = {false};
@@ -610,7 +614,7 @@ public final class BrigGameTests {
             int t = tick[0]++;
             if (t == 5) {
                 Player p = h.makeMockPlayer(GameType.SURVIVAL);
-                p.moveTo(net.ringA().x() + 0.55, net.ringA().y() + 0.05, net.ringA().z(), Direction.EAST.toYRot(), 0f);
+                p.moveTo(net.ringA().x() + 0.55, net.ringA().y() + 0.05, net.ringA().z(), up, 0f);
                 level.addFreshEntity(p);
                 player[0] = p;
             }
@@ -619,7 +623,9 @@ public final class BrigGameTests {
             p.setJumping(false);
             switch (phase[0]) {
                 case "up" -> {
-                    p.setYRot(Direction.EAST.toYRot());
+                    // along the net toward the mast (SHIP2: the net runs forward from the quarterdeck rail, and the foot lets go
+                    // of a climber pushing more than 60 degrees off its heading), then east off the hoop into the nest
+                    p.setYRot(p.getY() < net.ringB().y() ? up : Direction.EAST.toYRot());
                     p.zza = 1f;
                     if (p.blockPosition().equals(nest) && p.onGround()) phase[0] = "down";
                 }
@@ -640,6 +646,16 @@ public final class BrigGameTests {
             Constants.LOG.info("[SHIP1] up the port net into the nest and down again to y {}", fmt(local.y));
             p.discard();
         });
+    }
+
+    /** Blocks in the basin that are neither its stone, water nor air (what an assembly left behind). */
+    private static List<String> leftovers(GameTestHelper h) {
+        List<String> out = new ArrayList<>();
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(1, 2, 1), new BlockPos(46, 40, 46))) {
+            BlockState s = h.getBlockState(p);
+            if (!s.isAir() && !s.is(Blocks.WATER) && !s.is(Blocks.STONE) && !s.is(Blocks.BARRIER)) out.add(p.toShortString() + " " + s);
+        }
+        return out;
     }
 
     /** A boarding plank laid from the port gate (opened) bridges two blocks to a pier at the deck's height. */

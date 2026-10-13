@@ -39,7 +39,7 @@ public final class ShipOrderMath {
      * The brig's blocks (art/schematics/brig.py; {@code BrigLayoutTest} checks them against the committed structure) and
      * her carriage guns, two blocks each.
      */
-    public static final int BRIG_BLOCKS = 1235, BRIG_GUNS = 8;
+    public static final int BRIG_BLOCKS = 1233, BRIG_GUNS = 8;
 
     private ShipOrderMath() {
     }

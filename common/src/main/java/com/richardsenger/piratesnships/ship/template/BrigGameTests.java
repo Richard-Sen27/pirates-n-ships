@@ -92,8 +92,11 @@ import java.util.UUID;
 public final class BrigGameTests {
 
     private static final String BATCH = "pirates_n_ships_ship_brig_";
-    /** Water y 2..SURFACE in the 48 basin; the brig's waterline row 4 sits there, her keel a block over the floor. */
-    private static final int SURFACE = 7;
+    /**
+     * Water y 2..SURFACE in the 48 basin; the brig's waterline row 4 sits there, her keel two blocks over the floor (SHIP2:
+     * with her ballast she draws about five rows).
+     */
+    private static final int SURFACE = 8;
     private static final int SETTLE = 60;
     private static final BlockPos HELM = ShipTemplates.BRIG_HELM;
     private static final int WALK_TIMEOUT = 400;
@@ -110,16 +113,16 @@ public final class BrigGameTests {
 
     // ------------------------------------------------------------------ fixtures
 
-    /** A 48 × 48 basin: stone floor, water y 2..7, no barrier ceiling up to y 34 (the main mast's nest). */
+    /** A 48 × 48 basin: stone floor, water y 2..8, no barrier ceiling up to y 40 (the main mast's nest). */
     public static void basin(GameTestHelper h) {
         for (int x = 0; x < 48; x++) {
             for (int z = 0; z < 48; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
                 boolean wall = x == 0 || x == 47 || z == 0 || z == 47;
-                for (int y = 2; y <= 8; y++) {
+                for (int y = 2; y <= SURFACE + 1; y++) {
                     h.setBlock(new BlockPos(x, y, z), wall ? Blocks.STONE : y <= SURFACE ? Blocks.WATER : Blocks.AIR);
                 }
-                for (int y = 9; y <= 34; y++) {
+                for (int y = SURFACE + 2; y <= 40; y++) {
                     BlockPos p = new BlockPos(x, y, z);
                     if (h.getBlockState(p).is(Blocks.BARRIER)) h.setBlock(p, Blocks.AIR);
                 }
@@ -130,7 +133,7 @@ public final class BrigGameTests {
     /** The brig {@code id} placed and assembled in the basin, bow north, its stern near the south wall. */
     public static ShipBody brig(GameTestHelper h, ResourceLocation id) {
         basin(h);
-        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), id, h.absolutePos(new BlockPos(24, 8, 46)),
+        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), id, h.absolutePos(new BlockPos(24, SURFACE + 1, 46)),
                 Direction.NORTH, true, true, null);
         AssemblyResult a = r.assembly();
         if (a == null || a.shipId() == null) throw new GameTestAssertException("brig not placed and assembled: " + r.outcome() + " " + a);
@@ -211,7 +214,7 @@ public final class BrigGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "north")
     public static void theBrigPlacesAndAssemblesFacingNorth(GameTestHelper h) {
         basin(h);
-        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.BRIG_ID, h.absolutePos(new BlockPos(24, 8, 46)),
+        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.BRIG_ID, h.absolutePos(new BlockPos(24, SURFACE + 1, 46)),
                 Direction.NORTH, false, true, null);
         AssemblyResult a = r.assembly();
         if (a != null && a.shipId() != null) ShipTestCleanup.track(h, a.shipId());
@@ -239,7 +242,7 @@ public final class BrigGameTests {
     public static void theArmedBrigPlacesAndAssemblesFacingEastWithItsNets(GameTestHelper h) {
         basin(h);
         ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.NAVY_BRIG_ARMED_ID,
-                h.absolutePos(new BlockPos(1, 8, 24)), Direction.EAST, true, true, null);
+                h.absolutePos(new BlockPos(1, SURFACE + 1, 24)), Direction.EAST, true, true, null);
         AssemblyResult a = r.assembly();
         if (a != null && a.shipId() != null) ShipTestCleanup.track(h, a.shipId());
         h.assertTrue(r.outcome() == ShipTemplatePlacer.Outcome.PLACED, "outcome " + r.outcome() + " at " + r.where());
@@ -248,8 +251,9 @@ public final class BrigGameTests {
         ServerLevel level = h.getLevel();
         ShipBody ship = SableShips.byId(level, a.shipId());
         int cells = count(ship, level, s -> s.is(RiggingContent.NET_CELL.get()));
-        h.assertTrue(a.count() == r.blocks() + cells, "assembled " + a.count() + " of " + r.blocks() + " blocks and " + cells + " net cells");
-        h.assertTrue(cells > 60, "net cells " + cells);
+        h.assertTrue(a.count() == r.blocks() + cells, "assembled " + a.count() + " of " + r.blocks() + " blocks and " + cells
+                + " net cells; left in the world: " + leftovers(h));
+        h.assertTrue(cells > 48, "net cells " + cells);
         int latches = 0, held = 0;
         for (BlockPos p : ship.plotBlocks()) {
             if (level.getBlockState(p).getBlock() instanceof RailingLatchBlock) {
@@ -267,8 +271,9 @@ public final class BrigGameTests {
 
     /**
      * The armed brig (the heavier variant) afloat: after settling she lies level (roll and pitch within 2 degrees over
-     * the last 40 ticks: the auto-ballast makes good her raised quarterdeck, uncapped), the gun deck floor above the water
-     * and the keel under it, three or more compartments (the three holds), and not a drop inside.
+     * the last 40 ticks: the auto-ballast makes good what trim is left, uncapped), the gun ports' sills at least half a
+     * block over the water and the keel under it, three or more compartments (the three holds), and not a drop inside.
+     * (SHIP2: with her ballast she floats deeper, the surface about at the gun deck floor; BrigTrimGameTests.)
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 300, batch = BATCH + "afloat")
     public static void theBrigFloatsLevelAndStaysDry(GameTestHelper h) {
@@ -283,16 +288,16 @@ public final class BrigGameTests {
             max[1] = Math.max(max[1], Math.abs(at[1]));
         });
         h.runAtTickTime(241, () -> {
-            double floor = ship.toWorld(Vec3.atLowerCornerOf(plot(ship, 4, 5, 19))).y;
+            double floor = ship.toWorld(Vec3.atLowerCornerOf(plot(ship, 4, 6, 19))).y;
             double keel = ship.toWorld(Vec3.atLowerCornerOf(plot(ship, 4, 0, 19))).y;
             BallastRule.Result b = ShipBallast.result(level, ship.id());
             HullRuntime hull = HullRuntimes.get(level, ship.id());
             int compartments = hull == null ? -1 : hull.simulation().analysis().compartments().size();
-            Constants.LOG.info("[SHIP1] armed brig afloat: |roll| {}°, |pitch| {}°, gun deck floor {} and keel {} above the water, "
+            Constants.LOG.info("[SHIP1] armed brig afloat: |roll| {}°, |pitch| {}°, gun port sills {} and keel {} above the water, "
                     + "{} compartments, flood {}, ballast {}", fmt(max[0]), fmt(max[1]), fmt(floor - water), fmt(keel - water),
                     compartments, hull == null ? "-" : fmt(hull.simulation().totalVolume()), b);
             h.assertTrue(max[0] < 2.0 && max[1] < 2.0, "not level: roll " + max[0] + "°, pitch " + max[1] + "°");
-            h.assertTrue(floor > water, "the gun deck floor is awash: " + (floor - water));
+            h.assertTrue(floor > water + 0.5, "the gun ports are within half a block of the water: " + (floor - water));
             h.assertTrue(keel < water, "the keel is out of the water: " + (keel - water));
             h.assertTrue(b != null && !b.capped(), "the ballast is capped: " + b);
             h.assertTrue(hull != null && hull.seesSea(), "the hull runtime does not see the sea");
@@ -399,7 +404,7 @@ public final class BrigGameTests {
         ServerLevel level = h.getLevel();
         Map<String, BlockPos> stations = new LinkedHashMap<>();
         stations.put("helm", HELM);
-        stations.put("fore winch", new BlockPos(4, 9, 12));
+        stations.put("fore winch", new BlockPos(4, 9, 13));
         stations.put("main winch", new BlockPos(4, 9, 20));
         stations.put("capstan", new BlockPos(4, 9, 7));
         stations.put("pump", new BlockPos(7, 6, 19));
@@ -414,7 +419,7 @@ public final class BrigGameTests {
             if (t == SETTLE) {
                 int i = 0;
                 for (Map.Entry<String, BlockPos> e : stations.entrySet()) {
-                    CrewMember c = crew(h, ship, new BlockPos(2 + (i % 5), 12, 26 + i / 5 * 2), true);
+                    CrewMember c = crew(h, ship, new BlockPos(2 + (i % 5), 10, 26 + i / 5 * 2), true);
                     crew.add(c);
                     i++;
                 }
@@ -470,12 +475,12 @@ public final class BrigGameTests {
         ServerLevel level = h.getLevel();
         CrewMember c = StationContent.CREW_MEMBER.get().create(level);
         if (c == null) throw new GameTestAssertException("no crew member");
-        Vec3 at = Vec3.atBottomCenterOf(origin.offset(4, 12, 28));
+        Vec3 at = Vec3.atBottomCenterOf(origin.offset(4, 10, 28));
         c.moveTo(at.x, at.y, at.z, 0, 0);
         c.setStationary(true);
         level.addFreshEntity(c);
         Map<String, BlockPos> targets = new LinkedHashMap<>();
-        targets.put("fore winch (its spot)", new BlockPos(4, 9, 13));
+        targets.put("fore winch (its spot)", new BlockPos(4, 9, 12));
         targets.put("main winch (its spot)", new BlockPos(4, 9, 21));
         targets.put("capstan", new BlockPos(4, 9, 7));
         targets.put("pump", new BlockPos(7, 6, 19));
@@ -483,16 +488,17 @@ public final class BrigGameTests {
             targets.put("port gun " + z + " (its crew)", new BlockPos(3, 6, z));
             targets.put("starboard gun " + z + " (its crew)", new BlockPos(5, 6, z));
         }
-        targets.put("port swivel", new BlockPos(1, 13, 28));
-        targets.put("starboard swivel", new BlockPos(7, 13, 28));
-        targets.put("cabin door (before it)", new BlockPos(4, 9, 24));
-        targets.put("brig door (before it)", new BlockPos(4, 6, 26));
+        targets.put("port swivel (before it)", new BlockPos(2, 10, 29));
+        targets.put("starboard swivel (before it)", new BlockPos(6, 10, 29));
+        targets.put("cabin door (before it)", new BlockPos(4, 6, 25));
         targets.put("fore hatch", new BlockPos(4, 6, 12));
         targets.put("main hatch", new BlockPos(4, 6, 20));
         targets.put("aft hatch", new BlockPos(4, 6, 24));
-        targets.put("galley", new BlockPos(1, 6, 12));
-        targets.put("port gate", new BlockPos(0, 9, 17));
-        targets.put("starboard gate", new BlockPos(8, 9, 17));
+        // before the pantry: a solid target is moved up to the first free cell over it (GroundPathNavigation#createPath),
+        // which since SHIP2's tumblehome is over the rail, not the gun deck
+        targets.put("galley (before the pantry)", new BlockPos(2, 6, 12));
+        targets.put("port gate", new BlockPos(1, 9, 17));
+        targets.put("starboard gate", new BlockPos(7, 9, 17));
         h.runAfterDelay(10, () -> {
             c.setOnGround(true);
             List<String> unreachable = new ArrayList<>();
@@ -592,11 +598,12 @@ public final class BrigGameTests {
     public static void aPlayerClimbsANetToTheNestAndBackDown(GameTestHelper h) {
         BlockPos origin = onLand(h, "navy_brig_armed", new BlockPos(19, 1, 8));
         ServerLevel level = h.getLevel();
-        BlockPos latch = origin.offset(0, 10, 23);
+        BlockPos latch = origin.offset(1, 11, 27);
         BlockPos nest = origin.offset(4, 26, 19);
         RatlineNets.Net net = RatlineNets.netOf(level, latch);
         h.assertTrue(net != null, "no net at the port latch");
         h.assertTrue(level.getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no nest");
+        float up = (float) Math.toDegrees(Math.atan2(-(net.ringB().x() - net.ringA().x()), net.ringB().z() - net.ringA().z()));
         Player[] player = {null};
         String[] phase = {"up"};
         boolean[] caught = {false};
@@ -606,7 +613,7 @@ public final class BrigGameTests {
             int t = tick[0]++;
             if (t == 5) {
                 Player p = h.makeMockPlayer(GameType.SURVIVAL);
-                p.moveTo(net.ringA().x() + 0.55, net.ringA().y() + 0.05, net.ringA().z(), Direction.EAST.toYRot(), 0f);
+                p.moveTo(net.ringA().x() + 0.55, net.ringA().y() + 0.05, net.ringA().z(), up, 0f);
                 level.addFreshEntity(p);
                 player[0] = p;
             }
@@ -615,7 +622,10 @@ public final class BrigGameTests {
             p.setJumping(false);
             switch (phase[0]) {
                 case "up" -> {
-                    p.setYRot(Direction.EAST.toYRot());
+                    // along the net toward the mast (SHIP2: the net runs forward from the quarterdeck rail, and the foot lets go
+                    // of a climber pushing more than 60 degrees off its heading), then off the hoop toward the nest
+                    p.setYRot(p.getY() < net.ringB().y() ? up
+                            : (float) Math.toDegrees(Math.atan2(-(nest.getX() + 0.5 - p.getX()), nest.getZ() + 0.5 - p.getZ())));
                     p.zza = 1f;
                     if (p.blockPosition().equals(nest) && p.onGround()) phase[0] = "down";
                 }
@@ -638,16 +648,26 @@ public final class BrigGameTests {
         });
     }
 
-    /** A boarding plank laid from the port gate (opened) bridges two blocks of water to a pier at the deck's height. */
+    /** Blocks in the basin that are neither its stone, water nor air (what an assembly left behind). */
+    private static List<String> leftovers(GameTestHelper h) {
+        List<String> out = new ArrayList<>();
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(1, 2, 1), new BlockPos(46, 40, 46))) {
+            BlockState s = h.getBlockState(p);
+            if (!s.isAir() && !s.is(Blocks.WATER) && !s.is(Blocks.STONE) && !s.is(Blocks.BARRIER)) out.add(p.toShortString() + " " + s);
+        }
+        return out;
+    }
+
+    /** A boarding plank laid from the port gate (opened) bridges two blocks to a pier at the deck's height. */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 100, batch = BATCH + "plank")
     public static void aPlankLaysFromAGate(GameTestHelper h) {
         BlockPos origin = onLand(h, "brig", new BlockPos(19, 1, 8));
         ServerLevel level = h.getLevel();
-        BlockPos gate = origin.offset(0, 9, 17);
+        BlockPos gate = origin.offset(1, 9, 17);
         BlockState g = level.getBlockState(gate);
         h.assertTrue(g.getBlock() instanceof RailingGateBlock, "no gate at " + gate + ": " + g);
         level.setBlock(gate, g.setValue(RailingGateBlock.OPEN, true), Block.UPDATE_ALL);
-        for (int x = -5; x <= -3; x++) {
+        for (int x = -4; x <= -2; x++) {
             for (int dz = -1; dz <= 1; dz++) level.setBlock(origin.offset(x, 8, 17 + dz), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
         }
         BoardingPlanks.Laid laid = BoardingPlanks.lay(level, gate, Direction.UP, Direction.WEST);
@@ -759,7 +779,7 @@ public final class BrigGameTests {
             hull.reanalyseNow(body);
             int compartments = hull.simulation().analysis().compartments().size();
             h.assertTrue(compartments >= 3, "compartments after the reload " + compartments);
-            BlockPos latch = plot(body, 0, 10, 22);
+            BlockPos latch = plot(body, 1, 11, 26);
             h.assertTrue(RatlineNets.netsOf(level, latch).size() == 1, "the net at the port latch is gone");
             h.succeed();
         });

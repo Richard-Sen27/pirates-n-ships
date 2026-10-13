@@ -40,14 +40,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The brig (SHIP1, art/schematics/brig.py) against the rules that hold for the sloops ({@link ArmedSloopLayoutTest}),
- * read from the committed structures ({@code SchemToStructureTest} pins them to their schematics): the armed brigs differ
- * from the merchant brig only by the guns, the open gun ports, the shot lockers, the crow's nest, the ratline fittings
- * and the swivel guns; every gun is supplied and fires through a port; the nest crowns the main mast and the flag flies
- * aft; each ratline net (the template's {@code nets}, strung on placement) climbs from the weather deck's rail to a hoop
+ * The brig (SHIP1, reworked in SHIP2, art/schematics/brig.py) against the rules that hold for the sloops
+ * ({@link ArmedSloopLayoutTest}), read from the committed structures ({@code SchemToStructureTest} pins them to their
+ * schematics): the armed brigs differ from the orderable brig only by the crow's nest, the ratline fittings and the
+ * swivel guns; every brig's guns are supplied and fire through a port; the nest crowns the main mast and the flag flies
+ * aft; each ratline net (the template's {@code nets}, strung on placement) climbs from the quarterdeck's rail to a hoop
  * right under the nest and keeps clear of the cloth and the jib; the yards stand forward of the masts, the four square
- * sails and the jib set; the hold is closed below the gun deck. Walking to the stations is checked in a world
- * ({@code BrigGameTests}).
+ * sails and the jib set; the hold is closed below the gun deck; the ballast lies low and even on both sides, and the
+ * block count the price is made from is the structure's. Walking to the stations is checked in a world
+ * ({@code BrigGameTests}), floating upright in {@code BrigTrimGameTests}.
  */
 class BrigLayoutTest {
 
@@ -63,8 +64,9 @@ class BrigLayoutTest {
     private static final int[] GUN_ZS = {13, 17, 21, 25};
     private static final List<BlockPos> LOCKERS = List.of(new BlockPos(1, 6, 15), new BlockPos(1, 6, 23),
             new BlockPos(7, 6, 15), new BlockPos(7, 6, 23));
-    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(1, 13, 28), new BlockPos(7, 13, 28));
-    private static final BlockPos FLAG_FOOT = new BlockPos(MAST_X, 12, 29);
+    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(2, 11, 30), new BlockPos(6, 11, 30));
+    private static final BlockPos FLAG_FOOT = new BlockPos(MAST_X, 10, 29);
+    private static final String BALLAST = "minecraft:cobbled_deepslate";
     private static final BlockPoint JIB_HEAD = new BlockPoint(MAST_X, 22, FORE_Z - 1), JIB_CLEW = new BlockPoint(MAST_X, 11, FORE_Z - 1),
             JIB_TACK = new BlockPoint(MAST_X, 10, 1);
     /** The jib's area: 0.5 x 11 (head to clew) x 9 (clew to tack). */
@@ -91,24 +93,15 @@ class BrigLayoutTest {
         return "pirates_n_ships:dark_oak_bulwark_port[facing=" + facing + ",open=" + open + ",propped=false,waterlogged=false]";
     }
 
-    /** The armed brig's changes against the merchant brig: new cell -> state. */
+    /** The armed brig's changes against the orderable brig: new cell -> state. */
     private static Map<BlockPos, String> expectedChanges() {
         Map<BlockPos, String> out = new TreeMap<>();
-        for (int z : GUN_ZS) {
-            out.put(new BlockPos(0, 6, z), port("west", true));
-            out.put(new BlockPos(1, 6, z), cannon("west", "front"));
-            out.put(new BlockPos(2, 6, z), cannon("west", "rear"));
-            out.put(new BlockPos(8, 6, z), port("east", true));
-            out.put(new BlockPos(7, 6, z), cannon("east", "front"));
-            out.put(new BlockPos(6, 6, z), cannon("east", "rear"));
-        }
-        for (BlockPos l : LOCKERS) out.put(l, "minecraft:barrel[facing=up,open=false]");
         out.put(NEST, "pirates_n_ships:crows_nest");
         out.put(new BlockPos(MAST_X - 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=west,waterlogged=false]");
         out.put(new BlockPos(MAST_X + 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=east,waterlogged=false]");
-        for (int z = 22; z <= 24; z++) {
-            out.put(new BlockPos(0, 10, z), "pirates_n_ships:railing_latch[facing=west,waterlogged=false]");
-            out.put(new BlockPos(8, 10, z), "pirates_n_ships:railing_latch[facing=east,waterlogged=false]");
+        for (int z = 25; z <= 27; z++) {
+            out.put(new BlockPos(1, 11, z), "pirates_n_ships:railing_latch[facing=west,waterlogged=false]");
+            out.put(new BlockPos(7, 11, z), "pirates_n_ships:railing_latch[facing=east,waterlogged=false]");
         }
         for (BlockPos s : SWIVELS) out.put(s, "pirates_n_ships:swivel_gun");
         return out;
@@ -116,7 +109,7 @@ class BrigLayoutTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"navy_brig_armed", "pirate_brig_armed"})
-    void onlyTheGunsPortsLockerNestAndRatlinesDiffer(String name) throws IOException {
+    void onlyTheNestRatlineFittingsAndSwivelsDiffer(String name) throws IOException {
         Map<BlockPos, String> base = blocks("brig");
         Map<BlockPos, String> armed = blocks(name);
         Map<BlockPos, String> expected = expectedChanges();
@@ -133,26 +126,19 @@ class BrigLayoutTest {
             }
         }
         assertTrue(unexpected.isEmpty(), String.join("\n", unexpected));
-        // the merchant brig is pierced for the guns: her ports are there with their lids shut, everything else was free
-        for (Map.Entry<BlockPos, String> e : expected.entrySet()) {
-            BlockPos p = e.getKey();
-            if (e.getValue().contains("bulwark_port")) {
-                assertEquals(e.getValue().replace("open=true", "open=false"), base.get(p), "no shut gun port at " + p);
-            } else {
-                assertEquals(null, base.get(p), "cell " + p + " was not free in the merchant brig");
-            }
-        }
+        for (BlockPos p : expected.keySet()) assertEquals(null, base.get(p), "cell " + p + " was not free in the orderable brig");
     }
 
     /**
      * Four guns a side on the lower gun deck: each muzzle (master) right inboard of an open gun port on the hull side
      * with its rear inboard of it, both on the deck, the barrel clear above, its crew's place behind the rear free; every
      * gun within the gun crews' supply range (4) of a shot locker, two guns per locker; a barrel, which opens under the
-     * weather deck.
+     * weather deck. SHIP2: the orderable brig carries them as the armed ones do.
      */
-    @Test
-    void everyGunIsSuppliedAndFiresThroughAPort() throws IOException {
-        Map<BlockPos, String> armed = blocks("navy_brig_armed");
+    @ParameterizedTest
+    @ValueSource(strings = {"brig", "navy_brig_armed", "pirate_brig_armed"})
+    void everyGunIsSuppliedAndFiresThroughAPort(String name) throws IOException {
+        Map<BlockPos, String> armed = blocks(name);
         List<BlockPos> guns = new ArrayList<>();
         armed.forEach((p, s) -> {
             if (s.startsWith(CANNON) && s.contains("part=front")) guns.add(p);
@@ -267,15 +253,15 @@ class BrigLayoutTest {
     }
 
     /**
-     * Each side's nets: three latches in a row on the weather deck's rail abaft the main mast (each on a railing railed
-     * on the latch's edge, the deck inboard of it free to stand on), all to one mast hoop on the main mast's side right
+     * Each side's nets: three latches in a row on the quarterdeck's side rail (each on a railing railed on the latch's
+     * edge, the deck inboard of it free to stand on), all to one mast hoop on the main mast's side right
      * under the nest; every strand within the default length and pitch; the three join pairwise into one sheet (RL4's
      * fan) whose cells are all free in the structure; and the cell over the hoop is free and right beside the nest, so a
      * climber leaves the net at the top (RL3) straight into the nest.
      */
     @ParameterizedTest
     @ValueSource(strings = {"navy_brig_armed", "pirate_brig_armed"})
-    void eachNetClimbsFromTheWeatherDeckToTheNest(String name) throws IOException {
+    void eachNetClimbsFromTheQuarterdeckToTheNest(String name) throws IOException {
         Map<BlockPos, String> ship = blocks(name);
         assertEquals(6, ShipTemplates.BRIG_NETS.size());
         for (ShipTemplate.Net n : ShipTemplates.BRIG_NETS) {
@@ -286,7 +272,7 @@ class BrigLayoutTest {
                     "the latch at " + n.a() + " is not on its railing's edge: " + rail);
             BlockPos inboard = facingOf(latch).equals("west") ? n.a().below().east() : n.a().below().west();
             assertEquals(null, ship.get(inboard), "no deck to stand on beside the net's foot at " + inboard);
-            assertEquals(DECK, ship.get(inboard.below()), "no weather deck under " + inboard);
+            assertEquals(DECK, ship.get(inboard.below()), "no quarterdeck under " + inboard);
             String hoop = ship.get(n.b());
             assertTrue(hoop.startsWith("pirates_n_ships:mast_hoop"), "no hoop at " + n.b() + ": " + hoop);
             assertEquals(new BlockPos(MAST_X, MAIN_TOP, MAIN_Z), facingOf(hoop).equals("west") ? n.b().east() : n.b().west(),
@@ -423,14 +409,15 @@ class BrigLayoutTest {
     /**
      * SH1b on the brig: the hold (y 2..4) is closed below the gun deck: no air cell of the hull below the gun deck floor is
      * reached from outside through air (ladders count as air), and the two bulkheads cut it into three rooms (a fore, a
-     * main and an aft hold), each with its own hatch and ladder from the gun deck.
+     * main and an aft hold), each with its own hatch and ladder from the gun deck. The brig cell's bars and door in the
+     * aft hold (SHIP2) let water through, so they are open here.
      */
     @Test
     void theHoldIsClosedAndHasThreeCompartments() throws IOException {
         Map<BlockPos, String> ship = blocks("brig");
         java.util.function.Predicate<BlockPos> open = p -> {
             String s = ship.get(p);
-            return s == null || s.startsWith("minecraft:ladder");
+            return s == null || s.startsWith("minecraft:ladder") || s.startsWith("pirates_n_ships:brig_");
         };
         // flood the air outside the hull below the gun deck floor (y 0..4), from beyond the structure's box
         Set<BlockPos> outside = new HashSet<>();
@@ -484,5 +471,44 @@ class BrigLayoutTest {
             long hatches = room.stream().filter(p -> p.getY() == 4 && ship.getOrDefault(p.above(), "").startsWith("minecraft:spruce_trapdoor")).count();
             assertEquals(1, hatches, "hatches over hold room " + i);
         }
+    }
+
+    /**
+     * SHIP2: the ballast stones lie in the bottom and beside the keel (y 0 and 1), at least 60 of them, mirrored across
+     * the centre line; every block's mass sits evenly on both sides (the same block at x and 8 − x, ignoring facing and
+     * a few light fittings: the fore berth's hammocks hang from the hull to a fence post, so a hammock faces a post), so she
+     * has no list of her own.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"brig", "navy_brig_armed", "pirate_brig_armed"})
+    void theBallastLiesLowAndEven(String name) throws IOException {
+        Map<BlockPos, String> ship = blocks(name);
+        List<BlockPos> ballast = ship.entrySet().stream().filter(e -> e.getValue().equals(BALLAST)).map(Map.Entry::getKey).toList();
+        assertTrue(ballast.size() >= 60, "ballast stones " + ballast.size());
+        for (BlockPos b : ballast) {
+            assertTrue(b.getY() <= 1, "ballast above the bottom at " + b);
+            assertEquals(BALLAST, ship.get(new BlockPos(8 - b.getX(), b.getY(), b.getZ())), "the ballast at " + b + " has no twin");
+        }
+        Set<String> light = Set.of("pirates_n_ships:bilge_pump", "pirates_n_ships:chart_table", "pirates_n_ships:cargo_barrel",
+                "pirates_n_ships:ship_lantern", "pirates_n_ships:pantry", "pirates_n_ships:water_barrel", "pirates_n_ships:hammock",
+                "minecraft:spruce_fence");
+        List<String> uneven = new ArrayList<>();
+        ship.forEach((p, s) -> {
+            if (p.getX() == MAST_X) return;
+            String id = s.contains("[") ? s.substring(0, s.indexOf('[')) : s;
+            String twin = ship.get(new BlockPos(8 - p.getX(), p.getY(), p.getZ()));
+            String twinId = twin == null ? null : twin.contains("[") ? twin.substring(0, twin.indexOf('[')) : twin;
+            if (!id.equals(twinId) && !light.contains(id) && (twinId == null || !light.contains(twinId))) uneven.add(p.toShortString() + " " + id + " | " + twinId);
+        });
+        assertTrue(uneven.isEmpty(), "uneven across the centre line:\n" + String.join("\n", uneven));
+    }
+
+    /** The block count the brig's price is made from ({@link ShipOrderMath#brigPrice}) is the structure's. */
+    @Test
+    void thePriceCountsTheStructuresBlocksAndGuns() throws IOException {
+        Map<BlockPos, String> ship = blocks("brig");
+        assertEquals(ShipOrderMath.BRIG_BLOCKS, ship.size(), "blocks");
+        assertEquals(ShipOrderMath.BRIG_GUNS, ship.values().stream().filter(s -> s.startsWith(CANNON) && s.contains("part=front")).count());
+        assertEquals(1250, ShipOrderMath.brigPrice());
     }
 }

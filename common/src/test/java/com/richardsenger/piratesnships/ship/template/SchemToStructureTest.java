@@ -293,7 +293,7 @@ class SchemToStructureTest {
         String log = convert(out, schem);
         assertArrayEquals(Files.readAllBytes(committed), Files.readAllBytes(out.resolve(name + ".nbt")),
                 "rerun python3 tools/schem_to_structure.py and commit the result");
-        assertTrue(log.contains(name.contains("brig") ? "helm at [4, 12, 27]" : "helm at [4, 8, 22]"), log);
+        assertTrue(log.contains(name.contains("brig") ? "helm at [4, 10, 27]" : "helm at [4, 8, 22]"), log);
     }
 
     // ------------------------------------------------------------------ block entity check (FIX3)

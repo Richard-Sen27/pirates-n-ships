@@ -55,39 +55,40 @@ public final class ShipTemplates {
     public static final ShipTemplate PIRATE_SLOOP_ARMED = new ShipTemplate(Constants.id("ships/pirate_sloop_armed"),
             nameKey(PIRATE_SLOOP_ARMED_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 0, false);
 
-    /** The brig's helm on the quarterdeck (SHIP1, art/schematics/brig.py). */
-    public static final BlockPos BRIG_HELM = new BlockPos(4, 12, 27);
+    /** The brig's helm on the quarterdeck (SHIP1, art/schematics/brig.py; SHIP2 lowered the quarterdeck to y 9). */
+    public static final BlockPos BRIG_HELM = new BlockPos(4, 10, 27);
     /**
-     * The brig's waterline row: the keel (0), the bottom (1) and the hold (2..4) under water, the gun deck floor (5) and
-     * the gun ports (6) clear of the sea (she settles about 0.4 of a row deeper, BrigGameTests).
+     * The brig's waterline row: the keel (0), the bottom (1) and the hold (2..4) under water, the gun ports (6) clear of
+     * the sea (SHIP2: with her ballast she settles with about five rows under water, the surface at the gun deck floor
+     * (5), BrigTrimGameTests).
      */
     public static final int BRIG_WATERLINE = 4;
 
     public static final ResourceLocation BRIG_ID = Constants.id("brig");
 
     /**
-     * The brig (SHIP1, art/schematics/brig.py): two masts with two square sails each and a jib, 9×26×32, bow to the
-     * north; a hold three rows deep in three watertight compartments, a lower gun deck pierced for eight guns (the lids
-     * shut), the weather deck and a cabin under the raised quarterdeck. 1235 blocks; sold at the shipwright for 725
-     * doubloons, the starter sloop's 400 in proportion to her blocks (1235 against 685).
+     * The brig (SHIP1, reworked in SHIP2, art/schematics/brig.py): two masts with two square sails each and a jib,
+     * 9×28×32, bow to the north; ballast stones in the bottom, a hold three rows deep in three watertight compartments,
+     * a lower gun deck with eight guns and four shot lockers, the great cabin aft under a quarterdeck one row over the
+     * weather deck. Sold at the shipwright for {@link #BRIG_PRICE} doubloons.
      */
     public static final ShipTemplate BRIG = new ShipTemplate(Constants.id("ships/brig"), nameKey(BRIG_ID),
-            Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 725);
+            Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, ShipOrderMath.brigPrice());
 
     /**
-     * The armed brig's ratline nets (SHIP1): a fan of three strands on each side, from the railing latches on the
-     * weather deck's rail abaft the main mast (x 0 and 8, y 10, z 22..24) up to the mast hoops under the crow's nest
-     * (x 3 and 5, y 25, z 19).
+     * The armed brig's ratline nets (SHIP1, SHIP2): a fan of three strands on each side, from the railing latches on the
+     * quarterdeck's side rails (x 1 and 7, y 11, z 25..27) up to the mast hoops under the crow's nest (x 3 and 5, y 25,
+     * z 19).
      */
     public static final List<ShipTemplate.Net> BRIG_NETS = brigNets();
 
     public static final ResourceLocation NAVY_BRIG_ARMED_ID = Constants.id("navy_brig_armed");
 
     /**
-     * The navy patrols' brig (SHIP1, art/schematics/navy_brig_armed.py): {@link #BRIG} with four carriage cannons a
-     * side on the lower gun deck behind open gun ports, four shot lockers (barrels) between them, a crow's nest on the
-     * main masthead with mast hoops under it, railing latches on the rail and the {@link #BRIG_NETS} strung between
-     * them on placement, and two swivel guns on the quarterdeck rails. Same hull, helm and waterline. Not sold.
+     * The navy patrols' brig (SHIP1, art/schematics/navy_brig_armed.py): {@link #BRIG} (with her eight guns and four
+     * shot lockers since SHIP2) plus a crow's nest on the main masthead with mast hoops under it, railing latches on the
+     * quarterdeck rails and the {@link #BRIG_NETS} strung between them on placement, and two swivel guns on the
+     * taffrail. Same hull, helm and waterline. Not sold.
      */
     public static final ShipTemplate NAVY_BRIG_ARMED = new ShipTemplate(Constants.id("ships/navy_brig_armed"),
             nameKey(NAVY_BRIG_ARMED_ID), Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 0, false,
@@ -107,9 +108,9 @@ public final class ShipTemplates {
 
     private static List<ShipTemplate.Net> brigNets() {
         List<ShipTemplate.Net> out = new ArrayList<>();
-        for (int[] side : new int[][] {{0, 3}, {8, 5}}) {
-            for (int z = 22; z <= 24; z++) {
-                out.add(new ShipTemplate.Net(new BlockPos(side[0], 10, z), new BlockPos(side[1], 25, 19)));
+        for (int[] side : new int[][] {{1, 3}, {7, 5}}) {
+            for (int z = 25; z <= 27; z++) {
+                out.add(new ShipTemplate.Net(new BlockPos(side[0], 11, z), new BlockPos(side[1], 25, 19)));
             }
         }
         return List.copyOf(out);

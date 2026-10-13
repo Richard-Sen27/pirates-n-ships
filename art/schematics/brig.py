@@ -1,15 +1,24 @@
-"""Generates the brig BuildSpec (SHIP1, bow toward -Z) and prints it as JSON.
+"""Generates the brig BuildSpec (SHIP1, reworked in SHIP2; bow toward -Z) and prints it as JSON.
 
 A two-masted brig, 9 wide and 32 long over all (hull 27, bowsprit 4, the name boards one more), dark oak and spruce
-like the starter sloop. Decks from the keel up: the keel (y 0), the hold (y 2..3, three watertight compartments
-between two bulkheads), the lower gun deck (floor y 4, headroom y 5..6), the weather deck (y 7) and, aft, the cabin
-(y 8..9) under the raised quarterdeck (y 10). The design is written down in art/README.md, "The brig (SHIP1)".
+like the starter sloop. Decks from the keel up: the keel (y 0), the bottom (y 1), the hold (y 2..4, three watertight
+compartments between two bulkheads), the lower gun deck (floor y 5, headroom y 6..7, four guns a side, the great cabin
+aft of z 26), the weather deck (y 8) and, aft, the quarterdeck (y 9) one row over it. Ballast stones lie in the bottom
+(y 1) and beside the keel log (y 0).
+The design and the mass budget are written down in art/README.md, "The brig (SHIP1)" and "The brig (SHIP2)".
 
-``brig_cells(armed)`` builds both variants: run on its own this file prints the orderable merchant brig (``brig``);
-``navy_brig_armed.py`` and ``pirate_brig_armed.py`` print the armed one, which differs from it only as the armed
-sloops differ from the starter sloop: the guns, the open gun ports, the shot lockers, the crow's nest and the ratline
+SHIP2 (the human's first sail, 2026-10-13: "missing cannons (at least when ordered) ... looks very bulky ... not enough
+of the ship under water ... gets strongly tilted to one side"): the hull is rounder below the water (the bottom and the
+bilge narrower than the sides) with ballast stones in the bottom and beside the keel, so she floats deeper and with
+her centre of mass low enough to stand upright; the topsides tumble home one block above the gun deck (the weather deck
+and everything on it one block in from the hull side); the stripes and the rail rise toward the bow and the stern (the
+sheer), the stem is a log from the forefoot to the knighthead with the bowsprit stepped on its head, the counter stern
+overhangs the run, and the ordered brig carries her eight guns and their shot lockers.
+
+``brig_cells(armed)`` builds both variants: run on its own this file prints the orderable brig (``brig``);
+``navy_brig_armed.py`` and ``pirate_brig_armed.py`` print the armed one, which adds only the crow's nest, the ratline
 fittings (railing latches and mast hoops; the nets between them are strung when the template is placed, from the
-``nets`` list of its ship template definition, see ``NETS``), plus the two swivel guns.
+``nets`` list of its ship template definition, see ``NETS``) and the two swivel guns.
 """
 import json
 
@@ -18,33 +27,48 @@ OFF = 4         # z offset of the hull (room for the bowsprit)
 L = 27          # hull length
 STERN = OFF + L - 1          # 30, the transom
 
-# half-width of the hull at the gun deck and above, by hull z (0 = stem)
+# half-width of the hull at the gun deck, by hull z (0 = stem)
 HW = [0, 1, 1, 2, 2, 3, 3, 3] + [4] * 15 + [3, 3, 3, 3]
 assert len(HW) == L
+# the underwater body (the hold rows) is fuller toward the ends than the gun deck: more waterplane and displacement low
+LOW_HW = [0, 1, 2, 2, 3, 3, 4, 4] + [4] * 15 + [4, 4, 3, 3]
+assert len(LOW_HW) == L
+# the topsides tumble home: from the weather deck up the hull is at most this half-width
+TOP_HW = 3
 
-# lower layers: half-width reduction and hull z range (rocker)
-LOWER = {1: (1, 2, 24), 2: (0, 1, 25)}
+KEEL = 0
+BOTTOM = 1
+HOLD = (2, 3, 4)             # hold rows
+GUN_FLOOR = 5                # lower gun deck floor
+GUN_ROWS = (6, 7)            # lower gun deck headroom
+DECK = 8                     # weather deck
+QD = 25                      # first z of the cabin / quarterdeck
+QD_FLOOR = 9                 # quarterdeck floor, one row over the weather deck (the great cabin under it on the gun deck)
+CABIN_FRONT = 26             # the bulkhead between the gun deck and the great cabin (z 27..29)
+BULKHEADS = (14, 23)         # z of the two hold bulkheads: fore hold, main hold, aft hold
 
-HOLD = (2, 3)                # hold rows
-GUN_FLOOR = 4                # lower gun deck floor
-GUN_ROWS = (5, 6)            # lower gun deck headroom
-DECK = 7                     # weather deck
-QD = 25                      # first shifted z of the cabin / quarterdeck
-QD_FLOOR = 10                # quarterdeck floor (cabin y 8..9 under it)
-BULKHEADS = (14, 23)         # shifted z of the two hold bulkheads: fore hold, main hold, aft hold
+# the underwater body: per row the half-width reduction against LOW_HW (HW for the bottom) and the hull z range (the stem
+# rakes forward, the run rises into the counter); rows from the gun deck floor up follow HW. The keel row is three wide
+# amidships (KEEL_RED from HW): the keel log on the centre line with ballast stones either side of it.
+BODY = {BOTTOM: (1, 2, 23), 2: (0, 1, 24), 3: (0, 1, 25), 4: (0, 0, 25)}
+KEEL_RED = 3
 
-FMZ, MMZ = 11, 19            # fore and main mast (shifted z)
-FORE_TOP, MAIN_TOP = 22, 24  # mast heads
+FMZ, MMZ = 11, 19            # fore and main mast
+FORE_TOP, MAIN_TOP = 23, 25  # mast heads
 # yards (yard rule, PND3/TPL3): one block forward of the mast; (y, half length) from the lowest
-FORE_YARDS = ((11, 4), (16, 3), (20, 2))
-MAIN_YARDS = ((11, 4), (17, 3), (22, 2))
+FORE_YARDS = ((12, 4), (17, 3), (21, 2))
+MAIN_YARDS = ((12, 4), (18, 3), (23, 2))
 
 GUN_ZS = (13, 17, 21, 25)    # gun deck guns, both sides
-LOCKERS = [(1, 5, 15), (1, 5, 23), (7, 5, 15), (7, 5, 23)]   # shot lockers on the gun deck, two guns each
+GUN_Y = 6
+LOCKERS = [(1, 6, 15), (1, 6, 23), (7, 6, 15), (7, 6, 23)]   # shot lockers on the gun deck, two guns each
 NEST = (CX, MAIN_TOP + 1, MMZ)
 HOOPS = [(CX - 1, MAIN_TOP, MMZ, "west"), (CX + 1, MAIN_TOP, MMZ, "east")]
-LATCH_ZS = (22, 23, 24)      # railing latches on the weather deck rail, abaft the main mast
-SWIVELS = [(1, QD_FLOOR + 2, 28), (7, QD_FLOOR + 2, 28)]
+# railing latches on the quarterdeck's side rails, as far forward as they go (SHIP2: a strand climbing forward more
+# steeply than 8 in 14 leaves its latch through the north face into the next latch, and its net is not strung)
+LATCH_ZS = (25, 26, 27)
+# on the taffrail's quarters, clear of the latches (SHIP2: a swivel beside the aftmost latch blocks its net's sheet)
+SWIVELS = [(2, QD_FLOOR + 2, STERN), (6, QD_FLOOR + 2, STERN)]
 
 blocks = {}
 
@@ -60,14 +84,20 @@ def fit(x, y, z, b):
 
 
 def hw(zs, y):
+    """Half-width of row y at z (-1 outside the hull)."""
     z = zs - OFF
     if not 0 <= z < L:
         return -1
-    if y in LOWER:
-        red, z0, z1 = LOWER[y]
+    if y == KEEL:
+        return max(0, HW[z] - KEEL_RED) if 1 <= z <= 23 else -1
+    if y in BODY:
+        red, z0, z1 = BODY[y]
         if not z0 <= z <= z1:
             return -1
-        return HW[z] - red
+        w = (HW if y == BOTTOM else LOW_HW)[z] - red
+        return w if w >= 0 else -1
+    if y >= DECK:
+        return min(HW[z], TOP_HW)
     return HW[z]
 
 
@@ -90,89 +120,125 @@ def outside_dirs(x, zs, y=DECK):
     return out
 
 
-def side_block(y):
-    return {1: "lower", 2: "lower", 3: "wale", 4: "band", 7: "wale"}.get(y, "top")
+def sheer(zs):
+    """How many rows the hull's stripes and the rail stand higher at z: the sheer rising toward the bow and stern."""
+    if zs <= OFF + 1:
+        return 2
+    if zs <= OFF + 4:
+        return 1
+    if zs >= STERN - 1:
+        return 1
+    return 0
+
+
+def side_block(y, zs):
+    """The planking of the hull side: dark oak below the main wale, the wale, the gun stripe, the sheer strake."""
+    r = y - sheer(zs)
+    if r <= 4:
+        return "lower"
+    if r == 5:
+        return "wale"
+    if r == 6:
+        return "band"
+    return "top"
 
 
 # ---------------------------------------------------------------- hull
 
-for zs in range(OFF + 1, OFF + 24):
-    put(CX, 0, zs, "keel")
-
-for y in range(1, DECK + 1):
-    for zs in range(OFF, STERN + 1):
+for zs in range(OFF, STERN + 1):
+    for y in range(KEEL, DECK + 1):
         for x in range(0, 9):
             if not inside(x, y, zs):
                 continue
-            if y == 1 or edge(x, y, zs):
-                put(x, y, zs, side_block(y))
-            elif y in (GUN_FLOOR, DECK):
+            if y == KEEL:
+                put(x, y, zs, "keel" if x == CX else "ballast")
+            elif y == BOTTOM or edge(x, y, zs):
+                put(x, y, zs, side_block(y, zs))
+            elif y == GUN_FLOOR or (y == DECK and zs < QD):
                 put(x, y, zs, "deck")
             elif y in HOLD and zs in BULKHEADS:
                 put(x, y, zs, "bulkhead")
 
-# SH1b: a bottom plank under every hollow hold cell whose cell below is outside the hull
+# a bottom plank under every hollow cell whose cell below is outside the hull (SH1b): the run's and the entry's steps
 for y in HOLD:
     for zs in range(OFF, STERN + 1):
         for x in range(0, 9):
             if inside(x, y, zs) and (x, y, zs) not in blocks and not inside(x, y - 1, zs):
-                put(x, y - 1, zs, side_block(y - 1))
+                put(x, y - 1, zs, side_block(y - 1, zs))
 
-# the forefoot: the bottom of the two forward hold cells sits on the keel (layer 1 starts at z 7)
-for zs in (OFF + 1, OFF + 2):
-    if (CX, 1, zs) not in blocks:
-        fit(CX, 1, zs, "lower")
+# the stem: the foremost cell of every row on the centre line is a log standing up, from the forefoot to the knighthead
+for y in range(BOTTOM, DECK + 1):
+    zs = next(z for z in range(OFF, STERN + 1) if inside(CX, y, z))
+    put(CX, y, zs, "stem")
+# the deck edge (sheer strake) along the waist is a log, the tumblehome step outboard of it a stair turned inboard
+for zs in range(OFF, STERN + 1):
+    for x in range(0, 9):
+        if edge(x, DECK, zs) and sheer(zs) == 0 and zs < QD:
+            put(x, DECK, zs, "cap")
+        if inside(x, DECK - 1, zs) and not inside(x, DECK, zs):
+            put(x, DECK, zs, "tumble_e" if x < CX else "tumble_w")
 
-# ---------------------------------------------------------------- cabin and quarterdeck
+# the bow's raised bulwark (the sheer): side planks one and two rows over the deck, the rail on top
+for zs in range(OFF + 1, OFF + 5):
+    for x in range(0, 9):
+        if edge(x, DECK, zs):
+            for k in range(1, sheer(zs) + 1):
+                put(x, DECK + k, zs, "top")
+
+# ---------------------------------------------------------------- quarterdeck and great cabin
+# SHIP2: the quarterdeck is one row over the weather deck (it was three, over a cabin on the weather deck); the cabin is
+# the great cabin aft on the gun deck under it, three rows high, behind a bulkhead at z 26, lit by the stern windows
 
 for zs in range(QD, STERN + 1):
     for x in range(0, 9):
-        if not inside(x, DECK, zs):
-            continue
-        wall = edge(x, DECK, zs) or zs == QD
-        for y in (8, 9):
-            if wall:
-                put(x, y, zs, "top")
-        put(x, QD_FLOOR, zs, "top" if edge(x, DECK, zs) else "deck")
+        if inside(x, DECK, zs):
+            put(x, QD_FLOOR, zs, "cap" if edge(x, DECK, zs) else "deck")
+for y in GUN_ROWS + (DECK,):
+    for x in range(0, 9):
+        if inside(x, y, CABIN_FRONT) and not edge(x, y, CABIN_FRONT):
+            put(x, y, CABIN_FRONT, "top")
 
 # cabin door, stern windows, side lights
-put(CX, 8, QD, "door_lower")
-put(CX, 9, QD, "door_upper")
+put(CX, 6, CABIN_FRONT, "door_lower")
+put(CX, 7, CABIN_FRONT, "door_upper")
 for x in (2, 4, 6):
-    put(x, 9, STERN, "stern_window")
+    put(x, 7, STERN, "stern_window")
 for x in (1, 7):
-    put(x, 9, 29, "pane")
+    put(x, 7, 28, "pane")
 
-# stairs from the weather deck up to the quarterdeck on both sides (landing on the quarterdeck at z QD), one block in
-# from the rail so the deck beside the ratline latches (x 1 and 7, z 22..24) stays free for the climber
+# a stair up to the quarterdeck on each side of the break
 STAIR_XS = (2, 6)
 for x in STAIR_XS:
-    fit(x, 8, QD - 3, "stair")
-    fit(x, 8, QD - 2, "top")
-    fit(x, 9, QD - 2, "stair")
-    fit(x, 8, QD - 1, "top")
-    fit(x, 9, QD - 1, "top")
-    fit(x, 10, QD - 1, "stair")
+    fit(x, DECK + 1, QD - 1, "stair")
 
-# ---------------------------------------------------------------- the companion: weather deck down to the gun deck
+# ---------------------------------------------------------------- the companions: weather deck down to the gun deck
 # a three-block opening in the weather deck (z 14..16) with a stair in the deck at z 17 and two below it, descending
 # toward the bow onto the gun deck floor at z 14; a plank under the middle stair
 for zs in (14, 15, 16):
     blocks.pop((CX, DECK, zs))
 put(CX, DECK, 17, "stair_down")
-fit(CX, 6, 16, "stair_down")
-fit(CX, 5, 15, "stair_down")
-fit(CX, 5, 16, "deck")
+fit(CX, 7, 16, "stair_down")
+fit(CX, 6, 15, "stair_down")
+fit(CX, 6, 16, "deck")
 
 # the after companion (SHIP1 pathfinding: from the quarterdeck the crew's pathfinder runs out of nodes before it finds
-# the gun deck's after half by way of the forward companion): the same three-block opening at x 4, z 21..23 with the
-# stair in the deck at z 24 (at the cabin door), descending toward the bow onto the gun deck at z 21
+# the gun deck's after half by way of the forward companion): the same opening at x 4, z 21..23, the stair in the deck
+# at z 24 (at the cabin door), descending toward the bow onto the gun deck at z 21
 for zs in (21, 22, 23):
     blocks.pop((CX, DECK, zs))
 put(CX, DECK, 24, "stair_down")
-fit(CX, 6, 23, "stair_down")
-fit(CX, 5, 22, "stair_down")
-fit(CX, 5, 23, "deck")
+fit(CX, 7, 23, "stair_down")
+fit(CX, 6, 22, "stair_down")
+fit(CX, 6, 23, "deck")
+
+# ---------------------------------------------------------------- ballast
+# ballast stones in the bottom (y 1) inside its outer planking and beside the keel log (y 0): the brig's centre of mass
+# sits low enough that, with the hull's righting moment, she floats upright (art/README.md "The brig (SHIP2)"). The hold
+# above keeps its three rows.
+for zs in range(OFF, STERN + 1):
+    for x in range(0, 9):
+        if inside(x, BOTTOM, zs) and not edge(x, BOTTOM, zs):
+            put(x, BOTTOM, zs, "ballast")
 
 # hatches with ladders from the gun deck into each hold compartment (ladder on the mast or the bulkhead)
 for zs in (FMZ + 1, MMZ + 1, BULKHEADS[1] + 1):
@@ -183,35 +249,40 @@ for zs in (FMZ + 1, MMZ + 1, BULKHEADS[1] + 1):
 # ---------------------------------------------------------------- rails
 
 
+def rail_y(zs):
+    return DECK + 1 + (sheer(zs) if zs < QD else 0)
+
+
 def railing_cells():
     """(x, y, z) -> (kind, edges): the weather deck's railing family and the quarterdeck's rails."""
     out = {}
     for zs in range(OFF + 1, QD):
         for x in range(0, 9):
             if edge(x, DECK, zs):
-                out[(x, 8, zs)] = ("rail", outside_dirs(x, zs))
+                out[(x, rail_y(zs), zs)] = ("rail", outside_dirs(x, zs))
     for zs in range(QD, STERN + 1):
         for x in range(0, 9):
             if not inside(x, DECK, zs):
                 continue
             dirs = outside_dirs(x, zs)
-            if zs == QD:
-                dirs = dirs + ["north"]
             if not dirs:
                 continue
             kind = "rope" if zs == QD and not edge(x, DECK, zs) else "rail"
-            out[(x, 11, zs)] = (kind, dirs)
-    # gaps over the stair landings in the quarterdeck front
-    for x in STAIR_XS:
-        out.pop((x, 11, QD))
+            out[(x, QD_FLOOR + 1, zs)] = (kind, dirs)
+    # SHIP2: no rope railing along the break at all. The quarterdeck is one row over the weather deck, so the break is a
+    # step, and the after companion's top stair (z 24) lies right under it: the companion is entered from the
+    # quarterdeck. A one-block gap between rope railings is open floor to the crew's pathfinder but too narrow for a
+    # walker (a gunner stuck at the helm pushing into the gap over the companion).
+    for x in range(STAIR_XS[0], STAIR_XS[1] + 1):
+        out.pop((x, QD_FLOOR + 1, QD), None)
     # no rope railing round the companion openings: the crew's pathfinder takes a rope railing's edge for open floor
     # (SHIP1: a walker stuck pushing against it beside the after companion)
     # a wide port (two ports side by side) and a gate on each side of the waist
     for zs in (13, 14):
-        out[(0, 8, zs)] = ("port", ["west"])
-        out[(8, 8, zs)] = ("port", ["east"])
-    out[(0, 8, 17)] = ("gate", ["west"])
-    out[(8, 8, 17)] = ("gate", ["east"])
+        out[(1, DECK + 1, zs)] = ("port", ["west"])
+        out[(7, DECK + 1, zs)] = ("port", ["east"])
+    out[(1, DECK + 1, 17)] = ("gate", ["west"])
+    out[(7, DECK + 1, 17)] = ("gate", ["east"])
     return out
 
 
@@ -219,13 +290,15 @@ RAILS = railing_cells()
 
 # ---------------------------------------------------------------- bow, masts, rig
 
-fit(CX, 8, OFF, "top")                  # stem head
-for zs in range(0, OFF):
-    fit(CX, 8, zs, "sprit")
-fit(CX, 7, OFF - 1, "figure")
+# the bowsprit, its heel stepped on the stem head, and the knighthead above it
+STEM_HEAD = (CX, DECK + 1, OFF)
+for zs in range(0, OFF + 1):
+    put(CX, DECK + 1, zs, "sprit")
+put(CX, DECK + 2, OFF, "stem")
+fit(CX, DECK, OFF - 1, "figure")
 
 for top, mz, yards in ((FORE_TOP, FMZ, FORE_YARDS), (MAIN_TOP, MMZ, MAIN_YARDS)):
-    for y in range(1, top + 1):
+    for y in range(BOTTOM, top + 1):
         put(CX, y, mz, "mast")
     for y, half in yards:
         for x in range(CX - half, CX + half + 1):
@@ -234,88 +307,97 @@ for top, mz, yards in ((FORE_TOP, FMZ, FORE_YARDS), (MAIN_TOP, MMZ, MAIN_YARDS))
 # jib on the fore mast (TPL3): head above the upper fore yard, clew below the lower, tack on the bowsprit
 JIB_HEAD = (CX, FORE_YARDS[-1][0] + 1, FMZ - 1)
 JIB_CLEW = (CX, FORE_YARDS[0][0] - 1, FMZ - 1)
-JIB_TACK = (CX, 9, 1)
+JIB_TACK = (CX, DECK + 2, 1)
 fit(*JIB_HEAD, "cleat_mast")
 fit(*JIB_CLEW, "cleat_mast")
 fit(*JIB_TACK, "cleat_floor")
 
 # ---------------------------------------------------------------- stations, crew and gear
 
-fit(CX, 8, 7, "capstan")
-fit(CX, 8, FMZ + 1, "winch")
-fit(CX, 8, MMZ + 1, "winch")
-fit(7, 5, MMZ, "pump")                     # gun deck, against the starboard side over the main hold: its intake reaches the hold
+fit(CX, 9, 7, "capstan")
+# the fore winch two abaft the mast (SHIP2): its hand's spot (the first free side, north first) is then the cell between
+# the winch and the mast on the centre line, out of both walkways; beside the mast he stood in the starboard walkway,
+# narrowed by the tumblehome, and a crew member walking forward to the capstan stuck behind him
+fit(CX, 9, FMZ + 2, "winch")
+fit(CX, 9, MMZ + 1, "winch")
+fit(7, 6, MMZ, "pump")                     # gun deck, against the starboard side over the main hold: its intake reaches the hold
 fit(CX, QD_FLOOR + 1, 27, "helm")
 fit(CX, QD_FLOOR + 1, 29, "pedestal")
 fit(CX, QD_FLOOR + 2, 29, "pole_bottom")
 fit(CX, QD_FLOOR + 3, 29, "pole_middle")
 fit(CX, QD_FLOOR + 4, 29, "pole_top")
-fit(CX, 9, FMZ + 1, "bell_s")              # on the fore mast's after face, over the fore winch
-for x in (3, 5):
-    fit(x, 9, QD - 1, "lantern_n")
-fit(1, 6, 12, "lantern_e")
-fit(7, 6, 12, "lantern_w")
-fit(1, 6, 19, "lantern_e")
-fit(7, 6, 18, "lantern_w")
-fit(2, 9, 27, "lantern_e")
+fit(CX, 11, FMZ + 1, "bell_s")             # on the fore mast's after face, over the winch hand's head
+# on the masts' after faces over the winches (SHIP2: the break lanterns went, the break being a step)
+fit(CX, 12, FMZ + 1, "lantern_s")
+fit(CX, 11, MMZ + 1, "lantern_s")
+fit(1, 7, 12, "lantern_e")
+fit(7, 7, 12, "lantern_w")
+fit(1, 7, 19, "lantern_e")
+fit(7, 7, 19, "lantern_w")
+fit(2, 8, 27, "lantern_e")
+fit(6, 8, 27, "lantern_w")
 
 # galley at the fore end of the gun deck's waist
-fit(1, 5, 12, "pantry")
-fit(7, 5, 12, "water")
+fit(1, 6, 12, "pantry")
+fit(7, 6, 12, "water")
 
-# hammocks: two fore and aft in the fore berth (hull at z 8, posts at z 11), two across the gun deck abaft the guns
-# (hull and a post, z 26), four across the cabin (two at z 26 between the cabin wall and a post, two at z 28 between
-# the walls and a post in the middle); eight in all
+# hammocks: four in the fore berth (two fore and aft beside the hull at x 2 and 6 with a post at z 11, two across the
+# bow at z 7 and 8 from the hull to a post), one across the gun deck forward of the after guns on the port side (hull
+# and a post, z 24; the starboard side stays open: the after companion's foot closes x 4 at z 23, so z 24..25, the
+# cabin door and the aft hatch are reached by x 5), three fore and aft in the great cabin (from its bulkhead to the
+# crates and the barrel at z 29, the lane x 3..4 to the chest left free): eight
 for x in (2, 6):
-    fit(x, 5, 9, "ham_foot_s")
-    fit(x, 5, 10, "ham_head_s")
-    fit(x, 5, 11, "post")
-fit(2, 8, 28, "ham_foot_e")
-fit(3, 8, 28, "ham_head_e")
-fit(4, 8, 28, "post")
-fit(5, 8, 28, "ham_foot_e")
-fit(6, 8, 28, "ham_head_e")
-for zs in (26,):
-    fit(1, 5, zs, "ham_foot_e")
-    fit(2, 5, zs, "ham_head_e")
-    fit(3, 5, zs, "post")
-    fit(5, 5, zs, "post")
-    fit(6, 5, zs, "ham_foot_e")
-    fit(7, 5, zs, "ham_head_e")
-fit(1, 8, 26, "ham_foot_e")
-fit(2, 8, 26, "ham_head_e")
-fit(3, 8, 26, "post")
-fit(5, 8, 26, "post")
-fit(6, 8, 26, "ham_foot_e")
-fit(7, 8, 26, "ham_head_e")
+    fit(x, 6, 9, "ham_foot_s")
+    fit(x, 6, 10, "ham_head_s")
+    fit(x, 6, 11, "post")
+for zs in (7, 8):
+    fit(3, 6, zs, "ham_foot_e")
+    fit(4, 6, zs, "ham_head_e")
+    fit(5, 6, zs, "post")
+fit(1, 6, 24, "ham_foot_e")
+fit(2, 6, 24, "ham_head_e")
+fit(3, 6, 24, "post")
+for x in (2, 5, 6):
+    fit(x, 6, 27, "ham_foot_s")
+    fit(x, 6, 28, "ham_head_s")
 
-# brig cell at the after end of the gun deck: bars across with a brig door in the middle
-for y in GUN_ROWS:
-    for x in (2, 3, 5, 6):
-        fit(x, y, 27, "bars")
-fit(CX, 5, 27, "brig_door_lower")
-fit(CX, 6, 27, "brig_door_upper")
+# brig cell in the aft hold (down the aft hatch): bars across z 26 with a brig door in the middle, the cell abaft it
+for y in HOLD:
+    for x in range(1, 8):
+        if x != CX:
+            fit(x, y, 26, "bars")
+fit(CX, 2, 26, "brig_door_lower")
+fit(CX, 3, 26, "brig_door_upper")
+fit(CX, 4, 26, "bulkhead")
 
-# cabin: chart table, sea chest
-fit(2, 8, 29, "chart_table")
-fit(CX, 8, 29, "chest")
-fit(6, 8, 29, "crate")
+# great cabin: crates (the cabin hammocks' after supports), chart table, sea chest
+fit(2, 6, 29, "crate")
+fit(3, 6, 29, "chart_table")
+fit(CX, 6, 29, "chest")
+fit(5, 6, 29, "barrel")
+fit(6, 6, 29, "crate")
 
 # holds: cargo
 for x, zs, b in ((3, 9, "crate"), (5, 9, "crate"), (3, 10, "barrel"), (5, 10, "barrel"),
-                 (2, 16, "crate"), (6, 16, "crate"), (2, 17, "barrel"), (6, 17, "water"), (2, 21, "crate"),
-                 (6, 21, "crate"), (2, 26, "barrel"), (6, 26, "barrel"), (3, 28, "crate"), (5, 28, "crate")):
+                 (2, 16, "crate"), (6, 16, "crate"), (2, 17, "water"), (6, 17, "barrel"), (2, 21, "crate"),
+                 (6, 21, "crate")):
     fit(x, 2, zs, b)
 
 # name boards on the transom, under the stern windows
 for x in (3, 4, 5):
     fit(x, 6, STERN + 1, "plate_%d" % x)
 
-# gun ports (shut in the merchant brig: the lids open when a cannon is run out behind them)
+# the guns (SHIP2: the ordered brig carries them too): a carriage cannon behind every gun port, its lid held open
 for zs in GUN_ZS:
-    assert blocks.get((0, 5, zs)) == "top" and blocks.get((8, 5, zs)) == "top"
-    put(0, 5, zs, "port_w")
-    put(8, 5, zs, "port_e")
+    for x, side in ((0, "w"), (8, "e")):
+        step = 1 if x == 0 else -1
+        assert blocks.get((x, GUN_Y, zs)) == "band", (x, zs, blocks.get((x, GUN_Y, zs)))
+        put(x, GUN_Y, zs, "port_%s_open" % side)
+        fit(x + step, GUN_Y, zs, "gun_" + side)
+        fit(x + 2 * step, GUN_Y, zs, "gun_rear_" + side)
+for cell in LOCKERS:
+    assert blocks.get((cell[0], cell[1] - 1, cell[2])) == "deck", cell
+    fit(*cell, "locker")
 
 
 # ---------------------------------------------------------------- the railing family's block states
@@ -385,7 +467,7 @@ RAIL_KEYS = {}
 for cell in sorted(RAILS):
     state = rail_state(cell)
     key = RAIL_KEYS.setdefault(state, "rail_%d" % len(RAIL_KEYS))
-    assert cell not in blocks, cell
+    assert cell not in blocks, (cell, blocks[cell])
     put(*cell, key)
 
 
@@ -394,13 +476,19 @@ palette = {
     "wale": "minecraft:stripped_dark_oak_log[axis=z]",
     "band": "minecraft:spruce_planks",
     "top": "minecraft:dark_oak_planks",
+    "cap": "minecraft:stripped_dark_oak_log[axis=z]",
+    "tumble_e": "minecraft:dark_oak_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]",
+    "tumble_w": "minecraft:dark_oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
     "keel": "minecraft:stripped_dark_oak_log[axis=z]",
+    "stem": "minecraft:stripped_dark_oak_log[axis=y]",
+    "ballast": "minecraft:cobbled_deepslate",
     "deck": "minecraft:spruce_planks",
     "bulkhead": "minecraft:dark_oak_planks",
     "pane": "minecraft:glass_pane",
     "door_lower": "minecraft:spruce_door[facing=north,half=lower,hinge=left,open=false]",
     "door_upper": "minecraft:spruce_door[facing=north,half=upper,hinge=left,open=false]",
     "stair": "minecraft:spruce_stairs[facing=south,half=bottom]",
+    "stair_under": "minecraft:spruce_stairs[facing=north,half=top]",
     "stair_down": "minecraft:spruce_stairs[facing=south,half=bottom]",
     "sprit": "minecraft:spruce_log[axis=z]",
     "mast": "minecraft:spruce_log[axis=y]",
@@ -427,7 +515,7 @@ palette = {
     "pole_middle": "pirates_n_ships:flagpole[facing=north,flag=none,part=middle]",
     "pole_top": "pirates_n_ships:flagpole[facing=north,flag=none,part=top]",
     "bell_s": "pirates_n_ships:ships_bell[face=wall,facing=south]",
-    "lantern_n": "pirates_n_ships:ship_lantern[face=wall,facing=north]",
+    "lantern_s": "pirates_n_ships:ship_lantern[face=wall,facing=south]",
     "lantern_e": "pirates_n_ships:ship_lantern[face=wall,facing=east]",
     "lantern_w": "pirates_n_ships:ship_lantern[face=wall,facing=west]",
     "ham_foot_s": "pirates_n_ships:hammock[facing=south,part=foot,waterlogged=false]",
@@ -440,12 +528,6 @@ palette = {
     "plate_3": "pirates_n_ships:dark_oak_nameplate[facing=south,left=false,right=true]",
     "plate_4": "pirates_n_ships:dark_oak_nameplate[facing=south,left=true,right=true]",
     "plate_5": "pirates_n_ships:dark_oak_nameplate[facing=south,left=true,right=false]",
-    "port_w": "pirates_n_ships:dark_oak_bulwark_port[facing=west,open=false,propped=false,waterlogged=false]",
-    "port_e": "pirates_n_ships:dark_oak_bulwark_port[facing=east,open=false,propped=false,waterlogged=false]",
-    **{key: state for state, key in RAIL_KEYS.items()},
-}
-
-ARMED_PALETTE = {
     "gun_w": "pirates_n_ships:cannon[facing=west,load=empty,part=front]",
     "gun_rear_w": "pirates_n_ships:cannon[facing=west,load=empty,part=rear]",
     "gun_e": "pirates_n_ships:cannon[facing=east,load=empty,part=front]",
@@ -453,6 +535,10 @@ ARMED_PALETTE = {
     "port_w_open": "pirates_n_ships:dark_oak_bulwark_port[facing=west,open=true,propped=false,waterlogged=false]",
     "port_e_open": "pirates_n_ships:dark_oak_bulwark_port[facing=east,open=true,propped=false,waterlogged=false]",
     "locker": "minecraft:barrel[facing=up,open=false]",
+    **{key: state for state, key in RAIL_KEYS.items()},
+}
+
+ARMED_PALETTE = {
     "nest": "pirates_n_ships:crows_nest",
     "hoop_w": "pirates_n_ships:mast_hoop[facing=west,waterlogged=false]",
     "hoop_e": "pirates_n_ships:mast_hoop[facing=east,waterlogged=false]",
@@ -463,28 +549,16 @@ ARMED_PALETTE = {
 
 
 def latches():
-    return [(0, 9, zs, "west") for zs in LATCH_ZS] + [(8, 9, zs, "east") for zs in LATCH_ZS]
+    return [(1, QD_FLOOR + 2, zs, "west") for zs in LATCH_ZS] + [(7, QD_FLOOR + 2, zs, "east") for zs in LATCH_ZS]
 
 
 # the ratline nets of the armed brig: every latch on a side to that side's hoop (a fan of three strands each, RL4/RL5)
-NETS = [((x, y + 1, z), next((hx, hy + 1, hz) for hx, hy, hz, f in HOOPS if f == side)) for x, y, z, side in latches()]  # final (deepened)
+NETS = [((x, y, z), next((hx, hy, hz) for hx, hy, hz, f in HOOPS if f == side)) for x, y, z, side in latches()]
 
 
 def armed(base):
-    """``base`` with the guns, open ports, lockers, crow's nest, ratline fittings and swivel guns; nothing else."""
+    """``base`` with the crow's nest, the ratline fittings and the swivel guns; nothing else."""
     out = dict(base)
-    for zs in GUN_ZS:
-        for x, side in ((0, "w"), (8, "e")):
-            step = 1 if x == 0 else -1
-            assert out.get((x, 5, zs)) == "port_" + side, (x, zs)
-            for cell in ((x + step, 5, zs), (x + 2 * step, 5, zs)):
-                assert cell not in out, cell  # free gun deck
-            out[(x, 5, zs)] = "port_%s_open" % side
-            out[(x + step, 5, zs)] = "gun_" + side
-            out[(x + 2 * step, 5, zs)] = "gun_rear_" + side
-    for cell in LOCKERS:
-        assert cell not in out and out.get((cell[0], cell[1] - 1, cell[2])) == "deck", cell
-        out[cell] = "locker"
     nx, ny, nz = NEST
     assert NEST not in out and out.get((nx, ny - 1, nz)) == "mast", "the nest crowns the main mast"
     out[NEST] = "nest"
@@ -492,7 +566,7 @@ def armed(base):
         assert (x, y, z) not in out and out.get((CX, y, z)) == "mast"
         out[(x, y, z)] = "hoop_" + facing[0]
     for x, y, z, facing in latches():
-        assert (x, y, z) not in out and RAILS[(x, y - 1, z)] == ("rail", [facing]), (x, y, z)
+        assert (x, y, z) not in out and RAILS[(x, y - 1, z)] == ("rail", [facing]), (x, y, z, RAILS.get((x, y - 1, z)))
         out[(x, y, z)] = "latch_" + facing[0]
     for x, y, z in SWIVELS:
         assert (x, y, z) not in out and RAILS.get((x, y - 1, z), (None,))[0] == "rail", (x, y, z)
@@ -500,29 +574,8 @@ def armed(base):
     return out
 
 
-# SHIP1: laid out above with a two-row hold, the brig floated with her gun deck floor awash (Sable's buoyancy and the dry
-# hull lift against her weight: waterline 4.55 rows over the keel). ``deepen`` gives her a third hold row: every cell
-# from y DEEPEN_AT up moves one row up, and the new row repeats the hold row under it (sides, bulkheads, ladders, masts;
-# cargo stays on the hold floor). All coordinates in this file above are before deepening; the notes, art/README.md,
-# ShipTemplates and the tests use the final ones (y + 1 from the gun deck floor up).
-DEEPEN_AT = GUN_FLOOR
-
-
-def deepen(cells):
-    out = {}
-    for (x, y, z), b in cells.items():
-        out[(x, y + 1 if y >= DEEPEN_AT else y, z)] = b
-    for (x, y, z), b in cells.items():
-        if y == DEEPEN_AT - 1 and b in ("wale", "bulkhead", "ladder", "mast"):
-            out[(x, y + 1, z)] = b
-            if b == "wale":
-                out[(x, y, z)] = "lower"
-    return out
-
-
 def spec(cells, pal, spec_id, name, style, notes):
-    """The BuildSpec of ``cells`` (deepened): runs along x merged into box operations, the palette keys in use only."""
-    cells = deepen(cells)
+    """The BuildSpec of ``cells``: runs along x merged into box operations, the palette keys in use only."""
     ops = []
     for (y, zs) in sorted({(y, z) for (_, y, z) in cells}):
         xs = sorted(x for (x, yy, z) in cells if yy == y and z == zs)
@@ -546,22 +599,24 @@ def spec(cells, pal, spec_id, name, style, notes):
     }
 
 
-NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 12, 27], facing south.",
-         "Decks: hold y=2..4 (bulkheads at z=14 and 23), lower gun deck floor y=5, weather deck y=8, cabin y=9..10, "
-         "quarterdeck y=11.",
+NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 10, 27], facing south.",
+         "Decks: ballast stones at y=0..1 beside the keel and in the bottom, hold y=2..4 (bulkheads at z=14 and 23), "
+         "lower gun deck floor y=5 (great cabin aft of z=26), weather deck y=8 (tumbled home to x=1..7 in the waist), "
+         "quarterdeck y=9 from z=25.",
+         "Guns: four a side on the lower gun deck at z=13, 17, 21, 25, muzzles at x=1 (west) and x=7 (east) behind open "
+         "gun ports; shot lockers (barrels) at [1|7, 6, 15] and [1|7, 6, 23].",
          "Fore mast z=11 (top y=23), yards at z=10, y=12/17/21; main mast z=19 (top y=25), yards at z=18, y=12/18/23.",
          "Jib: rope on the head cleat [4, 22, 10], then on the bowsprit cleat [4, 10, 1]; clew cleat [4, 11, 10]."]
 ARMED_NOTES = NOTES + [
-    "Guns: four a side on the lower gun deck at z=13, 17, 21, 25, muzzles at x=1 (west) and x=7 (east) behind open "
-    "gun ports; shot lockers (barrels) at [1|7, 6, 15] and [1|7, 6, 23].",
     "Crow's nest on the main mast top at [4, 26, 19]; mast hoops at [3|5, 25, 19]; railing latches at "
-    "[0|8, 10, 22..24]: the template strings a net from every latch to its side's hoop when it is placed.",
-    "Swivel guns on the quarterdeck rails at [1|7, 13, 28]."]
+    "[1|7, 11, 25..27] on the quarterdeck rails: the template strings a net from every latch to its side's hoop when "
+    "it is placed.",
+    "Swivel guns on the taffrail at [2|6, 11, 30]."]
 
 
 def brig_cells(armed_variant):
-    """The final cells (deepened) of either variant."""
-    return deepen(armed(blocks) if armed_variant else dict(blocks))
+    """The final cells of either variant."""
+    return armed(blocks) if armed_variant else dict(blocks)
 
 
 def armed_spec(spec_id, name):
@@ -571,5 +626,5 @@ def armed_spec(spec_id, name):
 
 if __name__ == "__main__":
     print(json.dumps(spec(blocks, palette, "pns_brig", "Brig",
-                          "two-masted brig with a lower gun deck pierced for eight guns, cabin under a raised quarterdeck",
+                          "two-masted brig with a lower gun deck of eight guns, cabin under a raised quarterdeck",
                           NOTES)))

@@ -205,6 +205,7 @@ public final class AssemblyModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(AssemblyGameTests.class, SplitGameTests.class, ShipTemplateGameTests.class, RejoinGameTests.class,
-                HelmReplaceGameTests.class, com.richardsenger.piratesnships.ship.template.BrigGameTests.class);
+                HelmReplaceGameTests.class, com.richardsenger.piratesnships.ship.template.BrigGameTests.class,
+                com.richardsenger.piratesnships.ship.template.BrigTrimGameTests.class);
     }
 }

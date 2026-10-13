@@ -25,7 +25,43 @@ public final class ShipOrderMath {
     public static final double BLOCKS_PER_LOG = 20.0;
     public static final double TICKS_PER_DAY = 24000.0;
 
+    // ------------------------------------------------------------------ template prices (SHIP1, SHIP2)
+
+    /** The starter sloop's price and block count: what a shipwright asks per block of hull (SW1, SHIP1). */
+    public static final int STARTER_SLOOP_PRICE = 400, STARTER_SLOOP_BLOCKS = 685;
+    /** An iron ingot's base price in doubloons (trade/good/TradeGoods, IRON). */
+    public static final double IRON_INGOT_PRICE = 6.0;
+    /** The cannon's recipe: an iron block and two ingots (eleven ingots) on two stripped logs and a plank. */
+    public static final int CANNON_INGOTS = 11, CANNON_WOOD_BLOCKS = 3;
+    /** Prices are rounded to this many doubloons. */
+    public static final int PRICE_STEP = 25;
+    /**
+     * The brig's blocks (art/schematics/brig.py; {@code BrigLayoutTest} checks them against the committed structure) and
+     * her carriage guns, two blocks each.
+     */
+    public static final int BRIG_BLOCKS = 1235, BRIG_GUNS = 8;
+
     private ShipOrderMath() {
+    }
+
+    /** One cannon at its recipe's cost: the iron at its trade price, the wood at the hull's price per block. */
+    public static double cannonPrice() {
+        return CANNON_INGOTS * IRON_INGOT_PRICE + CANNON_WOOD_BLOCKS * (double) STARTER_SLOOP_PRICE / STARTER_SLOOP_BLOCKS;
+    }
+
+    /**
+     * A template's price: its hull blocks (every block but the guns') at the starter sloop's price per block, plus each
+     * carriage gun at {@link #cannonPrice()}, rounded to {@link #PRICE_STEP}.
+     */
+    public static int templatePrice(int blocks, int guns) {
+        double hull = (double) STARTER_SLOOP_PRICE * Math.max(0, blocks - 2 * guns) / STARTER_SLOOP_BLOCKS;
+        double total = hull + Math.max(0, guns) * cannonPrice();
+        return (int) (Math.round(total / PRICE_STEP) * PRICE_STEP);
+    }
+
+    /** The brig's price (SHIP2: she is sold with her eight guns). */
+    public static int brigPrice() {
+        return templatePrice(BRIG_BLOCKS, BRIG_GUNS);
     }
 
     /** What a template costs at a shipwright, never negative. */

@@ -64,7 +64,7 @@ class BrigLayoutTest {
     private static final int[] GUN_ZS = {13, 17, 21, 25};
     private static final List<BlockPos> LOCKERS = List.of(new BlockPos(1, 6, 15), new BlockPos(1, 6, 23),
             new BlockPos(7, 6, 15), new BlockPos(7, 6, 23));
-    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(1, 11, 29), new BlockPos(7, 11, 29));
+    private static final List<BlockPos> SWIVELS = List.of(new BlockPos(2, 11, 30), new BlockPos(6, 11, 30));
     private static final BlockPos FLAG_FOOT = new BlockPos(MAST_X, 10, 29);
     private static final String BALLAST = "minecraft:cobbled_deepslate";
     private static final BlockPoint JIB_HEAD = new BlockPoint(MAST_X, 22, FORE_Z - 1), JIB_CLEW = new BlockPoint(MAST_X, 11, FORE_Z - 1),
@@ -99,7 +99,7 @@ class BrigLayoutTest {
         out.put(NEST, "pirates_n_ships:crows_nest");
         out.put(new BlockPos(MAST_X - 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=west,waterlogged=false]");
         out.put(new BlockPos(MAST_X + 1, MAIN_TOP, MAIN_Z), "pirates_n_ships:mast_hoop[facing=east,waterlogged=false]");
-        for (int z = 26; z <= 28; z++) {
+        for (int z = 25; z <= 27; z++) {
             out.put(new BlockPos(1, 11, z), "pirates_n_ships:railing_latch[facing=west,waterlogged=false]");
             out.put(new BlockPos(7, 11, z), "pirates_n_ships:railing_latch[facing=east,waterlogged=false]");
         }

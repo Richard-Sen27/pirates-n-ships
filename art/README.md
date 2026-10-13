@@ -2894,8 +2894,8 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
 | `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
-| `brig` | `brig.py` | two-masted brig (SHIP1, reworked in SHIP2): ballast stones in the bottom, hold three rows deep in three compartments, a lower gun deck with eight guns and four shot lockers, the great cabin aft, weather deck, quarterdeck one row over it, 1233 blocks | shipwright (1250), merchant convoys |
-| `navy_brig_armed` | `navy_brig_armed.py` | the brig (her guns and lockers included) with a crow's nest, mast hoops and railing latches on the quarterdeck rails (six ratline nets strung on placement) and two swivel guns, 1244 blocks | navy patrols (not sold) |
+| `brig` | `brig.py` | two-masted brig (SHIP1, reworked in SHIP2): ballast stones in the bottom, hold three rows deep in three compartments, a lower gun deck with eight guns and four shot lockers, the great cabin aft, weather deck, quarterdeck one row over it, 1231 blocks | shipwright (1250), merchant convoys |
+| `navy_brig_armed` | `navy_brig_armed.py` | the brig (her guns and lockers included) with a crow's nest, mast hoops and railing latches on the quarterdeck rails (six ratline nets strung on placement) and two swivel guns on the taffrail, 1242 blocks | navy patrols (not sold) |
 | `pirate_brig_armed` | `pirate_brig_armed.py` | the same blocks and nets as `navy_brig_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
@@ -3057,16 +3057,23 @@ say, this section holds; the generator's docstring and `NOTES` are the short for
   target there is 6°: she is tenderer under sail than the sloop), dry, and stands up within 5 s of furling.
 - **Guns on the ordered brig:** eight carriage cannons behind open gun ports (z 13, 17, 21, 25) and four shot lockers,
   as on the armed brigs since SHIP1; the armed brigs now differ from her only by the nest, the ratline fittings and
-  the swivels. The ratline latches moved to the quarterdeck's side rails [1|7, 11, 26..28] (the weather deck's rail
-  stands over the tumblehome), the swivels to [1|7, 11, 29].
-- **Getting about:** the after companion is entered from the quarterdeck (a gap in the break's rope railing at x 4:
-  its top stair at z 24 lies right under the break, between the break lanterns); the port hammock across the gun deck
+  the swivels. The ratline latches moved to the quarterdeck's side rails [1|7, 11, 25..27] (the weather deck's rail
+  stands over the tumblehome; as far forward as they go: a strand that climbs forward more steeply than 8 in 14 leaves
+  its latch's cell through the north face into the next latch and is BLOCKED, so the first try at z 26..28 lost the
+  aftmost net a side), the swivels to the taffrail's quarters [2|6, 11, 30]: a swivel right abaft the aftmost
+  latch (first tried at [1|7, 11, 29]) is a block in that net's sheet, so the net was never strung (`RatlineNets.check`
+  BLOCKED; `BrigLayoutTest`'s free-cell check of the strands does not see the sheet's padding, the east placement
+  GameTest, which counts the held latches, does).
+- **Getting about:** the break has no rope railing (the quarterdeck is one step over the weather deck), so the after
+  companion, whose top stair at z 24 lies right under the break, is entered from the quarterdeck; a one-block gap in a
+  rope railing there trapped a gunner at the helm (open floor to the pathfinder, too narrow for the walker). The two
+  break lanterns hang on the masts' after faces over the winches instead [4, 11, 12|20]. The port hammock across the gun deck
   at z 24 leaves x 5..7 open, because the companion's foot closes x 4 at z 23, so the after guns, the aft hatch and the
   cabin door are reached by x 5.
 - **Price:** `ShipOrderMath.templatePrice`: the hull blocks (all but the guns' 16) at the starter sloop's price per
   block (400 / 685) plus each gun at its recipe's cost (eleven iron ingots at the trade price 6 and three wood blocks at
-  the hull's rate: 67.75), rounded to 25: **1250** (711 + 542). `BrigLayoutTest.thePriceCountsTheStructuresBlocksAndGuns`
-  ties `BRIG_BLOCKS` (1233) to the structure.
+  the hull's rate: 67.75), rounded to 25: **1250** (709 + 542). `BrigLayoutTest.thePriceCountsTheStructuresBlocksAndGuns`
+  ties `BRIG_BLOCKS` (1231) to the structure.
 - **Built** through the lab (`build_structures.Lab` on an agent's own port, then `schem_to_structure.py`), as the
   sloop; the iso renders are drawn by `tools/iso_render.py`.
 

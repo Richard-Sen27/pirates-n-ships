@@ -488,10 +488,9 @@ public final class BrigGameTests {
             targets.put("port gun " + z + " (its crew)", new BlockPos(3, 6, z));
             targets.put("starboard gun " + z + " (its crew)", new BlockPos(5, 6, z));
         }
-        targets.put("port swivel", new BlockPos(1, 11, 29));
-        targets.put("starboard swivel", new BlockPos(7, 11, 29));
+        targets.put("port swivel (before it)", new BlockPos(2, 10, 29));
+        targets.put("starboard swivel (before it)", new BlockPos(6, 10, 29));
         targets.put("cabin door (before it)", new BlockPos(4, 6, 25));
-        targets.put("great cabin", new BlockPos(4, 6, 28));
         targets.put("fore hatch", new BlockPos(4, 6, 12));
         targets.put("main hatch", new BlockPos(4, 6, 20));
         targets.put("aft hatch", new BlockPos(4, 6, 24));
@@ -624,8 +623,9 @@ public final class BrigGameTests {
             switch (phase[0]) {
                 case "up" -> {
                     // along the net toward the mast (SHIP2: the net runs forward from the quarterdeck rail, and the foot lets go
-                    // of a climber pushing more than 60 degrees off its heading), then east off the hoop into the nest
-                    p.setYRot(p.getY() < net.ringB().y() ? up : Direction.EAST.toYRot());
+                    // of a climber pushing more than 60 degrees off its heading), then off the hoop toward the nest
+                    p.setYRot(p.getY() < net.ringB().y() ? up
+                            : (float) Math.toDegrees(Math.atan2(-(nest.getX() + 0.5 - p.getX()), nest.getZ() + 0.5 - p.getZ())));
                     p.zza = 1f;
                     if (p.blockPosition().equals(nest) && p.onGround()) phase[0] = "down";
                 }

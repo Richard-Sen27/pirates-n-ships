@@ -64,8 +64,11 @@ GUN_Y = 6
 LOCKERS = [(1, 6, 15), (1, 6, 23), (7, 6, 15), (7, 6, 23)]   # shot lockers on the gun deck, two guns each
 NEST = (CX, MAIN_TOP + 1, MMZ)
 HOOPS = [(CX - 1, MAIN_TOP, MMZ, "west"), (CX + 1, MAIN_TOP, MMZ, "east")]
-LATCH_ZS = (26, 27, 28)      # railing latches on the quarterdeck's side rails
-SWIVELS = [(1, QD_FLOOR + 2, 29), (7, QD_FLOOR + 2, 29)]
+# railing latches on the quarterdeck's side rails, as far forward as they go (SHIP2: a strand climbing forward more
+# steeply than 8 in 14 leaves its latch through the north face into the next latch, and its net is not strung)
+LATCH_ZS = (25, 26, 27)
+# on the taffrail's quarters, clear of the latches (SHIP2: a swivel beside the aftmost latch blocks its net's sheet)
+SWIVELS = [(2, QD_FLOOR + 2, STERN), (6, QD_FLOOR + 2, STERN)]
 
 blocks = {}
 
@@ -262,18 +265,16 @@ def railing_cells():
             if not inside(x, DECK, zs):
                 continue
             dirs = outside_dirs(x, zs)
-            if zs == QD:
-                dirs = dirs + ["north"]
             if not dirs:
                 continue
             kind = "rope" if zs == QD and not edge(x, DECK, zs) else "rail"
             out[(x, QD_FLOOR + 1, zs)] = (kind, dirs)
-    # gaps over the stair landings in the quarterdeck front
-    for x in STAIR_XS:
-        out.pop((x, QD_FLOOR + 1, QD))
-    # and over the after companion's head (SHIP2: with the quarterdeck one row over the weather deck the companion's
-    # top stair at z 24 lies right under the break, between the break lanterns; it is entered from the quarterdeck)
-    out.pop((CX, QD_FLOOR + 1, QD))
+    # SHIP2: no rope railing along the break at all. The quarterdeck is one row over the weather deck, so the break is a
+    # step, and the after companion's top stair (z 24) lies right under it: the companion is entered from the
+    # quarterdeck. A one-block gap between rope railings is open floor to the crew's pathfinder but too narrow for a
+    # walker (a gunner stuck at the helm pushing into the gap over the companion).
+    for x in range(STAIR_XS[0], STAIR_XS[1] + 1):
+        out.pop((x, QD_FLOOR + 1, QD), None)
     # no rope railing round the companion openings: the crew's pathfinder takes a rope railing's edge for open floor
     # (SHIP1: a walker stuck pushing against it beside the after companion)
     # a wide port (two ports side by side) and a gate on each side of the waist
@@ -323,8 +324,9 @@ fit(CX, QD_FLOOR + 2, 29, "pole_bottom")
 fit(CX, QD_FLOOR + 3, 29, "pole_middle")
 fit(CX, QD_FLOOR + 4, 29, "pole_top")
 fit(CX, 10, FMZ + 1, "bell_s")             # on the fore mast's after face, over the fore winch
-for x in (3, 5):
-    fit(x, DECK + 1, QD - 1, "lantern_n")
+# on the masts' after faces over the winches (SHIP2: the break lanterns went, the break being a step)
+fit(CX, 11, FMZ + 1, "lantern_s")
+fit(CX, 11, MMZ + 1, "lantern_s")
 fit(1, 7, 12, "lantern_e")
 fit(7, 7, 12, "lantern_w")
 fit(1, 7, 19, "lantern_e")
@@ -510,7 +512,7 @@ palette = {
     "pole_middle": "pirates_n_ships:flagpole[facing=north,flag=none,part=middle]",
     "pole_top": "pirates_n_ships:flagpole[facing=north,flag=none,part=top]",
     "bell_s": "pirates_n_ships:ships_bell[face=wall,facing=south]",
-    "lantern_n": "pirates_n_ships:ship_lantern[face=wall,facing=north]",
+    "lantern_s": "pirates_n_ships:ship_lantern[face=wall,facing=south]",
     "lantern_e": "pirates_n_ships:ship_lantern[face=wall,facing=east]",
     "lantern_w": "pirates_n_ships:ship_lantern[face=wall,facing=west]",
     "ham_foot_s": "pirates_n_ships:hammock[facing=south,part=foot,waterlogged=false]",
@@ -604,9 +606,9 @@ NOTES = ["Bow toward -Z. Helm on the quarterdeck at [4, 10, 27], facing south.",
          "Jib: rope on the head cleat [4, 22, 10], then on the bowsprit cleat [4, 10, 1]; clew cleat [4, 11, 10]."]
 ARMED_NOTES = NOTES + [
     "Crow's nest on the main mast top at [4, 26, 19]; mast hoops at [3|5, 25, 19]; railing latches at "
-    "[1|7, 11, 26..28] on the quarterdeck rails: the template strings a net from every latch to its side's hoop when "
+    "[1|7, 11, 25..27] on the quarterdeck rails: the template strings a net from every latch to its side's hoop when "
     "it is placed.",
-    "Swivel guns on the quarterdeck rails at [1|7, 11, 29]."]
+    "Swivel guns on the taffrail at [2|6, 11, 30]."]
 
 
 def brig_cells(armed_variant):

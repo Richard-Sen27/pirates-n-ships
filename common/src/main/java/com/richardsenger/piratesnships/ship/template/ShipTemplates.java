@@ -77,7 +77,7 @@ public final class ShipTemplates {
 
     /**
      * The armed brig's ratline nets (SHIP1, SHIP2): a fan of three strands on each side, from the railing latches on the
-     * quarterdeck's side rails (x 1 and 7, y 11, z 26..28) up to the mast hoops under the crow's nest (x 3 and 5, y 25,
+     * quarterdeck's side rails (x 1 and 7, y 11, z 25..27) up to the mast hoops under the crow's nest (x 3 and 5, y 25,
      * z 19).
      */
     public static final List<ShipTemplate.Net> BRIG_NETS = brigNets();
@@ -88,7 +88,7 @@ public final class ShipTemplates {
      * The navy patrols' brig (SHIP1, art/schematics/navy_brig_armed.py): {@link #BRIG} (with her eight guns and four
      * shot lockers since SHIP2) plus a crow's nest on the main masthead with mast hoops under it, railing latches on the
      * quarterdeck rails and the {@link #BRIG_NETS} strung between them on placement, and two swivel guns on the
-     * quarterdeck rails. Same hull, helm and waterline. Not sold.
+     * taffrail. Same hull, helm and waterline. Not sold.
      */
     public static final ShipTemplate NAVY_BRIG_ARMED = new ShipTemplate(Constants.id("ships/navy_brig_armed"),
             nameKey(NAVY_BRIG_ARMED_ID), Optional.of(BRIG_HELM), Optional.of(BRIG_WATERLINE), Direction.NORTH, 0, false,
@@ -109,7 +109,7 @@ public final class ShipTemplates {
     private static List<ShipTemplate.Net> brigNets() {
         List<ShipTemplate.Net> out = new ArrayList<>();
         for (int[] side : new int[][] {{1, 3}, {7, 5}}) {
-            for (int z = 26; z <= 28; z++) {
+            for (int z = 25; z <= 27; z++) {
                 out.add(new ShipTemplate.Net(new BlockPos(side[0], 11, z), new BlockPos(side[1], 25, 19)));
             }
         }

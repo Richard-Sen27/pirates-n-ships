@@ -476,7 +476,8 @@ class BrigLayoutTest {
     /**
      * SHIP2: the ballast stones lie in the bottom and beside the keel (y 0 and 1), at least 60 of them, mirrored across
      * the centre line; every block's mass sits evenly on both sides (the same block at x and 8 − x, ignoring facing and
-     * a few light fittings), so she has no list of her own.
+     * a few light fittings: the fore berth's hammocks hang from the hull to a fence post, so a hammock faces a post), so she
+     * has no list of her own.
      */
     @ParameterizedTest
     @ValueSource(strings = {"brig", "navy_brig_armed", "pirate_brig_armed"})
@@ -489,7 +490,8 @@ class BrigLayoutTest {
             assertEquals(BALLAST, ship.get(new BlockPos(8 - b.getX(), b.getY(), b.getZ())), "the ballast at " + b + " has no twin");
         }
         Set<String> light = Set.of("pirates_n_ships:bilge_pump", "pirates_n_ships:chart_table", "pirates_n_ships:cargo_barrel",
-                "pirates_n_ships:ship_lantern", "pirates_n_ships:pantry", "pirates_n_ships:water_barrel");
+                "pirates_n_ships:ship_lantern", "pirates_n_ships:pantry", "pirates_n_ships:water_barrel", "pirates_n_ships:hammock",
+                "minecraft:spruce_fence");
         List<String> uneven = new ArrayList<>();
         ship.forEach((p, s) -> {
             if (p.getX() == MAST_X) return;

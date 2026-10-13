@@ -3046,14 +3046,14 @@ say, this section holds; the generator's docstring and `NOTES` are the short for
   0.5 (`refs/sable/.../physics_block_properties/light.json` for planks, logs, slabs and stairs; `normal.json`).
 - **Mass budget** (Sable masses, kpg): wood (planks, logs, stairs: 880 blocks × 0.5) 440, ballast 114, cannons
   (16 blocks × 2.0, `physics_block_properties/cannon.json`) 32, yards (42 × 0.1) 4, the rest (railings, bars,
-  hammocks, ladders, fittings) about 170: **758** measured for the orderable brig (`BrigTrimGameTests`: 758.35), 760
+  hammocks, ladders, fittings) about 170: **757 to 758** measured for the orderable brig (`BrigTrimGameTests`), 759
   for the armed ones; SHIP1's brig was 546. Centre of mass 4.76 rows over the keel's bottom (on the centre line, 0.36
   forward of z 19), centre of buoyancy 2.94.
-- **Afloat (measured, NeoForge, `BrigTrimGameTests`):** 5.02 to 5.04 rows under water amidships, so the surface lies
+- **Afloat (measured, NeoForge and Fabric, `BrigTrimGameTests`):** 5.01 to 5.04 rows under water amidships, so the surface lies
   at the template's waterline row 4 (`BRIG_WATERLINE`: keel, bottom and hold under water; `ShipSpots.LARGEST_DRAUGHT`
-  4 unchanged) and the gun port sills stand 0.98 over it; roll 0.00° and pitch 0.07 to 0.08° at rest (the human saw
+  4 unchanged) and the gun port sills stand 0.98 to 0.99 over it; roll 0.00° and pitch 0.07 to 0.08° at rest (the human saw
   25 to 30° of roll); heeled 12° by hand she is back under 1° in 8 to 10 s (|roll| at most 0.75 to 1.02° over the last
-  2 s); on a beam reach in wind 6 under all sail she makes 0.32 blocks/s with a steady heel of 10.0° (the sloop's
+  2 s); on a beam reach in wind 6 under all sail she makes 0.32 blocks/s with a steady heel of 9.6 to 10.0° (the sloop's
   target there is 6°: she is tenderer under sail than the sloop), dry, and stands up within 5 s of furling.
 - **Guns on the ordered brig:** eight carriage cannons behind open gun ports (z 13, 17, 21, 25) and four shot lockers,
   as on the armed brigs since SHIP1; the armed brigs now differ from her only by the nest, the ratline fittings and

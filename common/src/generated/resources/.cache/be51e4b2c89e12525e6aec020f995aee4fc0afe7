@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-13T01:21:52.005875	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-13T10:57:27.012217	Raw JSON (data): pirates_n_ships
 5984598103c68019c65ab1255ecfb9eb43b1cbd0 data/pirates_n_ships/advancement/almanac/all_chapters.json
 2868f2eb0485ab355ce80ea1bb4d8f2b79567958 data/pirates_n_ships/advancement/almanac/open.json
 964cb6c601180dd773b7b4d23869b5df17a6a073 data/pirates_n_ships/advancement/almanac/scene.json
@@ -5917,9 +5917,9 @@ f51d35b4fe313cf899a1835d0076c39c73bec5f8 data/pirates_n_ships/physics_block_prop
 d91efda3e820d55f577f516d9c8fd186dd0f8f42 data/pirates_n_ships/physics_block_properties/water_barrel.json
 699e460eebc13259b7b2e3da5634dc30f7add482 data/pirates_n_ships/physics_block_properties/yard.json
 db50dc0efaf5244a8f854ac6633574fa83fa8976 data/pirates_n_ships/pirates_n_ships/ship_template/brig.json
-7fb239ecebf4993cd9fa2d54371ccecd7c45f438 data/pirates_n_ships/pirates_n_ships/ship_template/navy_brig_armed.json
+9e05dc89eeb9fe169127bb3aa547437a7a4e086a data/pirates_n_ships/pirates_n_ships/ship_template/navy_brig_armed.json
 e88a726bcb9ae5e41c8b40d578527c7c097309c2 data/pirates_n_ships/pirates_n_ships/ship_template/navy_sloop_armed.json
-fdf253ba02da623967eece31450ab0514e963058 data/pirates_n_ships/pirates_n_ships/ship_template/pirate_brig_armed.json
+06a04b9e5169134273c05cd286d33d18b0d72076 data/pirates_n_ships/pirates_n_ships/ship_template/pirate_brig_armed.json
 48018af916ae19a0d8725211363e0ab8c62b8caa data/pirates_n_ships/pirates_n_ships/ship_template/pirate_sloop_armed.json
 24ed5d6a0f5c3d20d6845282d68164dcd5dd7410 data/pirates_n_ships/pirates_n_ships/ship_template/starter_sloop.json
 f2898cc1a94f7dedb4d5316534d8c6762025fcdb data/pirates_n_ships/pirates_n_ships/ship_template/starter_sloop_basic.json

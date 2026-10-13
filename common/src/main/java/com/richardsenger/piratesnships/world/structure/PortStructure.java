@@ -725,12 +725,12 @@ public final class PortStructure extends Structure {
         com.richardsenger.piratesnships.mob.harbor.HarborMasters.place(level, chunkBox, pieces, port);
         // LIFE1: the village's people, each in its building
         com.richardsenger.piratesnships.mob.village.Residents.place(level, chunkBox, pieces, port);
-        // STR9: half slabs on the trails' one-row steps (before the doors, whose approaches win)
+        // STR8: last, so the beard's fill, the surface and every piece of this chunk are in place
+        if (WorldConfig.STRUCTURE_CLEAR_DOORS.get()) DoorClearing.clear(level, chunkBox, pieces.pieces(), server.getStructureManager());
+        // STR9: half slabs on the trails' one-row steps, after the doors (a bottom slab before a door is a step, STR6)
         if (WorldConfig.STRUCTURE_TRAIL_SLABS.get() && WorldConfig.STRUCTURE_LEVEL_TRAILS.get()) {
             TrailSlabs.place(level, chunkBox, pieces.pieces(), server.getStructureManager(), portKind);
         }
-        // STR8: last, so the beard's fill, the surface and every piece of this chunk are in place
-        if (WorldConfig.STRUCTURE_CLEAR_DOORS.get()) DoorClearing.clear(level, chunkBox, pieces.pieces(), server.getStructureManager());
     }
 
     @Override

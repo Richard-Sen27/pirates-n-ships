@@ -345,8 +345,20 @@ public final class PlanRepair {
             below[j] = true;
             if (!keep[j]) continue;
             pieces.get(j).move(dx, 0, dz);
+            // the junctions move along, but for the moved piece's first one (its parent's connector stays put)
+            if (pieces.get(j) instanceof PoolElementStructurePiece moved) shiftJunctions(moved, j == i ? 1 : 0, dx, dz);
             LandFilter.Node node = nodes.get(j);
             nodes.set(j, new LandFilter.Node(pieces.get(j).getBoundingBox(), node.parent(), node.land(), node.building()));
+        }
+    }
+
+    /** Moves {@code piece}'s junctions from index {@code from} on sideways (vanilla's {@code move} leaves them). */
+    public static void shiftJunctions(PoolElementStructurePiece piece, int from, int dx, int dz) {
+        List<JigsawJunction> junctions = piece.getJunctions();
+        for (int k = from; k < junctions.size(); k++) {
+            JigsawJunction old = junctions.get(k);
+            junctions.set(k, new JigsawJunction(old.getSourceX() + dx, old.getSourceGroundY(), old.getSourceZ() + dz, old.getDeltaY(),
+                    old.getDestProjection()));
         }
     }
 

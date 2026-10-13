@@ -198,7 +198,10 @@ public final class PortTerrainGameTests {
         PortStructure.Terrain terrain = (x, z) -> z < PortSiteGameTests.PLAN_SHORE_Z ? seaY - 4 : PortSiteGameTests.bumpySurface(seaY, x, z) + 1;
         List<StructurePiece> pieces = PortSiteGameTests.plan(helper, level, structure, bumpy, planSite, seaY, terrain, seed).orElse(null);
         helper.assertTrue(pieces != null, key.location() + " seed " + seed + ": the bumpy shore gives a port");
-        pieces.forEach(p -> p.move(dx, 0, dz));
+        pieces.forEach(p -> {
+            p.move(dx, 0, dz);
+            if (p instanceof PoolElementStructurePiece pe) PlanRepair.shiftJunctions(pe, 0, dx, dz);
+        });
         BoundingBox arena = new BoundingBox(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + SIZE - 1,
                 origin.getY() + HEIGHT - 1, origin.getZ() + SIZE - 1);
         pieces.removeIf(p -> !insideXZ(arena, p.getBoundingBox()));
@@ -231,8 +234,9 @@ public final class PortTerrainGameTests {
             throw new IllegalStateException("could not write the region", e);
         }
         // STR9: every one-row step between trail pieces carries half slabs, and no step is two rows high
-        int[] slabs = slabSteps(level, pieces, templates);
-        helper.assertTrue(slabs[2] == 0, key.location() + ": " + slabs[2] + " one-row step cells without a slab");
+        List<String> bareCells = new ArrayList<>();
+        int[] slabs = slabSteps(level, pieces, templates, bareCells);
+        helper.assertTrue(slabs[2] == 0, key.location() + ": " + slabs[2] + " one-row step cells without a slab: " + bareCells);
         helper.assertTrue(TrailSlabs.steps(pieces, templates, 2).isEmpty() && TrailSlabs.steps(pieces, templates, 3).isEmpty(),
                 key.location() + ": a step of two rows or more");
         helper.assertTrue(slabs[0] == 0 || slabs[1] > 0, key.location() + ": " + slabs[0] + " one-row steps, no slab on any");
@@ -248,7 +252,7 @@ public final class PortTerrainGameTests {
      * slabs on their lower rows, and the cells of a joint a walker would have to jump (full paving with air above it and
      * a full block beyond with room above: a step the slab rule should have halved).
      */
-    static int[] slabSteps(ServerLevel level, List<StructurePiece> pieces, StructureTemplateManager templates) {
+    static int[] slabSteps(ServerLevel level, List<StructurePiece> pieces, StructureTemplateManager templates, List<String> bareCells) {
         int steps = 0;
         int slabs = 0;
         int bare = 0;
@@ -259,6 +263,8 @@ public final class PortTerrainGameTests {
                     slabs++;
                 } else if (TrailSlabs.slabAt(level, cell, step.row(), step.up(), PortKind.SEAFARER_VILLAGE) != null) {
                     bare++;
+                    bareCells.add(cell.atY(step.row()).toShortString() + " " + level.getBlockState(cell.atY(step.row())).getBlock()
+                            + " toward " + step.up());
                 }
             }
         }

@@ -27,7 +27,7 @@ import java.util.Map;
  * Half slabs on a trail's height steps (STR9, the human: "on height steps it would be fantastical if half slabs could
  * be used to make it smoother"). Since STR8 every street, trail and lane piece lies level on its own bed row, one row
  * above or below the piece it hangs from ({@link TrailLevels}); where two such pieces meet one row apart the walker had
- * to jump. Run by {@link PortStructure#afterPlace} per chunk, after the pieces (and the beard, the bed's cut and fill):
+ * to jump. Run by {@link PortStructure#afterPlace} per chunk, last (after the pieces, the beard, the bed's cut and fill and the door clearing):
  * along the joint the lower piece's last row of cells gets a bottom slab on its paving, so the step is two half steps.
  *
  * <ul>
@@ -77,7 +77,7 @@ public final class TrailSlabs {
      * One joint one row high: the lower piece's cells along it ({@code cells}, at {@code row}, the lower bed row) and the
      * direction from the lower piece to the higher one.
      */
-    public record Step(List<BlockPos> cells, int row, Direction up) {
+    public record Step(List<BlockPos> cells, int row, Direction up, PoolElementStructurePiece higher) {
     }
 
     /** Lays the slabs of {@code pieces}' steps inside {@code chunk}; returns how many were placed. */
@@ -85,9 +85,17 @@ public final class TrailSlabs {
                             PortKind kind) {
         int placed = 0;
         for (Step step : steps(pieces, templates, 1)) {
+            java.util.Set<Long> higher = null;
             for (BlockPos cell : step.cells()) {
                 if (!chunk.isInside(cell)) continue;
-                BlockState slab = slabAt(level, cell, step.row(), step.up(), kind);
+                BlockState slab;
+                if (chunk.isInside(cell.relative(step.up()))) {
+                    slab = slabAt(level, cell, step.row(), step.up(), kind);
+                } else {
+                    // the higher piece's cell lies in a chunk not placed yet: read it from its template
+                    if (higher == null) higher = walkable(step.higher(), templates);
+                    slab = higher.contains(column(cell.relative(step.up()))) ? slabOn(level, cell, step.row(), kind) : null;
+                }
                 if (slab == null) continue;
                 level.setBlock(cell.atY(step.row() + 1), slab, Block.UPDATE_CLIENTS);
                 placed++;
@@ -101,18 +109,65 @@ public final class TrailSlabs {
      * not a walkable step (no full paving, something above it, no full block beyond it, water).
      */
     static @Nullable BlockState slabAt(BlockGetter level, BlockPos cell, int row, Direction up, PortKind kind) {
-        BlockPos paving = cell.atY(row);
-        BlockPos above = cell.atY(row + 1);
         BlockPos beyond = cell.relative(up).atY(row + 1);
-        BlockPos beyondAbove = beyond.above();
-        BlockState ground = level.getBlockState(paving);
-        BlockState over = level.getBlockState(above);
-        if (!fullBlock(level, paving, ground) || !NaturalGround.isFluid(over) && !(over.isAir() || over.canBeReplaced())) return null;
-        if (NaturalGround.isFluid(over) || NaturalGround.isFluid(ground)) return null;
         if (!fullBlock(level, beyond, level.getBlockState(beyond))) return null;
-        BlockState high = level.getBlockState(beyondAbove);
+        BlockState high = level.getBlockState(beyond.above());
         if (!high.isAir() && !high.canBeReplaced()) return null;
+        return slabOn(level, cell, row, kind);
+    }
+
+    /** The slab for the lower cell alone: full paving at {@code row}, air or a plant above it, no water. */
+    static @Nullable BlockState slabOn(BlockGetter level, BlockPos cell, int row, PortKind kind) {
+        BlockPos paving = cell.atY(row);
+        BlockState ground = level.getBlockState(paving);
+        BlockState over = level.getBlockState(cell.atY(row + 1));
+        if (NaturalGround.isFluid(over) || NaturalGround.isFluid(ground)) return null;
+        if (!fullBlock(level, paving, ground) || !(over.isAir() || over.canBeReplaced())) return null;
         return slabFor(ground, kind);
+    }
+
+    /**
+     * The columns of a levelled trail piece whose template has a block on row 0 (its paving, a jigsaw's final state),
+     * or that lie within one block of one (the bed's filled margin), and none on row 1: where its bed can be walked onto.
+     */
+    static java.util.Set<Long> walkable(PoolElementStructurePiece piece, StructureTemplateManager templates) {
+        java.util.Set<Long> out = new java.util.HashSet<>();
+        StructureTemplate template = DoorClearing.template(piece, templates).orElse(null);
+        if (template == null) return out;
+        net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings settings =
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(piece.getRotation());
+        net.minecraft.nbt.CompoundTag saved = template.save(new net.minecraft.nbt.CompoundTag());
+        net.minecraft.nbt.ListTag palette = saved.getList("palette", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        net.minecraft.nbt.ListTag blocks = saved.getList("blocks", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        java.util.Set<Long> ground = new java.util.HashSet<>();
+        java.util.Set<Long> covered = new java.util.HashSet<>();
+        for (int i = 0; i < blocks.size(); i++) {
+            net.minecraft.nbt.CompoundTag block = blocks.getCompound(i);
+            net.minecraft.nbt.ListTag pos = block.getList("pos", net.minecraft.nbt.Tag.TAG_INT);
+            int y = pos.getInt(1);
+            if (y > 1) continue;
+            String name = palette.getCompound(block.getInt("state")).getString("Name");
+            if (name.equals("minecraft:air") || name.equals("minecraft:cave_air") || name.equals("minecraft:structure_void")) continue;
+            BlockPos world = StructureTemplate.calculateRelativePosition(settings, new BlockPos(pos.getInt(0), 0, pos.getInt(2)))
+                    .offset(piece.getPosition());
+            (y == 0 ? ground : covered).add(column(world));
+        }
+        // the bed processor fills the bed row within one block of the bed with ground as well
+        for (Long c : ground) {
+            int x = (int) (c >> 32);
+            int z = (int) (long) c;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    long n = column(new BlockPos(x + dx, 0, z + dz));
+                    if (!covered.contains(n)) out.add(n);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static long column(BlockPos pos) {
+        return ((long) pos.getX() << 32) ^ (pos.getZ() & 0xFFFFFFFFL);
     }
 
     private static boolean fullBlock(BlockGetter level, BlockPos pos, BlockState state) {
@@ -160,7 +215,7 @@ public final class TrailSlabs {
                     cells.add(c);
                 }
             }
-            out.add(new Step(cells, Math.min(childRow, parentRow), up));
+            out.add(new Step(cells, Math.min(childRow, parentRow), up, childLower ? parent : child));
         }
         return out;
     }

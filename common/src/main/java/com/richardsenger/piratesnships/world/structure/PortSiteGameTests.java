@@ -96,6 +96,19 @@ public final class PortSiteGameTests {
         PortStructure.Terrain barred = (x, z) -> sea(seaY, z < PLAN_SHORE_Z && !(site.getZ() - z >= 20 && site.getZ() - z <= 21)
                 || x - site.getX() >= 12 && !(x - site.getX() >= 22 && x - site.getX() <= 23));
         ChunkGenerator beach = StructureLayoutGameTests.beachGenerator(helper, level, seaY + 2);
+        // the site is a corner of land with the sea north and east: on its east side most of a port would stand over the
+        // northern sea, which STR9's min_port_share turns down; this test is about the pier rule alone
+        ConfigOverrides.Handle<Double> anyShare = ConfigOverrides.apply(WorldConfig.STRUCTURE_MIN_PORT_SHARE, 0.0);
+        try {
+            piersEndInTheSea(helper, level, seaY, site, sandbar, barred, beach);
+        } finally {
+            anyShare.restore();
+        }
+        helper.succeed();
+    }
+
+    private static void piersEndInTheSea(GameTestHelper helper, ServerLevel level, int seaY, BlockPos site, PortStructure.Terrain sandbar,
+                                         PortStructure.Terrain barred, ChunkGenerator beach) {
         for (ResourceKey<Structure> key : KINDS) {
             PortStructure structure = structure(level, key);
             String kind = key.location().getPath();
@@ -120,7 +133,6 @@ public final class PortSiteGameTests {
             helper.assertTrue(plan(helper, level, structure, beach, site, seaY, barred, 7L).isEmpty(),
                     kind + ": a site whose every side puts the pier on land is rejected");
         }
-        helper.succeed();
     }
 
     // --- 4. no piece over water ---------------------------------------------------------------------------------

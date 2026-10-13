@@ -4054,6 +4054,52 @@ start or 16 blocks out to sea is in `cold_shores`. Each kind has a second struct
 `minecraft:woodland_mansions` (`PortStructureData.vanillaExclusions`): in `exclusion_zone` for the villages, after the
 STR6 zones in `exclusion_zones` for the outposts and islands.
 
+### Structure polish, round three (STR9)
+The human, 2026-10-13, after regenerating the seed of an earlier structure test: the ports were "A LOT smaller now",
+the streets better; "on height steps it would be fantastical if half slabs could be used". His screenshots: an outpost
+with one wall run, two towers and the quay and nothing inside; a village with one house, the net loft and the pier.
+
+**Measured.** `PortStructure.plan` logs one line per site (`STR9: <kind> at x z: planned N, kept K, dropped: trail T,
+land L, corners C, wall W, children of dropped D (of trail, land, corners, wall); saved: ramps, shifted, swapped,
+rerooted`) and keeps it for the tests (`PlanReport.latest`). `RealCoastGameTests` plans the sites the smoke seed's
+`/locate` planned (2718281828, `RealCoastSites`) again on vanilla's overworld noise, with STR8's rules and with STR9's.
+What pruned most was not the levelling: it was the land rule on the first trail piece behind the start (the dock head,
+the camp, the gate) standing wholly over water, on spits with a lagoon or a river mouth behind the shore, which took
+the whole network with it; then trails running into lagoons, then the shore walls.
+
+**Rules (all behind `world.structures.resite_pieces`, off = STR8).**
+- **The side that keeps the port** (`PortStructure.plan`): every ranked side of the site (WG1's order) is planned in
+  full (the jigsaw runs again for each side, so a re-aimed pier never carries the other side's layout); the first side
+  whose plan keeps at least `min_port_share` (0.5) of its jigsaw pieces wins; a site where no side does gets no port
+  (logged: `STR9: <kind> site at x z rejected: its best side keeps K of N pieces`).
+- **Buildings** (`PlanRepair.shift`, `swapBuilding`): a building whose footprint fails the land rule (centre, four of
+  five samples, four corners) is shifted one to three blocks along its connector's axis away from its trail; then
+  swapped for the smallest piece of its pool that stands on land there (shifted 0 to 3); only then dropped.
+- **Trail pieces** (`PlanRepair.swapTrail`): a trail piece that fails the land rule, or lies more than
+  `max_trail_step_rows` off its ground, is swapped for a straight of its kind's straights pool on the same connector;
+  its children whose connector the straight carries too (side connectors of a street are where a long street's or a
+  fork's are) are re-rooted on it, the others go.
+- **Ramps** (`TrailLevels.solve(nodes, maxCut)`): each trail piece still lies one row above or below the one before
+  it; the drop limit is `max_trail_step_rows` (8, was 4), so a climbing street becomes a terraced ramp of one-row
+  steps; the bed processor cuts and fills `max(6, limit + 2)` rows.
+- **Wall runs** (`WallRuns.closeOnLand(..., shorten)`): a wall whose far end is over water is still replaced by a
+  closing tower; if no tower fits there or its centre would stand in the sea, the run is shortened one wall at a time
+  and the tower tried on the connector before, back to the gate. The court hangs from the gate's `lanehead_out`, not
+  from the walls, so a shortened run never empties it.
+
+**Slab steps** (`TrailSlabs`, `PortStructure.afterPlace`, last, after the door clearing; `world.structures.trail_slabs`):
+where a trail piece and the trail piece (or the start) it hangs from lie one row apart, the lower piece's last row of
+cells along the joint gets a bottom slab on its paving, wherever the paving is a full block with air or a plant above
+it and the higher piece's cell beyond is a full block with room above (never on water or a kerb). The slab is the
+paving's own (cobblestone, mossy cobblestone, stone bricks, mossy stone bricks, stone, andesite, polished andesite,
+sandstone, planks; sand takes a sandstone slab), else a cobblestone slab (dirt path, gravel, coarse dirt, grass).
+`PortTerrainGameTests` checks on the bumpy snowy shore that every one-row joint carries slabs where it is walkable and
+that no joint is two rows high.
+
+**Tests.** `PortSiteGameTests.*KeepsItsSizeOnARoughShore` (headlands, a pond, land rising one in five with bumps: at
+least 80 % of the flat beach's pieces, five seeds per kind), `RealCoastGameTests` (STR8 against STR9 on the smoke
+seed's real coasts), `TrailLevelsTest.str9KeepsATrailUpToTheStepLimitAsARamp`.
+
 Grapple and anchor poses (GR4):
 - **Why:** the human (2026-10-12): "Not just vertical grappling hook, adjusts to the orientation it flies and anchors,
   same for anchor." Neither model is GeckoLib (the hook is the vanilla item model `models/item/grappling_hook.json`

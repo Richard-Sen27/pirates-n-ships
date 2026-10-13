@@ -712,6 +712,8 @@ public final class PortStructure extends Structure {
         ServerLevel server = level.getLevel();
         // STR7: deep water at the berths (before the port reads its berths: they do not change, the water does)
         if (WorldConfig.PORTS_CARVE_BERTHS.get()) BerthBasins.carve(level, chunkBox, pieces.pieces(), server.getStructureManager());
+        // PIER1: the piles and pillars reach the (carved) floor
+        if (WorldConfig.STRUCTURE_PILES_TO_FLOOR.get()) PileFootings.extend(level, chunkBox, pieces.pieces());
         Port port = PortService.portOf(server, generator, pieces, portKind);
         PortService.report(server, port);
         PortService.intersection(chunkBox, port.box()).ifPresent(area -> PortService.bindDesks(level, area, port.id()));

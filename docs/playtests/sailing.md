@@ -39,3 +39,19 @@ What only a client shows: the arm and cloth drawn at the sheet, the sound, the f
    the boom from the default camera. Say whether the cloth reads well in each phase.
 8. **Old world / disassembly:** disassemble a ship with a boomed sail with a quarter turn and assemble it again.
    Expected: the boom, its arm and the cloth come back right.
+
+## SAIL6: the rope of a boomed sail
+
+The triangle of a boomed sail is the stay rope from the head cleat to the boom's outer end, the boom itself, and the mast
+side from the gooseneck up to the head with no rope. The boom's end is tied to the tack cleat on deck by the sheet rope.
+Only the drawn geometry changed: the stay still links the head cleat to the tack cleat, and the drive is unchanged.
+Covered headlessly: `BoomArmRigTest` (stay end, cloth corners and sheet for every facing and step). What only a client
+shows:
+
+1. **A boomed mainsail from both sides:** rig as in SAIL5 step 1. Expected: the rope from the head ends at the boom's tip
+   (not at the tack cleat), no rope runs along the mast between the head and the boom, the cloth fills head, gooseneck and
+   tip, and a separate sheet rope runs from the tip down to the tack cleat. No rope passes through the cloth's face.
+2. **The rope follows the swing:** sheet the boom through its steps by hand. Expected: the stay's lower end and the sheet's
+   upper end stay on the boom's tip all the way, with no jump at the end of the ease.
+3. **A jib is unchanged:** a clew-cleat sail still has its rope head to tack.
+4. **Ponder:** the boom phase shows the stay ending at the boom's tip and the sheet to the tack; the text line reads right.

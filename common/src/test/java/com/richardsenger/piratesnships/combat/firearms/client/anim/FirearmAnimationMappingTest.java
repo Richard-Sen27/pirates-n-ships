@@ -34,6 +34,15 @@ class FirearmAnimationMappingTest {
     }
 
     @Test
+    void aLoadingSessionOnALoadedGunEndsTheReload() {
+        // FA2: the server's load ends the reload animation, wherever the client's own count is
+        assertNull(FirearmAnimationMapping.forUse(FirearmKind.MUSKET, LOAD - 10, true));
+        assertEquals(new Pose(FirearmAnimationMapping.MUSKET_RELOAD, false, 10), FirearmAnimationMapping.forUse(FirearmKind.MUSKET, LOAD - 10, false));
+        // an aim keeps its pose on a loaded gun
+        assertEquals(new Pose(FirearmAnimationMapping.PISTOL_AIM, true, 3), FirearmAnimationMapping.forUse(FirearmKind.PISTOL, AIM - 3, true));
+    }
+
+    @Test
     void theSessionBoundaryMatchesFirearmRules() {
         assertTrue(FirearmAnimationMapping.forUse(FirearmKind.PISTOL, LOAD + 1).aim());
         assertFalse(FirearmAnimationMapping.forUse(FirearmKind.PISTOL, LOAD).aim());

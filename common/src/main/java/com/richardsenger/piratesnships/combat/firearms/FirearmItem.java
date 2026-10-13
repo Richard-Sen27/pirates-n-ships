@@ -78,6 +78,7 @@ public class FirearmItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!FirearmsConfig.ENABLED.get()) return InteractionResultHolder.pass(stack);
+        endStaleSession(level, player, hand);
         if (FirearmContent.isLoaded(stack)) {
             // another load is offered (e.g. a hook in the other hand) but the gun holds something else: say so, then aim
             FirearmLoad offered = FirearmLoads.forLoading(player, hand, stack, kind);
@@ -105,6 +106,25 @@ public class FirearmItem extends Item {
             if (load.missingMessage() != null) player.displayClientMessage(load.missingMessage(), true);
         }
         return InteractionResultHolder.fail(stack);
+    }
+
+    /**
+     * FA2: a press of use always starts a new session, on the server too. A client asks to use an item only while it
+     * is not using one, so a use that reaches the server while the server still runs a session with a gun in that hand
+     * means the client's own session ended without a release reaching the server, and the player pressed again.
+     * Vanilla's {@code startUsingItem} does nothing while a use runs, so the server would keep counting the old
+     * session and complete the loading early against the new press (the bar jumps full in the reload animation's first
+     * stage, letting go finds the gun loaded). The stale session is stopped here without a release (no shot) and the
+     * caller starts the new one in the same tick, so the synced "using" flag never reads false in between.
+     */
+    static boolean endStaleSession(Level level, Player player, InteractionHand hand) {
+        if (level.isClientSide || !player.isUsingItem() || player.getUsedItemHand() != hand) return false;
+        if (!(player.getUseItem().getItem() instanceof FirearmItem)) return false;
+        Constants.LOG.debug("FA2: {} pressed use during a running firearm session ({} ticks held, remaining {}); restarting it",
+                player.getGameProfile().getName(), FirearmRules.heldTicks(player.getUseItemRemainingTicks()),
+                player.getUseItemRemainingTicks());
+        player.stopUsingItem();
+        return true;
     }
 
     @Override

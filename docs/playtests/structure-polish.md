@@ -124,9 +124,46 @@ under its deck between the pillars and under the middle; on a shallow sea the pa
 3. **Off switch.** `world.structures.piles_to_floor = false`, new chunks.
    - **Expected:** piles end at their template's footings as before (the quay still stands on its pillars).
 
+## STR9
+
+The human, 2026-10-13, after regenerating the seed of an earlier structure test: "for some reason they are A LOT
+smaller now, though the steets are now a lot better than before. on height steps it would be fantastical if half slabs
+could be used to make it smoother." His screenshots: an outpost with one wall run, two towers and the quay and nothing
+inside; a village with one house, the net loft and the pier.
+
+Cause (measured on the smoke seed 2718281828): the land rule on the first street, trail or lane behind the dock head,
+camp or gate; on spits and beaches with a lagoon behind them it stood over water and took the whole port with it. Now
+every side of a site is planned, the side that keeps at least half its port wins, and a site where none does gets no
+port; huts and houses over water move inland or become a smaller one, street pieces become straight ones, wall runs end
+a wall earlier with the tower on land, streets climb as terraces with half-slab steps. Headless coverage:
+`RealCoastGameTests` (the smoke seed's sites on the real noise, STR8 against STR9), `PortSiteGameTests` (the rough-shore
+size tests), `PortTerrainGameTests` (the slabs on placed steps). Use a **new** world, and the same seed as before.
+
+1. **Sizes.** Regenerate the seed of the earlier test (a new world with that seed), visit the same places.
+   - **Expected:** villages, camps and outposts about as large as before STR8 (a village 25 to 50 pieces: several
+     houses, streets branching inland; an outpost with both wall runs where the coast allows and its court filled with
+     lanes and buildings). Some sites that held a tiny port (the one-house village) now hold none; the server log says
+     why (`STR9: <kind> site at x z rejected: its best side keeps K of N pieces`). Every generated port logs one line
+     `STR9: <kind> at x z: planned N, kept K, dropped: ...`: please send those lines with the screenshots.
+2. **Half-slab steps.** Walk the streets, trails and lanes up and down a slope.
+   - **Expected:** wherever one street piece lies one block above the next, the lower piece's last row holds half
+     slabs (cobblestone, stone brick or the paving's own; a sandstone slab on an island's sand), so you walk up without
+     jumping; no step is two blocks high. Set `world.structures.trail_slabs = false`, restart, new chunks: full steps.
+3. **Moved and swapped pieces.** Look at buildings near the water and on slopes.
+   - **Expected:** no building stands over water (STR8's rule holds); now and then a house stands one to three blocks
+     back from its street with a short gap (it was moved inland), or a small building (a well, a privy) stands where a
+     large one would have hung over the water. Report a door that cannot be reached from its street.
+4. **Ramps.** Find a port on a hillside.
+   - **Expected:** the main street climbs as a terrace of one-block steps, each with slabs, cut up to about eight
+     blocks into the slope or banked up to it (`max_trail_step_rows`, 8); it stops only where the slope is steeper.
+5. **Toggle.** Set `world.structures.resite_pieces = false`, restart, new chunks.
+   - **Expected:** STR8's behaviour (smaller ports, no re-siting), for comparison.
+
 ## Open problems to watch
 
 - The exclusion zone counts every possible village start chunk, also where no village could generate (no beach), so
   some outposts are skipped beside an empty coast: outposts are about a third rarer, islands about a quarter.
 - Terrain (a hillside, a tree, tall grass) can still fill a door's approach where the beard leaves it; the templates
   write no air (the converter drops it so pieces never carve the sea).
+- STR9: a port moved one to three blocks inland leaves a strip of natural ground between its street and its door
+  (the door clearing clears two cells); STR9 rejects about a third of the smoke seed's sites, so ports are rarer.

@@ -53,6 +53,21 @@ class TrailLevelsTest {
     }
 
     @Test
+    void str9KeepsATrailUpToTheStepLimitAsARamp() {
+        // a hillside: the ground under each piece rises 3 rows, the trail one per piece, so it falls behind by 2 a piece
+        List<TrailLevels.Node> nodes = List.of(start(64), trail(0, 64, 66), trail(1, 66, 69), trail(2, 69, 72), trail(3, 72, 75),
+                trail(4, 75, 78), other(5, 78));
+        TrailLevels.Result str8 = TrailLevels.solve(nodes);
+        assertArrayEquals(new boolean[] {false, false, false, true, true, true, true}, str8.dropped(), "STR8: dropped 5 rows off");
+        TrailLevels.Result str9 = TrailLevels.solve(nodes, TrailLevels.DEFAULT_MAX_STEP_ROWS);
+        assertArrayEquals(new boolean[] {false, false, false, false, false, true, true}, str9.dropped(),
+                "STR9: kept up to 8 rows off (the fifth piece lies 9 under its ground)");
+        int[] rows = new int[5];
+        for (int i = 0; i < 5; i++) rows[i] = str9.levelled(nodes.get(i), i);
+        assertArrayEquals(new int[] {64, 65, 66, 67, 68}, rows, "each piece one row above the one before it");
+    }
+
+    @Test
     void aBuildingSitsOnItsTrailsRow() {
         // the trail is laid one above its joint's surface; the hut's connector row (its joint's surface) was 66
         List<TrailLevels.Node> nodes = List.of(start(64), trail(0, 64, 65), other(1, 66), other(2, 70));

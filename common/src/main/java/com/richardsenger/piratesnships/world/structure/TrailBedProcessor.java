@@ -28,11 +28,11 @@ import java.util.Set;
  *     <li>puts every block back where the piece would place it rigidly, one row down: the template's row 0 on the bed
  *     row {@code box.minY() - 1}, which {@code PortStructure.plan} chose ({@link TrailLevels}: the surface under the
  *     piece, at most one block from its neighbour's);</li>
- *     <li>cuts the natural ground ({@link NaturalGround}) above the bed row away, up to {@value #CUT_ROWS} rows, in every
+ *     <li>cuts the natural ground ({@link NaturalGround}) above the bed row away, up to {@link #rows()} rows, in every
  *     column within one block of the bed (the template's row 0) and inside the piece's footprint, where the template
  *     has no block of its own;</li>
  *     <li>fills the air under the bed and, in the margin, the bed row itself with the ground found below (grass on
- *     soil, sand on sand, stone on stone), up to {@value #FILL_ROWS} rows; never over water, where the boardwalk lays
+ *     soil, sand on sand, stone on stone), up to {@link #rows()} rows; never over water, where the boardwalk lays
  *     boards on the sea surface instead.</li>
  * </ol>
  * Only positions inside the placement's bounding box (the chunk being placed) are cut or filled. With
@@ -45,10 +45,18 @@ public final class TrailBedProcessor extends StructureProcessor {
     public static final TrailBedProcessor INSTANCE = new TrailBedProcessor();
     public static final MapCodec<TrailBedProcessor> CODEC = MapCodec.unit(() -> INSTANCE);
 
-    /** Rows of natural ground cut away above the bed row. */
+    /** Rows of natural ground cut away above the bed row (STR8; since STR9 at least {@link #rows()}). */
     public static final int CUT_ROWS = 6;
-    /** Rows of air filled under the bed row. */
+    /** Rows of air filled under the bed row (STR8; since STR9 at least {@link #rows()}). */
     public static final int FILL_ROWS = 6;
+
+    /**
+     * STR9: the rows cut and filled, enough for a bed {@code world.structures.max_trail_step_rows} off the ground under
+     * the piece's centre and two more for the ground beside it (at least STR8's six).
+     */
+    public static int rows() {
+        return Math.max(CUT_ROWS, WorldConfig.STRUCTURE_MAX_TRAIL_STEP_ROWS.get() + 2);
+    }
 
     private TrailBedProcessor() {
     }
@@ -79,6 +87,7 @@ public final class TrailBedProcessor extends StructureProcessor {
             maxZ = Math.max(maxZ, rigid.getZ());
         }
         if (bed.isEmpty()) return out;
+        int rows = rows();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
@@ -86,7 +95,7 @@ public final class TrailBedProcessor extends StructureProcessor {
                 if (!onBed && !nearBed(bed, x, z)) continue;
                 if (chunk != null && (x < chunk.minX() || x > chunk.maxX() || z < chunk.minZ() || z > chunk.maxZ())) continue;
                 // cut: natural ground above the bed row where the template has nothing
-                for (int y = bedRow + 1; y <= bedRow + CUT_ROWS; y++) {
+                for (int y = bedRow + 1; y <= bedRow + rows; y++) {
                     cursor.set(x, y, z);
                     if (own.contains(cursor)) continue;
                     BlockState here = level.getBlockState(cursor);
@@ -95,10 +104,10 @@ public final class TrailBedProcessor extends StructureProcessor {
                 // fill: never over water (the boardwalk's), from the bed row (the margin) or the row under it (the bed) down
                 cursor.set(x, bedRow, z);
                 if (NaturalGround.isFluid(level.getBlockState(cursor))) continue;
-                BlockState ground = groundBelow(level, x, bedRow, z);
+                BlockState ground = groundBelow(level, x, bedRow, z, rows);
                 if (ground == null) continue;
                 int top = own.contains(cursor) ? bedRow - 1 : bedRow;
-                for (int y = top; y > bedRow - 1 - FILL_ROWS; y--) {
+                for (int y = top; y > bedRow - 1 - rows; y--) {
                     cursor.set(x, y, z);
                     BlockState here = level.getBlockState(cursor);
                     if (NaturalGround.isFluid(here)) break;
@@ -113,10 +122,10 @@ public final class TrailBedProcessor extends StructureProcessor {
         return out;
     }
 
-    /** The first solid block under the bed row in this column (within {@link #FILL_ROWS} + 4 rows), or null. */
-    private static BlockState groundBelow(ServerLevelAccessor level, int x, int bedRow, int z) {
+    /** The first solid block under the bed row in this column (within {@code rows} + 4 rows), or null. */
+    private static BlockState groundBelow(ServerLevelAccessor level, int x, int bedRow, int z, int rows) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, bedRow, z);
-        for (int y = bedRow; y >= bedRow - FILL_ROWS - 4; y--) {
+        for (int y = bedRow; y >= bedRow - rows - 4; y--) {
             cursor.setY(y);
             BlockState state = level.getBlockState(cursor);
             if (NaturalGround.isFluid(state)) return null;

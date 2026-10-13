@@ -72,6 +72,11 @@ public final class LandFilter {
         return !onLand(new Node(box, -1, true), water);
     }
 
+    /** Whether the footprint's centre column is open water (STR9: a closing tower must not stand in the sea). */
+    public static boolean overWaterCentre(BoundingBox box, Water water) {
+        return water.at((box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+    }
+
     /** How many of the box's {@value #SAMPLES} footprint samples (centre, corners one block in) are water. */
     public static int wetSamples(BoundingBox box, Water water) {
         int x0 = Math.min(box.minX() + 1, box.maxX());

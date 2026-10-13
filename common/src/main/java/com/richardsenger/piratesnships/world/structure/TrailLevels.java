@@ -25,8 +25,15 @@ public final class TrailLevels {
 
     /** The largest step between a trail piece's row and its parent's. */
     public static final int MAX_STEP = 1;
-    /** The largest distance between a trail piece's row and its natural row; beyond it the piece is dropped. */
+    /**
+     * STR8's largest distance between a trail piece's row and its natural row (beyond it the piece was dropped). Since
+     * STR9 the limit is {@code world.structures.max_trail_step_rows} (default {@value #DEFAULT_MAX_STEP_ROWS}); a piece
+     * between the two is kept as a step of a terraced ramp (each piece one row above or below the one before it, the
+     * step a slab, {@link TrailSlabs}) and counted as a ramp.
+     */
     public static final int MAX_CUT = 4;
+    /** The default of {@code world.structures.max_trail_step_rows} (STR9). */
+    public static final int DEFAULT_MAX_STEP_ROWS = 8;
 
     /** What a piece is for the levelling. */
     public enum Kind {
@@ -56,8 +63,16 @@ public final class TrailLevels {
     private TrailLevels() {
     }
 
-    /** The moves and drops for {@code nodes} (a parent always comes before its children, jigsaw order). */
+    /** The moves and drops for {@code nodes} with STR8's limit ({@value #MAX_CUT} rows off the ground). */
     public static Result solve(List<Node> nodes) {
+        return solve(nodes, MAX_CUT);
+    }
+
+    /**
+     * The moves and drops for {@code nodes} (a parent always comes before its children, jigsaw order): a trail piece more
+     * than {@code maxCut} rows off its natural row is dropped with what hangs from it.
+     */
+    public static Result solve(List<Node> nodes, int maxCut) {
         int n = nodes.size();
         int[] delta = new int[n];
         int[] row = new int[n];
@@ -78,7 +93,7 @@ public final class TrailLevels {
                     if (parentKind == Kind.START || parentKind == Kind.TRAIL) {
                         level = Math.max(row[p] - MAX_STEP, Math.min(row[p] + MAX_STEP, level));
                     }
-                    if (Math.abs(level - node.natural()) > MAX_CUT) {
+                    if (Math.abs(level - node.natural()) > maxCut) {
                         dropped[i] = true;
                         continue;
                     }

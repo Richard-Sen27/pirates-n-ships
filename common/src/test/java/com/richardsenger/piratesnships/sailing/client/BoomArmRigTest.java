@@ -106,4 +106,39 @@ class BoomArmRigTest {
         }
         assertEquals(0, StayClothRenderer.heldSide(new TriangleCloth(0, -6, -5, 5), 30f), "a jib has no boom");
     }
+
+    @Test
+    void theStayAndTheClothEndAtTheArmsEndAndTheSheetRunsToTheTack() {
+        // SAIL6: for every facing and step the leech rope, the cloth's corners and the sheet rope meet at the arm's end
+        int[][] tacks = {{4, -3}, {0, -5}, {-6, 0}, {3, 4}};
+        for (int[] t : tacks) {
+            TriangleCloth cloth = new TriangleCloth(t[0], -6, t[1], 5, true);
+            int[] arm = {cloth.tackX(), cloth.tackZ()};
+            Vector3f tack = new Vector3f(cloth.tackX(), cloth.tackY(), cloth.tackZ());
+            for (Direction facing : Direction.Plane.HORIZONTAL) {
+                for (int step = 0; step < BoomRules.STEPS; step++) {
+                    double sheet = BoomRules.angle(step);
+                    String at = "tack " + t[0] + "," + t[1] + " facing " + facing + " step " + step;
+                    double[] end = BoomRenderer.direction(arm, facing, sheet);
+                    int len = (int) Math.ceil(Math.hypot(end[0], end[1]) - 1e-4);
+                    // the drawn arm's far end, relative to the head (the boom hangs 5 below it)
+                    Vector3f armEnd = place(end[0], end[1], len - 1, (float) Math.hypot(end[0], end[1]) - (len - 1), 0.5f, 0.5f, 0f)
+                            .sub(0.5f, 0.5f, 0.5f).add(0f, -cloth.drop(), 0f);
+                    // the stay ends at the cloth's corner, which is the arm's end
+                    float[] corner = cloth.corner(sheet);
+                    Vector3f stay = StayClothRenderer.stayEnd(cloth, (float) sheet, tack);
+                    assertEquals(corner[0], stay.x, 1e-5f, at);
+                    assertEquals(corner[1], stay.y, 1e-5f, at);
+                    assertEquals(corner[2], stay.z, 1e-5f, at);
+                    // the cloth's corners: head (origin), gooseneck (0, -drop, 0), and the stay's end
+                    assertEquals(-cloth.drop(), stay.y, 1e-6f, at);
+                    assertEquals(armEnd.x, stay.x, 1e-4f, at);
+                    assertEquals(armEnd.y, stay.y, 1e-4f, at);
+                    assertEquals(armEnd.z, stay.z, 1e-4f, at);
+                    // the sheet rope runs from the stay's end (the renderer's start) to the tack;  a boomless sail's stay still goes to the tack
+                    assertEquals(tack, StayClothRenderer.stayEnd(new TriangleCloth(t[0], -6, t[1], 5), 30f, tack), at);
+                }
+            }
+        }
+    }
 }

@@ -1,11 +1,11 @@
-"""Generates the navy outpost quay's extension section (STR7: 7 by 11 by 12, the quay's 5 wide masonry mole carried 12
+"""Generates the navy outpost quay's extension section (STR7: 7 by 11 by 12, the quay's 5 wide masonry deck on pillars carried 12
 blocks further out, two berths) and prints the BuildSpec as JSON.
 
 The port structure hangs it from the quay's seaward end (and a second one from this
 section's own ``pier_end``) where the water at the quay's end is shallower than a ship needs (PortStructure, PierExtensions). Its
 ``pier_extension_in`` connector at the south end (x 3, deck row) lies in line with the quay's ``quay_in``: the deck is y 7, level
-with the quay's, the sea surface row y 6, and the mole is solid stone bricks from y 0 (six below the surface, the
-berths' carved floor) to the deck, mossy at the waterline. Berth markers in columns x 0 and x 6 at z 6, pointing north."""
+with the quay's, the sea surface row y 6, and PIER1: the deck stands on stone pillars from y 0 (six below the surface, the
+berths' carved floor) every four blocks, joined by an edge course at the waterline, open water between them. Berth markers in columns x 0 and x 6 at z 6, pointing north."""
 from _style import PALETTE, age, connector, dry, lantern_post, stair
 from buildspec import Piece
 
@@ -17,13 +17,25 @@ BERTH_Z = 6
 
 p = Piece("navy_outpost_quay_extension", "Navy Outpost Quay Extension", (W, H, L), PALETTE)
 
-# the mole: stone bricks from the seabed to the deck, mossy at the waterline
-p.fill(WEST, 0, 0, EAST, DECK - 1, L - 1, "bricks")
-p.fill(WEST, SEA - 1, 0, EAST, SEA, L - 1, "bricks_mossy")
-p.fill(WEST + 1, SEA - 1, 1, EAST - 1, SEA, L - 1, "bricks")
-for z in range(0, L, 3):
-    p.put(WEST, 3, z, "bricks_cracked")
-    p.put(EAST, 2, (z + 1) % L, "bricks_cracked")
+# PIER1: stone pillars on cobblestone footings at the seabed row, as the quay's, joined by an edge course at the
+# waterline; open water between them and under the middle
+p.palette["mossy"] = "minecraft:mossy_cobblestone"
+PILLAR_ZS = (1, 5, 9, L - 1)
+for z in PILLAR_ZS:
+    for x in (WEST, EAST):
+        p.put(x, 0, z, "mossy" if (x + z) % 3 else "cobble")
+        p.fill(x, 1, z, x, SEA, z, "bricks")
+        p.put(x, SEA - 1, z, "bricks_mossy")
+        if (x + z) % 4 == 0:
+            p.put(x, 3, z, "bricks_cracked")
+p.put(2, 0, 1, "cobble")                         # the ladder's backing pillar
+p.fill(2, 1, 1, 2, SEA, 1, "bricks")
+p.fill(WEST, SEA, 0, WEST, SEA, L - 1, "bricks")
+p.fill(EAST, SEA, 0, EAST, SEA, L - 1, "bricks")
+for z in range(0, L, 2):
+    if z not in PILLAR_ZS:
+        p.put(WEST, SEA, z, "bricks_mossy")
+        p.put(EAST, SEA, z, "bricks_mossy")
 
 # deck: andesite kerbs, bricks between, a chiseled course at the seaward end and an andesite band amidships
 p.fill(WEST, DECK, 0, WEST, DECK, L - 1, "andesite")

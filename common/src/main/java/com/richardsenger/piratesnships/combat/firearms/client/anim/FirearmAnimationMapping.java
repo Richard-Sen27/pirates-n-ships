@@ -51,7 +51,18 @@ public final class FirearmAnimationMapping {
      * when they are not using a gun ({@code kind == null}, or no use time left).
      */
     public static @Nullable Pose forUse(@Nullable FirearmKind kind, int remainingUseTicks) {
+        return forUse(kind, remainingUseTicks, false);
+    }
+
+    /**
+     * Like {@link #forUse(FirearmKind, int)} for a gun whose synced loaded state is {@code loaded} (FA2): a loading
+     * session on a gun that is already loaded shows nothing, so the reload ends when the server's loading does (the
+     * hammer model cocks at the same moment, P6) instead of playing on to its own end when the two drift apart. In step
+     * with the server the reload has just ended at that tick anyway.
+     */
+    public static @Nullable Pose forUse(@Nullable FirearmKind kind, int remainingUseTicks, boolean loaded) {
         if (kind == null || remainingUseTicks <= 0) return null;
+        if (loaded && !FirearmRules.isAimSession(remainingUseTicks)) return null;
         boolean aim = FirearmRules.isAimSession(remainingUseTicks);
         String name = aim ? aimAnimation(kind) : reloadAnimation(kind);
         return new Pose(name, aim, Math.max(0, FirearmRules.heldTicks(remainingUseTicks)));

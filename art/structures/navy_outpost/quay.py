@@ -1,8 +1,9 @@
-"""Generates the navy outpost's stone quay (a 5 wide masonry mole, 18 long) and prints the BuildSpec as JSON.
+"""Generates the navy outpost's stone quay (a 5 wide masonry deck on pillars, 18 long) and prints the BuildSpec as JSON.
 
 It runs north (seaward) from its ``quay_in`` connector at the south end, which hangs it from the fort gate's sea gate:
-the deck is at y 5, level with the gate's paving, and the sea surface is row y 4, like the village pier. The mole is
-solid stone bricks from the seabed row (y 0) to the deck, mossy at the waterline. Columns x 0 and x 6 hold the two
+the deck is at y 5, level with the gate's paving, and the sea surface is row y 4, like the village pier. PIER1: the deck stands on stone
+pillars (a cobblestone footing at y 0, stone bricks above) every four blocks along both edges, joined by an edge
+course at the waterline row, with open water between them and under the middle. Columns x 0 and x 6 hold the two
 berth markers (one per side, at sea level, at the berth's centre one block out from the deck, pointing north).
 
 On the deck: mooring rings and cleats along both edges, bollards (stone brick walls under upside-down stairs), a
@@ -20,13 +21,27 @@ BERTH_Z = 9                    # berth centre along the quay
 
 p = Piece("navy_outpost_quay", "Navy Outpost Quay", (W, H, L), PALETTE)
 
-# the mole: stone bricks from the seabed to the deck, mossy at the waterline, a chiseled course under the deck edge
-p.fill(WEST, 0, 0, EAST, DECK - 1, L - 1, "bricks")
-p.fill(WEST, SEA - 1, 0, EAST, SEA, L - 1, "bricks_mossy")
-p.fill(WEST + 1, SEA - 1, 1, EAST - 1, SEA, L - 1, "bricks")
-for z in range(0, L, 3):
-    p.put(WEST, 2, z, "bricks_cracked")
-    p.put(EAST, 1, (z + 1) % L, "bricks_cracked")
+# PIER1: the quay stands on stone pillars, not on a solid mole. A pillar every four blocks along both edges (and one
+# behind the ladder), each on a cobblestone footing at the seabed row (y 0; the PileFootings pass carries it down to
+# the real sea floor where the water is deeper), a plain edge course at the waterline under each deck kerb joining
+# them, open water between the pillars and under the deck's middle
+p.palette["mossy"] = "minecraft:mossy_cobblestone"
+PILLAR_ZS = tuple(range(1, L, 4))
+for z in PILLAR_ZS:
+    for x in (WEST, EAST):
+        p.put(x, 0, z, "mossy" if (x + z) % 3 else "cobble")
+        p.fill(x, 1, z, x, SEA, z, "bricks")
+        p.put(x, SEA - 1, z, "bricks_mossy")
+        if (x + z) % 4 == 0:
+            p.put(x, 2, z, "bricks_cracked")
+p.put(2, 0, 1, "cobble")                         # the ladder's backing pillar
+p.fill(2, 1, 1, 2, SEA, 1, "bricks")
+p.fill(WEST, SEA, 0, WEST, SEA, L - 1, "bricks")      # the edge courses under the deck kerbs
+p.fill(EAST, SEA, 0, EAST, SEA, L - 1, "bricks")
+for z in range(0, L, 2):
+    if z not in PILLAR_ZS:
+        p.put(WEST, SEA, z, "bricks_mossy")
+        p.put(EAST, SEA, z, "bricks_mossy")
 
 # the deck: polished andesite kerbs, stone brick paving, a chiseled landing at the sea end
 p.fill(WEST, DECK, 0, WEST, DECK, L - 1, "andesite")

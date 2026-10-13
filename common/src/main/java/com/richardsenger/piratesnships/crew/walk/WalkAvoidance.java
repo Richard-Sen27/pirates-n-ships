@@ -31,11 +31,13 @@ import org.jetbrains.annotations.Nullable;
  *   <li>When one of the next {@link WalkAvoid#LOOKAHEAD} cells of the walker's path is held, the walker
  *       <b>sidesteps</b>: it walks the {@link WalkAvoid#detour} cell by cell (one short path per cell, so the
  *       pathfinder, which knows nothing of entities, cannot lead it back through the held cell), then looks for a
- *       fresh path to its spot. No way round: it <b>waits</b> ({@code crew.walk.wait_ticks}, or until the cells ahead
- *       are clear) and tries again.</li>
- *   <li>Another <b>walker</b> in the way waits it out, unless the two meet <b>head-on</b> (each on the other's way):
- *       then the one with the lower entity id yields ({@link WalkAvoid#refuge}, aside or back along its way) and stays
- *       there until the other has passed, the other holds.</li>
+ *       fresh path to its spot. No way round a seated hand, a player or a walker standing to let someone by: it
+ *       <b>waits</b> ({@code crew.walk.wait_ticks}, or until the cells ahead are clear) and tries again. No way round a
+ *       crew member or villager just standing about: it walks on for {@code wait_ticks} and nudges him aside (vanilla's
+ *       entity push, WALK1's behaviour), so a crowd on the deck never holds it up.</li>
+ *   <li>Another <b>walker</b> going on ahead is followed, not avoided (it leaves the cell). Two walkers meeting
+ *       <b>head-on</b> (each on the other's way): the one with the lower entity id yields ({@link WalkAvoid#refuge},
+ *       aside or back along its way) and stays there until the other has passed, the other holds.</li>
  * </ul>
  * The state lives on the crew member ({@link CrewMember#walkAvoid()}), not saved: a reload starts the walk's steering
  * afresh. No Sable call beyond {@link ShipBody#toPlot} and {@link ShipEntities}: paths are created with plot targets as
@@ -78,7 +80,10 @@ public final class WalkAvoidance {
         /** The walker it yielded to (REFUGE, or a SIDESTEP towards the refuge), else -1. */
         int yieldedTo = -1;
         long sidestepTicks;
+        /** Until this game time it walks on past a standing hand it found no way round (WALK1's nudge). */
+        long walkOnUntil;
         /** Counters for tests and the debug log. */
+        int nudges;
         int sidesteps;
         int waits;
         int yields;
@@ -101,6 +106,10 @@ public final class WalkAvoidance {
 
         public int yields() {
             return yields;
+        }
+
+        public int nudges() {
+            return nudges;
         }
     }
 
@@ -152,6 +161,7 @@ public final class WalkAvoidance {
         BlockPos holderCell = WalkAvoid.holder(occupants.keySet(), held);
         Entity holder = holderCell == null ? null : occupants.get(holderCell);
         List<BlockPos> myWay = nodes(path, path.getNextNodeIndex());
+        boolean pushable = holder != null && !holder.isPassenger() && !(holder instanceof Player);
         if (holder instanceof CrewMember other && other.walk() != null && !other.isPassenger()) {
             List<BlockPos> otherWay = way(other);
             WalkAvoid.Meeting m = WalkAvoid.meeting(crew.getId(), other.getId(), true, WalkAvoid.onWay(self, otherWay));
@@ -169,12 +179,23 @@ public final class WalkAvoidance {
                     return true;
                 }
             }
-            State o = other.walkAvoid();
-            boolean otherStands = (o != null && o.mode != null && o.mode != Mode.SIDESTEP) || other.getNavigation().isDone();
-            if (m != WalkAvoid.Meeting.NONE || !otherStands) {
-                startWait(crew, s, ahead, myWay, now); // holds for the yielder, or follows a walker that goes on
+            if (m != WalkAvoid.Meeting.NONE) {
+                startWait(crew, s, ahead, myWay, now); // holds while the yielder makes room (or neither can: the timeout)
                 return true;
             }
+            State o = other.walkAvoid();
+            if (o != null && o.mode == Mode.SIDESTEP) {
+                startWait(crew, s, ahead, myWay, now); // it is stepping round someone (or out of the way): let it
+                return true;
+            }
+            boolean stands = (o != null && o.mode != null) || other.getNavigation().isDone();
+            if (!stands) {
+                return false; // a walker going on ahead: it leaves the cell, follow it
+            }
+            pushable = false; // a walker standing to let someone by is not shoved along
+        }
+        if (now < s.walkOnUntil) {
+            return false;
         }
         int heldAt = myWay.indexOf(held);
         List<BlockPos> rejoin = new ArrayList<>(myWay.subList(heldAt + 1, myWay.size()));
@@ -183,6 +204,11 @@ public final class WalkAvoidance {
         if (d != null) {
             s.sidesteps++;
             startSidestep(level, crew, s, d, now);
+        } else if (pushable) {
+            // no way round a hand standing about (not seated, not a player): walk on and nudge him aside, as WALK1 did
+            s.walkOnUntil = now + WalkConfig.WAIT_TICKS.get();
+            s.nudges++;
+            return false;
         } else {
             startWait(crew, s, ahead, myWay, now);
         }

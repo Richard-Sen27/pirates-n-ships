@@ -144,6 +144,7 @@ public final class CrewWalkAvoidGameTests {
         int sidesteps;
         int waits;
         int yields;
+        int nudges;
         long seatedAt = -1;
         int still;
         Vec3 last;
@@ -154,12 +155,13 @@ public final class CrewWalkAvoidGameTests {
                 sidesteps = Math.max(sidesteps, st.sidesteps());
                 waits = Math.max(waits, st.waits());
                 yields = Math.max(yields, st.yields());
+                nudges = Math.max(nudges, st.nudges());
             }
         }
 
         @Override
         public String toString() {
-            return "sidesteps " + sidesteps + ", waits " + waits + ", yields " + yields + ", seated at " + seatedAt + ", still " + still;
+            return "sidesteps " + sidesteps + ", waits " + waits + ", yields " + yields + ", nudges " + nudges + ", seated at " + seatedAt + ", still " + still;
         }
     }
 
@@ -277,9 +279,9 @@ public final class CrewWalkAvoidGameTests {
         h.runAtTickTime(CrewWalkGameTests.SETTLE, () -> sendToWinch(h, s, c));
         h.onEachTick(() -> {
             long t = h.getTick();
-            if (t <= CrewWalkGameTests.SETTLE || c.isAtStation()) return;
+            if (t <= CrewWalkGameTests.SETTLE || c.isAtStation() || c.isRemoved() || c.walk() == null) return;
             seen.sample(c);
-            h.assertTrue(s.body().toPlot(c.position()).z < s.plot(HAND_SEAT).getZ(), "the walker got past the hand; " + seen);
+            h.assertTrue(s.body().toPlot(c.position()).z < s.plot(HAND_SEAT).getZ(), "the walker got past the hand; " + seen + ", " + describe(s, c));
         });
         h.runAtTickTime(CrewWalkGameTests.SETTLE + timeout - 10, () -> {
             h.assertTrue(!c.isAtStation() && c.walk() != null, "seated before the timeout");

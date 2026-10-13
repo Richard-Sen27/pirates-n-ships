@@ -14,7 +14,7 @@ illustration: chart
 A captain who does not know where he is soon knows where the rocks are. Keep your chart and mark it well.
 
 ## Your chart
-Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in the coasts, shallows and open sea of the overworld around you. The land takes the colours of what stands on it, so a village's roofs and paths show up from afar.
+Your {item:pirates_n_ships:chart}**chart** draws itself as you sail, inking in the coasts, shallows and open sea of the overworld around you. The land stays in plain ink, but whatever people built (planks, bricks, cobblestone, glass, wool and the like) shows in colour, so a village or a harbour stands out from the wilds.
 
 {recipe:chart}
 

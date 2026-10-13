@@ -26,7 +26,7 @@ import com.richardsenger.piratesnships.chart.sample.MapColours;
  * {@link #SATURATION} percent, mixed {@link #PAPER_MIX} percent towards the parchment and laid on at alpha
  * {@link #COLOURED_ALPHA}, stippled like the ink land; so a village's roofs, paths and fields show while the ink
  * marks, labels and icons still stand out. Water keeps the chart's wash, coasts their ink stroke; a land cell without
- * a colour (sampled before CHART4) draws in ink. {@link ChartStyle#INK} ignores the colours.
+ * a colour (sampled before CHART4) draws in ink. {@link ChartStyle#INK} (CHART5) uses a colour only for cells flagged built, {@link ChartStyle#PLAIN} ignores the colours.
  */
 public final class ChartRaster {
 
@@ -54,7 +54,7 @@ public final class ChartRaster {
 
     /** The pixels of region {@code (rx, rz)} at {@code px} pixels per cell: {@code (64 * px)^2}, row-major. */
     public static int[] renderRegion(CellLookup cells, int rx, int rz, int px) {
-        return renderRegion(cells, rx, rz, px, ChartStyle.INK);
+        return renderRegion(cells, rx, rz, px, ChartStyle.PLAIN);
     }
 
     /** CHART4: {@link #renderRegion(CellLookup, int, int, int)} in {@code style}. */
@@ -68,12 +68,13 @@ public final class ChartRaster {
      * Neighbours outside the rectangle are read too (coast strokes).
      */
     public static int[] render(CellLookup cells, int minCx, int minCz, int w, int h, int px) {
-        return render(cells, minCx, minCz, w, h, px, ChartStyle.INK);
+        return render(cells, minCx, minCz, w, h, px, ChartStyle.PLAIN);
     }
 
     /** CHART4: {@link #render(CellLookup, int, int, int, int, int)} in {@code style} (the cells may be wide cells). */
     public static int[] render(CellLookup cells, int minCx, int minCz, int w, int h, int px, ChartStyle style) {
         boolean coloured = style == ChartStyle.COLOURED;
+        boolean builtOnly = style == ChartStyle.INK;
         if (px < 1) throw new IllegalArgumentException("pixels per cell " + px);
         int width = w * px;
         int[] out = new int[width * h * px];
@@ -90,7 +91,7 @@ public final class ChartRaster {
                 int e = cells.cell(cx + 1, cz);
                 boolean land = cls.isLand();
                 boolean coast = land && ChartCells.coast(cell);
-                int tint = coloured && land ? ChartCells.colour(cell) : 0;
+                int tint = land && (coloured || builtOnly && ChartCells.built(cell)) ? ChartCells.colour(cell) : 0;
                 int paint = tint == 0 ? 0 : softened(tint);
                 for (int j = 0; j < px; j++) {
                     for (int i = 0; i < px; i++) {

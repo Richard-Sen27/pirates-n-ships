@@ -154,7 +154,7 @@ public final class MapTileRaster {
      * any known cell of the block is coast, and it is unknown (0) only when no cell of the block is known. At zoom 1
      * it is the cell itself (with free bits cleared).
      *
-     * <p>CHART4: the cells may be wide cells ({@link ChartCells#wide}); the result then carries a colour the same way,
+     * <p>CHART4: the cells may be wide cells ({@link ChartCells#wide}); CHART5: a far pixel of a land class is built when any land cell of its block is built. The result then carries a colour the same way,
      * when its class is a land class: the most common map colour id among the block's land cells that have one (ties:
      * the lower id) with that colour's most common brightness step (ties: the lower step id), else none. Water pixels
      * carry no colour (the sea keeps the chart's wash).
@@ -164,11 +164,13 @@ public final class MapTileRaster {
             int c = cells.cell(cx0, cz0);
             if (!ChartCells.known(c)) return 0;
             int colour = ChartCells.cellClass(c).isLand() ? ChartCells.colour(c) : 0;
-            return ChartCells.wide(c & (ChartCells.CLASS_MASK | ChartCells.COAST), colour);
+            int keep = ChartCells.cellClass(c).isLand() ? ChartCells.USED : ChartCells.CLASS_MASK | ChartCells.COAST;
+            return ChartCells.wide(c & keep, colour);
         }
         int[] counts = new int[CellClass.values().length];
         int[] colours = null;
         boolean coast = false;
+        boolean built = false;
         boolean any = false;
         for (int j = 0; j < zoom; j++) {
             for (int i = 0; i < zoom; i++) {
@@ -178,6 +180,7 @@ public final class MapTileRaster {
                 CellClass cls = ChartCells.cellClass(c);
                 counts[cls.ordinal()]++;
                 if (ChartCells.coast(c)) coast = true;
+                if (cls.isLand() && ChartCells.built(c)) built = true;
                 int colour = ChartCells.colour(c);
                 if (colour != 0 && cls.isLand()) {
                     if (colours == null) colours = new int[256];
@@ -193,7 +196,7 @@ public final class MapTileRaster {
         }
         CellClass cls = CellClass.of(best);
         int colour = cls.isLand() && colours != null ? dominantColour(colours) : 0;
-        return ChartCells.wide(ChartCells.of(cls, coast), colour);
+        return ChartCells.wide(ChartCells.of(cls, coast, cls.isLand() && built), colour);
     }
 
     /** CHART4: the packed colour standing for counts per packed colour: the most common id, then its most common step. */

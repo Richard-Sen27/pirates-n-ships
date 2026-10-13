@@ -65,7 +65,7 @@ public final class ChartService {
             data = data.resetCells(cellBlocks);
         }
         SampleGrid grid = ChartSampler.sample(level, player.getX(), player.getZ(), ChartConfig.SAMPLE_RADIUS.get(),
-                cellBlocks, ChartConfig.SHALLOW_DEPTH.get(), ChartConfig.COLOUR_COLUMNS.get());
+                cellBlocks, ChartConfig.SHALLOW_DEPTH.get(), ChartConfig.COLOUR_COLUMNS.get(), ChartConfig.BUILT_COLUMNS.get());
         ChartMerge.Result result = ChartMerge.merge(data, grid, level.getGameTime(), ChartConfig.MAX_CELLS.get());
         if (!result.droppedRegions().isEmpty()) {
             Constants.LOG.warn("Chart of {} reached chart.max_cells ({}): forgot {} least recently visited region(s)",

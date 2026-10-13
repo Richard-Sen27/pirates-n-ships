@@ -276,3 +276,36 @@ old saves, the region payload's size, far-tile downsampling, ink vs coloured, th
 7. **Performance:** with a few players flying over new land (elytra), the server's tick time (F3 or `/neoforge tps`)
    stays where it was before this version; the chart sampling reads about 16 columns per cell every 40 ticks
    (`chart.colour_columns` 2 reads 4).
+
+## CHART5: the ink chart with built cells in colour
+
+What changed: the chart is back to the ink look by default (`chart.style` `INK`), and only built cells draw in colour:
+a land cell is built when at least `chart.built_columns` (2) of its sampled columns have a block of the tag
+`pirates_n_ships:chart_built` on top (planks, wooden slabs, stairs, fences, gates, doors, trapdoors, wool and carpets,
+bricks, stone bricks, cobblestone and mossy cobblestone with slabs, stairs and walls, all walls, smooth stone, dyed
+terracotta that badlands do not generate, glazed terracotta, concrete and powder, glass and panes, dirt paths,
+lanterns, campfires, barrels, chests, crafting tables, furnaces, bookshelves, beds, hay bales, scaffolding and every
+block of the mod; never logs, leaves, stone, sand, dirt, grass or plain badlands terracotta). The flag is bit 4 of the
+cell byte (the colour byte is full: 62 colour ids times 4 steps use all 8 bits), so it rides in the run-length cells
+of the region payload, is merged like the class, and a far pixel is built when any of its land cells is. A built
+cell takes the colour of its built columns only (a wall across a garden is stone, not green) in CHART4's softened
+look. `COLOURED` is unchanged, `PLAIN` is the pure ink. Map boards stay in ink.
+
+Covered headlessly: `ChartBuiltTest` (the tag's members read from the datagen'd file, the built rule, merge, far
+downsample, payload size, ink colouring only built cells, a preview at `build/chart5/styles.png`), `ChartCodecsTest`,
+`ChartColoursTest`, and the GameTests `builtCellsAreFlaggedAndForestsAreNot`, `aSampledVillageCellCarriesThePlanksColour`,
+`theStyleSwitchesAtRuntime`, `aBoardFromAColouredChartIsDrawnInInk`. Render of the three styles side by side (plain
+ink, ink with built cells, coloured): `art/renders/chart_styles.png`.
+
+1. **A village:** walk or sail past a vanilla village and open the chart at the closest zoom. Expected: grass, fields,
+   forests and hills in the plain parchment inks; the houses, paths, wells and any planks, cobblestone or glass in
+   muted colour; the sea and coasts as before.
+2. **A forest and a mountain:** stand in a dense forest and on a stone mountain. Expected: both stay ink, no coloured
+   spots from logs or stone.
+3. **Your own build:** place a small wooden hut, a cobblestone wall and a harbour pier of planks near the shore, wait
+   two seconds. Expected: they show in colour; a single stray plank does not (needs two columns in a cell).
+4. **Zoomed out:** scroll out to the widest step: a village is a small coloured speck on an otherwise ink chart.
+5. **Old charts:** areas charted before this version are plain ink until you walk past them again.
+6. **Styles:** `chart.style = "COLOURED"` shows all land in colour again (CHART4); `"PLAIN"` shows pure ink with no
+   built colours; reopen the chart to see the change.
+7. **Map board:** a board drawn over the village is pure ink (by design).

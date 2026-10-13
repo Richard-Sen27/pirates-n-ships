@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.firearms;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.combat.content.CombatSounds;
 import com.richardsenger.piratesnships.platform.Services;
@@ -52,6 +53,10 @@ public final class FirearmService {
         FirearmLoad load = FirearmLoads.forLoading(shooter, hand, gun, item.kind());
         if (!load.load(level, shooter, hand, gun)) return false;
         FirearmContent.setLoaded(gun, true);
+        if (shooter.isUsingItem()) {
+            Constants.LOG.debug("FA2: {} loaded after {} ticks of holding (reload_ticks {})", shooter.getName().getString(),
+                    FirearmRules.heldTicks(shooter.getUseItemRemainingTicks()), item.type().reloadTicks());
+        }
         level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEvents.CROSSBOW_LOADING_END.value(),
                 SoundSource.PLAYERS, 1.0f, 0.8f);
         return true;

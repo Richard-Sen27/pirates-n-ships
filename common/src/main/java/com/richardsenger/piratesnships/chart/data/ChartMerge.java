@@ -17,7 +17,7 @@ import java.util.Set;
  * recently touched regions are dropped until it fits; the regions of this sample go last.
  *
  * <p>CHART4: a sampled cell also takes its sampled colour (0 included: what the world shows now); unsampled cells keep
- * theirs. A region gets a colour array on its first sampled cell with a colour; regions from before CHART4 stay
+ * theirs. CHART5: the built flag (bit 4 of the cell byte) is taken from the sample like the class. A region gets a colour array on its first sampled cell with a colour; regions from before CHART4 stay
  * without one until then. A region whose colours changed counts as changed (a new version, sent again).
  */
 public final class ChartMerge {
@@ -40,12 +40,12 @@ public final class ChartMerge {
         for (int z = 0; z < grid.h(); z++) {
             for (int x = 0; x < grid.w(); x++) {
                 int cls = grid.classes()[z * grid.w() + x];
-                if (cls == 0) continue;
+                if ((cls & ChartCells.CLASS_MASK) == 0) continue;
                 int cx = grid.minCx() + x;
                 int cz = grid.minCz() + z;
                 sampled.add(ChartRegion.keyOfCell(cx, cz));
                 int old = work.read(cx, cz);
-                int now = (old & ~ChartCells.CLASS_MASK) | cls;
+                int now = (old & ~(ChartCells.CLASS_MASK | ChartCells.BUILT)) | cls;
                 if (now != old) work.write(cx, cz, now);
                 work.writeColour(cx, cz, grid.colours()[z * grid.w() + x] & 0xFF);
             }

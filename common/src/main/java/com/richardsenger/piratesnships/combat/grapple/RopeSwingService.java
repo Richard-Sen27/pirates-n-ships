@@ -157,13 +157,14 @@ public final class RopeSwingService {
 
     /**
      * The swing's correction of {@code player}'s velocity for the next tick on a rope of {@code length} around
-     * {@code pivot} ({@link RopeSwing#step}); vanilla's air drag is undone only out of the water.
+     * {@code pivot} ({@link RopeSwing#step}) with this tick's walking input; vanilla's air drag and air control are
+     * taken out only out of the water.
      */
     public static void apply(Player player, Pivot pivot, double length) {
         Vec3 rel = hand(player).subtract(pivot.position());
         Vec3 pv = pivot.carries(player) ? Vec3.ZERO : pivot.velocity();
-        Vec3 wish = RopeSwing.wish(player.xxa, player.zza, player.getYRot());
-        Vec3 v = RopeSwing.step(rel, player.getDeltaMovement(), pv, length, wish, !player.isInWater(), GrappleConfig.swingParams());
+        RopeSwing.Input input = new RopeSwing.Input(player.zza, player.xxa, player.getYRot(), RopeSwing.airControl(player.isSprinting()));
+        Vec3 v = RopeSwing.step(rel, player.getDeltaMovement(), pv, length, input, !player.isInWater(), GrappleConfig.swingParams());
         player.setDeltaMovement(v);
         player.resetFallDistance();
     }
@@ -197,6 +198,7 @@ public final class RopeSwingService {
         if (cooldown > 0) {
             player.getCooldowns().addCooldown(CombatContent.GRAPPLING_HOOK.get(), cooldown);
         }
+        hook.countPull(); // GR8: every client shows the hand-over-hand (RopePose)
         double d = hand.distanceTo(far);
         double step = GrappleConfig.ROPE_CLIMB_STEP.get();
         if (RopeSwing.arrives(length, d, step, ARRIVE_LENGTH)) {

@@ -28,8 +28,12 @@ import net.minecraft.world.level.material.MapColor;
  */
 public final class MapColours {
 
-    /** One column: the {@link MapColor} id of its top coloured block, that block's y and the water depth under it (0 on land). */
-    public record Column(int colourId, int height, int waterDepth) {
+    /** One column: the {@link MapColor} id of its top coloured block, that block's y, the water depth under it (0 on land) and (CHART5) whether that block is man-made ({@link ChartBuilt}). */
+    public record Column(int colourId, int height, int waterDepth, boolean built) {
+        /** A column that is not built (CHART4's three values). */
+        public Column(int colourId, int height, int waterDepth) {
+            this(colourId, height, waterDepth, false);
+        }
     }
 
     private MapColours() {

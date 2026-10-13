@@ -69,7 +69,7 @@ public final class GrappleService {
     /**
      * Launches a hook from {@code player}'s eyes along its view: thrown or fired from the musket, with the mode's speed
      * ({@link GrappleConfig#speed}), rope length ({@link GrappleConfig#ropeLength}) and gravity factor
-     * ({@link GrappleConfig#gravityFactor}, GR4). The weapon's own sound and effects are the caller's; a throw plays
+     * ({@link GrappleConfig#gravity}, GR4, GR8). The weapon's own sound and effects are the caller's; a throw plays
      * the bobber throw.
      */
     public static GrapplingHookEntity launchHook(ServerLevel level, Player player, ItemStack hook, boolean consumed, GrappleLaunch.Mode mode) {
@@ -83,7 +83,7 @@ public final class GrappleService {
     /** Gives a new hook the rope length and gravity of a launch in {@code mode}. */
     static void configure(GrapplingHookEntity entity, GrappleLaunch.Mode mode) {
         entity.setRopeLength(GrappleConfig.ropeLength(mode));
-        entity.setGravityFactor(GrappleConfig.gravityFactor(mode));
+        entity.setFlightGravity(GrappleConfig.gravity(mode));
     }
 
     /** Launches a hook from {@code pos} with {@code velocity} (blocks per tick); used by tests. */

@@ -215,8 +215,8 @@ public final class MapBoardGameTests {
     }
 
     /**
-     * CHART4: map boards stay in ink. A board drawn from a chart whose cells carry map colours is exactly the board
-     * drawn from the same chart without them, at zoom 1 and zoom 2 (the tile palette has no block colours).
+     * CHART4/CHART5: map boards stay in ink. A board drawn from a chart whose cells carry map colours and the built
+     * flag (here every land cell is built) is exactly the board drawn from the same chart without them, at zoom 1 and zoom 2 (the tile palette has no block colours).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aBoardFromAColouredChartIsDrawnInInk(GameTestHelper helper) {
@@ -231,12 +231,13 @@ public final class MapBoardGameTests {
         for (int cz = bz; cz < bz + h; cz++) {
             for (int cx = bx; cx < bx + w; cx++) {
                 boolean land = cx < bx + size();
-                grid.set(cx, cz, land ? CellClass.LAND : CellClass.DEEP_WATER, land ? wood : water);
+                grid.set(cx, cz, land ? CellClass.LAND : CellClass.DEEP_WATER, land ? wood : water, land);
             }
         }
         ChartData coloured = ChartMerge.merge(ChartData.EMPTY.resetCells(cb()), grid, 0, ChartConfig.MAX_CELLS.get()).data();
         ChartData plain = chart(cb(), bx, bz, w, h, bx + size());
         helper.assertTrue(coloured.regions().values().stream().anyMatch(r -> r.hasColours()), "the chart carries colours");
+        helper.assertTrue(com.richardsenger.piratesnships.chart.data.ChartCells.built(coloured.cell(bx, bz)), "and the built flag");
         ServerPlayer p = drawer(helper, "board_coloured", tiles.get(0), coloured, 10);
         for (int zoom : new int[]{1, 2}) {
             MapTileService.Outcome out = MapTileService.draw(p, new DrawTilePayload(tiles.get(0), bx, bz, zoom, false, false));

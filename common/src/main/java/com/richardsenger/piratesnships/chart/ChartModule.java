@@ -72,6 +72,7 @@ public final class ChartModule implements ModModule {
             lang.block(ChartContent.MAP_TILE, "Map Tile");
             ChartText.ENGLISH.forEach(lang::add);
         });
+        data.blockTags(com.richardsenger.piratesnships.chart.sample.ChartBuiltData::contribute);
         data.models(m -> {
             // The chart's item model is hand-made (art/models/chart.bbmodel, design.md §4.8)
             MapTileModels.generate(m);

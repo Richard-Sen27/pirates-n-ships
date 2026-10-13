@@ -59,7 +59,7 @@ public final class ChartZoomOut {
 
     /** The ARGB pixels of far tile {@code (tx, tz)}: {@link #TILE} squared, row-major, in the chart's pirate style. */
     public static int[] render(LongFunction<ChartRegion> regions, int tx, int tz, int c) {
-        return render(regions, tx, tz, c, ChartStyle.INK);
+        return render(regions, tx, tz, c, ChartStyle.PLAIN);
     }
 
     /** CHART4: {@link #render(LongFunction, int, int, int)} in {@code style}. */

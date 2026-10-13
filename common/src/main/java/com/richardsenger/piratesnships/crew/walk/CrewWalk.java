@@ -40,6 +40,9 @@ import org.jetbrains.annotations.Nullable;
  * Seated at once instead of walking: walking off ({@code crew.walk.enabled}), a mob without AI (it cannot move), a
  * crew member that is not on the target's ship (ashore, on another ship), one already within
  * {@code arrive_distance}, or no path at all. Distances are measured in ship space, so a moving ship does not count.
+ * <p>
+ * WALK2: on the way the walker steers round people in its path ({@link WalkAvoidance}, {@code crew.walk.avoids_crew});
+ * its sidesteps do not count towards the timeout, its waits do ({@link WalkAvoid#timeoutElapsed}).
  */
 public final class CrewWalk {
 

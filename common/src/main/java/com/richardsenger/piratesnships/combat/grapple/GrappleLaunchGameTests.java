@@ -725,10 +725,14 @@ public final class GrappleLaunchGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = LAUNCH_BATCH, timeoutTicks = 80)
     public static void aFiredMusketHookFliesAndLatchesOnAWall(GameTestHelper h) {
         wallAtTheFarEnd(h);
-        musketHookStaysOut(h, RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(2.5, 1, 12.5)), -90f));
+        musketHookStaysOut(h, RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(2.5, 1, 12.5)), -90f), true);
     }
 
-    /** The same with a real {@link net.minecraft.server.level.ServerPlayer} (a connection that goes nowhere). */
+    /**
+     * The same with a real {@link net.minecraft.server.level.ServerPlayer} (a connection that goes nowhere). The shot is
+     * the hook load's own launch ({@link MusketHookLoad#launch}): the trigger's recoil is a payload, which a connection
+     * without negotiated channels refuses.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = LAUNCH_BATCH, timeoutTicks = 80)
     public static void aServerPlayersMusketHookFliesAndLatchesOnAWall(GameTestHelper h) {
         wallAtTheFarEnd(h);
@@ -743,10 +747,10 @@ public final class GrappleLaunchGameTests {
         p.getInventory().clearContent();
         Vec3 at = h.absoluteVec(new Vec3(2.5, 1, 12.5));
         p.moveTo(at.x, at.y, at.z, -90f, 0f);
-        musketHookStaysOut(h, p);
+        musketHookStaysOut(h, p, false);
     }
 
-    private static void musketHookStaysOut(GameTestHelper h, Player player) {
+    private static void musketHookStaysOut(GameTestHelper h, Player player, boolean trigger) {
         ServerLevel level = h.getLevel();
         player.setYRot(-90f);
         player.setXRot(0f);
@@ -755,7 +759,12 @@ public final class GrappleLaunchGameTests {
         give(player, new ItemStack(Items.GUNPOWDER, 2));
         loadMusket(h, player, InteractionHand.MAIN_HAND);
         h.assertTrue(GrappleContent.isHookLoaded(player.getMainHandItem()), "the musket holds no hook");
-        aimAndRelease(h, player, InteractionHand.MAIN_HAND, FirearmsConfig.AIM_STEADY_TICKS.get() + 5);
+        if (trigger) {
+            aimAndRelease(h, player, InteractionHand.MAIN_HAND, FirearmsConfig.AIM_STEADY_TICKS.get() + 5);
+        } else {
+            MusketHookLoad.INSTANCE.launch(level, player, player.getMainHandItem(),
+                    com.richardsenger.piratesnships.combat.firearms.FirearmKind.MUSKET, 0f, -90f);
+        }
         GrapplingHookEntity out = GrappleService.hookOf(player);
         h.assertTrue(out != null, "no hook out after firing the musket");
         h.assertTrue(level.getEntity(out.getId()) == out, "the fired hook is not in the level");

@@ -23,6 +23,12 @@ public final class WalkConfig {
             "Ticks a crew member walks before it is seated at its spot anyway (an unreachable spot never stalls it)");
     public static final ConfigValue<Integer> REPATH_TICKS = S.intRange("repath_ticks", 20, 5, 200,
             "Ticks between two path searches while the ship moves");
+    public static final ConfigValue<Boolean> AVOIDS_CREW = S.bool("avoids_crew", true,
+            "Walking crew steer round crew members, villagers and players standing or seated in their way: a sidestep where there is room, "
+                    + "else they wait; two walkers meeting head-on in a narrow gangway let the one give way (WALK2). Off = they walk into them (WALK1)");
+    public static final ConfigValue<Integer> WAIT_TICKS = S.intRange("wait_ticks", 20, 1, 400,
+            "Ticks a walking crew member waits for someone in its way when there is no room to step round, before it looks for a way again; "
+                    + "the wait counts towards timeout_ticks");
 
     private WalkConfig() {
     }

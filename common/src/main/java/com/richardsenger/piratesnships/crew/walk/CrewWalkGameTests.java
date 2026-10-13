@@ -318,7 +318,8 @@ public final class CrewWalkGameTests {
                 h.assertTrue(!w.between.isEmpty(), "seated without being seen on the way: from " + w.startDistance);
                 return;
             }
-            h.assertTrue(t - w.startTick <= 100, "not at the meal within 100 ticks: walk " + c.walk() + ", on the way " + w.between);
+            h.assertTrue(t - w.startTick <= 100, "not at the meal within 100 ticks: walk " + c.walk() + ", on the way " + w.between
+                    + ", " + CrewWalkAvoidGameTests.describe(s, c));
             if ((t - w.startTick) % SAMPLE == 0 && c.walk() != null) {
                 w.sample(s.body().toPlot(c.position()), CrewWalk.distance(s.body(), c, c.walk().spot()));
             }

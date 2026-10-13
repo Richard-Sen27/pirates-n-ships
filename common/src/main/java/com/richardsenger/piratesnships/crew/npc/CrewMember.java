@@ -164,6 +164,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
     private boolean stationary;
     /** Where it walks to take its place (WALK1, {@code crew.walk.CrewWalk}), else null. Server only, saved. */
     private @Nullable WalkTarget walk;
+    /** How it steers round people on its walk (WALK2, {@code crew.walk.WalkAvoidance}), else null. Server only, not saved. */
+    private com.richardsenger.piratesnships.crew.walk.WalkAvoidance.@Nullable State walkAvoid;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
     /** It is one of a boarding party (BRD3, {@code combat.boarding.order.BoardingParties}). Server only, not saved. */
@@ -483,6 +485,16 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, Mel
     /** Sets the walk only; {@code crew.walk.CrewWalk} starts, ends and steers it. */
     public void setWalk(@Nullable WalkTarget walk) {
         this.walk = walk;
+    }
+
+    /** How it steers round people on its walk (WALK2), else null. */
+    public com.richardsenger.piratesnships.crew.walk.WalkAvoidance.@Nullable State walkAvoid() {
+        return walkAvoid;
+    }
+
+    /** Sets the steering state only; {@code crew.walk.WalkAvoidance} owns it. */
+    public void setWalkAvoid(com.richardsenger.piratesnships.crew.walk.WalkAvoidance.@Nullable State walkAvoid) {
+        this.walkAvoid = walkAvoid;
     }
 
     /** Whether it is one of a boarding party (BRD3): it does not stroll, and the job board leaves it alone. */

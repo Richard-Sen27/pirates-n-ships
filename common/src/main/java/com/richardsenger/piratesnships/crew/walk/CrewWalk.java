@@ -87,6 +87,7 @@ public final class CrewWalk {
             Constants.LOG.debug("Crew {} has no path to {} {} on {}: seated at once", crew.getUUID(), purpose, anchor, ship);
             return false;
         }
+        WalkAvoidance.clear(crew);
         crew.setWalk(new WalkTarget(purpose, ship, spot, anchor, level.getGameTime()));
         return true;
     }
@@ -109,6 +110,7 @@ public final class CrewWalk {
             crew.setWalk(null);
             crew.getNavigation().stop();
         }
+        WalkAvoidance.clear(crew);
     }
 
     /**
@@ -136,7 +138,9 @@ public final class CrewWalk {
         }
         long elapsed = level.getGameTime() - t.started();
         double d = distance(body, crew, t.spot());
-        switch (WalkRules.step(d, WalkConfig.ARRIVE_DISTANCE.get(), elapsed, WalkConfig.TIMEOUT_TICKS.get())) {
+        WalkAvoidance.State avoid = crew.walkAvoid();
+        long counted = avoid == null ? elapsed : WalkAvoid.timeoutElapsed(elapsed, avoid.sidestepTicks(), WalkConfig.TIMEOUT_TICKS.get());
+        switch (WalkRules.step(d, WalkConfig.ARRIVE_DISTANCE.get(), counted, WalkConfig.TIMEOUT_TICKS.get())) {
             case ARRIVED -> finish(level, crew, t);
             case TIMED_OUT -> {
                 Constants.LOG.debug("Crew {} did not reach {} {} in {} ticks ({} blocks short): seated there",
@@ -147,6 +151,9 @@ public final class CrewWalk {
                 ShipBody on = ShipEntities.standingOrRiding(crew);
                 if (on == null || !on.id().equals(t.ship()) || !crew.onGround()) {
                     return; // off the deck for a moment (a jump, a fall): the timeout catches a walker that stays off
+                }
+                if (WalkConfig.AVOIDS_CREW.get() && WalkAvoidance.tick(level, crew, body, t)) {
+                    return; // WALK2: steered round someone this tick (a sidestep, a wait, a yield)
                 }
                 boolean hasPath = !crew.getNavigation().isDone();
                 if (!hasPath && elapsed % NO_PATH_RETRY_TICKS != 0) {
@@ -159,6 +166,11 @@ public final class CrewWalk {
                 }
             }
         }
+    }
+
+    /** The walker's WALK2 steering state (sidesteps, waits, yields), or null when it never steered round anyone. */
+    public static WalkAvoidance.@Nullable State avoidance(CrewMember crew) {
+        return crew.walkAvoid();
     }
 
     /** The walk ends at its place (arrived or the fallback): the place's seat code runs. */
@@ -176,10 +188,15 @@ public final class CrewWalk {
      * A fresh path to plot cell {@code spot} at {@code crew.walk.speed}, or null. The old path is dropped first: Sable's
      * {@code createPath} hands back the current path while it is not done and has the same target.
      */
-    private static @Nullable Path path(CrewMember crew, BlockPos spot) {
+    static @Nullable Path path(CrewMember crew, BlockPos spot) {
+        return path(crew, spot, ACCURACY);
+    }
+
+    /** A fresh path to plot cell {@code cell} within {@code accuracy} blocks (0 for a sidestep's cell, WALK2), or null. */
+    static @Nullable Path path(CrewMember crew, BlockPos cell, int accuracy) {
         PathNavigation nav = crew.getNavigation();
         nav.stop();
-        Path p = nav.createPath(spot, ACCURACY);
+        Path p = nav.createPath(cell, accuracy);
         if (p != null) {
             nav.moveTo(p, WalkConfig.SPEED.get()); // false when it already stands at the path's end: kept as a path found
         }

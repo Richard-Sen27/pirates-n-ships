@@ -128,7 +128,7 @@ public final class RealCoastGameTests {
                     Constants.LOG.info("{} real coast: {} at {} {}: no port", label, kind.getSerializedName(), site[0], site[1]);
                     continue;
                 }
-                Constants.LOG.info("{} real coast: {}", label, report.line());
+                Constants.LOG.info("{} real coast: {} roots {}", label, report.line(), report.roots);
                 sites++;
                 add(sum, report);
             }

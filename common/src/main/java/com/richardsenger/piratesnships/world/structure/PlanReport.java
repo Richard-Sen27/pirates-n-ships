@@ -41,6 +41,8 @@ public final class PlanReport {
     public int rerooted;
     /** Children lost, by the reason their dropped ancestor was dropped for (indexed by {@link Reason#ordinal}). */
     public final int[] childrenOf = new int[Reason.values().length];
+    /** The pieces dropped for a reason of their own, with how many pieces hung from them (for the tests' logs). */
+    public final java.util.List<String> roots = new java.util.ArrayList<>();
 
     public PlanReport(PortKind kind, int x, int z) {
         this.kind = kind;

@@ -294,20 +294,22 @@ public final class PortSiteGameTests {
 
     /**
      * The first land row of the rough shore at column x: straight within 14 blocks of the site (so the pier's side is
-     * the same as on the flat beach), elsewhere a coast that wiggles five blocks in and out.
+     * the same as on the flat beach), elsewhere headlands up to five blocks out to sea with coves between them. (Bays
+     * cutting in behind the shore line would end the fort's shore walls early, which is STR8's wall rule, not a loss.)
      */
     static int roughCoast(int x) {
-        return Math.abs(x - PLAN_X) < 14 ? PLAN_SHORE_Z : PLAN_SHORE_Z + (int) Math.round(5 * Math.sin((x - PLAN_X) / 7.0));
+        return Math.abs(x - PLAN_X) < 14 ? PLAN_SHORE_Z
+                : PLAN_SHORE_Z - (int) Math.round(5 * Math.max(0, Math.sin((x - PLAN_X) / 7.0)));
     }
 
     /**
      * The surface of a rough shore (STR9: the real coasts where STR8 kept a third to a half of a port): a wiggling coast
-     * ({@link #roughCoast}) with a pond, land rising one block every six inland with bumps of up to three blocks.
+     * ({@link #roughCoast}) with a pond, land rising one block every five inland with bumps of up to three blocks.
      */
     static int roughSurface(int seaY, int x, int z) {
         if (roughWater(x, z)) return seaY;
         int bump = (int) Math.round(1.5 * (Math.sin(x / 3.0) + Math.cos(z / 4.0)) / 2 + 1.5);
-        return seaY + 1 + bump + Math.max(0, z - PLAN_SHORE_Z) / 6;
+        return seaY + 1 + bump + Math.max(0, z - PLAN_SHORE_Z) / 5;
     }
 
     /** The rough shore's water: the sea north of its coast and a round pond 30 blocks inland, 24 to the east. */

@@ -277,18 +277,33 @@ public final class PortStructure extends Structure {
                 config.shoreProbeBlocks().get(), config.maxDistanceFromWater().get());
         if (shores.isEmpty()) return Optional.empty();
         boolean piersInWater = WorldConfig.STRUCTURE_PIERS_END_IN_WATER.get();
+        // STR9: a side where most of the port would be dropped (a spit with a lagoon behind it) gives way to the next
+        boolean resite = WorldConfig.STRUCTURE_RESITE_PIECES.get();
+        double minShare = resite ? WorldConfig.STRUCTURE_MIN_PORT_SHARE.get() : 0.0;
         boolean pierRejected = false;
+        PlanReport small = null;
         // STR8: the best side first (WG1's choice); a side whose pier would not stand in the sea gives way to the next
-        for (ShoreFacing.Shore shore : piersInWater ? shores : shores.subList(0, 1)) {
+        for (ShoreFacing.Shore shore : piersInWater || resite ? shores : shores.subList(0, 1)) {
             Facing result = planFacing(context, candidate, seaSurface, terrain, depth, config, shore, piersInWater);
             if (result.stub() != null) {
-                if (result.report() != null && LOGGED_SITES.add(siteKey(context.chunkPos()))) Constants.LOG.info(result.report().line());
-                return Optional.of(result.stub());
+                PlanReport report = result.report();
+                if (report == null || report.kept >= minShare * report.planned) {
+                    if (report != null) {
+                        report.publish();
+                        if (LOGGED_SITES.add(siteKey(context.chunkPos()))) Constants.LOG.info(report.line());
+                    }
+                    return Optional.of(result.stub());
+                }
+                if (small == null || report.kept > small.kept) small = report;
+                continue;
             }
             pierRejected |= result.pierRejected();
             if (result.stop()) break;
         }
-        if (pierRejected && REJECTED_SITES.add(siteKey(context.chunkPos()))) {
+        if (small != null && REJECTED_SITES.add(siteKey(context.chunkPos()))) {
+            Constants.LOG.info("STR9: {}{} site at {} {} rejected: its best side keeps {} of {} pieces ({} sites rejected so far)",
+                    portKind.getSerializedName(), cold ? " (cold)" : "", cx, cz, small.kept, small.planned, REJECTED_SITES.size());
+        } else if (pierRejected && REJECTED_SITES.add(siteKey(context.chunkPos()))) {
             Constants.LOG.info("STR8: {}{} site at {} {} rejected: no side puts its pier over the sea ({} sites rejected so far)",
                     portKind.getSerializedName(), cold ? " (cold)" : "", cx, cz, REJECTED_SITES.size());
         }
@@ -340,7 +355,6 @@ public final class PortStructure extends Structure {
         PlanReport report = new PlanReport(portKind, candidate.getX(), candidate.getZ());
         report.planned = pieces.size();
         List<StructurePiece> placed = arrange(context, pieces, seaSurface, terrain, report);
-        report.publish();
         BlockPos at = stub.get().position();
         return new Facing(new GenerationStub(at, builder -> placed.forEach(builder::addPiece)), false, false, report);
     }
@@ -402,7 +416,7 @@ public final class PortStructure extends Structure {
             }
             placed.add(piece);
         }
-        account(report, nodes, keep, why);
+        account(report, pieces, nodes, keep, why, water);
         report.kept = placed.size();
         // STR7: the pier, jetty or quay grows where the water at its end is shallow
         if (extensionPool.isPresent() && WorldConfig.PORTS_PIER_EXTENSION.get()) {
@@ -415,12 +429,29 @@ public final class PortStructure extends Structure {
      * STR9: counts every dropped piece in {@code report}: by its own reason, or as a child of the reason its nearest
      * dropped (or re-sited) ancestor had.
      */
-    static void account(PlanReport report, List<LandFilter.Node> nodes, boolean[] keep, PlanReport.Reason[] why) {
+    static void account(PlanReport report, List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep,
+                        PlanReport.Reason[] why, LandFilter.Water water) {
         for (int i = 1; i < keep.length; i++) {
             if (keep[i]) continue;
             PlanReport.Reason reason = why[i] == null ? PlanReport.Reason.CHILD : why[i];
             if (reason != PlanReport.Reason.CHILD) {
                 report.drop(reason);
+                int below = 0;
+                boolean[] under = new boolean[keep.length];
+                under[i] = true;
+                for (int j = i + 1; j < keep.length; j++) {
+                    int p = nodes.get(j).parent();
+                    if (p >= 0 && p < j && under[p]) {
+                        under[j] = true;
+                        below++;
+                    }
+                }
+                StructurePiece piece = pieces.get(i);
+                String name = piece instanceof PoolElementStructurePiece pe ? StructureLayout.templateName(pe.getElement().toString()) : "?";
+                int depth = 0;
+                for (int a = nodes.get(i).parent(); a > 0 && depth < 50; a = nodes.get(a).parent()) depth++;
+                report.roots.add(reason + " " + name + " depth " + depth + " wet " + LandFilter.wetSamples(piece.getBoundingBox(), water)
+                        + (LandFilter.overWaterCentre(piece.getBoundingBox(), water) ? " centre" : "") + " below " + below);
                 continue;
             }
             PlanReport.Reason root = PlanReport.Reason.LAND;

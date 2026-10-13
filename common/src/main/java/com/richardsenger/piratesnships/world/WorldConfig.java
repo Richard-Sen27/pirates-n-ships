@@ -94,6 +94,12 @@ public final class WorldConfig {
                     + "one, a street or trail piece that breaks a rule is swapped for a straight one that keeps what hangs from it, and "
                     + "a wall run over water ends one piece earlier with its tower on land, before anything is left out (off = such "
                     + "pieces are left out with everything hanging from them, as before)");
+    /** STR9: read by {@code world.structure.PortStructure.plan}. */
+    public static final ConfigValue<Double> STRUCTURE_MIN_PORT_SHARE = STRUCTURES.doubleRange("min_port_share", 0.5, 0.0, 1.0,
+            "With resite_pieces on, a new port is planned on each side of its site that faces the sea and takes the first side "
+                    + "where it keeps at least this share of its planned buildings, streets and walls (the rest would stand over "
+                    + "water, for example on a spit with a lagoon behind it); a site where no side does gets no port. 0 = the first "
+                    + "side that fits, however little of it stays");
     /** STR9: read by {@code world.structure.PortStructure.plan} ({@code TrailLevels}) and {@code TrailBedProcessor}. */
     public static final ConfigValue<Integer> STRUCTURE_MAX_TRAIL_STEP_ROWS = STRUCTURES.intRange("max_trail_step_rows", 8, 1, 16,
             "How many blocks a level street, trail or lane piece of a new port may lie above or below the natural ground under "

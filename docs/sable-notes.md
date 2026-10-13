@@ -887,3 +887,4 @@ seat type). Walking crew later can rely on Sable's pathfinding mixins (§6).
 - Buoyancy details derived from Rust source (which voxels are in the liquid octree, overlap computation). They were read,
   not run.
 
+- **Stale pathfinding data in a reused plot (WALK2, 2026-10-13, unverified in Sable's code):** after a test ship is removed, the next ship that gets the same plot is pathed by vanilla's navigation as if the old blocks were still there, although the level's block states in the plot read air (`PathNavigationRegion` reads chunks through `getChunkNow`, which Sable redirects to `SubLevelContainer.getChunk`; which path keeps the stale data was not found). Deterministic in `CrewWalkAvoidGameTests`; the tests set their walls to air in the plot before the ship is removed. A test that fails before that cleanup can poison later walk tests in a full-suite run.

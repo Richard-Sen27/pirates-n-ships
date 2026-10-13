@@ -295,9 +295,9 @@ public final class ChartGameTests {
             com.richardsenger.piratesnships.chart.render.CellLookup wide = data::wide;
             com.richardsenger.piratesnships.chart.render.CellLookup narrow = (cx, cz) -> data.cell(cx, cz) & 0xFF;
             int[] ink = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 4, 4, 1,
-                    com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.PLAIN);
             helper.assertTrue(Arrays.equals(ink, com.richardsenger.piratesnships.chart.render.ChartRaster.render(narrow, minCx, minCz, 4, 4, 1)),
-                    "the ink style draws the chart as if it had no colours");
+                    "the plain style draws the chart as if it had no colours");
             int[] coloured = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 4, 4, 1,
                     com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED);
             int at = 1 * 4 + (v.planks() - minCx);
@@ -306,6 +306,16 @@ public final class ChartGameTests {
             helper.assertTrue(c != ink[at], "the coloured style paints the planks cell");
             helper.assertTrue(c >>> 24 == wood >>> 24 && ((c >> 16) & 0xFF) > ((c >> 8) & 0xFF) && ((c >> 8) & 0xFF) > (c & 0xFF),
                     "with the softened wood colour (brown): " + Integer.toHexString(c));
+            // CHART5: planks and the path are built, grass is not; the ink style paints the built cells only
+            helper.assertTrue(ChartCells.built(data.cell(v.planks(), v.cz0() + 1)), "planks are built");
+            helper.assertTrue(ChartCells.built(data.cell(v.path(), v.cz0() + 1)), "a dirt path is built");
+            helper.assertTrue(!ChartCells.built(data.cell(v.grass(), v.cz0() + 1)), "grass is not built");
+            int[] builtInk = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 4, 4, 1,
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+            helper.assertTrue(builtInk[at] == c, "in the ink style the planks cell is painted as in the coloured style");
+            helper.assertTrue(builtInk[at] != ink[at], "and differs from plain ink");
+            int grassAt = 1 * 4 + (v.grass() - minCx);
+            helper.assertTrue(builtInk[grassAt] == ink[grassAt], "while the grass keeps its ink");
             // the region the client gets carries the colours
             ChartRegion region = data.regions().get(ChartRegion.keyOfCell(v.planks(), v.cz0() + 1));
             helper.assertTrue(ChartRegionPayload.of(region).region().sameCells(region), "the payload carries cells and colours");
@@ -313,20 +323,100 @@ public final class ChartGameTests {
         });
     }
 
+    /** Sets every block of cell {@code (cx, cz)}'s columns: {@code fill} gets the column's relative x, z and the cell's origin offset. */
+    private static void forCellColumns(GameTestHelper helper, int cx, int cz, java.util.function.BiConsumer<Integer, Integer> columns) {
+        int cb = ChartConfig.CELL_BLOCKS.get();
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        for (int dx = 0; dx < cb; dx++) {
+            for (int dz = 0; dz < cb; dz++) {
+                columns.accept(cx * cb + dx - origin.getX(), cz * cb + dz - origin.getZ());
+            }
+        }
+    }
+
+    /**
+     * CHART5: a village cell (planks, a path) is built and, in the ink style, coloured; a forest cell (logs, then
+     * leaves) is not built although a log is wood-coloured; a cobblestone wall across a grass cell is built and shows
+     * the wall's stone, not the grass.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24)
+    public static void builtCellsAreFlaggedAndForestsAreNot(GameTestHelper helper) {
+        Village v = buildVillage(helper);
+        int forestLogs = v.cx0() + 4;
+        int rowLogs = v.cz0() + 1;
+        int rowLeaves = v.cz0() + 2;
+        int rowWall = v.cz0() + 3;
+        forCellColumns(helper, forestLogs, rowLogs, (x, z) -> {
+            helper.setBlock(new BlockPos(x, 0, z), Blocks.GRASS_BLOCK);
+            helper.setBlock(new BlockPos(x, 1, z), Blocks.OAK_LOG);
+            helper.setBlock(new BlockPos(x, 2, z), Blocks.OAK_LOG);
+        });
+        forCellColumns(helper, forestLogs, rowLeaves, (x, z) -> {
+            helper.setBlock(new BlockPos(x, 0, z), Blocks.GRASS_BLOCK);
+            helper.setBlock(new BlockPos(x, 1, z), Blocks.OAK_LOG);
+            helper.setBlock(new BlockPos(x, 2, z), Blocks.OAK_LEAVES);
+        });
+        int cb = v.cb();
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        forCellColumns(helper, forestLogs, rowWall, (x, z) -> {
+            helper.setBlock(new BlockPos(x, 0, z), Blocks.GRASS_BLOCK);
+            if (Math.floorMod(origin.getX() + x, cb) == 1) helper.setBlock(new BlockPos(x, 1, z), Blocks.COBBLESTONE_WALL);
+        });
+        ServerPlayer p = player(helper, "chart_builder");
+        p.setPos(new Vec3(origin.getX() + SIZE / 2.0, origin.getY() + 1, origin.getZ() + SIZE / 2.0));
+        helper.runAfterDelay(2, () -> {
+            ChartData data = ChartService.sampleNow(p).orElseThrow().data();
+            helper.assertTrue(ChartCells.built(data.cell(v.planks(), v.cz0() + 1)), "the planks cell is built");
+            helper.assertTrue(ChartCells.built(data.cell(v.path(), v.cz0() + 1)), "the path cell is built");
+            helper.assertTrue(!ChartCells.built(data.cell(v.grass(), v.cz0() + 1)), "grass is not built");
+            helper.assertTrue(!ChartCells.built(data.cell(forestLogs, rowLogs)), "a cell of logs is not built");
+            helper.assertTrue(!ChartCells.built(data.cell(forestLogs, rowLeaves)), "logs under leaves are not built");
+            helper.assertTrue(ChartCells.built(data.cell(forestLogs, rowWall)), "a cobblestone wall across a cell is built");
+            helper.assertValueEqual(ChartCells.colour(data.wide(forestLogs, rowLogs)),
+                    packed(net.minecraft.world.level.material.MapColor.WOOD, net.minecraft.world.level.material.MapColor.Brightness.NORMAL),
+                    "the log cell is wood-coloured all the same");
+            helper.assertValueEqual(MapColoursIdOf(data.wide(forestLogs, rowWall)), net.minecraft.world.level.material.MapColor.STONE.id,
+                    "the wall cell shows the wall's stone, not the grass");
+            com.richardsenger.piratesnships.chart.render.CellLookup wide = data::wide;
+            int minCx = v.cx0();
+            int minCz = v.cz0();
+            int[] ink = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 5, 4, 1,
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+            int[] plain = com.richardsenger.piratesnships.chart.render.ChartRaster.render(wide, minCx, minCz, 5, 4, 1,
+                    com.richardsenger.piratesnships.chart.render.ChartStyle.PLAIN);
+            int w = 5;
+            helper.assertTrue(ink[1 * w + 1] != plain[1 * w + 1], "ink: the planks cell is coloured");
+            helper.assertTrue(ink[1 * w + 2] != plain[1 * w + 2], "ink: the path cell is coloured");
+            helper.assertTrue(ink[3 * w + 4] != plain[3 * w + 4], "ink: the wall cell is coloured");
+            helper.assertTrue(ink[1 * w + 4] == plain[1 * w + 4], "ink: the log cell stays ink");
+            helper.assertTrue(ink[2 * w + 4] == plain[2 * w + 4], "ink: the forest cell stays ink");
+            helper.assertTrue(ink[1 * w + 3] == plain[1 * w + 3], "ink: the grass cell stays ink");
+            // the flag travels with the region (the cell byte) and the merge keeps it on a later sample
+            ChartRegion region = data.regions().get(ChartRegion.keyOfCell(v.planks(), v.cz0() + 1));
+            helper.assertTrue(ChartCells.built(ChartRegionPayload.of(region).region().get(v.planks() & ChartRegion.MASK, (v.cz0() + 1) & ChartRegion.MASK)),
+                    "the payload carries the built flag");
+            finish(helper, p);
+        });
+    }
+
+    private static int MapColoursIdOf(int wide) {
+        return com.richardsenger.piratesnships.chart.sample.MapColours.id(ChartCells.colour(wide));
+    }
+
     /** CHART4, own batch: changes config. The style reaches the client with the settings and follows a change at runtime. */
     @ModGameTest(batch = "pirates_n_ships_config_chart_style")
     public static void theStyleSwitchesAtRuntime(GameTestHelper helper) {
-        helper.assertValueEqual(ChartConfig.STYLE.get(), com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED, "coloured by default");
-        ConfigOverrides.during(helper, ChartConfig.STYLE, com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
+        helper.assertValueEqual(ChartConfig.STYLE.get(), com.richardsenger.piratesnships.chart.render.ChartStyle.INK, "ink (with the built cells coloured) by default");
+        ConfigOverrides.during(helper, ChartConfig.STYLE, com.richardsenger.piratesnships.chart.render.ChartStyle.PLAIN);
         ServerPlayer p = player(helper, "chart_stylist");
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ChartContent.CHART.get()));
         List<CustomPacketPayload> sent = ChartBackend.record(p.getUUID());
         ChartBackend.onDatapackSync(p, true);
         helper.assertValueEqual(of(sent, ChartSettingsPayload.class).get(0).settings().style(),
-                com.richardsenger.piratesnships.chart.render.ChartStyle.INK, "the synced settings carry the ink style");
+                com.richardsenger.piratesnships.chart.render.ChartStyle.PLAIN, "the synced settings carry the plain style");
         helper.assertTrue(ChartBackend.open(p), "opens");
         helper.assertValueEqual(of(sent, ChartOpenPayload.class).get(0).settings().style(),
-                com.richardsenger.piratesnships.chart.render.ChartStyle.INK, "and so does the open payload");
+                com.richardsenger.piratesnships.chart.render.ChartStyle.PLAIN, "and so does the open payload");
         ChartBackend.close(p);
         ConfigOverrides.during(helper, ChartConfig.STYLE, com.richardsenger.piratesnships.chart.render.ChartStyle.COLOURED);
         helper.assertTrue(ChartBackend.open(p), "opens again");

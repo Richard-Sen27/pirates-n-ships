@@ -234,7 +234,7 @@ class ChartColoursTest {
         ChartData plain = merged(village(false));
         CellLookup wide = coloured::wide;
         int[] ink = ChartRaster.render(wide, 0, 0, 24, 24, 2, ChartStyle.INK);
-        assertArrayEquals(ChartRaster.render(CellLookup.of(plain), 0, 0, 24, 24, 2), ink, "ink ignores the colours");
+        assertArrayEquals(ChartRaster.render(CellLookup.of(plain), 0, 0, 24, 24, 2), ink, "ink without built cells ignores the colours");
         int[] col = ChartRaster.render(wide, 0, 0, 24, 24, 2, ChartStyle.COLOURED);
         int[] colPlain = ChartRaster.render(plain::wide, 0, 0, 24, 24, 2, ChartStyle.COLOURED);
         assertArrayEquals(ink, colPlain, "cells without colours draw in ink");
@@ -293,13 +293,13 @@ class ChartColoursTest {
         com.richardsenger.piratesnships.chart.client.ClientChart.setRegionListener(heard::add);
         try {
             com.richardsenger.piratesnships.chart.net.ChartSettings base = com.richardsenger.piratesnships.chart.net.ChartSettings.DEFAULT;
-            assertEquals(ChartStyle.COLOURED, base.style(), "the client assumes the default style");
+            assertEquals(ChartStyle.INK, base.style(), "the client assumes the default style");
             com.richardsenger.piratesnships.chart.client.ClientChart.acceptSettings(base);
             assertTrue(heard.isEmpty(), "the same style: nothing redrawn");
             com.richardsenger.piratesnships.chart.client.ClientChart.acceptSettings(new com.richardsenger.piratesnships.chart.net.ChartSettings(
-                    true, false, 4, 0, 3, ChartStyle.INK));
+                    true, false, 4, 0, 3, ChartStyle.COLOURED));
             assertEquals(java.util.List.of(Long.MIN_VALUE), heard, "a new style drops every texture");
-            assertEquals(ChartStyle.INK, com.richardsenger.piratesnships.chart.client.ClientChart.settings().style());
+            assertEquals(ChartStyle.COLOURED, com.richardsenger.piratesnships.chart.client.ClientChart.settings().style());
         } finally {
             com.richardsenger.piratesnships.chart.client.ClientChart.setRegionListener(k -> { });
             com.richardsenger.piratesnships.chart.client.ClientChart.reset();

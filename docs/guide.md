@@ -1139,12 +1139,17 @@ them; vanilla structures never do (`chart.show_structures` turns all of this off
 The M key opens the chart while you hold one in either hand; only if the server turns on `chart.open_without_item`
 (off by default) does it open without one. Only the overworld's seas are charted.
 
-The land on the chart shows the colours of the blocks, as on a vanilla map but softened onto the parchment: roofs,
-paths, fields, sand, snow and stone each in their colour, a little brighter where the ground rises and darker where it
-falls, so villages and other buildings stand out (`chart.style` `COLOURED`, the default). The sea keeps the chart's
-blue wash and the coasts their ink line. `chart.style` `INK` draws the land in the plain parchment inks instead; the
+The land on the chart is drawn in parchment inks, as on a pirate's chart, but a place where people built something
+shows in colour (CHART5): a cell counts as built when at least two of the columns read in it (`chart.built_columns`,
+2) have a man-made block on top: planks, slabs, stairs, fences and doors of wood, wool, bricks and stone bricks,
+cobblestone and walls, smooth stone, terracotta and concrete, glass, paths, lanterns, campfires, barrels, chests,
+crafting tables, furnaces, bookshelves, beds, hay bales, scaffolding and every block of this mod. Logs and leaves
+(a forest stays natural), stone, sand, dirt and grass are never built. Built cells take vanilla's map colour for
+what was built, softened onto the parchment, so roofs, paths and decks show while forests, plains and mountains stay
+minimal ink. The sea keeps the chart's blue wash and the coasts their ink line. `chart.style` picks the look: `INK`
+(the default) as described, `COLOURED` paints all land in the colours of the blocks (CHART4), `PLAIN` is ink only. The
 server tells every client its style, so a change shows the next time the chart is opened. Ground charted before this
-version has no colours yet and stays in ink until you sail past it again. Map tiles and boards always draw in ink.
+version has no built marks yet and stays in ink until you sail past it again. Map tiles and boards always draw in ink.
 `chart.colour_columns` (4) sets how many columns per cell side are read for the colour (fewer is cheaper on a busy
 server). While you read the chart you hold it unrolled in both hands; it unrolls and rolls up smoothly over half a
 second, and other players see it too (`chart.held_open`).
@@ -2014,7 +2019,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `grapple` | Grappling hook on/off, throw speed (`hand_throw_velocity` by hand), rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing (`pull_cooldown_ticks`, `rope_climb_step`), hanging and swinging on the rope (`swing`, `swing_push`, `swing_damping`); `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | The "Board!" order on/off (`board_order`), the widest gap jumped (`board_gap`, 2), gunners and helmsman staying (`boarders_keep_stations`), the clear deck's hold before "Her deck is yours" (`capture_seconds`), NPC boarding on/off and its delay (`npc_boarding`, `npc_board_delay`), the NPC recall (`npc_recall_outnumbered`, `npc_recall_flooded`), swords from the chests (`take_arms`), the punch (`unarmed_damage`), the crew's sword skill (`crew_skill`), the crossing's fallback (`cross_timeout_ticks`), how often boarders look around (`order_check_ticks`); `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
-| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`), the land's look (`style`: `COLOURED` block colours or `INK`; `colour_columns` read per cell side), the held chart (`held_open`); other players are never shown; `tiles` (map tiles). |
+| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`), the land's look (`style`: `INK` with the built cells in colour, the default, `COLOURED` block colours or `PLAIN` ink only; `built_columns` columns that make a cell built; `colour_columns` read per cell side), the held chart (`held_open`); other players are never shown; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |
 | `advancements` | The mod's advancement criteria on/off (`enabled`; off: none of them fires and no experience is paid) and the multiplier on the experience each advancement pays (`experience_scale`, 1.0). |
 

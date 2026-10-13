@@ -4,7 +4,7 @@ package com.richardsenger.piratesnships.chart.data;
  * One sampling pass (work package MAP1): a rectangle of cells starting at cell {@code (minCx, minCz)}, {@code w} by
  * {@code h}, each holding a {@link CellClass} ordinal ({@code UNKNOWN} = not sampled: outside the circle or in an
  * unloaded chunk). Row-major: index {@code z * w + x}. CHART4: beside each class the cell's packed vanilla map colour
- * ({@code colours}, 0 = none), merged with the class.
+ * ({@code colours}, 0 = none), merged with the class. CHART5: a class byte may carry {@link ChartCells#BUILT}.
  */
 public record SampleGrid(int minCx, int minCz, int w, int h, byte[] classes, byte[] colours) {
 
@@ -27,7 +27,7 @@ public record SampleGrid(int minCx, int minCz, int w, int h, byte[] classes, byt
         int x = cx - minCx;
         int z = cz - minCz;
         if (x < 0 || z < 0 || x >= w || z >= h) return CellClass.UNKNOWN;
-        return CellClass.of(classes[z * w + x]);
+        return CellClass.of(classes[z * w + x] & ChartCells.CLASS_MASK);
     }
 
     /** CHART4: the packed map colour sampled for cell {@code (cx, cz)}, 0 when none (or outside the grid). */
@@ -47,6 +47,19 @@ public record SampleGrid(int minCx, int minCz, int w, int h, byte[] classes, byt
         int i = (cz - minCz) * w + (cx - minCx);
         classes[i] = (byte) cls.ordinal();
         colours[i] = (byte) colour;
+    }
+
+    /** CHART5: {@link #set(int, int, CellClass, int)} with the built flag. */
+    public void set(int cx, int cz, CellClass cls, int colour, boolean built) {
+        set(cx, cz, cls, colour);
+        if (built) classes[(cz - minCz) * w + (cx - minCx)] |= (byte) ChartCells.BUILT;
+    }
+
+    /** CHART5: whether cell {@code (cx, cz)} was sampled as built. */
+    public boolean built(int cx, int cz) {
+        int x = cx - minCx;
+        int z = cz - minCz;
+        return x >= 0 && z >= 0 && x < w && z < h && (classes[z * w + x] & ChartCells.BUILT) != 0;
     }
 
     public int sampledCount() {

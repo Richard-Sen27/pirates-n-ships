@@ -42,10 +42,13 @@ public final class ChartConfig {
     public static final ConfigValue<Boolean> HELD_OPEN = S.bool("held_open", true,
             "CHART3: a player reading their chart holds it unrolled in both hands, and everyone around sees it unroll; false: the chart stays rolled up in the hand");
 
-    public static final ConfigValue<ChartStyle> STYLE = S.enumValue("style", ChartStyle.COLOURED,
-            "CHART4: how the chart draws land; COLOURED: the colours of the blocks as on a vanilla map, softened onto the parchment (villages, paths and fields show); INK: the parchment inks of the pirate chart. The sea keeps its wash in both; map tiles always draw in ink");
+    public static final ConfigValue<ChartStyle> STYLE = S.enumValue("style", ChartStyle.INK,
+            "CHART4/CHART5: how the chart draws land; INK: the parchment inks of the pirate chart, with built cells (planks, bricks, glass, cobblestone, wool, this mod's blocks) in their map colour so a settlement shows; COLOURED: every land cell in the colours of its blocks as on a vanilla map, softened onto the parchment; PLAIN: pure ink, built cells too. The sea keeps its wash in all; map tiles always draw in ink");
     public static final ConfigValue<Integer> COLOUR_COLUMNS = S.intRange("colour_columns", 4, 1, 16,
             "CHART4: columns per cell side read for a cell's map colour (capped at cell_blocks; 4 at 4-block cells reads every column like a vanilla map, fewer is cheaper)");
+
+    public static final ConfigValue<Integer> BUILT_COLUMNS = S.intRange("built_columns", 2, 1, 16,
+            "CHART5: a land cell counts as built (drawn in colour in the ink style) when at least this many of its sampled columns have a man-made block on top (planks, bricks, glass, cobblestone, wool, this mod's blocks; never logs, leaves, stone or sand); capped at the columns read per cell (colour_columns squared)");
 
     private static final ConfigSection TILES = S.section("tiles", "Map tiles (work package MAP2): a part of a player's chart drawn onto a block for everyone to see");
 

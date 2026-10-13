@@ -131,6 +131,11 @@ class ChartCodecsTest {
         ChartData d = sample();
         ChartSettings s = new ChartSettings(true, true, 4, 64, 3, com.richardsenger.piratesnships.chart.render.ChartStyle.INK);
         assertEquals(new ChartSettingsPayload(s), roundTrip(ChartSettingsPayload.CODEC, new ChartSettingsPayload(s)));
+        for (com.richardsenger.piratesnships.chart.render.ChartStyle style : com.richardsenger.piratesnships.chart.render.ChartStyle.values()) {
+            ChartSettings withStyle = new ChartSettings(true, false, 4, 0, 3, style);
+            assertEquals(withStyle, roundTrip(ChartSettings.STREAM_CODEC, withStyle), "CHART5: every style survives the wire: " + style);
+        }
+        assertEquals(com.richardsenger.piratesnships.chart.render.ChartStyle.INK, ChartSettings.DEFAULT.style(), "CHART5: ink is the default");
         ChartOpenPayload open = new ChartOpenPayload(s, d.markers());
         assertEquals(open, roundTrip(ChartOpenPayload.CODEC, open));
         // CHART2: markers and structures only when changed, the viewer's ships, never other players

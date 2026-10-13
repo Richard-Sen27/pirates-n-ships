@@ -2,7 +2,8 @@ package com.richardsenger.piratesnships.chart.data;
 
 /**
  * The byte of one chart cell: bits 0-2 hold the {@link CellClass} ordinal, bit 3 the coast flag (a land cell with
- * water on at least one of its four sides). Bits 4-7 are free. 0 is an unknown cell.
+ * water on at least one of its four sides), bit 4 (CHART5) the built flag (a land cell where people built something:
+ * planks, bricks, glass, this mod's blocks; see {@code ChartBuilt}). Bits 5-7 are free. 0 is an unknown cell.
  *
  * <p>CHART4: a cell may also carry a colour, vanilla's packed map colour ({@code MapColor} id times four plus the
  * brightness step, 0 = none), kept beside the cell bytes ({@link ChartRegion#colour}). Readers that want both get a
@@ -13,6 +14,10 @@ public final class ChartCells {
 
     public static final int CLASS_MASK = 0x07;
     public static final int COAST = 0x08;
+    /** CHART5: a land cell whose top blocks are man-made. */
+    public static final int BUILT = 0x10;
+    /** The bits of a cell byte that mean something. */
+    public static final int USED = CLASS_MASK | COAST | BUILT;
 
     private ChartCells() {
     }
@@ -25,12 +30,22 @@ public final class ChartCells {
         return (cell & COAST) != 0;
     }
 
+    /** CHART5: whether the cell is flagged as built. */
+    public static boolean built(int cell) {
+        return (cell & BUILT) != 0;
+    }
+
     public static boolean known(int cell) {
         return (cell & CLASS_MASK) != 0;
     }
 
     public static byte of(CellClass cls, boolean coast) {
         return (byte) (cls.ordinal() | (coast ? COAST : 0));
+    }
+
+    /** CHART5: {@link #of(CellClass, boolean)} with the built flag. */
+    public static byte of(CellClass cls, boolean coast, boolean built) {
+        return (byte) (cls.ordinal() | (coast ? COAST : 0) | (built ? BUILT : 0));
     }
 
     /** CHART4: a wide cell, the cell byte with the packed map colour {@code colour} (0 = none) above it. */

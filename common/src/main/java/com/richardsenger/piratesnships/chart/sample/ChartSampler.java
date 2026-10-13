@@ -21,7 +21,10 @@ import java.util.Arrays;
  * <p>CHART4: each sampled cell also gets vanilla's map colour ({@link MapColours}) from {@code colourColumns} by
  * {@code colourColumns} of its columns, spread evenly over the cell (all of them when it equals the cell size). The
  * brightness step compares the cell's mean height with the cell to its north, so the row north of the circle's cells
- * is read too (heights only matter there, nothing of it is stored). A column is the top block with a map colour below
+ * is read too (heights only matter there, nothing of it is stored).
+ *
+ * <p>CHART5: a land cell is flagged built when at least {@code builtColumns} of its columns have a block of the tag
+ * {@link ChartBuilt#TAG} as their colour-giving block ({@link ChartBuilt#cellBuilt}). A column is the top block with a map colour below
  * the {@code WORLD_SURFACE} heightmap; the water depth under a fluid comes from the {@code OCEAN_FLOOR} heightmap.
  */
 public final class ChartSampler {
@@ -37,12 +40,17 @@ public final class ChartSampler {
         return Math.floorDiv(b, cellBlocks);
     }
 
-    /** {@link #sample(ServerLevel, double, double, int, int, int, int)} reading every column of a cell for its colour. */
+    /** {@link #sample(ServerLevel, double, double, int, int, int, int, int)} reading every column of a cell for its colour. */
     public static SampleGrid sample(ServerLevel level, double x, double z, int radius, int cellBlocks, int shallowDepth) {
-        return sample(level, x, z, radius, cellBlocks, shallowDepth, cellBlocks);
+        return sample(level, x, z, radius, cellBlocks, shallowDepth, cellBlocks, 2);
     }
 
     public static SampleGrid sample(ServerLevel level, double x, double z, int radius, int cellBlocks, int shallowDepth, int colourColumns) {
+        return sample(level, x, z, radius, cellBlocks, shallowDepth, colourColumns, 2);
+    }
+
+    /** CHART5: {@code builtColumns} is {@code chart.built_columns}, the columns that make a land cell built. */
+    public static SampleGrid sample(ServerLevel level, double x, double z, int radius, int cellBlocks, int shallowDepth, int colourColumns, int builtColumns) {
         int minCx = cellOf((int) Math.floor(x) - radius, cellBlocks);
         int maxCx = cellOf((int) Math.floor(x) + radius, cellBlocks);
         int minCz = cellOf((int) Math.floor(z) - radius, cellBlocks);
@@ -75,8 +83,11 @@ public final class ChartSampler {
                 int n = reader.readCell(cx * cellBlocks, cz * cellBlocks, offsets);
                 if (n > 0) row[cx - minCx] = MapColours.meanHeight(reader.heights, n);
                 if (inside) {
-                    int colour = MapColours.cellColour(reader.ids, reader.heights, reader.depths, n, north[cx - minCx], (cx + cz) & 1, cellBlocks);
-                    grid.set(cx, cz, cls, colour);
+                    boolean built = cls.isLand() && ChartBuilt.cellBuilt(reader.builtCount, n, builtColumns);
+                    // a built cell shows the colour of what was built (a wall in a garden is stone, not grass)
+                    int m = built ? reader.keepBuilt(n) : n;
+                    int colour = MapColours.cellColour(reader.ids, reader.heights, reader.depths, m, north[cx - minCx], (cx + cz) & 1, cellBlocks);
+                    grid.set(cx, cz, cls, colour, built);
                 }
             }
             double[] t = north;
@@ -120,7 +131,8 @@ public final class ChartSampler {
             depth = Math.max(0, y - chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, bx, bz));
             state = MapColours.shownState(state, level, pos);
         }
-        return new MapColours.Column(state.getMapColor(level, pos).id, y, depth);
+        boolean built = depth == 0 && ChartBuilt.isBuilt(state);
+        return new MapColours.Column(state.getMapColor(level, pos).id, y, depth, built);
     }
 
     /** Reads the colour columns of one cell at a time, remembering the last chunk. */
@@ -130,13 +142,17 @@ public final class ChartSampler {
         final int[] ids;
         final int[] heights;
         final int[] depths;
+        final boolean[] builtCols;
         LevelChunk chunk;
+        /** CHART5: how many of the columns of the last cell read are built. */
+        int builtCount;
 
         Reader(ServerLevel level, int max) {
             this.level = level;
             ids = new int[max];
             heights = new int[max];
             depths = new int[max];
+            builtCols = new boolean[max];
         }
 
         LevelChunk chunk(int bx, int bz) {
@@ -148,9 +164,23 @@ public final class ChartSampler {
             return chunk;
         }
 
+        /** CHART5: keeps only the built columns among the first {@code n} read (in order); returns how many. */
+        int keepBuilt(int n) {
+            int k = 0;
+            for (int i = 0; i < n; i++) {
+                if (!builtCols[i]) continue;
+                ids[k] = ids[i];
+                heights[k] = heights[i];
+                depths[k] = depths[i];
+                k++;
+            }
+            return k;
+        }
+
         /** Reads the columns of the cell whose north-west block is {@code (x0, z0)}; returns how many were loaded. */
         int readCell(int x0, int z0, int[] offsets) {
             int n = 0;
+            builtCount = 0;
             for (int ox : offsets) {
                 for (int oz : offsets) {
                     int bx = x0 + ox;
@@ -162,6 +192,8 @@ public final class ChartSampler {
                     ids[n] = col.colourId();
                     heights[n] = col.height();
                     depths[n] = col.waterDepth();
+                    builtCols[n] = col.built();
+                    if (col.built()) builtCount++;
                     n++;
                 }
             }

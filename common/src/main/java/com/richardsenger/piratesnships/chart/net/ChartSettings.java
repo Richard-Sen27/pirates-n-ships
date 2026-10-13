@@ -15,7 +15,7 @@ import net.minecraft.network.codec.StreamCodec;
 public record ChartSettings(boolean enabled, boolean openWithoutItem, int cellBlocks, int maxMarkers, int maxZoomOut, ChartStyle style) {
 
     /** What a client assumes before the server said anything: the config defaults. */
-    public static final ChartSettings DEFAULT = new ChartSettings(true, false, 4, 0, 3, ChartStyle.COLOURED);
+    public static final ChartSettings DEFAULT = new ChartSettings(true, false, 4, 0, 3, ChartStyle.INK);
 
     private static final StreamCodec<ByteBuf, ChartStyle> STYLE_CODEC = ByteBufCodecs.VAR_INT.map(ChartStyle::of, ChartStyle::ordinal);
 

@@ -210,6 +210,15 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock, Sim
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
+    /**
+     * Never a path through a gun (SHIP2): the carriage's collision is not a full block, so vanilla's default let the crew's
+     * pathfinder route over it and a walker stuck pushing against the carriage on a gun deck.
+     */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
+
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         int i = state.getValue(FACING).get2DDataValue();

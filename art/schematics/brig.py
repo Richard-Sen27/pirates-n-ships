@@ -315,7 +315,10 @@ fit(*JIB_TACK, "cleat_floor")
 # ---------------------------------------------------------------- stations, crew and gear
 
 fit(CX, 9, 7, "capstan")
-fit(CX, 9, FMZ + 1, "winch")
+# the fore winch two abaft the mast (SHIP2): its hand's spot (the first free side, north first) is then the cell between
+# the winch and the mast on the centre line, out of both walkways; beside the mast he stood in the starboard walkway,
+# narrowed by the tumblehome, and a crew member walking forward to the capstan stuck behind him
+fit(CX, 9, FMZ + 2, "winch")
 fit(CX, 9, MMZ + 1, "winch")
 fit(7, 6, MMZ, "pump")                     # gun deck, against the starboard side over the main hold: its intake reaches the hold
 fit(CX, QD_FLOOR + 1, 27, "helm")
@@ -323,9 +326,9 @@ fit(CX, QD_FLOOR + 1, 29, "pedestal")
 fit(CX, QD_FLOOR + 2, 29, "pole_bottom")
 fit(CX, QD_FLOOR + 3, 29, "pole_middle")
 fit(CX, QD_FLOOR + 4, 29, "pole_top")
-fit(CX, 10, FMZ + 1, "bell_s")             # on the fore mast's after face, over the fore winch
+fit(CX, 11, FMZ + 1, "bell_s")             # on the fore mast's after face, over the winch hand's head
 # on the masts' after faces over the winches (SHIP2: the break lanterns went, the break being a step)
-fit(CX, 11, FMZ + 1, "lantern_s")
+fit(CX, 12, FMZ + 1, "lantern_s")
 fit(CX, 11, MMZ + 1, "lantern_s")
 fit(1, 7, 12, "lantern_e")
 fit(7, 7, 12, "lantern_w")

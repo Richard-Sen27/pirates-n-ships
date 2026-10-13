@@ -3067,7 +3067,12 @@ say, this section holds; the generator's docstring and `NOTES` are the short for
 - **Getting about:** the break has no rope railing (the quarterdeck is one step over the weather deck), so the after
   companion, whose top stair at z 24 lies right under the break, is entered from the quarterdeck; a one-block gap in a
   rope railing there trapped a gunner at the helm (open floor to the pathfinder, too narrow for the walker). The two
-  break lanterns hang on the masts' after faces over the winches instead [4, 11, 12|20]. The port hammock across the gun deck
+  break lanterns hang on the masts' after faces instead [4, 12, 12] and [4, 11, 20]. The fore winch stands two abaft
+  its mast [4, 9, 13], the bell over it at [4, 11, 12]: a station's hand stands on its first free side, north first, so
+  he now stands between the winch and the mast on the centre line instead of in the starboard walkway, where a crew
+  member walking forward to the capstan stuck behind him (the crew's walk does not steer round people; WALK2). Cannons
+  and swivel guns are never pathfindable (`CannonBlock`/`SwivelGunBlock#isPathfindable`, SHIP2): the carriage's
+  partial collision let the pathfinder route a gunner over a gun on the gun deck, where he stuck. The port hammock across the gun deck
   at z 24 leaves x 5..7 open, because the companion's foot closes x 4 at z 23, so the after guns, the aft hatch and the
   cabin door are reached by x 5.
 - **Price:** `ShipOrderMath.templatePrice`: the hull blocks (all but the guns' 16) at the starter sloop's price per
@@ -3075,7 +3080,10 @@ say, this section holds; the generator's docstring and `NOTES` are the short for
   the hull's rate: 67.75), rounded to 25: **1250** (709 + 542). `BrigLayoutTest.thePriceCountsTheStructuresBlocksAndGuns`
   ties `BRIG_BLOCKS` (1231) to the structure.
 - **Built** through the lab (`build_structures.Lab` on an agent's own port, then `schem_to_structure.py`), as the
-  sloop; the iso renders are drawn by `tools/iso_render.py`.
+  sloop. **Renders** (`tools/iso_render.py`, scale 16, named by the corner the viewer stands at):
+  `art/renders/ships/brig_{se,ne,nw,sw}.png`, `navy_brig_armed_{se,ne,nw,sw}.png` and `brig_cut_{se,ne,nw,sw}.png`
+  (cut above y 7: the gun deck with its guns, lockers, galley and the great cabin). `brig_side.png`, `brig_bow.png`,
+  `brig_deck.png`, `brig_quarter.png` and `brig_cutaway.png` show SHIP1's brig.
 
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never

@@ -143,6 +143,12 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock, 
         }
     }
 
+    /** Never a path through a swivel gun (SHIP2): its shape is not a full block, as with {@link CannonBlock}. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
+
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPES.get(state.getValue(MOUNT));

@@ -404,7 +404,7 @@ public final class BrigGameTests {
         ServerLevel level = h.getLevel();
         Map<String, BlockPos> stations = new LinkedHashMap<>();
         stations.put("helm", HELM);
-        stations.put("fore winch", new BlockPos(4, 9, 12));
+        stations.put("fore winch", new BlockPos(4, 9, 13));
         stations.put("main winch", new BlockPos(4, 9, 20));
         stations.put("capstan", new BlockPos(4, 9, 7));
         stations.put("pump", new BlockPos(7, 6, 19));
@@ -480,7 +480,7 @@ public final class BrigGameTests {
         c.setStationary(true);
         level.addFreshEntity(c);
         Map<String, BlockPos> targets = new LinkedHashMap<>();
-        targets.put("fore winch (its spot)", new BlockPos(4, 9, 13));
+        targets.put("fore winch (its spot)", new BlockPos(4, 9, 12));
         targets.put("main winch (its spot)", new BlockPos(4, 9, 21));
         targets.put("capstan", new BlockPos(4, 9, 7));
         targets.put("pump", new BlockPos(7, 6, 19));

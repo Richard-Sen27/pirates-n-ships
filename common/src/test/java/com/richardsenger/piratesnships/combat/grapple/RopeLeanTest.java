@@ -93,8 +93,12 @@ class RopeLeanTest {
         float yaw = 0f; // facing +z: the player's right is -x
         Vec3 right = new Vec3(-1, 0, 0);
         RopeLean.Lean l = RopeLean.of(right.add(0, 3, 0), yaw);
-        Vec3 head = point(chain(l, yaw), 0, 1.6, 0);
-        assertTrue(head.dot(right) > 0.3, "the head does not lean right: " + head);
+        Matrix4f m = chain(l, yaw);
+        Vec3 head = point(m, 0, 1.6, 0);
+        Vec3 feet = point(m, 0, 0, 0);
+        // the body hangs from its hands: the feet swing out to the left, under the line from the hook through the grip
+        assertTrue(feet.dot(right) < -0.3, "the feet do not swing left: " + feet);
+        assertTrue(head.dot(right) > feet.dot(right) + 0.5, "the body does not lean right: head " + head + ", feet " + feet);
     }
 
     @Test

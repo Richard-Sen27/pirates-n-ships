@@ -230,11 +230,39 @@ public final class PortTerrainGameTests {
         } catch (IOException e) {
             throw new IllegalStateException("could not write the region", e);
         }
+        // STR9: every one-row step between trail pieces carries half slabs, and no step is two rows high
+        int[] slabs = slabSteps(level, pieces, templates);
+        helper.assertTrue(slabs[2] == 0, key.location() + ": " + slabs[2] + " one-row step cells without a slab");
+        helper.assertTrue(TrailSlabs.steps(pieces, templates, 2).isEmpty() && TrailSlabs.steps(pieces, templates, 3).isEmpty(),
+                key.location() + ": a step of two rows or more");
+        helper.assertTrue(slabs[0] == 0 || slabs[1] > 0, key.location() + ": " + slabs[0] + " one-row steps, no slab on any");
         List<String> blocked = DoorAccess.blockedDoors(level, start.getBoundingBox());
-        Constants.LOG.info("STR8 {} on the bumpy snowy shore, seed {}: {} pieces, {} trail pieces, {} blocked doors", key.location(), seed,
-                pieces.size(), trails, blocked.size());
+        Constants.LOG.info("STR8 {} on the bumpy snowy shore, seed {}: {} pieces, {} trail pieces, {} blocked doors; STR9: {} one-row steps, "
+                + "{} slabs", key.location(), seed, pieces.size(), trails, blocked.size(), slabs[0], slabs[1]);
         helper.assertTrue(blocked.isEmpty(), key.location() + ": " + blocked.size() + " blocked doors: " + blocked);
         helper.succeed();
+    }
+
+    /**
+     * STR9 on placed blocks: {steps, slabs, bare}: the one-row joints between trail pieces ({@link TrailSlabs#steps}), the
+     * slabs on their lower rows, and the cells of a joint a walker would have to jump (full paving with air above it and
+     * a full block beyond with room above: a step the slab rule should have halved).
+     */
+    static int[] slabSteps(ServerLevel level, List<StructurePiece> pieces, StructureTemplateManager templates) {
+        int steps = 0;
+        int slabs = 0;
+        int bare = 0;
+        for (TrailSlabs.Step step : TrailSlabs.steps(pieces, templates, 1)) {
+            steps++;
+            for (BlockPos cell : step.cells()) {
+                if (level.getBlockState(cell.atY(step.row() + 1)).getBlock() instanceof net.minecraft.world.level.block.SlabBlock) {
+                    slabs++;
+                } else if (TrailSlabs.slabAt(level, cell, step.row(), step.up(), PortKind.SEAFARER_VILLAGE) != null) {
+                    bare++;
+                }
+            }
+        }
+        return new int[] {steps, slabs, bare};
     }
 
     /**

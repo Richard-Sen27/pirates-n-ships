@@ -88,6 +88,22 @@ public final class WorldConfig {
             "A port only generates where its pier, jetty or quay and four blocks beyond its end lie over the sea (another side "
                     + "of the site is tried first); off = the side with the most sea is taken whatever lies under the pier");
 
+    /** STR9: read by {@code world.structure.PortStructure.plan} ({@code world.structure.PlanRepair}, {@code WallRuns}). */
+    public static final ConfigValue<Boolean> STRUCTURE_RESITE_PIECES = STRUCTURES.bool("resite_pieces", true,
+            "When a building of a new port would stand over water it is moved up to three blocks inland or swapped for a smaller "
+                    + "one, a street or trail piece that breaks a rule is swapped for a straight one that keeps what hangs from it, and "
+                    + "a wall run over water ends one piece earlier with its tower on land, before anything is left out (off = such "
+                    + "pieces are left out with everything hanging from them, as before)");
+    /** STR9: read by {@code world.structure.PortStructure.plan} ({@code TrailLevels}) and {@code TrailBedProcessor}. */
+    public static final ConfigValue<Integer> STRUCTURE_MAX_TRAIL_STEP_ROWS = STRUCTURES.intRange("max_trail_step_rows", 8, 1, 16,
+            "How many blocks a level street, trail or lane piece of a new port may lie above or below the natural ground under "
+                    + "it (cut into a slope or banked up) before it is left out; each piece still lies at most one block above or "
+                    + "below the piece before it");
+    /** STR9: read by {@code world.structure.TrailSlabs} in {@code PortStructure.afterPlace}. */
+    public static final ConfigValue<Boolean> STRUCTURE_TRAIL_SLABS = STRUCTURES.bool("trail_slabs", true,
+            "Where a level street, trail or lane piece of a new port lies one block above the piece before it, the lower piece's "
+                    + "last row gets half slabs so it can be walked up without a jump (off = a full block step)");
+
     private static final ConfigSection ISLAND = STRUCTURES.section("pirate_island", "Placement of pirate islands");
 
     /**

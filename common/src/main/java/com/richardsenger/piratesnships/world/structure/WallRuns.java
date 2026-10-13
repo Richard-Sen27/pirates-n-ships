@@ -37,18 +37,35 @@ public final class WallRuns {
     private WallRuns() {
     }
 
-    /** One wall run's replacement: the piece at {@code index} becomes {@code tower} (null: dropped without a tower). */
-    public record Closure(int index, @Nullable PoolElementStructurePiece tower) {
+    /**
+     * One wall run's replacement: the piece at {@code index} becomes {@code tower} (null: dropped without a tower);
+     * {@code walls} are the wall pieces dropped for it (the one at {@code index} first, then, since STR9, the walls before
+     * it the run was shortened by because no tower stood on land at the end).
+     */
+    public record Closure(int index, @Nullable PoolElementStructurePiece tower, List<Integer> walls) {
+
+        public Closure(int index, @Nullable PoolElementStructurePiece tower) {
+            this(index, tower, List.of(index));
+        }
+    }
+
+    /** STR8's rule ({@link #closeOnLand(List, List, boolean[], boolean[], LandFilter.Water, StructureTemplateManager, HolderGetter, boolean)} without shortening). */
+    public static List<Closure> closeOnLand(List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep, boolean[] chain,
+                                            LandFilter.Water water, StructureTemplateManager templates,
+                                            HolderGetter<StructureTemplatePool> pools) {
+        return closeOnLand(pieces, nodes, keep, chain, water, templates, pools, false);
     }
 
     /**
      * Applies the rule to {@code pieces} (jigsaw order) in place: {@code keep} is updated (a dropped piece and its
-     * descendants are no longer kept), and each closing tower replaces the dropped piece in {@code pieces}. Returns the
-     * closures made.
+     * descendants are no longer kept), and each closing tower replaces the dropped piece in {@code pieces}. With
+     * {@code shorten} (STR9, {@code world.structures.resite_pieces}) a run whose closing tower finds no room, or would
+     * stand with its centre over water, is shortened one wall at a time and the tower tried on the connector before,
+     * back to the gate. Returns the closures made.
      */
     public static List<Closure> closeOnLand(List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep, boolean[] chain,
                                             LandFilter.Water water, StructureTemplateManager templates,
-                                            HolderGetter<StructureTemplatePool> pools) {
+                                            HolderGetter<StructureTemplatePool> pools, boolean shorten) {
         List<Closure> out = new java.util.ArrayList<>();
         boolean[] replaced = new boolean[pieces.size()];
         for (int i = 1; i < pieces.size(); i++) {
@@ -58,41 +75,81 @@ public final class WallRuns {
                 continue;
             }
             if (!keep[i] || !chain[i] || !(pieces.get(i) instanceof PoolElementStructurePiece wall) || parent < 0
-                    || !(pieces.get(parent) instanceof PoolElementStructurePiece from)) {
+                    || !(pieces.get(parent) instanceof PoolElementStructurePiece)) {
                 continue;
             }
             if (isPierLike(wall, templates) || wall.getJunctions().isEmpty()) continue;
-            JigsawJunction up = wall.getJunctions().get(0);
-            BlockPos source = new BlockPos(up.getSourceX(), up.getSourceGroundY(), up.getSourceZ());
-            StructureTemplate.StructureBlockInfo jigsaw = jigsawAt(from, templates, source.getX(), source.getZ());
-            if (jigsaw == null) continue;
-            Direction facing = JigsawBlock.getFrontFacing(jigsaw.state());
-            Optional<Holder.Reference<StructureTemplatePool>> pool = pool(jigsaw, pools);
-            if (pool.isEmpty()) continue;
-            Holder<StructureTemplatePool> fallback = pool.get().value().getFallback();
-            if (fallback.value().getShuffledTemplates(RandomSource.create(0L)).contains(wall.getElement())) continue;
-            BlockPos far = farEnd(wall.getBoundingBox(), jigsaw.pos().relative(facing), facing);
+            End end = end(pieces, nodes, i, templates, pools);
+            if (end == null || end.terminator()) continue;
+            BlockPos far = farEnd(wall.getBoundingBox(), end.jigsaw().pos().relative(end.facing()), end.facing());
             if (!water.at(far.getX(), far.getZ())) continue;
-            replaced[i] = true;
-            // the dropped piece's descendants go before the tower looks for room
-            boolean[] below = new boolean[pieces.size()];
-            below[i] = true;
-            for (int j = i + 1; j < pieces.size(); j++) {
-                int p = nodes.get(j).parent();
-                if (p >= 0 && p < j && below[p]) {
-                    below[j] = true;
-                    keep[j] = false;
+            List<Integer> walls = new java.util.ArrayList<>();
+            int at = i;
+            End here = end;
+            PoolElementStructurePiece tower;
+            while (true) {
+                walls.add(at);
+                replaced[at] = true;
+                dropBelow(nodes, keep, at);
+                tower = tower(here.jigsaw(), here.fallback(), templates, pieces, keep, at, nodes.get(at).parent());
+                if (tower != null && (!shorten || !LandFilter.overWaterCentre(tower.getBoundingBox(), water))) break;
+                tower = null;
+                if (!shorten) break;
+                // STR9: one wall back, if the piece before is a wall of the run (not the gate, the quay or a tower)
+                int before = nodes.get(at).parent();
+                if (before <= 0 || !chain[before] || !(pieces.get(before) instanceof PoolElementStructurePiece prior)
+                        || isPierLike(prior, templates)) {
+                    break;
                 }
+                End back = end(pieces, nodes, before, templates, pools);
+                if (back == null || back.terminator()) break;
+                keep[at] = false;
+                at = before;
+                here = back;
             }
-            PoolElementStructurePiece tower = tower(jigsaw, fallback, templates, pieces, keep, i, parent);
             if (tower != null) {
-                pieces.set(i, tower);
+                pieces.set(at, tower);
+                keep[at] = true;
             } else {
-                keep[i] = false;
+                keep[at] = false;
             }
-            out.add(new Closure(i, tower));
+            out.add(new Closure(at, tower, List.copyOf(walls)));
         }
         return out;
+    }
+
+    /** The connector piece {@code i} hangs from, its facing, its pool's fallback and whether {@code i} is from that fallback. */
+    private record End(StructureTemplate.StructureBlockInfo jigsaw, Direction facing, Holder<StructureTemplatePool> fallback, boolean terminator) {
+    }
+
+    private static @Nullable End end(List<StructurePiece> pieces, List<LandFilter.Node> nodes, int i, StructureTemplateManager templates,
+                                     HolderGetter<StructureTemplatePool> pools) {
+        int parent = nodes.get(i).parent();
+        if (parent < 0 || !(pieces.get(i) instanceof PoolElementStructurePiece wall) || wall.getJunctions().isEmpty()
+                || !(pieces.get(parent) instanceof PoolElementStructurePiece from)) {
+            return null;
+        }
+        JigsawJunction up = wall.getJunctions().get(0);
+        StructureTemplate.StructureBlockInfo jigsaw = jigsawAt(from, templates, up.getSourceX(), up.getSourceZ());
+        if (jigsaw == null) return null;
+        Optional<Holder.Reference<StructureTemplatePool>> pool = pool(jigsaw, pools);
+        if (pool.isEmpty()) return null;
+        Holder<StructureTemplatePool> fallback = pool.get().value().getFallback();
+        boolean terminator = fallback.value().getShuffledTemplates(RandomSource.create(0L)).contains(wall.getElement());
+        return new End(jigsaw, JigsawBlock.getFrontFacing(jigsaw.state()), fallback, terminator);
+    }
+
+    /** Un-keeps every piece hanging (transitively) from piece {@code i}. */
+    private static void dropBelow(List<LandFilter.Node> nodes, boolean[] keep, int i) {
+        boolean[] below = new boolean[keep.length];
+        below[i] = true;
+        for (int j = i + 1; j < keep.length; j++) {
+            int p = nodes.get(j).parent();
+            if (p >= 0 && p < j && below[p]) {
+                below[j] = true;
+                keep[j] = false;
+            }
+        }
     }
 
     /**

@@ -284,6 +284,100 @@ public final class PortSiteGameTests {
         helper.succeed();
     }
 
+    // --- STR9: ports keep their size on rough shores ------------------------------------------------------------
+
+    /** The share of the flat beach's pieces a port keeps on the rough shore (STR9). */
+    static final double ROUGH_SHARE = 0.8;
+
+    /** The seeds the rough-shore size tests plan with (the layout tests' seeds). */
+    static final long[] ROUGH_SEEDS = {7L, 11L, 2024L, 4242L, 5150L};
+
+    /**
+     * The first land row of the rough shore at column x: straight within 14 blocks of the site (so the pier's side is
+     * the same as on the flat beach), elsewhere a coast that wiggles five blocks in and out.
+     */
+    static int roughCoast(int x) {
+        return Math.abs(x - PLAN_X) < 14 ? PLAN_SHORE_Z : PLAN_SHORE_Z + (int) Math.round(5 * Math.sin((x - PLAN_X) / 7.0));
+    }
+
+    /**
+     * The surface of a rough shore (STR9: the real coasts where STR8 kept a third to a half of a port): a wiggling coast
+     * ({@link #roughCoast}) with a pond, land rising one block every six inland with bumps of up to three blocks.
+     */
+    static int roughSurface(int seaY, int x, int z) {
+        if (roughWater(x, z)) return seaY;
+        int bump = (int) Math.round(1.5 * (Math.sin(x / 3.0) + Math.cos(z / 4.0)) / 2 + 1.5);
+        return seaY + 1 + bump + Math.max(0, z - PLAN_SHORE_Z) / 6;
+    }
+
+    /** The rough shore's water: the sea north of its coast and a round pond 30 blocks inland, 24 to the east. */
+    static boolean roughWater(int x, int z) {
+        if (z < roughCoast(x)) return true;
+        int px = x - (PLAN_X + 24);
+        int pz = z - (PLAN_SHORE_Z + 30);
+        return px * px + pz * pz <= 16;
+    }
+
+    @ModGameTest(timeoutTicks = 600)
+    public static void villageKeepsItsSizeOnARoughShore(GameTestHelper helper) {
+        keepsItsSizeOnARoughShore(helper, VillageKeys.SEAFARER_VILLAGE);
+    }
+
+    @ModGameTest(timeoutTicks = 600)
+    public static void islandKeepsItsSizeOnARoughShore(GameTestHelper helper) {
+        keepsItsSizeOnARoughShore(helper, IslandKeys.PIRATE_ISLAND);
+    }
+
+    @ModGameTest(timeoutTicks = 600)
+    public static void outpostKeepsItsSizeOnARoughShore(GameTestHelper helper) {
+        keepsItsSizeOnARoughShore(helper, OutpostKeys.NAVY_OUTPOST);
+    }
+
+    /**
+     * STR9: the port planned on the flat beach and on the rough shore with the same seeds keeps at least
+     * {@value #ROUGH_SHARE} of the flat beach's pieces (summed over {@link #ROUGH_SEEDS}); with STR8's rules alone it
+     * kept far fewer (logged, the {@code STR9 rough} lines).
+     */
+    private static void keepsItsSizeOnARoughShore(GameTestHelper helper, ResourceKey<Structure> key) {
+        ServerLevel level = helper.getLevel();
+        int seaY = seaY(helper);
+        PortStructure structure = structure(level, key);
+        BlockPos site = new BlockPos(PLAN_X, seaY, PLAN_SHORE_Z + 9);
+        ChunkGenerator beach = StructureLayoutGameTests.beachGenerator(helper, level, seaY + 2);
+        PortStructure.Terrain straight = (x, z) -> sea(seaY, z < PLAN_SHORE_Z);
+        ChunkGenerator rough = bumpyGenerator(level, (x, z) -> roughSurface(seaY, x, z) + 1);
+        PortStructure.Terrain roughTerrain = (x, z) -> roughWater(x, z) ? seaY - 4 : roughSurface(seaY, x, z) + 1;
+        int flat = 0;
+        int kept = 0;
+        int planned = 0;
+        int str8 = 0;
+        StringBuilder seeds = new StringBuilder();
+        for (long seed : ROUGH_SEEDS) {
+            List<StructurePiece> onFlat = plan(helper, level, structure, beach, site, seaY, straight, seed).orElse(null);
+            List<StructurePiece> onRough = plan(helper, level, structure, rough, site, seaY, roughTerrain, seed).orElse(null);
+            helper.assertTrue(onFlat != null && onRough != null, key.location().getPath() + " seed " + seed + ": both shores give a port");
+            PlanReport report = PlanReport.latest(structure.portKind()).orElseThrow();
+            // STR8's rules alone, for the log (synchronous: the override is restored before any other test runs)
+            ConfigOverrides.Handle<Boolean> off = ConfigOverrides.apply(WorldConfig.STRUCTURE_RESITE_PIECES, false);
+            try {
+                str8 += plan(helper, level, structure, rough, site, seaY, roughTerrain, seed).map(List::size).orElse(0);
+            } finally {
+                off.restore();
+            }
+            flat += onFlat.size();
+            kept += onRough.size();
+            planned += report.planned;
+            seeds.append(" ").append(seed).append(": ").append(onRough.size()).append("/").append(onFlat.size());
+            Constants.LOG.info("STR9 rough {} seed {}: flat {}, rough {}; {}", key.location().getPath(), seed, onFlat.size(), onRough.size(),
+                    report.line());
+        }
+        Constants.LOG.info("STR9 rough {}: flat {} pieces, rough {} ({} planned, {} with STR8's rules alone){}", key.location().getPath(),
+                flat, kept, planned, str8, seeds);
+        helper.assertTrue(kept >= ROUGH_SHARE * flat, key.location().getPath() + ": the rough shore keeps " + kept + " of the flat beach's "
+                + flat + " pieces (at least " + ROUGH_SHARE + ");" + seeds);
+        helper.succeed();
+    }
+
     // --- 5. cold shores -----------------------------------------------------------------------------------------
 
     @ModGameTest(timeoutTicks = 300)

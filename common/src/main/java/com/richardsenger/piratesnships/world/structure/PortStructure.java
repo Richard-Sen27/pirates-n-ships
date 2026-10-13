@@ -282,20 +282,32 @@ public final class PortStructure extends Structure {
         for (ShoreFacing.Shore shore : piersInWater ? shores : shores.subList(0, 1)) {
             Facing result = planFacing(context, candidate, seaSurface, terrain, depth, config, shore, piersInWater);
             if (result.stub() != null) {
+                if (result.report() != null && LOGGED_SITES.add(siteKey(context.chunkPos()))) Constants.LOG.info(result.report().line());
                 return Optional.of(result.stub());
             }
             pierRejected |= result.pierRejected();
             if (result.stop()) break;
         }
-        if (pierRejected && REJECTED_SITES.add(context.chunkPos().toLong() * 8 + portKind.ordinal() * 2L + (cold ? 1 : 0))) {
+        if (pierRejected && REJECTED_SITES.add(siteKey(context.chunkPos()))) {
             Constants.LOG.info("STR8: {}{} site at {} {} rejected: no side puts its pier over the sea ({} sites rejected so far)",
                     portKind.getSerializedName(), cold ? " (cold)" : "", cx, cz, REJECTED_SITES.size());
         }
         return Optional.empty();
     }
 
+    private long siteKey(ChunkPos chunk) {
+        return chunk.toLong() * 8 + portKind.ordinal() * 2L + (cold ? 1 : 0);
+    }
+
+    /** STR9: sites whose plan report was logged (each chunk once). */
+    private static final java.util.Set<Long> LOGGED_SITES = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /** The outcome of planning one side: the stub, or why not (the pier on land; {@code stop}: no other side is tried). */
-    private record Facing(@org.jetbrains.annotations.Nullable GenerationStub stub, boolean pierRejected, boolean stop) {
+    private record Facing(@org.jetbrains.annotations.Nullable GenerationStub stub, boolean pierRejected, boolean stop,
+                          @org.jetbrains.annotations.Nullable PlanReport report) {
+        Facing(@org.jetbrains.annotations.Nullable GenerationStub stub, boolean pierRejected, boolean stop) {
+            this(stub, pierRejected, stop, null);
+        }
     }
 
     private Facing planFacing(GenerationContext context, BlockPos candidate, int seaSurface, Terrain terrain, int depth,
@@ -325,9 +337,12 @@ public final class PortStructure extends Structure {
         List<StructurePiece> pieces = new java.util.ArrayList<>(stub.get().getPiecesBuilder().build().pieces());
         StructureTemplateManager templates = context.structureTemplateManager();
         if (piersInWater && !PierExtensions.endsInWater(pieces, templates, terrain, seaSurface)) return new Facing(null, true, false);
-        List<StructurePiece> placed = arrange(context, pieces, seaSurface, terrain);
+        PlanReport report = new PlanReport(portKind, candidate.getX(), candidate.getZ());
+        report.planned = pieces.size();
+        List<StructurePiece> placed = arrange(context, pieces, seaSurface, terrain, report);
+        report.publish();
         BlockPos at = stub.get().position();
-        return new Facing(new GenerationStub(at, builder -> placed.forEach(builder::addPiece)), false, false);
+        return new Facing(new GenerationStub(at, builder -> placed.forEach(builder::addPiece)), false, false, report);
     }
 
     /**
@@ -346,24 +361,35 @@ public final class PortStructure extends Structure {
     }
 
     /**
-     * The jigsaw's pieces made into the port (in order): land pieces off the water ({@link LandFilter}), wall runs ended
-     * on land ({@link WallRuns}), buildings sunk onto the surface row, trails levelled ({@link TrailLevels}), the rigid
-     * chain out of the beard's reach, the pier extended (STR7).
+     * The jigsaw's pieces made into the port (in order): land pieces off the water ({@link LandFilter}, re-sited first
+     * since STR9: {@link PlanRepair}), wall runs ended on land ({@link WallRuns}), buildings sunk onto the surface row,
+     * trails levelled ({@link TrailLevels}; a trail too far off its ground swapped for a straight before it is dropped),
+     * the rigid chain out of the beard's reach, the pier extended (STR7). {@code report} gets the counts.
      */
-    private List<StructurePiece> arrange(GenerationContext context, List<StructurePiece> pieces, int seaSurface, Terrain terrain) {
+    private List<StructurePiece> arrange(GenerationContext context, List<StructurePiece> pieces, int seaSurface, Terrain terrain,
+                                         PlanReport report) {
         StructureTemplateManager templates = context.structureTemplateManager();
+        net.minecraft.core.HolderGetter<StructureTemplatePool> pools = context.registryAccess().lookupOrThrow(Registries.TEMPLATE_POOL);
         List<LandFilter.Node> nodes = landNodes(pieces);
         LandFilter.Water water = (x, z) -> terrain.firstFree(x, z) <= seaSurface;
-        boolean[] keep = landPiecesOnLand ? LandFilter.keep(nodes, water) : filled(pieces.size());
+        boolean resite = WorldConfig.STRUCTURE_RESITE_PIECES.get();
+        PlanRepair.Env env = new PlanRepair.Env(templates, pools, water);
+        boolean[] keep = filled(pieces.size());
+        PlanReport.Reason[] why = new PlanReport.Reason[pieces.size()];
+        if (landPiecesOnLand) PlanRepair.land(pieces, nodes, keep, why, env, resite, report);
         boolean[] chain = rigidChain(pieces, nodes);
         if (landPiecesOnLand) {
-            WallRuns.closeOnLand(pieces, nodes, keep, chain, water, templates,
-                    context.registryAccess().lookupOrThrow(Registries.TEMPLATE_POOL));
+            for (WallRuns.Closure closure : WallRuns.closeOnLand(pieces, nodes, keep, chain, water, templates, pools, resite)) {
+                for (int wall : closure.walls()) why[wall] = PlanReport.Reason.WALL;
+            }
+            for (int i = 1; i < pieces.size(); i++) {
+                if (!keep[i] && why[i] == null) why[i] = PlanReport.Reason.CHILD;
+            }
         }
         for (int i = 1; i < pieces.size(); i++) {
             if (keep[i] && sinksIntoTerrain(pieces.get(i))) pieces.get(i).move(0, -1, 0);
         }
-        if (WorldConfig.STRUCTURE_LEVEL_TRAILS.get()) level(context, pieces, nodes, keep);
+        if (WorldConfig.STRUCTURE_LEVEL_TRAILS.get()) level(context, pieces, nodes, keep, why, env, resite, landPiecesOnLand, report);
         List<StructurePiece> placed = new java.util.ArrayList<>(pieces.size());
         for (int i = 0; i < pieces.size(); i++) {
             StructurePiece piece = pieces.get(i);
@@ -376,11 +402,36 @@ public final class PortStructure extends Structure {
             }
             placed.add(piece);
         }
+        account(report, nodes, keep, why);
+        report.kept = placed.size();
         // STR7: the pier, jetty or quay grows where the water at its end is shallow
         if (extensionPool.isPresent() && WorldConfig.PORTS_PIER_EXTENSION.get()) {
             placed.addAll(PierExtensions.extend(templates, extensionPool.get(), placed, terrain, seaSurface, BerthBasins.depth()));
         }
         return placed;
+    }
+
+    /**
+     * STR9: counts every dropped piece in {@code report}: by its own reason, or as a child of the reason its nearest
+     * dropped (or re-sited) ancestor had.
+     */
+    static void account(PlanReport report, List<LandFilter.Node> nodes, boolean[] keep, PlanReport.Reason[] why) {
+        for (int i = 1; i < keep.length; i++) {
+            if (keep[i]) continue;
+            PlanReport.Reason reason = why[i] == null ? PlanReport.Reason.CHILD : why[i];
+            if (reason != PlanReport.Reason.CHILD) {
+                report.drop(reason);
+                continue;
+            }
+            PlanReport.Reason root = PlanReport.Reason.LAND;
+            for (int a = nodes.get(i).parent(); a >= 0; a = a < nodes.size() && nodes.get(a).parent() < a ? nodes.get(a).parent() : -1) {
+                if (why[a] != null && why[a] != PlanReport.Reason.CHILD) {
+                    root = why[a];
+                    break;
+                }
+            }
+            report.child(root);
+        }
     }
 
     private static boolean[] filled(int n) {
@@ -392,39 +443,59 @@ public final class PortStructure extends Structure {
     /**
      * STR8: lays the trails level ({@link TrailLevels}) from the generator's surface (the heights vanilla's jigsaw read
      * for them): a trail's natural row under its centre, a building's connector row at its joint. Moves the pieces and
-     * their junctions; a dropped trail drops what hangs from it ({@code keep}).
+     * their junctions; a dropped trail drops what hangs from it ({@code keep}). STR9: the limit is
+     * {@code max_trail_step_rows}; with {@code resite} a trail piece beyond it is first swapped for a straight on the same
+     * connector ({@link PlanRepair#swapTrail}) whose row would lie within it, and the rows are solved again.
      */
-    private static void level(GenerationContext context, List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep) {
+    private static void level(GenerationContext context, List<StructurePiece> pieces, List<LandFilter.Node> nodes, boolean[] keep,
+                              PlanReport.Reason[] why, PlanRepair.Env env, boolean resite, boolean landRule, PlanReport report) {
         ChunkGenerator generator = context.chunkGenerator();
-        List<TrailLevels.Node> levels = new java.util.ArrayList<>(pieces.size());
-        for (int i = 0; i < pieces.size(); i++) {
-            StructurePiece piece = pieces.get(i);
-            BoundingBox box = piece.getBoundingBox();
-            int parent = keep[i] ? nodes.get(i).parent() : -1;
-            if (i == 0) {
-                levels.add(new TrailLevels.Node(TrailLevels.Kind.START, -1, box.minY(), box.minY()));
-            } else if (piece instanceof PoolElementStructurePiece p
-                    && p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING) {
-                int natural = generator.getFirstFreeHeight((box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2,
-                        Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState()) - 1;
-                levels.add(new TrailLevels.Node(TrailLevels.Kind.TRAIL, parent, box.minY() - 1, natural));
-            } else {
-                int row = box.minY();
-                if (piece instanceof PoolElementStructurePiece p && !p.getJunctions().isEmpty() && parent >= 0
-                        && levelsKind(pieces.get(parent)) == TrailLevels.Kind.TRAIL) {
-                    JigsawJunction up = p.getJunctions().get(0);
-                    row = generator.getFirstFreeHeight(up.getSourceX(), up.getSourceZ(), Heightmap.Types.WORLD_SURFACE_WG,
-                            context.heightAccessor(), context.randomState()) - 1;
+        int maxCut = WorldConfig.STRUCTURE_MAX_TRAIL_STEP_ROWS.get();
+        int n = pieces.size();
+        Integer[] naturals = new Integer[n];
+        boolean[] tried = new boolean[n];
+        TrailLevels.Result result;
+        List<TrailLevels.Node> levels;
+        while (true) {
+            levels = levelNodes(context, pieces, nodes, keep, naturals);
+            result = TrailLevels.solve(levels, maxCut);
+            int root = -1;
+            for (int i = 1; i < n; i++) {
+                int parent = levels.get(i).parent();
+                if (keep[i] && result.dropped()[i] && !tried[i] && !(parent >= 0 && result.dropped()[parent])) {
+                    root = i;
+                    break;
                 }
-                levels.add(new TrailLevels.Node(TrailLevels.Kind.OTHER, parent, row, row));
+            }
+            if (root < 0 || !resite) break;
+            tried[root] = true;
+            int r = root;
+            int parentRow = parentRow(levels, result, r);
+            int rerooted = PlanRepair.swapTrail(pieces, nodes, keep, why, r, env, candidate -> {
+                if (landRule && !PlanRepair.onLand(candidate, nodes.get(r).parent(), false, env.water())) return false;
+                BoundingBox box = candidate.getBoundingBox();
+                int natural = surfaceRow(context, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+                int level = Math.max(parentRow - TrailLevels.MAX_STEP, Math.min(parentRow + TrailLevels.MAX_STEP, natural));
+                return Math.abs(level - natural) <= maxCut;
+            });
+            if (rerooted >= 0) {
+                why[r] = PlanReport.Reason.TRAIL;
+                naturals[r] = null;
+                report.swapped++;
+                report.rerooted += rerooted;
             }
         }
-        TrailLevels.Result result = TrailLevels.solve(levels);
-        for (int i = 0; i < pieces.size(); i++) {
+        for (int i = 0; i < n; i++) {
             if (!keep[i]) continue;
             if (result.dropped()[i]) {
                 keep[i] = false;
+                int parent = levels.get(i).parent();
+                why[i] = parent >= 0 && result.dropped()[parent] ? PlanReport.Reason.CHILD : PlanReport.Reason.TRAIL;
                 continue;
+            }
+            TrailLevels.Node node = levels.get(i);
+            if (node.kind() == TrailLevels.Kind.TRAIL && Math.abs(result.levelled(node, i) - node.natural()) > TrailLevels.MAX_CUT) {
+                report.ramps++;
             }
             int delta = result.delta()[i];
             if (delta == 0) continue;
@@ -439,6 +510,56 @@ public final class PortStructure extends Structure {
                 }
             }
         }
+        // the pieces whose parent was dropped by an earlier pass are not in the solve's tree
+        for (int i = 1; i < n; i++) {
+            int parent = nodes.get(i).parent();
+            if (keep[i] && parent >= 0 && parent < i && !keep[parent]) {
+                keep[i] = false;
+                why[i] = PlanReport.Reason.CHILD;
+            }
+        }
+    }
+
+    /** The levelled row of piece {@code i}'s parent (the start's or a trail's), or its own planned row. */
+    private static int parentRow(List<TrailLevels.Node> levels, TrailLevels.Result result, int i) {
+        int parent = levels.get(i).parent();
+        if (parent < 0) return levels.get(i).row();
+        return result.levelled(levels.get(parent), parent);
+    }
+
+    private static int surfaceRow(GenerationContext context, int x, int z) {
+        return context.chunkGenerator().getFirstFreeHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(),
+                context.randomState()) - 1;
+    }
+
+    /** The levelling's view of the pieces (dropped ones hang from nothing); trail naturals are cached in {@code naturals}. */
+    private static List<TrailLevels.Node> levelNodes(GenerationContext context, List<StructurePiece> pieces, List<LandFilter.Node> nodes,
+                                                     boolean[] keep, Integer[] naturals) {
+        List<TrailLevels.Node> levels = new java.util.ArrayList<>(pieces.size());
+        for (int i = 0; i < pieces.size(); i++) {
+            StructurePiece piece = pieces.get(i);
+            BoundingBox box = piece.getBoundingBox();
+            int parent = keep[i] ? nodes.get(i).parent() : -1;
+            if (i == 0) {
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.START, -1, box.minY(), box.minY()));
+            } else if (piece instanceof PoolElementStructurePiece p
+                    && p.getElement().getProjection() == StructureTemplatePool.Projection.TERRAIN_MATCHING) {
+                if (naturals[i] == null) naturals[i] = surfaceRow(context, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.TRAIL, parent, box.minY() - 1, naturals[i]));
+            } else {
+                int row = box.minY();
+                if (piece instanceof PoolElementStructurePiece p && !p.getJunctions().isEmpty() && parent >= 0
+                        && levelsKind(pieces.get(parent)) == TrailLevels.Kind.TRAIL) {
+                    if (naturals[i] == null) {
+                        JigsawJunction up = p.getJunctions().get(0);
+                        naturals[i] = surfaceRow(context, up.getSourceX(), up.getSourceZ());
+                    }
+                    row = naturals[i];
+                }
+                levels.add(new TrailLevels.Node(TrailLevels.Kind.OTHER, parent, row, row));
+            }
+        }
+        return levels;
     }
 
     private static TrailLevels.Kind levelsKind(StructurePiece piece) {
@@ -571,6 +692,10 @@ public final class PortStructure extends Structure {
         com.richardsenger.piratesnships.mob.harbor.HarborMasters.place(level, chunkBox, pieces, port);
         // LIFE1: the village's people, each in its building
         com.richardsenger.piratesnships.mob.village.Residents.place(level, chunkBox, pieces, port);
+        // STR9: half slabs on the trails' one-row steps (before the doors, whose approaches win)
+        if (WorldConfig.STRUCTURE_TRAIL_SLABS.get() && WorldConfig.STRUCTURE_LEVEL_TRAILS.get()) {
+            TrailSlabs.place(level, chunkBox, pieces.pieces(), server.getStructureManager(), portKind);
+        }
         // STR8: last, so the beard's fill, the surface and every piece of this chunk are in place
         if (WorldConfig.STRUCTURE_CLEAR_DOORS.get()) DoorClearing.clear(level, chunkBox, pieces.pieces(), server.getStructureManager());
     }

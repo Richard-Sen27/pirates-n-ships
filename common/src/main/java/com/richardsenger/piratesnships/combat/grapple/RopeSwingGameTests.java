@@ -136,7 +136,7 @@ public final class RopeSwingGameTests {
 
     /**
      * A hook thrown by hand ({@link GrapplingHookItem#use}) at a railing two blocks up and four blocks away still gets
-     * there with the gentler throw and latches on it.
+     * there with the gentler throw and latches on it (GR8: aimed a little above it, as its arc falls).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aHandThrowLatchesARailTwoUpAtFourBlocks(GameTestHelper h) {
@@ -154,9 +154,13 @@ public final class RopeSwingGameTests {
         p.setPos(feet.x, feet.y, feet.z);
         p.setOnGround(true);
         Vec3 target = Vec3.atLowerCornerOf(rail).add(0.1, 0.5, 0.5); // the west rail, about 1.5 above the feet
-        Vec3 d = target.subtract(p.getEyePosition());
+        Vec3 d = target.subtract(p.getEyePosition().subtract(0, 0.1, 0)); // from where a thrown item starts
         p.setYRot((float) Math.toDegrees(-Math.atan2(d.x, d.z)));
-        p.setXRot((float) Math.toDegrees(-Math.asin(d.y / d.length())));
+        // GR8: the throw falls on a real arc, so the thrower aims a little above the rail to drop onto it
+        double pitch = HookFlight.aimPitch(GrappleConfig.HAND_THROW_VELOCITY.get(), d.horizontalDistance(), d.y,
+                GrappleConfig.gravity(GrappleLaunch.Mode.THROW));
+        h.assertTrue(!Double.isNaN(pitch), "no hand throw reaches the rail");
+        p.setXRot((float) -pitch);
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(CombatContent.GRAPPLING_HOOK.get()));
         p.getMainHandItem().use(level, p, InteractionHand.MAIN_HAND);
         GrapplingHookEntity g = GrappleService.hookOf(p);
@@ -226,13 +230,20 @@ public final class RopeSwingGameTests {
         });
     }
 
-    /** Hanging still under the hook, walking forward for two seconds swings the player out sideways. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 140)
-    public static void walkingPushesAHangingPlayerIntoASwing(GameTestHelper h) {
+    /**
+     * GR8: hanging still under the hook, holding forward for three seconds only leans the player a little (gravity
+     * dominates; GR7's push plus vanilla's air control flew them out), while pumping (forward as they swing forward,
+     * back as they swing back) builds a swing of more than a block; the speed stays under {@code swing_max_speed}.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 380)
+    public static void pumpingSwingsAHangingPlayerAndHoldingOnlyLeans(GameTestHelper h) {
         landRig(h);
         Player[] player = {null};
         GrapplingHookEntity[] hook = {null};
-        double[] most = {0};
+        double[] held = {0};
+        double[] pumped = {0};
+        double[] fastest = {0};
+        Vec3[] last = {null};
         int[] tick = {0};
         h.onEachTick(() -> {
             int t = tick[0]++;
@@ -247,14 +258,22 @@ public final class RopeSwingGameTests {
             if (p == null || hook[0] == null) {
                 return;
             }
-            if (t >= 50 && t < 90) {
-                p.zza = 1f;
+            Vec3 at = hook[0].ropeFarEnd(h.getLevel());
+            if (at == null) {
+                return;
+            }
+            double out = p.getZ() - at.z;
+            double vz = last[0] == null ? 0.0 : p.getZ() - last[0].z;
+            if (last[0] != null && t >= 50) fastest[0] = Math.max(fastest[0], p.position().distanceTo(last[0]));
+            last[0] = p.position();
+            if (t >= 50 && t < 110) {
+                p.zza = 1f; // held forward
+                held[0] = Math.max(held[0], Math.abs(out));
+            } else if (t >= 110 && t < 360) {
+                p.zza = vz >= 0 ? 1f : -1f; // pumped in time with the swing
+                pumped[0] = Math.max(pumped[0], Math.abs(out));
             } else {
                 p.zza = 0f;
-            }
-            if (t >= 50 && t <= 100) {
-                Vec3 at = hook[0].ropeFarEnd(h.getLevel());
-                if (at != null) most[0] = Math.max(most[0], Math.abs(p.getZ() - at.z));
             }
         });
         h.runAfterDelay(49, () -> {
@@ -265,9 +284,13 @@ public final class RopeSwingGameTests {
             double off = Math.hypot(player[0].getX() - at.x, player[0].getZ() - at.z);
             h.assertTrue(off < 0.3, "the player does not hang still under the hook: " + off);
         });
-        h.runAfterDelay(102, () -> {
-            Constants.LOG.info("[GR7] pushed swing: farthest {} blocks out along z", f(most[0]));
-            h.assertTrue(most[0] > 1.0, "two seconds of walking swung the player only " + most[0] + " blocks out");
+        h.runAfterDelay(362, () -> {
+            Constants.LOG.info("[GR8] swing: held forward 3 s leans {} blocks out, pumping reaches {} blocks, fastest {} blocks/tick",
+                    f(held[0]), f(pumped[0]), f(fastest[0]));
+            h.assertTrue(held[0] < 0.8, "holding forward for three seconds swung the player " + held[0] + " blocks out");
+            h.assertTrue(pumped[0] > 1.0, "pumping swung the player only " + pumped[0] + " blocks out");
+            // the displacement per tick includes vanilla's own air control of the input (0.02)
+            h.assertTrue(fastest[0] <= GrappleConfig.SWING_MAX_SPEED.get() + 0.03, "the swing ran at " + fastest[0] + " blocks per tick");
             h.assertTrue(beyond(h, player[0], hook[0]) <= 0.1, "the push stretched the rope");
             hook[0].release(GrappleRules.Release.NONE);
             h.succeed();
@@ -484,6 +507,68 @@ public final class RopeSwingGameTests {
             h.assertTrue(worst[0] <= 0.35, "the hand got " + worst[0] + " blocks beyond the rope on a moving ship");
             h.assertTrue(across[0] < 2.0, "the player trailed " + across[0] + " blocks from under the hook");
             h.assertTrue(p.getY() < at.y, "the player is not under the hook");
+            g.release(GrappleRules.Release.NONE);
+            h.succeed();
+        });
+    }
+    // ------------------------------------------------------------------ GR8: the rope poses
+
+    /** The rope pose the hook's synced state gives {@code p} now ({@link RopePose}, as every client works it out). */
+    private static RopePose pose(GameTestHelper h, Player p, GrapplingHookEntity g, RopePose previous) {
+        Vec3 far = g.ropeFarEnd(h.getLevel());
+        double speed = far == null ? 0.0 : RopePose.swingSpeed(hand(p).subtract(far), p.getDeltaMovement());
+        return RopePose.select(RopePose.facts(p.isPassenger() && p.getVehicle() instanceof RopeRiderEntity, g, p,
+                g.syncedSwingLength(), speed), previous);
+    }
+
+    /**
+     * GR8: the hook's synced state drives the pose. Standing under the beam, a pull is the standing pull; hanging still,
+     * the hang; a pull while hanging, the climb, for {@link RopePose#PULL_TICKS}, then the hang again; swinging fast,
+     * the swing; and each pull moves the synced counter that restarts the climb on every client.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void theHookStateDrivesTheRopePose(GameTestHelper h) {
+        landRig(h);
+        ServerLevel level = h.getLevel();
+        Player[] player = {null};
+        GrapplingHookEntity[] hook = {null};
+        int[] pulls = {0};
+        h.runAfterDelay(10, () -> player[0] = playerInLevel(h, h.absoluteVec(new Vec3(HOOK_X, 1, HOOK_Z)), 0f));
+        h.runAfterDelay(12, () -> hook[0] = hookBeam(h, player[0]));
+        h.runAfterDelay(40, () -> {
+            Player p = player[0];
+            GrapplingHookEntity g = hook[0];
+            assertLatchedOnBeam(h, g);
+            h.assertTrue(p.onGround(), "the player is not standing under the beam");
+            h.assertTrue(pose(h, p, g, RopePose.NONE) == RopePose.NONE, "standing with the rope: " + pose(h, p, g, RopePose.NONE));
+            RopeSlideService.Board b = RopeSlideService.tryBoard(level, p, g, 0.0);
+            h.assertTrue(b == RopeSlideService.Board.OK, "the standing pull was refused: " + b);
+            h.assertTrue(g.pulls() == 1 && g.ticksSincePull() == 0, "the pull was not counted: " + g.pulls());
+            RopePose standing = pose(h, p, g, RopePose.NONE);
+            h.assertTrue(standing == RopePose.PULL, "a pull while standing shows " + standing);
+            pulls[0] = g.pulls();
+        });
+        h.runAfterDelay(80, () -> {
+            Player p = player[0];
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(!p.onGround() && RopeSwing.holding(g.syncedSwingLength()), "the pull did not lift the player onto the rope");
+            RopePose still = pose(h, p, g, RopePose.NONE);
+            h.assertTrue(still == RopePose.HANG, "hanging still shows " + still);
+            RopeSlideService.Board b = RopeSlideService.tryBoard(level, p, g, 0.0);
+            h.assertTrue(b == RopeSlideService.Board.OK, "the pull while hanging was refused: " + b);
+            h.assertTrue(g.pulls() == pulls[0] + 1, "the second pull was not counted");
+            RopePose climbing = pose(h, p, g, RopePose.HANG);
+            h.assertTrue(climbing == RopePose.CLIMB, "a pull while hanging shows " + climbing);
+        });
+        h.runAfterDelay(80 + RopePose.PULL_TICKS + 2, () -> {
+            Player p = player[0];
+            GrapplingHookEntity g = hook[0];
+            RopePose after = pose(h, p, g, RopePose.CLIMB);
+            h.assertTrue(after == RopePose.HANG || after == RopePose.SWING, "after the pull's hand over hand: " + after);
+            p.setDeltaMovement(new Vec3(0.3, 0, 0)); // swinging across the rope
+            RopePose swinging = pose(h, p, g, RopePose.HANG);
+            h.assertTrue(swinging == RopePose.SWING, "swinging at 0.3 blocks per tick shows " + swinging);
+            Constants.LOG.info("[GR8] rope poses: pull {}, then hang, climb, {}, swing; {} pulls synced", RopePose.PULL, after, g.pulls());
             g.release(GrappleRules.Release.NONE);
             h.succeed();
         });

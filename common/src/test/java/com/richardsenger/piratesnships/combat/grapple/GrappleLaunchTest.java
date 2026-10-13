@@ -118,10 +118,11 @@ class GrappleLaunchTest {
     }
 
     @Test
-    void onlyTheMusketShotFliesFlatter() {
-        assertEquals(1.0, GrappleLaunch.gravityFactor(Mode.THROW, 0.5), EPS);
-        assertEquals(0.5, GrappleLaunch.gravityFactor(Mode.MUSKET, 0.5), EPS);
-        assertEquals(0.0, GrappleLaunch.gravityFactor(Mode.MUSKET, -1.0), EPS, "never negative");
+    void aThrowFallsAtItsOwnGravityAndTheMusketShotFliesFlatter() {
+        assertEquals(0.05, GrappleLaunch.gravity(Mode.THROW, 0.05, 0.02, 0.5), EPS, "GR8: the hand throw's own gravity");
+        assertEquals(0.01, GrappleLaunch.gravity(Mode.MUSKET, 0.05, 0.02, 0.5), EPS);
+        assertEquals(0.0, GrappleLaunch.gravity(Mode.MUSKET, 0.05, 0.02, -1.0), EPS, "never negative");
+        assertEquals(0.0, GrappleLaunch.gravity(Mode.THROW, -0.05, 0.02, 0.5), EPS, "never negative");
     }
 
     @Test

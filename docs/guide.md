@@ -510,13 +510,20 @@ steadily. Close under the hook a pull puts you on top, where the hook bit in. A 
 climb; tie the rope off on a cleat to use it as a line, and only such a tied rope is a line others can slide along.
 **Hanging and swinging:** once you are off the ground with the hook above you (climbing, pulled up off a deck, or
 stepping off an edge with the rope in hand), the rope holds you like a liana: you get no farther from the hook than the
-rope is long, you swing down under it, and walking pushes the swing so you can swing across a gap. The swing dies down
-in a few seconds. The rope hangs from the hook under its own weight: straight when you hang at full length, sagging
-when it is slack. Take another item in hand to let go and drop (sneaking lets go too, except on a hook in a ship,
+rope is long and gravity swings you down under it and up the other side. Your keys only give a little thrust along the
+swing: holding forward (W) or back (S) just leans you a few degrees; to swing out, pump like on a playground swing,
+forward as you swing forward and back as you swing back, and the swing builds up to about 20 degrees on a 4-block rope.
+Strafing (A, D) pushes too, but less than half as hard. Nothing gets you faster than 0.8 blocks per tick (16 m/s) on
+the rope, not even a long drop. Without input the swing dies down in about eight seconds. The rope hangs from the hook
+under its own weight: straight when you hang at full length, sagging when it is slack. **Poses** (with the Player
+Animation Library, seen in F5 and by other players): hanging still you hold the rope with both hands above your head,
+legs pressed together; each pull while hanging is one hand-over-hand climb with the knees; while you swing the legs
+trail and your whole body leans along the rope toward the hook; a pull while you still stand is a hand-over-hand pull on
+the rope ahead. In first person you see both raised arms (the lean is third person only). Take another item in hand to let go and drop (sneaking lets go too, except on a hook in a ship,
 where sneak freezes the rope for hauling as above); the hook stays where it is. On a ship under way the hook moves
 with the hull and you hang on with it. Server config `grapple.hauling`, `haul_stiffness`, `haul_damping`,
 `haul_max_force`, `haul_player_pull`, `pull_cooldown_ticks`, `rope_climb_step`, `rope_climb_speed`, `swing`,
-`swing_push`, `swing_damping`.
+`swing_push`, `swing_push_sideways`, `swing_max_speed`, `swing_damping`.
 
 ### Fire at will
 Pick "Fire at will" on the captain's whistle and your gun crews take over their cannons. Every second each crew
@@ -1737,9 +1744,10 @@ on another ship catches on it and holds twice as far before tearing loose. With 
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.
 
-**Throwing by hand.** Without a musket in the other hand, right-click throws the hook, gently: a level throw lands about
-nine blocks away and the farthest lob about twenty (`grapple.hand_throw_velocity`), enough to reach a rail from
-alongside; for range, fire it from the musket. If it hits the hull of another
+**Throwing by hand.** Without a musket in the other hand, right-click throws the hook in one natural arc, like a thrown
+trident: a throw 45 degrees up lands about nine blocks away, a level throw about five and a half
+(`grapple.hand_throw_velocity`, `hand_throw_gravity`). Aim a little above what you want to hit; it reaches a rail from
+alongside. For range, fire it from the musket, which keeps its own fast, flat shot. If it hits the hull of another
 ship it bites in and hangs there, following the ship; from your own ship the taut rope hauls both ships together
 until they lie side by side, ready for boarding, then goes slack. It also holds on your own ship (a line, not a haul;
 `grapple.latch_own_ship`) and on land (`grapple.latch_world_blocks`). On land the rope does not drag a hooked ship by
@@ -2012,7 +2020,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, a barrel run into a bulwark (`walls_block_barrel`), glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
-| `grapple` | Grappling hook on/off, throw speed (`hand_throw_velocity` by hand), rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing (`pull_cooldown_ticks`, `rope_climb_step`), hanging and swinging on the rope (`swing`, `swing_push`, `swing_damping`); `launch` (from the musket), `slide` (sliding along a rope). |
+| `grapple` | Grappling hook on/off, throw speed and arc (`hand_throw_velocity`, `hand_throw_gravity` by hand), rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing (`pull_cooldown_ticks`, `rope_climb_step`), hanging and swinging on the rope (`swing`, `swing_push`, `swing_push_sideways`, `swing_max_speed`, `swing_damping`); `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | The "Board!" order on/off (`board_order`), the widest gap jumped (`board_gap`, 2), gunners and helmsman staying (`boarders_keep_stations`), the clear deck's hold before "Her deck is yours" (`capture_seconds`), NPC boarding on/off and its delay (`npc_boarding`, `npc_board_delay`), the NPC recall (`npc_recall_outnumbered`, `npc_recall_flooded`), swords from the chests (`take_arms`), the punch (`unarmed_damage`), the crew's sword skill (`crew_skill`), the crossing's fallback (`cross_timeout_ticks`), how often boarders look around (`order_check_ticks`); `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), marker cap (`max_markers`, 0 = none), zoom-out steps (`max_zoom_out`), ships (`show_ships`), structures (`show_structures`, `ports_always_known`, `structure_reveal_distance`), the land's look (`style`: `COLOURED` block colours or `INK`; `colour_columns` read per cell side), the held chart (`held_open`); other players are never shown; `tiles` (map tiles). |

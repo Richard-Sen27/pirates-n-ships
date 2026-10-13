@@ -200,8 +200,9 @@ public final class GrappleLaunchGameTests {
         assertSpeed(h, out, musket, "the musket hook");
         h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.MUSKET)
                 && out.ropeLength() > GrappleConfig.MAX_ROPE_LENGTH.get(), "rope length " + out.ropeLength());
-        h.assertTrue(Math.abs(out.gravityFactor() - GrappleConfig.MUSKET_GRAVITY_FACTOR.get()) < 1.0e-6,
-                "the musket hook flies with gravity factor " + out.gravityFactor());
+        double musketGravity = GrappleConfig.GRAVITY.get() * GrappleConfig.MUSKET_GRAVITY_FACTOR.get();
+        h.assertTrue(Math.abs(out.flightGravity() - musketGravity) < 1.0e-6,
+                "the musket hook flies with gravity " + out.flightGravity() + ", not " + musketGravity);
         h.assertTrue(!GrappleContent.isHookLoaded(gun), "the musket still holds the hook");
         h.assertTrue(!FirearmContent.isLoaded(gun), "the musket is still marked loaded");
         h.assertTrue(player.getCooldowns().isOnCooldown(CombatContent.MUSKET.get()), "the musket's cooldown did not start");
@@ -293,6 +294,11 @@ public final class GrappleLaunchGameTests {
      * feet, i.e. lands on flat ground at the thrower's height.
      */
     private static Flight flyLevel(GameTestHelper h, GrappleLaunch.Mode mode, double rope) {
+        return fly(h, mode, rope, 0.0);
+    }
+
+    /** Like {@link #flyLevel}, launched {@code pitch} degrees above the horizon. */
+    private static Flight fly(GameTestHelper h, GrappleLaunch.Mode mode, double rope, double pitch) {
         ServerLevel level = h.getLevel();
         Player p = h.makeMockPlayer(GameType.SURVIVAL);
         p.getInventory().clearContent();
@@ -301,7 +307,9 @@ public final class GrappleLaunchGameTests {
         p.setYRot(-90.0f); // +x
         p.setXRot(0.0f);
         Vec3 eye = new Vec3(p.getX(), p.getEyeY() - 0.1, p.getZ()); // where a thrown projectile starts
-        GrapplingHookEntity hook = new GrapplingHookEntity(level, p, eye, new Vec3(GrappleConfig.speed(mode), 0, 0), hook(), false);
+        double a = Math.toRadians(pitch);
+        double speed = GrappleConfig.speed(mode);
+        GrapplingHookEntity hook = new GrapplingHookEntity(level, p, eye, new Vec3(speed * Math.cos(a), speed * Math.sin(a), 0), hook(), false);
         GrappleService.configure(hook, mode);
         if (!Double.isNaN(rope)) {
             hook.setRopeLength(rope);
@@ -346,19 +354,71 @@ public final class GrappleLaunchGameTests {
     }
 
     /**
-     * GR7 (the human: "when thrown with hand, it goes WAY too far"): a level throw by hand lands 8 to 10 blocks away,
-     * as {@code HookFlightTest} pins the arithmetic, well inside its 32-block rope (which is still its length).
+     * GR7 (the human: "when thrown with hand, it goes WAY too far"), GR8 ("it starts off way too fast" and drops): a
+     * throw by hand 45 degrees up lands 8 to 10 blocks away, as {@code HookFlightTest} pins the arithmetic, well inside
+     * its 32-block rope (which is still its length).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void aLevelHandThrowLandsWithinThePinnedRange(GameTestHelper h) {
+    public static void aFortyFiveDegreeHandThrowLandsWithinThePinnedRange(GameTestHelper h) {
         double rope = GrappleConfig.ropeLength(GrappleLaunch.Mode.THROW);
-        Flight free = flyLevel(h, GrappleLaunch.Mode.THROW, Double.NaN);
-        Constants.LOG.info("GR7 reach: a level hand throw lands {} blocks away after {} ticks (rope {})",
+        Flight free = fly(h, GrappleLaunch.Mode.THROW, Double.NaN, 45.0);
+        Constants.LOG.info("GR8 reach: a 45 degree hand throw lands {} blocks away after {} ticks (rope {})",
                 String.format(java.util.Locale.ROOT, "%.1f", free.distance()), free.ticks(), rope);
         h.assertTrue(free.state() == GrapplingHookEntity.State.FLYING, "the hand throw's rope ran out: " + free);
-        h.assertTrue(free.distance() >= 8.0 && free.distance() <= 10.0, "a level hand throw lands " + free.distance()
+        h.assertTrue(free.distance() >= 8.0 && free.distance() <= 10.0, "a 45 degree hand throw lands " + free.distance()
                 + " blocks away, not 8 to 10");
         h.assertTrue(rope >= 32.0, "the thrown rope is shorter than 32 blocks");
+        h.succeed();
+    }
+
+    /**
+     * GR8: a hook thrown by hand 45 degrees up flies one plain arc for 60 ticks (a long rope, open air 100 blocks up):
+     * the horizontal speed shrinks a little every tick (drag only), the vertical speed falls by about the same every tick
+     * (gravity from the first tick, no cut-off, no clamp), and the path has exactly one apex.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void aHandThrowFliesOnePlainArc(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Player p = h.makeMockPlayer(GameType.SURVIVAL);
+        p.getInventory().clearContent();
+        Vec3 feet = h.absoluteVec(new Vec3(4.5, 100, 4.5));
+        p.setPos(feet.x, feet.y, feet.z);
+        Vec3 eye = new Vec3(p.getX(), p.getEyeY() - 0.1, p.getZ());
+        double speed = GrappleConfig.speed(GrappleLaunch.Mode.THROW);
+        double a = Math.toRadians(45.0);
+        GrapplingHookEntity hook = new GrapplingHookEntity(level, p, eye, new Vec3(speed * Math.cos(a), speed * Math.sin(a), 0), hook(), false);
+        GrappleService.configure(hook, GrappleLaunch.Mode.THROW);
+        hook.setRopeLength(1000.0);
+        double gravity = GrappleConfig.gravity(GrappleLaunch.Mode.THROW);
+        h.assertTrue(Math.abs(hook.flightGravity() - GrappleConfig.HAND_THROW_GRAVITY.get()) < 1.0e-6,
+                "the hand throw falls at " + hook.flightGravity());
+        try {
+            Vec3 prev = hook.position();
+            double prevVx = Double.POSITIVE_INFINITY;
+            double prevVy = Double.POSITIVE_INFINITY;
+            int apexes = 0;
+            for (int t = 0; t < 60; t++) {
+                hook.tick();
+                h.assertTrue(hook.state() == GrapplingHookEntity.State.FLYING && !hook.isRemoved(),
+                        "tick " + t + ": the hook stopped flying: " + hook.state());
+                Vec3 now = hook.position();
+                double vx = now.x - prev.x;
+                double vy = now.y - prev.y;
+                h.assertTrue(vx > 0.0 && vx < prevVx, "tick " + t + ": the horizontal speed went from " + prevVx + " to " + vx);
+                h.assertTrue(vy < prevVy, "tick " + t + ": the vertical speed went from " + prevVy + " to " + vy);
+                if (t > 0) {
+                    double lost = prevVy - vy;
+                    h.assertTrue(Math.abs(lost - gravity) < 0.02, "tick " + t + ": the fall changed by " + lost + ", not about " + gravity);
+                    if (prevVy > 0.0 && vy <= 0.0) apexes++;
+                }
+                prevVx = vx;
+                prevVy = vy;
+                prev = now;
+            }
+            h.assertTrue(apexes == 1, "the arc has " + apexes + " apexes");
+        } finally {
+            hook.discard();
+        }
         h.succeed();
     }
 
@@ -643,5 +703,90 @@ public final class GrappleLaunchGameTests {
             s.a().ship().addVelocity(s.a().ship().linearVelocity().negate(), new Vector3d());
             s.b().ship().addVelocity(s.b().ship().linearVelocity().negate(), new Vector3d());
         }));
+    }
+    // ------------------------------------------------------------------ GR8: the musket's hook stays out
+
+    /** A stone wall across the whole EMPTY_24 test at x 22 (y 1..10) and a stone floor at y 0. */
+    private static void wallAtTheFarEnd(GameTestHelper h) {
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        }
+        for (int z = 0; z < 24; z++) {
+            for (int y = 1; y <= 10; y++) h.setBlock(new BlockPos(22, y, z), Blocks.STONE);
+        }
+    }
+
+    /**
+     * GR8 (the human, 2026-10-13: "when using it with the musket, it is for some reason gone after shooting it"): a
+     * survival player in the level loads the hook into the musket from the off hand and fires it level at a wall 19.5
+     * blocks away. The hook is in the level every tick for 20 ticks after the shot, flies until it bites and then stays
+     * latched on the wall; nothing gives it back early.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = LAUNCH_BATCH, timeoutTicks = 80)
+    public static void aFiredMusketHookFliesAndLatchesOnAWall(GameTestHelper h) {
+        wallAtTheFarEnd(h);
+        musketHookStaysOut(h, RopeSwingGameTests.playerInLevel(h, h.absoluteVec(new Vec3(2.5, 1, 12.5)), -90f), true);
+    }
+
+    /**
+     * The same with a real {@link net.minecraft.server.level.ServerPlayer} (a connection that goes nowhere). The shot is
+     * the hook load's own launch ({@link MusketHookLoad#launch}): the trigger's recoil is a payload, which a connection
+     * without negotiated channels refuses.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = LAUNCH_BATCH, timeoutTicks = 80)
+    public static void aServerPlayersMusketHookFliesAndLatchesOnAWall(GameTestHelper h) {
+        wallAtTheFarEnd(h);
+        var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "gr8_musket");
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+        net.minecraft.server.level.ServerPlayer p = new net.minecraft.server.level.ServerPlayer(h.getLevel().getServer(),
+                h.getLevel(), profile, cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, p, cookie);
+        p.setGameMode(GameType.SURVIVAL);
+        p.getInventory().clearContent();
+        Vec3 at = h.absoluteVec(new Vec3(2.5, 1, 12.5));
+        p.moveTo(at.x, at.y, at.z, -90f, 0f);
+        musketHookStaysOut(h, p, false);
+    }
+
+    private static void musketHookStaysOut(GameTestHelper h, Player player, boolean trigger) {
+        ServerLevel level = h.getLevel();
+        player.setYRot(-90f);
+        player.setXRot(0f);
+        player.setItemInHand(InteractionHand.MAIN_HAND, musket());
+        player.setItemInHand(InteractionHand.OFF_HAND, hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 2));
+        loadMusket(h, player, InteractionHand.MAIN_HAND);
+        h.assertTrue(GrappleContent.isHookLoaded(player.getMainHandItem()), "the musket holds no hook");
+        if (trigger) {
+            aimAndRelease(h, player, InteractionHand.MAIN_HAND, FirearmsConfig.AIM_STEADY_TICKS.get() + 5);
+        } else {
+            MusketHookLoad.INSTANCE.launch(level, player, player.getMainHandItem(),
+                    com.richardsenger.piratesnships.combat.firearms.FirearmKind.MUSKET, 0f, -90f);
+        }
+        GrapplingHookEntity out = GrappleService.hookOf(player);
+        h.assertTrue(out != null, "no hook out after firing the musket");
+        h.assertTrue(level.getEntity(out.getId()) == out, "the fired hook is not in the level");
+        int[] tick = {0};
+        boolean[] latched = {false};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t > 20) return;
+            h.assertTrue(!out.isRemoved() && level.getEntity(out.getId()) == out,
+                    "tick " + t + ": the musket hook is gone (" + out.getRemovalReason() + ", " + out.state() + " at " + out.position() + ")");
+            h.assertTrue(GrappleService.hookOf(player) == out, "tick " + t + ": the thrower has no hook out");
+            h.assertTrue(out.state() != GrapplingHookEntity.State.RETRACTING, "tick " + t + ": the musket hook missed at " + out.position());
+            if (out.state() == GrapplingHookEntity.State.LATCHED) latched[0] = true;
+            if (t == 20) {
+                h.assertTrue(latched[0] && out.state() == GrapplingHookEntity.State.LATCHED, "the musket hook did not latch: " + out.state());
+                h.assertTrue(out.latchedBlock() != null && out.latchedBlock().getX() == h.absolutePos(new BlockPos(22, 1, 0)).getX(),
+                        "the hook latched on " + out.latchedBlock() + ", not the wall");
+                h.assertTrue(hooks(player) == 0, "the hook came back while it is out");
+                out.release(GrappleRules.Release.NONE);
+                h.assertTrue(hooks(player) == 1, "the released hook did not come back");
+                h.succeed();
+            }
+        });
     }
 }

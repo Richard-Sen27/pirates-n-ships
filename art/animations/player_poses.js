@@ -471,7 +471,29 @@ F9.H = {
 F9.buildHaul = function(){
 F9.make('haul', 1.0, 'loop', [{t:0,pose:F9.H.REACH_R},{t:0.25,pose:F9.H.PASS_A},{t:0.5,pose:F9.H.REACH_L},{t:0.75,pose:F9.H.PASS_A},{t:1.0,pose:F9.H.REACH_R}]);
 };
+// GR8 rope poses: hanging on the own hand-held rope (both hands above the head, legs pressed together and crossed), the
+// swing (the same grip, legs trailing; the whole body leans along the rope in code, RopeLean), the climb (hand over hand
+// with the knees, one play per pull) and the standing pull (hand over hand up the rope ahead, leaning back). The files
+// common/src/main/resources/assets/pirates_n_ships/rope_animations/rope_{hang,swing,climb,pull}.json are written by
+// tools/gen_rope_animations.py from the same values (Blockbench was not available for GR8); keep both in step.
+F9.G8 = {
+ HANG: {ra: [-172, 0, 6], la: [-172, 0, -6], rl: [-20, 0, -5], ll: [-10, 0, 5]},
+ SWING: {ra: [-172, 0, 5], la: [-172, 0, -5], rl: [10, 0, -2], ll: [14, 0, 2]},
+ CLIMB_A: {ra: [-180, 0, 3], la: [-148, 0, -10], rl: [-38, 0, -4], ll: [-6, 0, 4]},
+ CLIMB_B: {ra: [-148, 0, 10], la: [-180, 0, -3], rl: [-6, 0, -4], ll: [-38, 0, 4]},
+ PULL_A: {ra: [-140, -8, 0], la: [-92, 8, 0], lean: -8, rl: [-14, 0, 2], ll: [10, 0, -2]},
+ PULL_B: {ra: [-92, -8, 0], la: [-140, 8, 0], lean: -11, rl: [-14, 0, 2], ll: [10, 0, -2]},
+ PULL_C: {ra: [-118, -8, 0], la: [-118, 8, 0], lean: -6, rl: [-10, 0, 2], ll: [8, 0, -2]}
+};
+F9.buildRopeGr8 = function(){
+const G = F9.G8;
+F9.make('rope_hang', 0.25, 'hold', [{t:0,pose:F9.R.REST},{t:0.25,pose:G.HANG}]);
+F9.make('rope_swing', 0.25, 'hold', [{t:0,pose:G.HANG},{t:0.25,pose:G.SWING}]);
+F9.make('rope_climb', 0.6, 'once', [{t:0,pose:G.HANG},{t:0.15,pose:G.CLIMB_A},{t:0.35,pose:G.CLIMB_B},{t:0.5,pose:G.HANG}]);
+F9.make('rope_pull', 0.6, 'once', [{t:0,pose:G.PULL_C},{t:0.15,pose:G.PULL_A},{t:0.35,pose:G.PULL_B},{t:0.5,pose:G.PULL_C}]);
+};
 F9.build();
 F9.buildFirearms();
 F9.buildRope();
 F9.buildHaul();
+F9.buildRopeGr8();

@@ -131,11 +131,12 @@ public final class GrappleLaunch {
     }
 
     /**
-     * Gravity of the flying hook as a multiple of {@code grapple.gravity}: {@code musketFactor} for a musket shot (a
-     * fast, flat shot, GR4), 1 for a throw. Never negative.
+     * Gravity of the flying hook [blocks per tick squared]: a throw by hand falls at {@code handGravity}
+     * ({@code hand_throw_gravity}, GR8: its own arc, not the musket's), a musket shot at {@code gravity} times
+     * {@code musketFactor} (a fast, flat shot, GR4). Never negative.
      */
-    public static double gravityFactor(Mode mode, double musketFactor) {
-        return mode == Mode.MUSKET ? Math.max(0.0, musketFactor) : 1.0;
+    public static double gravity(Mode mode, double handGravity, double gravity, double musketFactor) {
+        return Math.max(0.0, mode == Mode.MUSKET ? gravity * musketFactor : handGravity);
     }
 
     /** Inaccuracy of the launch (vanilla {@code shoot} units). */
